@@ -852,24 +852,40 @@ plof {
 
 
         /* the reparenting function, not defined as a function because then
-         * opFunction and opExtend would be mutually dependent */
+         * opFunction and opExtend would be mutually dependent. reparent
+         * actually creates an indirection object to reparent */
         var reparent = psl { {
-            // combine it with a new object to dup it
-            new combine
+            // remember the object being reparented
+            this "y" push2 memberset pop
 
-            // then call opExtend recursively
-            push0 1 integer array
-            push1 "opExtend" member pul_eval
-            push0 null
+            // prepare an indirection object
+            new
+
+            // get the lazy reparenting function
             {
-                pop pop
+                // combine it with a new object to dup it
+                this "y" pul_var member pul_eval new combine
+
+                // then call opExtend recursively
+                push0 1 integer array
+                push1 "opExtend" member pul_eval
+                push0 null
+                {
+                    pop pop
+                }
+                {
+                    call pul_eval pop
+                } cmp
+
+                // finally, actually reset the parent
+                push0 this "x" pul_var member pul_eval parentset
             }
-            {
-                call pul_eval pop
-            } cmp
 
-            // finally, actually reset the parent
-            push0 this "x" pul_var member pul_eval parentset
+            // then put it in the indirection object
+            push1 "__pul_e" push2 memberset
+
+            // pop off the function, leaving only the indirection object
+            pop
         } };
 
         // then go through each element
