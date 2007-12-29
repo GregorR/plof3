@@ -1,0 +1,15 @@
+psl {
+    this "foo" "Oh no!" memberset
+    this "b" "Hello, world!" memberset
+};
+
+plof {
+    var bar = {
+        foo
+    };
+    bar() = b;
+};
+
+psl {
+    this "foo" member print
+};

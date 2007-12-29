@@ -1,0 +1,959 @@
+/*
+ * The Plof User Language basic definitions. This file gets you from the grammar defined in base.psl
+ * to a functional PUL grammar, and creates mostly-empty Object and Function objects. object.pul
+ * should be loaded next to flesh out the important objects.
+ *
+ *  Copyright (c) 2007  Gregor Richards
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to
+ *  deal in the Software without restriction, including without limitation the
+ *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *  sell copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *  IN THE SOFTWARE.
+ */
+
+// Whatever primary is set to is the primary language. This indirection makes it easily switchable
+__grammar_add(top, primary, push0 0 integer index);
+
+// Basic PSL: psl { psl code here };
+__grammar_add(top, psl, push0 0 integer index);
+__grammar_add(psl,
+              white /psl/ token white /\{/ pslOps white /\}/ white /;/ white,
+              push0 5 integer index);
+
+// PSL BNF: pslbnf { production = target => { code } };
+__grammar_add(top, pslbnf, push0 0 integer index);
+__grammar_add(pslbnf,
+              white /pslbnf/ token white /\{/ pslbnf_productions white /\}/ white /;/ white,
+              push0 5 integer index {[gcommit]} concat);
+__grammar_add(pslbnf_productions,
+              pslbnf_productions pslbnf_production,
+              push0 0 integer index push1 1 integer index concat);
+__grammar_add(pslbnf_productions,
+              pslbnf_production,
+              push0 0 integer index);
+__grammar_add(pslbnf_production,
+              white /[A-Za-z_][A-Za-z0-9_]*/ white /=/ pslbnf_targets white
+                  /=>/ white /\{/ pslOps white /\}/,
+              push0 1 integer index
+                  push1 4 integer index
+                  push2 9 integer index wrap
+                  {gadd}
+                  concat concat concat iwrap);
+__grammar_add(pslbnf_targets,
+              pslbnf_targets pslbnf_target,
+              push0 0 integer index
+                  push1 1 integer index
+                  {aconcat}
+                  concat concat);
+__grammar_add(pslbnf_targets,
+              pslbnf_target,
+              push0 0 integer index);
+__grammar_add(pslbnf_target,
+              white /[A-Za-z_][A-Za-z0-9_]*/,
+              push0 1 integer index
+                  {1 integer array}
+                  concat);
+__grammar_add(pslbnf_target,
+              white /(\/([^\\\/]*\\.)*[^\\\/]*\/)/,
+              push0 1 integer index
+                  {1 integer array}
+                  concat);
+__grammar_commit();
+
+/* PUL objects can potentially be unevaluated. This function evaluates
+ * unevaluated objects, or just returns the object if it has been evaluated */
+psl {
+    global "__pul_eval" {
+        // check if __pul_v is set
+        push0 "__pul_v" member null
+        {
+            // unset, so check if __pul_e is set
+            push0 "__pul_e" member push0 null
+            {
+                // unset, not an unevaluated object
+                pop
+            }
+            {
+                // __pul_e is set, so evaluate
+                call // evaluate
+
+                // potentially recurse
+                global "__pul_eval" member call
+
+                // now cache it. stack: orig eval
+                push1 "__pul_v" push2 memberset
+
+                // and get everything else off of the stack
+                pop "__pul_v" member
+            } cmp
+        }
+        {
+            // __pul_v is set, so just get the cached value
+            "__pul_v" member
+        } cmp
+    } memberset
+};
+
+// PUL returns are by-ref, so you can set through them. __pul_set does so
+psl {
+    global "__pul_set" {
+        // stack: object newvalue
+
+        // make sure __pul_s is set
+        push1 "__pul_s" member push0 null
+        {
+            // unset! We should fail more gracefully
+            pop pop pop
+        }
+        {
+            // __pul_s is set, so call it
+            call
+
+            // then pop the remaining object
+            pop
+        } cmp
+    } memberset
+};
+
+// Names in PUL can evaluate at any depth. This function does that
+psl {
+    global "__pul_var" {
+        // stack: object name
+
+        // first check if the object is null, in which case null!
+        push1 null
+        {
+            // it's null, byebye!
+            pop null
+        }
+        {
+            // not null, so check if it's set
+            push1 push1 member null
+            {
+                // object.name = null, so recurse
+                this "name" push2 memberset pop
+                parent
+                this "name" member
+                global "__pul_var" member call
+            }
+            {
+                // object.name was it, we're done
+            } cmp
+        } cmp
+    } memberset
+};
+
+// Wrap an evaluation procedure into an object
+psl {
+    global "__pul_evalwrap" {
+        // make the object and set __pul_e
+        new push0 "__pul_e" push3 memberset
+
+        // then pop the procedure and push the object
+        this "ret" push2 memberset
+        pop pop
+        this "ret" member
+    } memberset
+};
+
+/* Everything is lazy in PUL. This means it's often necessary to wrap a variable
+ * (object, name) in an object to manipulate it. This function wraps it */
+psl {
+    global "__pul_varwrap" {
+        new
+
+        // first, __pul_e, the evaluation function
+        { this parent } push2 wrap { member } concat concat
+        push0 push4 parentset // the function's parent is the object
+        push1 "__pul_e" push2 memberset
+        pop
+
+        // then, __pul_s, to set
+        { this parent } push2 wrap { push2 memberset pop } concat concat
+        push0 push4 parentset // the function's parent is the object
+        push1 "__pul_s" push2 memberset
+        pop
+
+        // finally, pop off the unwrapped object and push on the wrapped one
+        this "wrapped" push2 memberset
+        pop pop pop
+        this "wrapped" member
+    } memberset
+};
+
+psl {
+    global "__pul_parentwrap" {
+        new
+
+        // first, __pul_e, the evaluation function
+        { this parent call parent }
+        push0 push3 parentset // the function's parent is the object
+        push1 "__pul_e" push2 memberset
+        pop
+
+        // then, __pul_s, to set
+        { this parent call push1 parentset pop }
+        push0 push3 parentset // the function's parent is the object
+        push1 "__pul_s" push2 memberset
+        pop
+
+        // finally, pop off the unwrapped object and push on the wrapped one
+        this "wrapped" push2 memberset
+        pop pop
+        this "wrapped" member
+    } memberset
+};
+
+// The function to wrap functions in a Function object (not yet set usefully)
+psl {
+    this "opFunction" {
+        // currently a noop
+        0 integer index
+    } memberset
+};
+
+// PUL functions return unevaluated values, which must be wrapped
+psl {
+    global "__pul_funcwrap" {
+        // save the object itself
+        this "func" push2 memberset pop
+
+        new
+
+        // make the __pul_e function
+        push0 "__pul_e" {
+            this parent "func" member call
+            global "__pul_eval" member call
+        } memberset
+
+        // make the __pul_s function
+        push0 "__pul_s" {
+            this parent "func" member call
+            push1
+            global "__pul_set" member call
+            pop
+        } memberset
+    } memberset
+};
+
+// Finally, __pul_fc is used to mark those contexts that are Plof function contexts
+psl {
+    this "__pul_fc" this memberset
+};
+
+// Some PSL shortcuts
+pslbnf {
+    pslOp = white /0index/ token =>             { {push0 0 integer index} }
+    pslOp = white /pul_eval/ token =>           { {global "__pul_eval"          member call} }
+    pslOp = white /pul_set/ token =>            { {global "__pul_set"           member call} }
+    pslOp = white /pul_var/ token =>            { {global "__pul_var"           member call} }
+    pslOp = white /pul_evalwrap/ token =>       { {global "__pul_evalwrap"      member call} }
+    pslOp = white /pul_varwrap/ token =>        { {global "__pul_varwrap"       member call} }
+    pslOp = white /pul_parentwrap/ token =>     { {global "__pul_parentwrap"    member call} }
+    pslOp = white /pul_funcwrap/ token =>       { {global "__pul_funcwrap"      member call} }
+    pslOp = white /pul_fc/ token =>             { {this "__pul_fc" global "__pul_var" member call member } }
+};
+
+// Convenience function for the grammar for operator overloads
+psl {
+    [
+        global "__pul_overload" {
+            // get the right ...
+            push1 3 integer index
+
+            // make it an argument ...
+            {1 integer array} concat
+
+            // get the left ...
+            push2 0 integer index concat
+            {pul_eval} concat
+
+            // push the function name and dot it ...
+            push1 wrap concat
+            {member pul_eval} concat
+
+            // call the function
+            {call} concat
+
+            // now push the whole mess as an unevaluated value
+            wrap {pul_funcwrap} concat
+        } memberset
+    ]
+};
+
+pslbnf {
+    pslOp = white /pul_overload/ token =>       { {global "__pul_overload"      member call} }
+};
+
+// Grammar for Plof
+pslbnf {
+    top = plofW => {0index}
+
+    // The wrapper for Plof code (not very useful when Plof gets added to the top)
+    plofW = white /plof/ token white /\{/ plof_statements white /\}/ white /;/ white => {
+        push0 5 integer index
+    }
+    
+    // Any number of Plof statements
+    plof_statements = plof_statements_sub => {0index}
+    plof_statements = white => {{}}
+    plof_statements_sub = plof_statement => {0index}
+    plof_statements_sub = plof_statements_sub plof_statement => {
+        push0 0 integer index push1 1 integer index concat
+    }
+
+    // A single Plof statement
+    plof_statement = plof_comma white /;/ white => {
+        push0 0 integer index
+
+        // force the expression to evaluate and pop the result
+        {pul_eval pop} concat
+    }
+    plof_statement = pslbnf => {0index}
+
+    // Plof ; expression - like comma, but only in ()
+    plof_semicolon = plof_statements => {
+        push0 0 integer index
+        {null} concat
+    }
+    plof_semicolon = plof_comma => {0index}
+    plof_semicolon = plof_statements plof_comma => {
+        // evaluate the left - it gets rid of itself
+        push0 0 integer index
+
+        // then return the right
+        push1 1 integer index concat
+
+        // wrap it up
+        wrap {pul_evalwrap} concat
+    }
+
+    // Plof , expression
+    plof_comma = plof_assign => {0index}
+    plof_comma = plof_comma white /,/ plof_assign => {
+        // evaluate the left, then pop it
+        push0 0 integer index
+        {pul_eval pop} concat
+
+        // now return the right
+        push1 3 integer index concat
+
+        // wrap it up
+        wrap {pul_evalwrap} concat
+    }
+
+    // Plof assignment expression
+    plof_assign = plof_or => {0index}
+    plof_assign = plof_or white /=/ plof_or => {
+        // get the right ...
+        push0 3 integer index
+        {pul_eval} concat
+
+        // and the left ...
+        push1 0 integer index concat
+
+        // then perform the assignment
+        {push1 pul_set} concat
+
+        // wrap it up
+        wrap {pul_evalwrap} concat
+    }
+
+    // (Place other assignment expressions here)
+
+    // Plof || expression
+    plof_or = plof_and => {0index}
+    plof_or = plof_or white /\|\|/ plof_and => {
+        "opOr" pul_overload
+    }
+
+    // Plof && expression
+    plof_and = plof_equal => {0index}
+    plof_and = plof_and white /\&\&/ plof_equal => {
+        "opAnd" pul_overload
+    }
+
+    // Plof == expression
+    plof_equal = plof_cmp => {0index}
+    plof_equal = plof_equal white /==/ plof_cmp => {
+        "opEqual" pul_overload
+    }
+    plof_equal = plof_equal white /\!=/ plof_cmp => {
+        "opNotEqual" pul_overload
+    }
+
+    // Plof comparison expressions
+    plof_cmp = plof_combine => {0index}
+    plof_cmp = plof_cmp white /</ plof_combine => {
+        "opLess" pul_overload
+    }
+    plof_cmp = plof_cmp white /<=/ plof_combine => {
+        "opLessEqual" pul_overload
+    }
+    plof_cmp = plof_cmp white />/ plof_combine => {
+        "opGreater" pul_overload
+    }
+    plof_cmp = plof_cmp white />=/ plof_combine => {
+        "opGreaterEqual" pul_overload
+    }
+
+    // Plof object combination
+    plof_combine = plof_add => {0index}
+    plof_combine = plof_combine white /:/ plof_add => {
+        // raw combine the two ...
+        push0 0 integer index
+        {pul_eval} concat
+        push1 3 integer index concat
+        {pul_eval push1 push1 combine
+         // stack now contains: left right new. Must call left.opCombine(right, new)
+         this "__plof_combine_new" push2 memberset // cache it
+         2 integer array // the arguments
+         push1 "opCombine" member pul_eval call pop // call opCombine
+
+         // stack now contains: left
+
+         pop this "__plof_combine_new" member // then take it out of the cache
+        } concat
+
+        // and wrap it up
+        wrap {pul_evalwrap} concat
+    }
+    plof_combine = plof_combine white /:/ white /\[/ plof_obj white /\]/ => {
+        // duplicate the first object ...
+        push0 0 integer index
+        {pul_eval new combine
+         
+         // set its parent properly
+         push0 pul_fc parentset} concat
+
+        // now start making the procedure to modify it
+        {this parent this "__pul_fc" push2 memberset}
+
+        // apply the modifications
+        push2 5 integer index concat
+
+        // then pop off the object
+        {pop} concat
+
+        // now wrap up the modification procedure, set its parent to the object, then call it
+        wrap concat
+        {push0 push2 parentset call
+
+         // and call opExtend with itself as an arg
+         push0 1 integer array
+         push1 "opExtend" member pul_eval
+         
+         // if opExtend is null, don't call it
+         push0 null
+         {
+             pop pop
+         }
+         {
+             call pop
+         } cmp
+        } concat
+
+        // wrap the whole thing up
+        wrap {pul_evalwrap} concat
+    }
+
+    // Plof +
+    plof_add = plof_mul => {0index}
+    plof_add = plof_add white /\+/ plof_mul => {
+        "opAdd" pul_overload
+    }
+    plof_add = plof_add white /-/ plof_mul => {
+        "opSub" pul_overload
+    }
+
+    // Plof *
+    plof_mul = plof_inc => {0index}
+    plof_mul = plof_mul white /\*/ plof_inc => {
+        "opMul" pul_overload
+    }
+    plof_mul = plof_mul white /\// plof_inc => {
+        "opDiv" pul_overload
+    }
+    plof_mul = plof_mul white /%/ plof_inc => {
+        "opMod" pul_overload
+    }
+
+    // Plof ++, --
+    plof_inc = plof_not => {0index}
+    plof_inc = plof_inc white /\+\+/ => {
+        // no args to opInc
+        {0 integer array}
+
+        // get the left ...
+        push1 0 integer index concat
+
+        // get the opInc function, call it
+        {pul_eval "opInc" member pul_eval call} concat
+
+        // wrap it up
+        wrap {pul_funcwrap} concat
+    }
+    plof_inc = plof_inc white /--/ => {
+        {0 integer array}
+        push1 0 integer index concat
+        {pul_eval "opDec" member call} concat
+        wrap {pul_funcwrap} concat
+    }
+
+    // Plof !
+    plof_not = plof_type => {0index}
+    plof_not = white /!/ plof_not => {
+        // call opNot
+        {0 integer array}
+        push1 2 integer index concat
+        {pul_eval "opNot" member pul_eval call} concat
+
+        // wrap it up
+        wrap {pul_funcwrap} concat
+    }
+
+    // Type checks and similar
+    plof_type = plof_group => {0index}
+    plof_type = plof_type white /(as)[^A-Za-z0-9_]/ plof_group => {
+        "opAs" pul_overload
+    }
+    plof_type = plof_type white /(is)[^A-Za-z0-9_]/ plof_group => {
+        "opIs" pul_overload
+    }
+    plof_type = plof_type white /in/ token plof_group => {
+        // This one's sort of backwards. Get the left ...
+        push0 0 integer index
+
+        // as an argument
+        {1 integer array} concat
+
+        // now the right
+        push1 4 integer index concat
+
+        // call opContains
+        {pul_eval "opContains" member pul_eval call} concat
+
+        // then wrap it up
+        wrap {pul_funcwrap} concat
+    }
+
+    // Groups
+    plof_group = plof_var => {0index}
+    plof_group = white /\(/ plof_params white /\)/ white /\{/ plof_function white /\}/ => {
+        // plof_params actually returns code to convert the args to names
+
+        // combine both bits of code into the full function
+        push0 2 integer index
+        push1 7 integer index concat wrap
+
+        // then set the function's parent properly
+        {push0 pul_fc parentset
+
+         // and put it in a Function object
+         1 integer array
+         this "opFunction" pul_var member pul_eval call
+        } concat
+    }
+    plof_group = white /\{/ plof_function white /\}/ => {
+        // make the function
+        push0 2 integer index wrap
+        {push0 pul_fc parentset
+
+         // then put it in a Function object
+         1 integer array
+         this "opFunction" pul_var member pul_eval call} concat
+    }
+    plof_group = white /\(/ plof_semicolon white /\)/ => {
+        push0 2 integer index
+    }
+    plof_group = plof_group white /\./ plof_identifier => {
+        // left
+        push0 0 integer index
+        {pul_eval} concat
+
+        // dot right
+        push1 3 integer index concat
+        {pul_varwrap} concat
+
+        // wrap it up
+        wrap {pul_funcwrap} concat
+    }
+    plof_group = plof_group white /\./ white /parent/ token => {
+        // left
+        push0 0 integer index
+        {pul_eval} concat
+        
+        // wrap it up
+        wrap {pul_parentwrap} concat
+    }
+    plof_group = plof_group white /\(/ white /\)/ => {
+        // simple function call
+        {0 integer array}
+        push1 0 integer index concat
+        {pul_eval call} concat
+
+        // wrap it up
+        wrap {pul_funcwrap} concat
+    }
+    plof_group = plof_group white /\(/ plof_args white /\)/ => {
+        // push on the arguments
+        push0 3 integer index
+
+        // then the function
+        push1 0 integer index concat
+
+        // call it
+        {pul_eval call} concat
+
+        // wrap it up
+        wrap {pul_funcwrap} concat
+    }
+    plof_group = white /return/ white /\(/ plof_semicolon white /\)/ => {
+        // wrap this up in a return object
+        { new
+          push0 "__pul_ret_fc" pul_fc memberset
+          push0 "__pul_ret_val"}
+
+        push1 4 integer index concat
+
+        { memberset throw } concat
+    }
+    plof_group = plof_group white /\[/ plof_semicolon white /\]/ => {
+        // index operation
+        
+        // push the argument ...
+        push0 3 integer index
+
+        // make it an argument
+        {1 integer array} concat
+        
+        // push the object
+        push1 0 integer index concat
+
+        // evaluate it and call opIndex
+        {pul_eval "opIndex" member pul_eval call} concat
+
+        // wrap it up
+        wrap {pul_funcwrap} concat
+    }
+
+    // Variable creation
+    plof_var = plof_literal => {0index}
+    plof_var = white /var/ token plof_identifier => {
+        // assert that the name exists
+        {pul_fc}
+        push1 3 integer index concat
+        {push1 push1 null memberset pul_varwrap} concat
+    }
+
+    // Literals
+    plof_literal = plof_identifier => {
+        // check at any scope
+        {pul_fc}
+        push1 0 integer index concat
+        {pul_var pul_varwrap} concat
+    }
+    plof_literal = white /psl/ token white /\{/ pslOps white /\}/ => {
+        // psl code used as a literal
+        push0 5 integer index
+    }
+    // Other types of identifiers come later
+
+    // Parameters to a function
+    plof_params = plof_params_sub => {
+        // push on the param index first
+        {0 integer}
+
+        // then the code to actually get the parameters
+        push1 0 integer index concat
+
+        // and pop the index
+        {pop} concat
+    }
+    plof_params_sub = plof_param => {0index}
+    plof_params_sub = plof_params_sub white /,/ plof_param => {
+        push0 0 integer index
+        push1 3 integer index concat
+    }
+    plof_param = plof_identifier => {
+        // we have: args index
+
+        // get the name context
+        {this}
+        push1 0 integer index concat
+        
+        // now get the actual argument and set it
+        {push3 push3 index memberset
+
+         // then increase the index
+         1 integer add} concat
+    }
+    // FIXME: typechecked parameters
+
+    // Arguments in a function call
+    plof_args = plof_arg => {0index}
+    plof_args = plof_args white /,/ plof_arg => {
+        // combine the two arg arrays
+        push0 0 integer index
+        push1 3 integer index concat
+        {aconcat} concat
+    }
+    plof_arg = plof_assign => {
+        // put it in a 1-element array
+        push0 0 integer index
+        {1 integer array} concat
+    }
+
+    // Function content
+    plof_function = plof_statements => {
+        // FIXME: try/catch
+        // set the function context
+        {this "__pul_fc" this memberset}
+
+        // args -> "args"
+        {this "args" push2 memberset pop} concat
+
+        // then the actual content, in a sub-function
+        push1 0 integer index
+        
+        // which returns null
+        { null } concat wrap concat
+
+        // catch returns
+        { {push0 "__pul_ret_fc" member pul_fc
+           {
+               // this was in this context, so get the return
+               "__pul_ret_val" member
+           }
+           {
+               // in a different context, so throw it
+               throw
+           } cmp
+          } catch
+        } concat
+    }
+    plof_function = plof_comma => {
+        // basic setup
+        {this "__pul_fc" this memberset
+         this "args" push2 memberset pop}
+
+        // the actual content
+        push1 0 integer index wrap concat
+
+        // catch returns
+        { {push0 "__pul_ret_fc" member pul_fc
+           {
+               // this was in this context, so get the return
+               "__pul_ret_val" member
+           }
+           {
+               // in a different context, so throw it
+               throw
+           } cmp
+          } catch
+        } concat
+    }
+
+    // Object descriptor
+    plof_obj = plof_obj_assigns => {0index}
+    plof_obj = white => {{}}
+
+    // Object assignment
+    plof_obj_assigns = plof_obj_assign => {0index}
+    plof_obj_assigns = plof_obj_assigns plof_obj_assign => {
+        push0 0 integer index
+        push1 1 integer index concat
+    }
+    plof_obj_assign = plof_identifier white /;/ => {
+        // set it to Object
+        {push0}
+        push1 0 integer index concat
+        {this "Object" pul_var member pul_eval memberset} concat
+    }
+    plof_obj_assign = plof_identifier white /=/ plof_or white /;/ => {
+        // the object is on the stack, so just push0 "name" val memberset
+        {push0}
+        push1 0 integer index concat
+        push1 3 integer index concat
+        {pul_eval memberset} concat
+    }
+
+    // Identifier
+    plof_identifier = white plof_notkeyword /[A-Za-z_][A-Za-z0-9_]*/ token => {
+        push0 2 integer index
+    }
+
+    plof_notkeyword =
+        /()(?!as[^A-Za-z0-9_])/
+        /()(?!is[^A-Za-z0-9_])/
+        /()(?!in[^A-Za-z0-9_])/
+        /()(?!return[^A-Za-z0-9_])/
+        /()(?!parent[^A-Za-z0-9_])/
+        => {{}}
+};
+
+// Initialize the vital top objects: Object and Function
+psl {
+    this "Object" new memberset
+    this "Function" new memberset
+};
+
+plof {
+    // Initialize the types
+    Object.__pul_type = psl {
+        this "Object" pul_var member
+        1 integer array
+    };
+    Function.__pul_type = psl {
+        this "Object" pul_var member
+        this "Function" pul_var member
+        2 integer array
+    };
+
+    // basics
+    Object.this = Object;
+    Function.this = Function;
+
+    // the opExtend and opCombine functions, which are necessary for opFunction
+    Object.opExtend = (x) {
+        // the basics
+        x.this = x;
+        x.__pul_type = psl {
+            // this one's type
+            this "__pul_type" pul_var member pul_eval
+            push0 null
+            {
+                // if null, set to the parent of the function
+                pop pul_fc parent 1 integer array
+            } {} cmp
+
+            // plus the new one
+            this "x" pul_var member pul_eval
+            1 integer array
+
+            // combine them
+            aconcat
+        };
+
+        // for each of the elements in x, duplicate and reparent it if necessary
+
+
+        /* the reparenting function, not defined as a function because then
+         * opFunction and opExtend would be mutually dependent */
+        var reparent = psl { {
+            // combine it with a new object to dup it
+            new combine
+
+            // then call opExtend recursively
+            push0 1 integer array
+            push1 "opExtend" member pul_eval
+            push0 null
+            {
+                pop pop
+            }
+            {
+                call pul_eval pop
+            } cmp
+
+            // finally, actually reset the parent
+            push0 this "x" pul_var member pul_eval parentset
+        } };
+
+        // then go through each element
+        psl {
+            this "x" pul_var member pul_eval // get x
+
+            push0 members
+
+            // stack: x members
+
+            push0 length
+
+            // stack: x members members.length
+            {
+                1 integer sub // reduce the index by 1
+
+                push2 push2 push2 // duplicate the elements
+
+                index push1 push1 member // get the current one
+
+                // stack: x members members.length x name oldval
+
+                // reparent it if the parent is the old object
+                push0 parent this "this" pul_var member pul_eval
+                {
+                    this "reparent" pul_var member pul_eval call pul_eval
+
+                    // then reset it
+                    memberset
+                }
+                {
+                    pop pop pop
+                } cmp
+
+                // stack: x members members.length
+
+                // now if the member is 0, we're done
+                push0 0 integer
+                {
+                    new push0 "__pul_opExtend_endloop" new memberset throw
+                }
+                {} eq
+
+                loop
+            }
+            {
+                // only catch loop ends
+                push0 "__pul_opExtend_endloop" member null
+                {
+                    // unset, this isn't ours!
+                    throw
+                }
+                {} cmp
+                pop
+            } catch
+
+            // stack: x members
+            pop
+        };
+    };
+    Object.opExtend.parent = Object;
+    Function.opExtend = Object.opExtend : [];
+    Function.opExtend.parent = Function;
+
+    // opCombine just calls opExtend
+    Object.opCombine = (x, y) {
+        opExtend(y);
+    };
+    Object.opCombine.parent = Object;
+    Function.opCombine = Object.opCombine : [];
+    Function.opCombine.parent = Function;
+
+    // the opFunction function, which combines functions with Function
+    opFunction = (x) {
+        var ret = Function : x,
+        ret.parent = x.parent,
+        ret
+    };
+
+    // brain melting time
+    opFunction = opFunction(opFunction);
+};
+
+// Make plof the primary language
+pslbnf {
+    primary = plof_statement => {0index}
+};

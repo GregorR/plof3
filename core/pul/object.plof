@@ -1,0 +1,285 @@
+/*
+ * The contents of the PUL Object object.
+ *
+ *  Copyright (c) 2007  Gregor Richards
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to
+ *  deal in the Software without restriction, including without limitation the
+ *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *  sell copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *  IN THE SOFTWARE.
+ */
+
+// although Number doesn't exist yet, we need the grammar element for opCmp
+var opNumber = (x) {
+    var ret = NativeNumber : [],
+    ret.__value = x,
+    ret
+};
+pslbnf {
+    plof_literal = number => {
+        push0 0 integer index
+        {1 integer array
+         this "opNumber" pul_var member pul_eval call} concat
+        wrap {pul_funcwrap} concat
+    }
+};
+
+/* many of the functions don't make sense for Object, so they default to throw
+ * an exception */
+Object.opOr = (x) { unsupportedOperatorException(); };
+Object.opOr.parent = Object;
+Object.opAnd = (x) { unsupportedOperatorException(); };
+Object.opAnd.parent = Object;
+Object.opNot = (x) { unsupportedOperatorException(); };
+Object.opNot.parent = Object;
+Object.opCmp = (x) { unsupportedOperatorException(); };
+Object.opCmd.parent = Object;
+Object.opAdd = (x) { unsupportedOperatorException(); };
+Object.opAdd.parent = Object;
+Object.opSub = (x) { unsupportedOperatorException(); };
+Object.opSub.parent = Object;
+Object.opMul = (x) { unsupportedOperatorException(); };
+Object.opMul.parent = Object;
+Object.opDiv = (x) { unsupportedOperatorException(); };
+Object.opDiv.parent = Object;
+Object.opMod = (x) { unsupportedOperatorException(); };
+Object.opMod.parent = Object;
+Object.opInc = (x) { unsupportedOperatorException(); };
+Object.opInc.parent = Object;
+Object.opDec = (x) { unsupportedOperatorException(); };
+Object.opDec.parent = Object;
+Object.opContains = (x) { unsupportedOperatorException(); };
+Object.opContains.parent = Object;
+Object.opIndex = (x) { unsupportedOperatorException(); };
+Object.opIndex.parent = Object;
+Object.opCmp = (x) { unsupportedOperatorException(); };
+Object.opCmp.parent = Object;
+
+// default equality is just object equality
+Object.opEqual = (x) {
+    psl {
+        {
+            this "this" pul_var member pul_eval // this object
+            this "x" pul_var member pul_eval // the object it's being compared to
+
+            {
+                // they're equal, so return true
+                this "True" pul_var member pul_eval
+            }
+            {
+                this "False" pul_var member pul_eval
+            } cmp
+        } pul_evalwrap
+    }
+};
+Object.opEqual.parent = Object;
+
+Object.opNotEqual = (x) {
+    psl {
+        {
+            this "x" pul_var member pul_eval 1 integer array // pass x to opEqual
+
+            this "opEqual" pul_var member pul_eval call pul_eval // get the original value
+
+            "opNot" pul_var member pul_eval call
+        } pul_funcwrap
+    }
+};
+Object.opNotEqual.parent = Object;
+
+// opLess, opLessEqual and friends are all defined in terms of opCmp
+Object.opLess = (x) {
+    opCmp(x) < 0
+};
+Object.opLess.parent = Object;
+Object.opLessEqual = (x) {
+    opCmp(x) <= 0
+};
+Object.opLessEqual.parent = Object;
+Object.opGreater = (x) {
+    opCmp(x) > 0
+};
+Object.opGreater.parent = Object;
+Object.opGreaterEqual = (x) {
+    opCmp(x) >= 0
+};
+Object.opGreaterEqual.parent = Object;
+
+// opCastFrom and opCastTo by default don't support any casts
+Object.opCastFrom = (x) { psl { null } };
+Object.opCastFrom.parent = Object;
+Object.opCastTo = (x) { psl { null } };
+Object.opCastTo.parent = (x) { psl { null } };
+
+// opAs does a basic typecheck, then calls opCastTo, then calls opCastFrom
+Object.opAs = (x) {
+    var ret = psl { null };
+    psl {
+        // get x
+        this "x" pul_var member pul_eval
+        // stack: x
+
+        // get __pul_type
+        this "this" pul_var member pul_eval
+             "__pul_type" pul_var member pul_eval
+        // stack: x __pul_type
+
+        // and the length
+        push0 length
+        // stack: x __pul_type __pul_type.length
+
+        // now loop over the elements
+        {
+            // reduce the index
+            1 integer sub
+
+            // get the element
+            push1 push1 index
+            // stack: x __pul_type index element
+
+            // then compare
+            push3
+            {
+                // was equal, so this is good!
+                this "ret" pul_var this "this" pul_var member memberset
+                // stack: x __pul_type index
+
+                // set the index to 0 to short-circuit
+                pop 0 integer
+            }
+            {} cmp
+
+            // if the index is 0, we're done
+            push0 0 integer
+            {
+                // done, end the loop
+                new push0 "__pul_opAs_endloop" new memberset throw
+            }
+            {} eq
+        }
+        {
+            // only catch loop ends
+            push0 "__pul_opAs_endloop" member null
+            {
+                // not ours!
+                throw
+            }
+            {} cmp
+            pop
+        } catch
+
+        // stack: x __pul_type
+        pop
+
+        // if we haven't returned anything, call opCastTo
+        this "ret" pul_var member pul_eval null
+        {
+            // OK, try opCastTo
+            this "x" pul_var member pul_eval
+            1 integer array
+            this "this" pul_var member pul_eval
+            "opCastTo" member pul_eval
+            call
+            // stack: x this.opCastTo(x)
+
+            // put it in ret
+            this "ret" pul_var push2 memberset pop
+        }
+        {} cmp
+
+        // if we STILL haven't returned anything, call opCastFrom
+        this "ret" pul_var member pul_eval null
+        {
+            // Same as opCastTo but backwards
+            this "this" pul_var member pul_eval
+            1 integer array
+            this "x" pul_var member pul_eval
+            "opCastFrom" member pul_eval
+            call
+            // stack: x x.opCastFrom(this)
+
+            // put it in ret
+            this "ret" pul_var push2 memberset pop
+        }
+        {} cmp
+    };
+    return(ret);
+};
+Object.opAs.parent = Object;
+
+// opIs does a basic typecheck
+Object.opIs = (x) {
+    var ret = False;
+    psl {
+        // get x
+        this "x" pul_var member pul_eval
+        // stack: x
+
+        // get __pul_type
+        this "this" pul_var member pul_eval
+             "__pul_type" pul_var member pul_eval
+        // stack: x __pul_type
+
+        // and the length
+        push0 length
+        // stack: x __pul_type __pul_type.length
+
+        // now loop over the elements
+        {
+            // reduce the index
+            1 integer sub
+
+            // get the element
+            push1 push1 index
+            // stack: x __pul_type index element
+
+            // then compare
+            push3
+            {
+                // was equal, so this is good!
+                this "ret" pul_var this "True" pul_var member memberset
+                // stack: x __pul_type index
+
+                // set the index to 0 to short-circuit
+                pop 0 integer
+            }
+            {} cmp
+
+            // if the index is 0, we're done
+            push0 0 integer
+            {
+                // done, end the loop
+                new push0 "__pul_opIs_endloop" new memberset throw
+            }
+            {} eq
+        }
+        {
+            // only catch loop ends
+            push0 "__pul_opIs_endloop" member null
+            {
+                // not ours!
+                throw
+            }
+            {} cmp
+            pop
+        } catch
+
+        // stack: x __pul_type
+        pop
+    };
+    return(ret);
+};
+Object.opIs.parent = Object;
