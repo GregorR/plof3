@@ -4,7 +4,10 @@ syntax: glob
 *.a
 dsss_imports
 dsss_objs
+base.psl
 dplof
+dsss.last
 packrat_test
 pslasm
 psli
+std.psl
