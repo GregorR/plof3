@@ -2,9 +2,12 @@ syntax: glob
 *~
 *.o
 *.a
+base.psl
 dsss_imports
 dsss_objs
+dsss.last
 dplof
 packrat_test
 pslasm
 psli
+std.psl
