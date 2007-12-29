@@ -5,19 +5,12 @@ syntax: glob
 base.psl
 dsss_imports
 dsss_objs
-<<<<<<< /home/pikhq/plof/.hgignore.orig.2525229195
 dsss.last
-||||||| /tmp/.hgignore~base.a1IG-J
-=======
 base.psl
->>>>>>> /tmp/.hgignore~other.ZqjsLX
 dplof
 dsss.last
 packrat_test
 pslasm
 psli
-<<<<<<< /home/pikhq/plof/.hgignore.orig.2525229195
-std.psl||||||| /tmp/.hgignore~base.a1IG-J
-=======
 std.psl
->>>>>>> /tmp/.hgignore~other.ZqjsLX
+
