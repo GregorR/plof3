@@ -70,27 +70,7 @@ var NativeNumber = Number : [
 
     /// Conversion to boolean
     opCastTo = (x) {
-        (x is Boolean).ifTrue((
-            // cast to boolean
-            var ret = True;
-            psl {
-                // this.__value
-                this "this" pul_var member pul_eval
-                     "__value" member pul_eval
-
-                // if it's 0, return false
-                0 integer
-                {
-                    this "ret" pul_var
-                        this "True" pul_var member pul_eval
-                    memberset
-                }
-                {} eq
-
-                null
-            };
-            return(ret);
-        ));
+        (x is Boolean).ifTrue(return(!(this == 0)));
     };
 
     /// Operators
@@ -136,6 +116,7 @@ var NativeNumber = Number : [
      * NativeNumber, so this needs to have each set up */
     cmpOp = (x, op) {
         var ret = False;
+	
         psl {
             this "this" pul_var member pul_eval
                 "__value" member pul_eval
