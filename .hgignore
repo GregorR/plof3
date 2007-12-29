@@ -1,0 +1,10 @@
+syntax: glob
+*~
+*.o
+*.a
+dsss_imports
+dsss_objs
+dplof
+packrat_test
+pslasm
+psli
