@@ -181,7 +181,7 @@ var NativeNumber = Number : [
 // Strings
 pslbnf {
 	// The pul_char stuff. Basically, a normal char + escapes
-	pul_char = /[^\\]/ => {
+	pul_char = /[^\\"]/ => {
 		push0 0 integer index call
 	}
 	pul_char = /\\0/ => { // NULL
