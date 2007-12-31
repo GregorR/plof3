@@ -83,30 +83,29 @@ var NativeNumber = Number : [
     };
     opEqual = (x) {
         var ret = False;
-        (x is NativeNumber).ifTrue((
-            psl {
-                // simple comparison
+		x = x as NativeNumber;
+        psl {
+            // simple comparison
 
-                // this
-                this "this" pul_var member pul_eval
-                    "__value" member pul_eval
+            // this
+            this "this" pul_var member pul_eval
+                "__value" member pul_eval
             
-                // x
-                this "x" pul_var member pul_eval
-                    "__value" member pul_eval
+            // x
+            this "x" pul_var member pul_eval
+                "__value" member pul_eval
 
-                // compare them
-                {
-                    // equal, so be true
-                    this "ret" pul_var
-                        this "True" pul_var member pul_eval
-                    memberset
-                }
-                {} eq
-
-                null
+            // compare them
+            {
+                // equal, so be true
+                this "ret" pul_var
+                    this "True" pul_var member pul_eval
+                memberset
             }
-        ));
+            {} eq
+
+            null
+        };
         return(ret);
     };
     opNotEqual = (x) {
