@@ -13,4 +13,3 @@ plof {
 psl {
     this "foo" member print
 };
-// testing CIA
