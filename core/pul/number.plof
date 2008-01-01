@@ -1,0 +1,148 @@
+/*
+ * The standard Plof number hierarchy
+ *
+ *  Copyright (c) 2007  Gregor Richards
+ *  Copyright (c) 2007  Josiah Worcester
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to
+ *  deal in the Software without restriction, including without limitation the
+ *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *  sell copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *  IN THE SOFTWARE.
+ */
+
+var Number = Object : [];
+
+/* A NativeNumber is the same as a C int
+ * The syntactical definitions are in object.plof, so object.plof can use numbers
+ * in spite of not having them defined yet.
+ */
+
+var NativeNumber = Number : [
+    /// Initialize this value with a primitive number
+    __valinit = (primval) {
+        var x = NativeNumber : [];
+        x.__value = primval;
+        return(x);
+    };
+
+    /// Conversion to boolean
+    opCastTo = (x) {
+        (x is Boolean).ifTrue(return(!(this == 0)));
+    };
+
+    /// Operators
+    opOr = (x) {
+        this as Boolean || x as Boolean
+    };
+    opAnd = (x) {
+        this as Boolean && x as Boolean
+    };
+    opEqual = (x) {
+        var ret = False;
+		x = x as NativeNumber;
+        psl {
+            // simple comparison
+
+            // this
+            this "this" pul_var member pul_eval
+                "__value" member pul_eval
+            
+            // x
+            this "x" pul_var member pul_eval
+                "__value" member pul_eval
+
+            // compare them
+            {
+                // equal, so be true
+                this "ret" pul_var
+                    this "True" pul_var member pul_eval
+                memberset
+            }
+            {} eq
+
+            null
+        };
+        return(ret);
+    };
+    opNotEqual = (x) {
+        !(this == x)
+    };
+
+    /* in all other cases, comparisons just use opCmp, but opCmp uses
+     * NativeNumber, so this needs to have each set up */
+    cmpOp = (x, op) {
+        var ret = False;
+	
+        psl {
+            this "this" pul_var member pul_eval
+                "__value" member pul_eval
+            this "x" pul_var member pul_eval
+                "__value" member pul_eval
+            {
+                this "ret" pul_var
+                    this "True" pul_var member pul_eval
+                memberset
+            }
+            {} this "op" pul_var member pul_eval call
+            null
+        };
+        return(ret);
+    };
+    opLess = (x) {
+        cmpOp(x, psl { { lt } })
+    };
+    opLessEqual = (x) {
+        cmpOp(x, psl { { lte } })
+    };
+    opGreater = (x) {
+        cmpOp(x, psl { { gt } })
+    };
+    opGreaterEqual = (x) {
+        cmpOp(x, psl { { gte } })
+    };
+
+    // Arithmetic functions
+    arithOp = (x, op) {
+        var res = NativeNumber : [];
+        psl {
+            this "res" pul_var
+            this "this" pul_var member pul_eval
+                "__value" member pul_eval
+            this "x" pul_var member pul_eval
+                "__value" member pul_eval
+            this "op" pul_var member pul_eval call
+            memberset
+            null
+        };
+        return(res);
+    };
+    opAdd = (x) {
+        arithOp(x, psl { { add } })
+    };
+    opSub = (x) {
+        arithOp(x, psl { { sub } })
+    };
+    opMul = (x) {
+        arithOp(x, psl { { mul } })
+    };
+    opDiv = (x) {
+        arithOp(x, psl { { div } })
+    };
+    opMod = (x) {
+        arithOp(x, psl { { mod } })
+    };
+];
+

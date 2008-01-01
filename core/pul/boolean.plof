@@ -1,8 +1,7 @@
 /*
- * The standard Plof library
+ * The standard Plof Boolean hierarchy
  *
  *  Copyright (c) 2007  Gregor Richards
- *  Copyright (c) 2007  Josiah Worcester
  *  
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,16 +22,29 @@
  *  IN THE SOFTWARE.
  */
 
-// 'new' is a convenience function to create a new object derived from a prototype
-var new = (x){
-	var ret = x : [];
-	(init in ret && ret.init is Function).ifTrue((
-		ret.init()
-	));
-	return(ret);
-};
+// A Boolean has no syntax definition
+var Boolean = Object : [
+    // by default, neither ifTrue nor ifFalse actually perform any action
+    ifTrue = (x) {};
+    ifFalse = (x) {};
+];
+var True = Boolean : [
+    ifTrue = (x) {x};
+    opNot = {True};
 
-// Undefined functions in abstract objects are set to Abstract, which will just die
-var Abstract = {
-    unsupportedFunctionException();
-};
+    /// short circuited or
+    opOr = (x) {True};
+
+    /// and is simple and not short-circuitable
+    opAnd = (x) {x as Boolean};
+];
+var False = Boolean : [
+    ifFalse = (x) {x};
+    opNot = {False};
+
+    /// or isn't short-circuited
+    opOr = (x) {x as Boolean};
+
+    /// but and is
+    opAnd = (x) {False};
+];
