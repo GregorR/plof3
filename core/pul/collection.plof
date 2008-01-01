@@ -1,0 +1,45 @@
+var Collection = Object : [
+	NilElement = Object : [];
+
+	each = (x){
+		x = x as Function;
+		stub();
+	};
+
+	dup = {
+		stub();
+	};
+
+	apply = (x){
+		x = x as Function;
+	};
+
+	map = (x){
+		dup().apply(x);
+	};
+
+	size = (x){
+		var i = 0;
+		each((x){i++});
+		return(i);
+	};
+
+	fold = (init, f) {
+		f = f as Function;
+		var ret = init;
+		each((x){ret = f(ret,x)});
+		return(ret);
+	};
+
+	sum = {
+		fold(0, (x, y){x+y})
+	};
+
+	product = {
+		fold(0, (x, y){x*y})
+	};
+];
+
+var stub = {
+	unsupportedOperatorException();
+};

@@ -24,6 +24,13 @@
  */
 
 // 'new' is a convenience function to create a new object derived from a prototype
+var new = (x){
+	var ret = x : [];
+	(init in ret && ret.init is function).ifTrue((
+		ret.init()
+	));
+	return(ret);
+};
 
 // Undefined functions in abstract objects are set to Abstract, which will just die
 var Abstract = {
