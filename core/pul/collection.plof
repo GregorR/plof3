@@ -44,7 +44,7 @@ var Collection = Object : [
 		dup().apply(x);
 	};
 
-	size = (x){
+	size = {
 		var i = 0;
 		each((x){i++});
 		return(i);
