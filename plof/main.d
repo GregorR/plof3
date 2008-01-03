@@ -193,7 +193,7 @@ int main(char[][] args)
 void usage()
 {
     Stderr
-    ("Use: plofi [-s<PSL file>] [-i<plof file>] [-c<output file>] <plof file>").newline()
+    ("Use: dplof [-s<PSL file>] [-i<plof file>] [-c<output file>] <plof file>").newline()
     ("Options:").newline()
     ("  -s <PSL file>:          Include the provided PSL file instead of").newline()
     ("                          std.psl").newline()
