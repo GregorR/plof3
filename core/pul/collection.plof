@@ -33,7 +33,7 @@ var Collection = Object : [
 
 	dup = {
 		Abstract();
-	}
+	};
 
 	apply = (x){
 		x = x as Function;
