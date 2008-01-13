@@ -24,44 +24,44 @@
  */
 
 var Collection = Object : [
-	NilElement = Object : [];
+    NilElement = Object : [];
 
-	each = (x){
-		x = x as Function;
-		Abstract();
-	};
+    each = (x){
+        x = x as Function;
+        Abstract();
+    };
 
-	dup = {
-		Abstract();
-	};
+    dup = {
+        Abstract();
+    };
 
-	apply = (x){
-		x = x as Function;
-		Abstract();
-	};
+    apply = (x){
+        x = x as Function;
+        Abstract();
+    };
 
-	map = (x){
-		dup().apply(x);
-	};
+    map = (x){
+        dup().apply(x);
+    };
 
-	size = {
-		var i = 0;
-		each((x){i++});
-		return(i);
-	};
+    size = {
+        var i = 0;
+        each((x){i++});
+        return(i);
+    };
 
-	fold = (init, f) {
-		f = f as Function;
-		var ret = init;
-		each((x){ret = f(ret,x)});
-		return(ret);
-	};
+    fold = (init, f) {
+        f = f as Function;
+        var ret = init;
+        each((x){ret = f(ret,x)});
+        return(ret);
+    };
 
-	sum = {
-		fold(0, (x, y){x+y})
-	};
+    sum = {
+        fold(0, (x, y){x+y})
+    };
 
-	product = {
-		fold(0, (x, y){x*y})
-	};
+    product = {
+        fold(0, (x, y){x*y})
+    };
 ];

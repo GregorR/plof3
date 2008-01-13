@@ -52,7 +52,7 @@ var NativeNumber = Number : [
     };
     opEqual = (x) {
         var ret = False;
-		x = x as NativeNumber;
+        x = x as NativeNumber;
         psl {
             // simple comparison
 
@@ -85,7 +85,8 @@ var NativeNumber = Number : [
      * NativeNumber, so this needs to have each set up */
     cmpOp = (x, op) {
         var ret = False;
-	
+        x = x as NativeNumber;
+    
         psl {
             this "this" pul_var member pul_eval
                 "__value" member pul_eval
@@ -117,6 +118,8 @@ var NativeNumber = Number : [
     // Arithmetic functions
     arithOp = (x, op) {
         var res = NativeNumber : [];
+        x = x as NativeNumber;
+
         psl {
             this "res" pul_var
             this "this" pul_var member pul_eval
