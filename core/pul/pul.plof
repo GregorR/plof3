@@ -217,10 +217,14 @@ psl {
     } memberset
 };
 
-// The function to wrap functions in a Function object (not yet set usefully)
+/* The functions to wrap functions in Function objects and arrays in Array
+ * objects. These simple ones will be replaced later in bootstrapping */
 psl {
     this "opFunction" {
         // currently a noop
+        0 integer index
+    } memberset
+    this "opArray" {
         0 integer index
     } memberset
 };
@@ -724,7 +728,9 @@ pslbnf {
         {this "__pul_fc" this memberset}
 
         // args -> "args"
-        {this "args" push2 memberset pop} concat
+        {1 integer array
+         this "opArray" pul_var member pul_eval call
+         this "args" push2 memberset pop} concat
 
         // then the actual content, in a sub-function
         push1 0 integer index
