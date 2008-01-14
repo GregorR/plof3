@@ -26,8 +26,7 @@
 var Collection = Object : [
     NilElement = Object : [];
 
-    each = (x){
-        x = x as Function;
+    each = (x as Function) {
         Abstract();
     };
 
@@ -35,8 +34,7 @@ var Collection = Object : [
         Abstract();
     };
 
-    apply = (x){
-        x = x as Function;
+    apply = (x as Function) {
         Abstract();
     };
 
@@ -50,8 +48,7 @@ var Collection = Object : [
         return(i);
     };
 
-    fold = (init, f) {
-        f = f as Function;
+    fold = (init, f as Function) {
         var ret = init;
         each((x){ret = f(ret,x)});
         return(ret);
