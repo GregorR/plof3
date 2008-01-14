@@ -125,5 +125,19 @@ var Array = IndexableCollection : [
 
 // The function to convert a primitive array to an Array
 var opArray = (x) {
-    x:Array
+    Array:x
+};
+
+// Create a new array from a list of parameters
+var array = {
+    var i = 0;
+    var res = psl {
+        0 integer array 1 integer array
+        this "opArray" pul_var member pul_eval call pul_eval
+    };
+
+    // this is complicated because we want to guarantee that e is evaluated
+    args.each((e) {
+        res[i] = e;
+    });
 };
