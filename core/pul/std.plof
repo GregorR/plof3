@@ -36,3 +36,76 @@ var new = (x){
 var Abstract = {
     unsupportedFunctionException();
 };
+
+// The basic procedural 'while'
+var while = (cond, inner) {
+    var break = False;
+    psl {
+        {
+            // check the condition
+            {
+                // The condition was false, so break
+                new push0 "__pul_while_break" new memberset throw
+            } 1 integer array
+            this "cond" pul_var member pul_forceEval
+                 "ifFalse" member pul_eval call
+
+            // run the inner
+            this "inner" pul_var member pul_forceEval
+
+            // and loop
+            loop
+        }
+        {
+            // catch __pul_while_break
+            push0 "__pul_while_break" member null
+            {
+                // it was null, this isn't ours!
+                throw
+            }
+            {} cmp
+        } catch
+    };
+};
+
+var for = (init, cond, step, inner) {
+    init;
+    while(forceEval(cond), (
+        forceEval(inner);
+        forceEval(step);
+    ));
+};
+
+// Constants for if
+var IfOperation = Object:[];
+var else = IfOperation:[];
+var elsif = IfOperation:[];
+
+// 'if' won't work until Array is in place, but it can be written
+var if = {
+    /* args[0] is the first condition, args[1] is the operation to perform if
+     * the first condition is true */
+    (args[0] && (args[1], return()));
+    
+    // if we haven't returned, we're on to elses and elsifs
+    for(var i = 2, i < args.size(), i = i + 1, (
+        (args[i] is else).ifTrue((
+            i = i + 1;
+            
+            // handle the else case
+            args[i];
+
+            // and we're done
+            return();
+        ));
+        (args[i] is elsif).ifTrue((
+            i = i + 1;
+
+            // handle this other case
+            (args[i] && (args[i+1], return()));
+
+            // if we haven't returned, more cases
+            i = i + 2;
+        ));
+    ));
+};
