@@ -62,3 +62,68 @@ var Collection = Object : [
         fold(0, (x, y){x*y})
     };
 ];
+
+var IndexableCollection = Collection : [
+    opIndex = (x as Number) {
+        Abstract();
+    };
+];
+
+var Array = IndexableCollection : [
+    opIndex = (x as NativeNumber) {
+        psl {
+            // make an indirection object, since this is an lval
+            new
+
+            // __pul_e first
+            push0 "__pul_e"
+            {
+                this "this" pul_var member pul_eval
+                this "x" pul_var member pul_eval
+                     "__value" member pul_eval
+                index
+            } memberset
+
+            // __pul_s is mostly similar, but with a set
+            push0 "__pul_s"
+            {
+                this "this" pul_var member pul_eval
+                this "x" pul_var member pul_eval
+                     "__value" member pul_eval
+                push2 indexset
+            } memberset
+        }
+    };
+
+    each = (x as Function) {
+        for(var i = 0, i < size(), i = i + 1, (
+            x(this[i])
+        ));
+    };
+
+    dup = {
+        this:[];
+    };
+
+    apply = (x as Function) {
+        for(var i = 0, i < size(), i = i + 1, (
+            this[i] = x(this[i]);
+        ));
+    };
+
+    size = {
+        psl {
+            this "this" pul_var member pul_eval
+            length
+
+            // then use opNumber to number-ize it
+            1 integer array
+            this "opNumber" pul_var member pul_eval call
+        }
+    };
+];
+
+// The function to convert a primitive array to an Array
+var opArray = (x) {
+    x:Array
+};
