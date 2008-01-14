@@ -705,7 +705,34 @@ pslbnf {
          // then increase the index
          1 integer add} concat
     }
-    // FIXME: typechecked parameters
+    plof_param = plof_identifier white /as/ plof_identifier => {
+        // we have: args index
+
+        // get the type
+        {this}
+        push1 3 integer index concat
+        {pul_var member 1 integer array
+
+         // we have: args index [type]
+
+         // get the argument
+         push2 push2 index
+
+         // we have: args index [type] arg
+
+         // now call .opAs
+         pul_eval "opAs" member pul_eval call
+
+         // we have: args index arg
+
+         // and finally, set it
+         this} concat
+        push1 0 integer index concat
+        {push2 memberset pop
+
+         // then increase the index
+         1 integer add} concat
+    }
 
     // Arguments in a function call
     plof_args = plof_arg => {0index}
