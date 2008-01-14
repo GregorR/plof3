@@ -39,10 +39,6 @@ pslbnf {
 
 /* many of the functions don't make sense for Object, so they default to throw
  * an exception */
-Object.opOr = (x) { unsupportedOperatorException(); };
-Object.opOr.parent = Object;
-Object.opAnd = (x) { unsupportedOperatorException(); };
-Object.opAnd.parent = Object;
 Object.opNot = (x) { unsupportedOperatorException(); };
 Object.opNot.parent = Object;
 Object.opCmp = (x) { unsupportedOperatorException(); };
@@ -67,6 +63,12 @@ Object.opIndex = (x) { unsupportedOperatorException(); };
 Object.opIndex.parent = Object;
 Object.opCmp = (x) { unsupportedOperatorException(); };
 Object.opCmp.parent = Object;
+
+// Objects are true except for False
+Object.opOr = (x) { True };
+Object.opOr.parent = Object;
+Object.opAnd = (x) { x };
+Object.opAnd.parent = Object;
 
 // default equality is just object equality
 Object.opEqual = (x) {
