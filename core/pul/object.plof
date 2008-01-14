@@ -303,6 +303,8 @@ Object.opIs = (x) {
                 new push0 "__pul_opIs_endloop" new memberset throw
             }
             {} eq
+
+            loop
         }
         {
             // only catch loop ends
