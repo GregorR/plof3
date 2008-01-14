@@ -105,6 +105,22 @@ psl {
             "__pul_v" member
         } cmp
     } memberset
+
+    global "__pul_forceEval" {
+        // check if __pul_e is set
+        push0 "__pul_e" member push0 null
+        {
+            // unset, not an unevaluated object
+            pop
+        }
+        {
+            // __pul_e is set, so evaluate
+            call // evaluate
+
+            // potentially recurse
+            global "__pul_forceEval" member call
+        } cmp
+    } memberset
 };
 
 // PUL returns are by-ref, so you can set through them. __pul_set does so
@@ -262,6 +278,7 @@ psl {
 pslbnf {
     pslOp = white /0index/ token =>             { {push0 0 integer index} }
     pslOp = white /pul_eval/ token =>           { {global "__pul_eval"          member call} }
+    pslOp = white /pul_forceEval/ token =>      { {global "__pul_forceEval"     member call} }
     pslOp = white /pul_set/ token =>            { {global "__pul_set"           member call} }
     pslOp = white /pul_var/ token =>            { {global "__pul_var"           member call} }
     pslOp = white /pul_evalwrap/ token =>       { {global "__pul_evalwrap"      member call} }
@@ -635,6 +652,11 @@ pslbnf {
 
         { memberset throw } concat
     }
+    plof_group = white /forceEval/ white /\(/ plof_semicolon white /\)/ => {
+        push0 4 integer index
+        { pul_forceEval } concat
+        wrap {pul_evalwrap} concat
+    }
     plof_group = plof_group white /\[/ plof_semicolon white /\]/ => {
         // index operation
         
@@ -831,6 +853,7 @@ pslbnf {
 
     plof_notkeyword =
         /()(?!as[^A-Za-z0-9_])/
+        /()(?!forceEval[^A-Za-z0-9_])/
         /()(?!is[^A-Za-z0-9_])/
         /()(?!in[^A-Za-z0-9_])/
         /()(?!parent[^A-Za-z0-9_])/

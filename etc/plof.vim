@@ -1,4 +1,4 @@
-syn keyword     pulKeyword      as is in parent return var
+syn keyword     pulKeyword      as forceEval is in parent return var
 syn keyword     pslKeyword      contained push0 push1 push2 push3 push4 push5 push6 push7 pop this null global new combine member memberset parent parentset call return throw catch cmp concat wrap iwrap loop array aconcat length lengthset index indexset memberset integer intwidth mul div mod add sub lt lte eq ne gt gte sl sr or nor xor nxor and nand byte float fint fmul fdiv fmod fadd fsub flt flte feq fne fgt fgte print debug parse gadd grem gaddstop gaddgroup gremgroup gcommit
 
 syn region      plofLineComment start=+//+ end=+$+
