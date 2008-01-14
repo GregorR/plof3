@@ -126,7 +126,7 @@ Object.opCastTo.parent = (x) { psl { null } };
 
 // opAs does a basic typecheck, then calls opCastTo, then calls opCastFrom
 Object.opAs = (x) {
-    var ret = psl { null };
+    var ret = psl { new push0 "__unfound" new memberset };
     psl {
         // get x
         this "x" pul_var member pul_eval
@@ -169,6 +169,8 @@ Object.opAs = (x) {
                 new push0 "__pul_opAs_endloop" new memberset throw
             }
             {} eq
+
+            loop
         }
         {
             // only catch loop ends
@@ -185,36 +187,72 @@ Object.opAs = (x) {
         pop
 
         // if we haven't returned anything, call opCastTo
-        this "ret" pul_var member pul_eval null
+        this "ret" pul_var member pul_eval "__unfound" member null
+        {}
         {
             // OK, try opCastTo
             this "x" pul_var member pul_eval
             1 integer array
             this "this" pul_var member pul_eval
             "opCastTo" member pul_eval
-            call
+
+            // make sure it's not null
+            push0 null
+            {
+                pop pop null
+            }
+            {
+                call
+            } cmp
             // stack: x this.opCastTo(x)
 
-            // put it in ret
-            this "ret" pul_var push2 memberset pop
-        }
-        {} cmp
+            // put it in ret if it's not null
+            push0 null
+            {}
+            {
+                this "ret" pul_var push2 memberset
+            } cmp
+
+            pop
+        } cmp
 
         // if we STILL haven't returned anything, call opCastFrom
-        this "ret" pul_var member pul_eval null
+        this "ret" pul_var member pul_eval "__unfound" member null
+        {}
         {
             // Same as opCastTo but backwards
             this "this" pul_var member pul_eval
             1 integer array
             this "x" pul_var member pul_eval
             "opCastFrom" member pul_eval
-            call
+
+            // make sure it's not null
+            push0 null
+            {
+                pop pop null
+            }
+            {
+                call
+            } cmp
             // stack: x x.opCastFrom(this)
 
-            // put it in ret
-            this "ret" pul_var push2 memberset pop
-        }
-        {} cmp
+            // put it in ret if it's not null
+            push0 null
+            {}
+            {
+                this "ret" pul_var push2 memberset
+            } cmp
+
+            pop
+        } cmp
+
+        // and if we STILL haven't returned anything, call castException
+        this "ret" pul_var member pul_eval "__unfound" member null
+        {}
+        {
+            0 integer array
+            this "castException" pul_var member pul_eval call pop
+        } cmp
     };
     return(ret);
 };
