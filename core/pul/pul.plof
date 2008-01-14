@@ -752,12 +752,12 @@ pslbnf {
     plof_function = plof_statements => {
         // FIXME: try/catch
         // set the function context
-        {this "__pul_fc" this memberset}
+        {this "__pul_fc" this memberset
 
         // args -> "args"
-        {1 integer array
+         1 integer array
          this "opArray" pul_var member pul_eval call
-         this "args" push2 memberset pop} concat
+         this "args" push2 memberset pop}
 
         // then the actual content, in a sub-function
         push1 0 integer index
