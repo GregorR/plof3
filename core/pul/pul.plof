@@ -355,6 +355,7 @@ pslbnf {
     plof_semicolon = plof_statements => {
         push0 0 integer index
         {null} concat
+        wrap {pul_evalwrap} concat
     }
     plof_semicolon = plof_comma => {0index}
     plof_semicolon = plof_statements plof_comma => {
