@@ -43,15 +43,18 @@ var while = (cond, inner) {
     psl {
         {
             // check the condition
+            new push0 "__pul_e"
             {
                 // The condition was false, so break
                 new push0 "__pul_while_break" new memberset throw
-            } 1 integer array
+            } memberset 1 integer array
             this "cond" pul_var member pul_forceEval
-                 "ifFalse" member pul_eval call
+                 "ifFalse" member pul_eval call pul_eval
+            pop
 
             // run the inner
             this "inner" pul_var member pul_forceEval
+            pop
 
             // and loop
             loop
