@@ -119,6 +119,12 @@ psl {
 
             // potentially recurse
             global "__pul_forceEval" member call
+
+            // now cache it. stack: orig eval
+            push1 "__pul_v" push2 memberset
+
+            // and get everything else off of the stack
+            pop "__pul_v" member
         } cmp
     } memberset
 };
