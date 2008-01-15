@@ -137,7 +137,11 @@ gadd
 "pslOp" "white" "/cmp/" "token" 3 integer array {{cmp}} gadd
 "pslOp" "white" "/combine/" "token" 3 integer array {{combine}} gadd
 "pslOp" "white" "/concat/" "token" 3 integer array {{concat}} gadd
+"pslOp" "white" "/debug/" "token" 3 integer array {{debug}} gadd
 "pslOp" "white" "/div/" "token" 3 integer array {{div}} gadd
+"pslOp" "white" "/dsrccol/" "token" 3 integer array {{dsrccol}} gadd
+"pslOp" "white" "/dsrcfile/" "token" 3 integer array {{dsrcfile}} gadd
+"pslOp" "white" "/dsrcline/" "token" 3 integer array {{dsrcline}} gadd
 "pslOp" "white" "/eq/" "token" 3 integer array {{eq}} gadd
 "pslOp" "white" "/fadd/" "token" 3 integer array {{fadd}} gadd
 "pslOp" "white" "/fdiv/" "token" 3 integer array {{fdiv}} gadd
@@ -205,7 +209,6 @@ gadd
 "pslOp" "white" "/throw/" "token" 3 integer array {{throw}} gadd
 "pslOp" "white" "/wrap/" "token" 3 integer array {{wrap}} gadd
 "pslOp" "white" "/xor/" "token" 3 integer array {{xor}} gadd
-"pslOp" "white" "/debug/" "token" 3 integer array {{debug}} gadd
 
 "white"
 "/(([ \t\r\n]*(\/\/[^\r\n]*[\r\n])?(\/\*([^\*]*\*[^\/])*[^\*]*\*\/)?)*)/"

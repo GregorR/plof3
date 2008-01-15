@@ -38,7 +38,7 @@ version (build) { pragma(link, "pcre"); }
 /** A grammatical element: Could be a terminal or nonterminal */
 class GrammarElem {
     /** Parse this grammar element, memoized */
-    ParseResultArr* parse(char[] inp, uint start)
+    ParseResultArr* parse(char[] inp, uint start, char[] file, uint line, uint col)
     {
         // if we don't have room to memoize this, make room
         if (memo.length <= start) {
@@ -56,7 +56,7 @@ class GrammarElem {
         }
 
         // otherwise, check and memoize
-        pr = gparse(inp, start);
+        pr = gparse(inp, start, file, line, col);
         pr.gc.blessUp();
         memo[start] = pr;
         return pr;
@@ -84,7 +84,8 @@ class GrammarElem {
     void subclear() {}
 
     /** Parse this grammar element over the given input (non-memoized) */
-    ParseResultArr* gparse(char[] inp, uint start) { return null; }
+    ParseResultArr* gparse(char[] inp, uint start, char[] file, uint line, uint col)
+    { return null; }
 
     /** The name of this element */
     char[] name() { return _name; }
@@ -112,6 +113,11 @@ struct ParseResult {
         ret.choice = copy.choice;
         ret.subResults = ParseResultArr.allocate(copy.subResults);
         ret.subResults.gc.refUp();
+        ret.file = copy.file;
+        ret.sline = copy.sline;
+        ret.eline = copy.eline;
+        ret.scol = copy.scol;
+        ret.ecol = copy.ecol;
         return ret;
     }
 
@@ -158,6 +164,15 @@ struct ParseResult {
 
     /** Any sub-results */
     ParseResultArr* subResults;
+
+    /** The file being parsed */
+    char[] file;
+
+    /** The line this result begins and ends on */
+    uint sline, eline;
+
+    /** The column this result begins and ends on */
+    uint scol, ecol;
 
     /** The string consumed by this parse */
     char[] consumed;
@@ -253,7 +268,7 @@ class Production : GrammarElem {
     }
 
     /** Parse this production, non-memoized */
-    ParseResultArr* gparse(char[] inp, uint start)
+    ParseResultArr* gparse(char[] inp, uint start, char[] file, uint line, uint col)
     {
         //Stdout("Parsing ")(name)(" over ")(inp[start..$].length).newline;
         // First, collect any left recursions
@@ -290,6 +305,11 @@ class Production : GrammarElem {
             basepr.choice = ch;
             basepr.consumed = null;
             basepr.remaining = inp[start..$];
+            basepr.file = file;
+            basepr.sline = line;
+            basepr.eline = line;
+            basepr.scol = col;
+            basepr.ecol = col;
             prs.append(basepr);
 
             // consume each part
@@ -298,7 +318,8 @@ class Production : GrammarElem {
                 sprs.gc.blessUp();
 
                 foreach (pr; prs.arr) {
-                    ParseResultArr* eprs = elem.parse(inp, start + pr.consumed.length);
+                    ParseResultArr* eprs = elem.parse(inp, start + pr.consumed.length,
+                                                      pr.file, pr.eline, pr.ecol);
 
                     foreach (epr; eprs.arr) {
                         // worked, so consume this
@@ -306,6 +327,8 @@ class Production : GrammarElem {
                         spr.subResults.append(epr);
                         spr.consumed = inp[0..(pr.consumed.length + epr.consumed.length)];
                         spr.remaining = epr.remaining;
+                        spr.eline = epr.eline;
+                        spr.ecol = epr.ecol;
                         sprs.append(spr);
                     }
 
@@ -331,7 +354,8 @@ class Production : GrammarElem {
             
             foreach (ch, lr; lRecursions) {
                 if (lr is null) continue;
-                ParseResultArr* sprs = lr.parse(inp, start + pr.consumed.length);
+                ParseResultArr* sprs = lr.parse(inp, start + pr.consumed.length,
+                                                pr.file, pr.eline, pr.ecol);
 
                 foreach (spr; sprs.arr) {
                     if (spr.consumed.length == 0) {
@@ -348,6 +372,11 @@ class Production : GrammarElem {
                     }
                     npr.consumed = inp[0..(pr.consumed.length + spr.consumed.length)];
                     npr.remaining = spr.remaining;
+                    npr.file = file;
+                    npr.sline = pr.sline;
+                    npr.scol = pr.scol;
+                    npr.eline = spr.eline;
+                    npr.ecol = spr.ecol;
                     prFinal.append(npr);
                 }
 
@@ -388,7 +417,7 @@ class RegexTerminal : GrammarElem {
     }
 
     /** Parse this regex */
-    ParseResultArr* gparse(char[] inp, uint start)
+    ParseResultArr* gparse(char[] inp, uint start, char[] file, uint line, uint col)
     {
         ParseResultArr* ret = ParseResultArr.allocate();
         ret.gc.blessUp();
@@ -418,6 +447,23 @@ class RegexTerminal : GrammarElem {
         ParseResult* pr = ParseResult.allocate(this);
         pr.consumed = inp[start..start+len];
         pr.remaining = inp[start+len..$];
+
+        // now figure out the lines and columns
+        pr.file = file;
+        pr.sline = line;
+        pr.scol = col;
+
+        foreach (ch; pr.consumed) {
+            if (ch == '\n') {
+                line++;
+                col = 0;
+            } else {
+                col++;
+            }
+        }
+        pr.eline = line;
+        pr.ecol = col;
+
         ret.append(pr);
 
         return ret;

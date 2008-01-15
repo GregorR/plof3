@@ -30,7 +30,7 @@ import plof.prp.packrat;
 /// Interface for the Plof runtime parser
 interface IPlofRuntimeParser {
     /// Parse the given code into PSL code, given a top
-    ubyte[] parse(ref char[], ubyte[]);
+    ubyte[] parse(ref char[], ubyte[], char[], uint = 0, uint = 0);
 
     /// Add a grammar element
     void gadd(ubyte[], ubyte[][], ubyte[]);

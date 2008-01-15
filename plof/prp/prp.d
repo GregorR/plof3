@@ -25,6 +25,8 @@
 
 module plof.prp.prp;
 
+import tango.stdc.stdlib;
+
 import plof.prp.iprp;
 import plof.prp.packrat;
 
@@ -32,17 +34,21 @@ import plof.psl.bignum;
 import plof.psl.interp;
 import plof.psl.pslobject;
 
+/// Enable debug output
+bool enableDebug = false;
+
 /// The Plof runtime parser
 class PlofRuntimeParser : IPlofRuntimeParser {
     /// Parse the given code into PSL code, given a top
-    ubyte[] parse(ref char[] code, ubyte[] top)
+    ubyte[] parse(ref char[] code, ubyte[] top,
+                  char[] file, uint line = 0, uint col = 0)
     {
         ubyte[] psl;
 
         // Parse the code chunk-by-chunk
         while (code.length != 0) {
             GrammarElem topg = _grammar[top];
-            ParseResultArr* res = topg.parse(code, 0);
+            ParseResultArr* res = topg.parse(code, 0, file, line, col);
             topg.clear();
 
             if (res.arr.length == 0) {
@@ -65,6 +71,10 @@ class PlofRuntimeParser : IPlofRuntimeParser {
 
                 // get rid of the data it returned
                 ret.gc.blessDown();
+
+                // bump the line and col
+                line = res.arr[0].eline;
+                col = res.arr[0].ecol;
 
                 // Then take out whatever was parsed from the code
                 code = res.arr[0].remaining;
@@ -225,6 +235,57 @@ class ParserPSL {
         no.gc.blessUp();
         foreach (i; args) {
             (cast(PSLObject*) i).gc.blessDown();
+        }
+
+        if (enableDebug &&
+            !no.isArray && no.raw !is null &&
+            no.raw.data.length > ptrdiff_t.sizeof) {
+            // add debugger info
+            int debugbnr = bignumBytesReq(res.file.length);
+            int debuglen = res.file.length + debugbnr + 18;
+                /* 18 = 8 commands + two 1-byte bignums + two 4-byte integers =
+                 * 8 + 1 + 1 + 4 + 4 = 18 */
+            ubyte[] debugbuf = (cast(ubyte*) alloca(debuglen + no.raw.data.length))
+                [0..(debuglen + no.raw.data.length)];
+
+            // first the filename
+            int i = 0;
+            debugbuf[i] = '\xFF'; // raw
+            i++;
+            intToPSLBignum(res.file.length, debugbuf[i..i+debugbnr]);
+            i += debugbnr;
+            debugbuf[i .. i + res.file.length] =
+                cast(ubyte[]) res.file;
+            i += res.file.length;
+            debugbuf[i] = '\xD0'; // dsrcfile
+            i++;
+
+            // then the line number
+            debugbuf[i..i+2] = cast(ubyte[]) "\xFF\x04"; // raw, length 4
+            i += 2;
+            debugbuf[i] = cast(ubyte) ((res.sline & 0xFF000000) >> 24);
+            debugbuf[i+1] = cast(ubyte) ((res.sline & 0xFF0000) >> 16);
+            debugbuf[i+2] = cast(ubyte) ((res.sline & 0xFF00) >> 8);
+            debugbuf[i+3] = cast(ubyte) (res.sline & 0xFF);
+            i += 4;
+            debugbuf[i..i+2] = cast(ubyte[]) "\x70\xD1"; // integer dsrcline
+            i += 2;
+
+            // then the column
+            debugbuf[i..i+2] = cast(ubyte[]) "\xFF\x04"; // raw, length 4
+            i += 2;
+            debugbuf[i] = cast(ubyte) ((res.scol & 0xFF000000) >> 24);
+            debugbuf[i+1] = cast(ubyte) ((res.scol & 0xFF0000) >> 16);
+            debugbuf[i+2] = cast(ubyte) ((res.scol & 0xFF00) >> 8);
+            debugbuf[i+3] = cast(ubyte) (res.scol & 0xFF);
+            i += 4;
+            debugbuf[i..i+2] = cast(ubyte[]) "\x70\xD2"; // integer dsrccol
+            i += 2;
+
+            // finally, the original function
+            debugbuf[i..$] = no.raw.data[];
+
+            no.raw = PSLRawData.allocate(debugbuf);
         }
 
         // then get rid of them

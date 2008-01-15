@@ -68,7 +68,7 @@ int main()
         // then time it
         sw.start();
         addexp.clear();
-        addexp.parse(inp, 0).gc.blessDown();
+        addexp.parse(inp, 0, "", 0, 0).gc.blessDown();
         real time = sw.stop();
         Stdout(l)(": ").format("{0:10}", time).newline;
     }

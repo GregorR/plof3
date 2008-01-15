@@ -57,36 +57,36 @@ int main(char[][] args)
             if (args[argi] == "-s") {
                 // PSL file, include it
                 pslFiles ~= args[++argi];
+                continue;
 
             } else if (args[argi] == "-i") {
                 // Plof file
                 plofFiles ~= args[++argi];
+                continue;
 
             } else if (args[argi] == "-c") {
                 // Compile
                 outFile = args[++argi];
-
-            } else {
-                Stderr("Unrecognized argument ")(args[argi]).newline;
-                return 1;
+                continue;
 
             }
+        }
+
+        if (args[argi] == "--help" ||
+            args[argi] == "-h") {
+            usage();
+            return 0;
+
+        } else if (args[argi] == "--interactive" ||
+                   args[argi] == "-I") {
+            interactive = true;
+
+        } else if (args[argi] == "--debug") {
+            plof.prp.prp.enableDebug = true;
 
         } else {
-            if (args[argi] == "--help" ||
-                args[argi] == "-h") {
-                usage();
-                return 0;
-
-            } else if (args[argi] == "--interactive" ||
-                       args[argi] == "-I") {
-                interactive = true;
-
-            } else {
-                Stderr("Unrecognized argument ")(args[argi]).newline;
-                return 1;
-
-            }
+            Stderr("Unrecognized argument ")(args[argi]).newline;
+            return 1;
 
         }
     }
@@ -132,7 +132,7 @@ int main(char[][] args)
     // Interpret all of the Plof files ...
     foreach (plofFile; plofFiles) {
         char[] fcont = cast(char[]) (new File(plofFile)).read();
-        ubyte[] psl = prp.parse(fcont, cast(ubyte[]) "top");
+        ubyte[] psl = prp.parse(fcont, cast(ubyte[]) "top", plofFile, 0, 0);
         if (fcont.length) {
             Stderr("Failed to parse! Remaining: '")(fcont)("'").newline;
         }
@@ -168,7 +168,7 @@ int main(char[][] args)
             }
 
             // parse
-            psl = prp.parse(code, cast(ubyte[]) "top");
+            psl = prp.parse(code, cast(ubyte[]) "top", "INPUT", 0, 0);
 
             // Run or compile it
             if (outFile.length) {
@@ -193,12 +193,13 @@ int main(char[][] args)
 void usage()
 {
     Stderr
-    ("Use: dplof [-s<PSL file>] [-i<plof file>] [-c<output file>] <plof file>").newline()
+    ("Use: dplof <options> <plof file>").newline()
     ("Options:").newline()
     ("  -s <PSL file>:          Include the provided PSL file instead of").newline()
     ("                          std.psl").newline()
     ("  -i <plof file>:         Include the provided Plof file before the one").newline()
     ("                          being interpreted.").newline()
     ("  -c <output file>:       Compile into PSL only, do not run.").newline()
-    ("  -I:                     Interactive mode.").newline();
+    ("  -I|--interactive:       Interactive mode.").newline()
+    ("  --debug:                Debug mode (MUCH slower).").newline();
 }
