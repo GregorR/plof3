@@ -90,14 +90,14 @@ var Array = IndexableCollection : [
                 this "this" pul_var member pul_eval
                 this "x" pul_var member pul_eval
                      "__value" member pul_eval
-                push2 indexset
+                push2 indexset pop
             } memberset
         }
     };
 
-    each = (x as Function) {
+    each = (x) {
         for(var i = 0, i < size(), i = i + 1, (
-            x(this[i])
+            x(this[i]);
         ));
     };
 
