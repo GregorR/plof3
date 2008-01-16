@@ -72,13 +72,13 @@ pslbnf {
         0index
     }
 
-    pul_string = /"/ pul_chars /"/ => {
-        push0 1 integer index wrap
+    pul_string = white /"/ pul_chars /"/ => {
+        push0 2 integer index wrap
         {1 integer array
          this "opString" pul_var member pul_eval call} concat
         wrap {pul_funcwrap} concat
     }
-    pul_string = /""/ => {
+    pul_string = white /""/ => {
         "" wrap
         {1 integer array
          this "opString" pul_var member pul_eval call} concat
