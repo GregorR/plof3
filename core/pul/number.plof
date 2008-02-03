@@ -1,7 +1,7 @@
 /*
  * The standard Plof number hierarchy
  *
- *  Copyright (c) 2007  Gregor Richards
+ *  Copyright (c) 2007, 2008  Gregor Richards
  *  Copyright (c) 2007  Josiah Worcester
  *  
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -121,12 +121,23 @@ var NativeNumber = Number : [
         x = x as NativeNumber;
 
         psl {
+            // prepare to store the result ...
             this "res" pul_var
+            
+            // get the left and right
             this "this" pul_var member pul_eval
                 "__value" member pul_eval
             this "x" pul_var member pul_eval
                 "__value" member pul_eval
+
+            // call the operation
             this "op" pul_var member pul_eval call
+
+            // put it in a Number
+            1 integer array
+            this "opNumber" pul_var member pul_eval call
+
+            // then set the result
             memberset
             null
         };
