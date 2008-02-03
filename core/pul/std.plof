@@ -39,7 +39,6 @@ var Abstract = {
 
 // The basic procedural 'while'
 var while = (cond, inner) {
-    var break = False;
     psl {
         {
             // check the condition
