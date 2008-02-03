@@ -140,4 +140,6 @@ var array = {
     args.each((e) {
         res[i] = e;
     });
+
+    return(res);
 };
