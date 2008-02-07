@@ -90,15 +90,7 @@ Object.opEqual = (x) {
 Object.opEqual.parent = Object;
 
 Object.opNotEqual = (x) {
-    psl {
-        {
-            this "x" pul_var member pul_eval 1 integer array // pass x to opEqual
-
-            this "opEqual" pul_var member pul_eval call pul_eval // get the original value
-
-            "opNot" pul_var member pul_eval call
-        } pul_funcwrap
-    }
+    !opEqual(x)
 };
 Object.opNotEqual.parent = Object;
 
