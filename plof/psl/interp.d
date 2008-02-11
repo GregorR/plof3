@@ -29,12 +29,19 @@ import tango.io.Stdout;
 
 import tango.stdc.stdlib;
 
+version (Posix) {
+    import tango.stdc.posix.dlfcn;
+    version (build) { pragma(link, "dl"); }
+}
+
 import plof.prp.iprp;
 
 import plof.psl.bignum;
 import plof.psl.gc;
 import plof.psl.pslobject;
 import plof.psl.treemap;
+
+import libffi.libffi;
 
 /// The stack, allocated as a PlofGCable for easy mark/sweeping
 struct PSLStack {
@@ -1186,6 +1193,238 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     }
                     break;
                 }
+
+                case 0xC0: // version
+                {
+                    // make the object ...
+                    PSLObject* no = PSLObject.allocate(context);
+                    push(no);
+
+                    // and start making the content ...
+                    PSLObject*[] cont;
+
+                    // fill it out
+                    void addVersion(char[] nm) {
+                        PSLRawData* rawd = PSLRawData.allocate(cast(ubyte[]) nm);
+                        PSLObject* vo = PSLObject.allocate(context);
+                        vo.raw = rawd;
+                        cont ~= vo;
+                    }
+                    addVersion("dplof");
+                    addVersion("CNFI");
+
+                    // OSes
+                    version (Posix) {
+                        addVersion("POSIX");
+                    }
+                    version (linux) {
+                        addVersion("Linux");
+                        addVersion("glibc");
+                    } else version (darwin) {
+                        addVersion("Darwin");
+                        addVersion("Mac OS X");
+                    } else version (freebsd) {
+                        addVersion("FreeBSD");
+                        addVersion("BSD");
+                    } else version (bsd) {
+                        addVersion("BSD");
+                    } else version (solaris) {
+                        addVersion("Solaris");
+                    } else version (Windows) {
+                        addVersion("Windows");
+                    }
+
+                    // architectures
+                    version (Alpha) {
+                        addVersion("Alpha");
+                    } else version (ARM) {
+                        addVersion("ARM");
+                    } else version (X86_64) {
+                        addVersion("x86");
+                        addVersion("x86_64");
+                    } else version (X86) {
+                        addVersion("x86");
+                    } else version (MIPS64) {
+                        addVersion("MIPS");
+                        addVersion("MIPS64");
+                    } else version (MIPS) {
+                        addVersion("MIPS");
+                    } else version (PPC64) {
+                        addVersion("PowerPC");
+                        addVersion("PowerPC64");
+                    } else version (SPARC64) {
+                        addVersion("SPARC");
+                        addVersion("SPARC64");
+                    } else version (SPARC) {
+                        addVersion("SPARC");
+                    }
+
+                    // then put it in place
+                    no.arr = PSLArray.allocate(cont);
+
+                    break;
+                }
+
+                /* * * * * * * * * *
+                 * C INTERFACE     *
+                 * * * * * * * * * */
+                case 0xC1: // dlopen
+                    use1((PSLObject* a) {
+                        if (!a.isArray && a.raw !is null) {
+                            // try to open this file
+                            void *handle = dlopen(((cast(char[]) a.raw.data)~'\0').ptr,
+                                                  RTLD_NOW|RTLD_GLOBAL);
+
+                            if (handle is null) {
+                                // whoops! Push null
+                                push(pslNull);
+                            } else {
+                                PSLRawData* rd = PSLRawData.allocate(
+                                    (cast(ubyte*) &handle)[0..(void*).sizeof]);
+                                PSLObject* no = PSLObject.allocate(context);
+                                no.raw = rd;
+                                push(no);
+                            }
+
+                        } else {
+                            throw new InterpreterFailure("dlopen expects a raw data operand.");
+                            
+                        }
+                    });
+                    break;
+
+                case 0xC2: // dlclose
+                    use1((PSLObject* a) {
+                        if (!a.isArray && a.raw !is null &&
+                            a.raw.data.length == ptrdiff_t.sizeof) {
+                            dlclose(*(cast(void**) a.raw.data.ptr));
+                            
+                        } else {
+                            throw new InterpreterFailure("dlclose expects an integer operand.");
+
+                        }
+                    });
+                    break;
+
+                case 0xC3: // dlsym
+                    use2((PSLObject* a, PSLObject* b) {
+                        if (!b.isArray && b.raw !is null) {
+                            void* handle = null; // RTLD_DEFAULT is usually null
+
+                            if (a != pslNull && !a.isArray && a.raw !is null &&
+                                a.raw.data.length == ptrdiff_t.sizeof) {
+                                handle = *(cast(void**) a.raw.data.ptr);
+
+                            } else {
+                                throw new InterpreterFailure(
+                                    "dlsym expects an integer as the first operand.");
+
+                            }
+
+                            void* sym = dlsym(handle, ((cast(char[]) b.raw.data)~'\0').ptr);
+                            
+                            if (sym is null) {
+                                push(pslNull);
+
+                            } else {
+                                PSLRawData* rd = PSLRawData.allocate(
+                                    (cast(ubyte*) &sym)[0..(void*).sizeof]);
+                                PSLObject* no = PSLObject.allocate(context);
+                                no.raw = rd;
+                                push(no);
+
+                            }
+
+                        } else {
+                            throw new InterpreterFailure(
+                                    "dlsym expects a raw data object as the second operand.");
+
+                        }
+                    });
+                    break;
+
+                case 0xC4: // cmalloc
+                    use1((PSLObject* a) {
+                        if (!a.isArray && a.raw !is null &&
+                            a.raw.data.length == ptrdiff_t.sizeof) {
+                            void* re = malloc(*(cast(ptrdiff_t*) a.raw.data.ptr));
+
+                            if (re is null) {
+                                push(pslNull);
+
+                            } else {
+                                PSLRawData* rd = PSLRawData.allocate(
+                                    (cast(ubyte*) &re)[0..(void*).sizeof]);
+                                PSLObject* no = PSLObject.allocate(context);
+                                no.raw = rd;
+                                push(no);
+
+                            }
+
+                        } else {
+                            throw new InterpreterFailure("cmalloc expects an integer operand.");
+
+                        }
+                    });
+                    break;
+
+                case 0xC5: // cfree
+                    use1((PSLObject* a) {
+                        if (!a.isArray && a.raw !is null &&
+                            a.raw.data.length == ptrdiff_t.sizeof) {
+                            free(*(cast(void**) a.raw.data.ptr));
+
+                        } else {
+                            throw new InterpreterFailure("cfree expects an integer operand.");
+
+                        }
+                    });
+                    break;
+
+                case 0xC6: // cget
+                    use2((PSLObject* a, PSLObject* b) {
+                        if (!a.isArray && a.raw !is null &&
+                            a.raw.data.length == ptrdiff_t.sizeof &&
+                            !b.isArray && b.raw !is null &&
+                            b.raw.data.length == ptrdiff_t.sizeof) {
+                            // get the pointer from a
+                            ubyte* ptr = *(cast(ubyte**) a.raw.data.ptr);
+
+                            // and the length from b
+                            ptrdiff_t sz = *(cast(ptrdiff_t*) b.raw.data.ptr);
+
+                            // then turn the data at that location into a raw data object
+                            PSLRawData* rd = PSLRawData.allocate(
+                                ptr[0..sz]);
+                            PSLObject* no = PSLObject.allocate(context);
+                            no.raw = rd;
+                            push(no);
+
+                        } else {
+                            throw new InterpreterFailure("cget expects two integer operands.");
+
+                        }
+                    });
+                    break;
+
+                case 0xC7: // cset
+                    use2((PSLObject* a, PSLObject* b) {
+                        if (!a.isArray && a.raw !is null &&
+                            a.raw.data.length == ptrdiff_t.sizeof &&
+                            !b.isArray && b.raw !is null) {
+                            // get the pointer from a
+                            ubyte* ptr = *(cast(ubyte**) a.raw.data.ptr);
+                            
+                            // and fill it in
+                            ptr[0..b.raw.data.length] = b.raw.data;
+
+                        } else {
+                            throw new InterpreterFailure(
+                                "cset expects an integer operand and a raw data operand.");
+
+                        }
+                    });
+                    break;
 
                 case 0xD0: // dsrcfile
                     use1((PSLObject* a) {

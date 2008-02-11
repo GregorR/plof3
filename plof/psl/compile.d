@@ -163,6 +163,7 @@ static this() {
     "fne"       : 0x9B,
     "fgt"       : 0x9C,
     "fgte"      : 0x9D,
+    "version"   : 0xC0,
     "dsrcfile"  : 0xD0,
     "dsrcline"  : 0xD1,
     "dsrccol"   : 0xD2,

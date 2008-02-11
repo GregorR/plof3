@@ -1,0 +1,77 @@
+/*
+ * Interface for the C Native Function Interface
+ *
+ *  Copyright (c) 2008  Gregor Richards
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to
+ *  deal in the Software without restriction, including without limitation the
+ *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *  sell copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *  IN THE SOFTWARE.
+ */
+
+// the psl operations
+pslbnf {
+    pslOp = white /dlopen/ token =>     { 193 integer byte }
+    pslOp = white /dlclose/ token =>    { 194 integer byte }
+    pslOp = white /dlsym/ token =>      { 195 integer byte }
+    pslOp = white /cmalloc/ token =>    { 196 integer byte }
+    pslOp = white /cfree/ token =>      { 197 integer byte }
+    pslOp = white /cget/ token =>       { 198 integer byte }
+    pslOp = white /cset/ token =>       { 199 integer byte }
+    pslOp = white /ctype/ token =>      { 200 integer byte }
+    pslOp = white /cstruct/ token =>    { 201 integer byte }
+    pslOp = white /csget/ token =>      { 202 integer byte }
+    pslOp = white /csset/ token =>      { 203 integer byte }
+    pslOp = white /prepcif/ token =>    { 204 integer byte }
+    pslOp = white /ccall/ token =>      { 205 integer byte }
+};
+
+// and their Plof equivalents
+var C = Object : [
+    dlopen = (filename as String) {
+        psl {
+            this "filename" pul_var member pul_eval "__value" member
+            dlopen
+            push0 null
+            {}
+            {
+                1 integer array
+                this "opNumber" pul_var member pul_eval call
+            } cmp
+        }
+    };
+
+    dlclose = (handle as NativeNumber) {
+        psl {
+            this "handle" pul_var member pul_eval "__value" member
+            dlclose null
+        }
+    };
+
+    dlsym = (handle as NativeNumber, symbol as String) {
+        psl {
+            this "handle" pul_var member pul_eval "__value" member
+            this "symbol" pul_var member pul_eval "__value" member
+            dlsym
+            push0 null
+            {}
+            {
+                1 integer array
+                this "opNumber" pul_var member pul_eval call
+            } cmp
+        }
+    };
+];
