@@ -1,16 +1,8 @@
-psl {
-    this "foo" "Oh no!" memberset
-    this "b" "Hello, world!" memberset
+var print = (x) {
+    psl { this "x" pul_var member pul_eval print null }
 };
-
-plof {
-    var bar = {
-        foo
-    };
-    bar() = b;
-};
-
-psl {
-    this "foo" member print
-};
-// testing CIA
+var libc = C.dlopen("libc.so.6");
+var get_nprocs = C.dlsym(libc, "get_nprocs");
+var cif = C.prepcif(C.int, array(), 0);
+var ret = C.call(cif, get_nprocs, array());
+print(ret.__value);

@@ -228,27 +228,6 @@ struct ffi_cif {
 #endif*/
 }
 
-// these aren't guaranteed, but work pretty well
-alias ptrdiff_t ffi_sarg;
-alias size_t ffi_arg;
-
-union ffi_raw {
-  ffi_sarg  sint;
-  ffi_arg   usint; // had to rename uint -> usint == UnSigned INTeger
-  float	    flt;
-  char      data[ffi_arg.sizeof];
-  void*     ptr;
-}
-
-void ffi_raw_call (ffi_cif *cif,
-		   void (*fn)(),
-		   void *rvalue,
-		   ffi_raw *avalue);
-
-void ffi_ptrarray_to_raw (ffi_cif *cif, void **args, ffi_raw *raw);
-void ffi_raw_to_ptrarray (ffi_cif *cif, ffi_raw *raw, void **args);
-size_t ffi_raw_size (ffi_cif *cif);
-
 ffi_status ffi_prep_cif(ffi_cif *cif,
 			ffi_abi abi,
 			uint nargs,
@@ -256,7 +235,7 @@ ffi_status ffi_prep_cif(ffi_cif *cif,
 			ffi_type **atypes);
 
 void ffi_call(ffi_cif *cif,
-	      void (*fn)(),
+	      void *fn,
 	      void *rvalue,
 	      void **avalue);
 

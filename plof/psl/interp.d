@@ -1426,6 +1426,261 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
 
+                case 0xC8: // ctype
+                    use1((PSLObject* a) {
+                        if (!a.isArray && a.raw !is null &&
+                            a.raw.data.length == ptrdiff_t.sizeof) {
+                            // get the number representing the type
+                            ptrdiff_t typenum = *(cast(ptrdiff_t*) a.raw.data.ptr);
+
+                            // and turn it into an ffi_type
+                            ffi_type* type = null;
+
+                            switch (typenum) {
+                                case 0: // void
+                                    type = &ffi_type_void;
+                                    break;
+
+                                case 1: // int
+                                    // FIXME: assumes 32-bit int
+                                    type = &ffi_type_sint32;
+                                    break;
+
+                                case 2: // float
+                                    type = &ffi_type_float;
+                                    break;
+
+                                case 3: // double
+                                    type = &ffi_type_double;
+                                    break;
+
+                                case 4: // long double
+                                    type = &ffi_type_longdouble;
+                                    break;
+
+                                case 5: // uint8
+                                    type = &ffi_type_uint8;
+                                    break;
+
+                                case 6: // sint8
+                                    type = &ffi_type_sint8;
+                                    break;
+
+                                case 7: // uint16
+                                    type = &ffi_type_uint16;
+                                    break;
+
+                                case 8: // sint16
+                                    type = &ffi_type_sint16;
+                                    break;
+
+                                case 9: // uint32
+                                    type = &ffi_type_uint32;
+                                    break;
+
+                                case 10: // sint32
+                                    type = &ffi_type_sint32;
+                                    break;
+
+                                case 11: // uint64
+                                    type = &ffi_type_uint64;
+                                    break;
+
+                                case 12: // sint64
+                                    type = &ffi_type_sint64;
+                                    break;
+
+                                case 14: // pointer
+                                    type = &ffi_type_pointer;
+                                    break;
+
+                                case 24: // uchar
+                                    type = &ffi_type_uint8;
+                                    break;
+
+                                case 25: // schar
+                                    type = &ffi_type_sint8;
+                                    break;
+
+                                case 26: // ushort
+                                    type = &ffi_type_uint16;
+                                    break;
+
+                                case 27: // sshort
+                                    type = &ffi_type_sint16;
+                                    break;
+
+                                case 28: // uint
+                                    type = &ffi_type_uint32;
+                                    break;
+
+                                case 29: // sint
+                                    type = &ffi_type_sint32;
+                                    break;
+
+                                case 30: // ulong
+                                    static if ((void*).sizeof == 8) {
+                                        // 64-bit system, 64-bit long
+                                        type = &ffi_type_uint64;
+                                    } else {
+                                        type = &ffi_type_uint32;
+                                    }
+                                    break;
+
+                                case 31: // slong
+                                    static if ((void*).sizeof == 8) {
+                                        type = &ffi_type_sint64;
+                                    } else {
+                                        type = &ffi_type_sint32;
+                                    }
+                                    break;
+
+                                case 32: // ulonglong
+                                    type = &ffi_type_uint64;
+                                    break;
+
+                                case 33: // slonglong
+                                    type = &ffi_type_sint64;
+                                    break;
+
+                                default:
+                                    throw new InterpreterFailure(
+                                            "Unsupported C type.");
+                            }
+
+                            // finally, put it in raw data
+                            PSLRawData* rd = PSLRawData.allocate(
+                                    (cast(ubyte*) &type)[0..(void*).sizeof]);
+                            PSLObject* no = PSLObject.allocate(context);
+                            no.raw = rd;
+                            push(no);
+
+                        } else {
+                            throw new InterpreterFailure("ctype expects an integer operand.");
+
+                        }
+                    });
+                    break;
+
+                /+ case 0xC9: // cstruct
+                    use1((PSLObject* a) {
+                        if (a.isArray) {
+                            //  +/
+
+                case 0xCA: // csizeof
+                    use1((PSLObject* a) {
+                        if (!a.isArray && a.raw !is null &&
+                            a.raw.data.length == ptrdiff_t.sizeof) {
+                            // get the size out of it
+                            ffi_type* type = *(cast(ffi_type**) a.raw.data.ptr);
+                            ptrdiff_t sz = type.size;
+
+                            // and put it in raw data
+                            PSLRawData* rd = PSLRawData.allocate(
+                                (cast(ubyte*) &sz)[0..ptrdiff_t.sizeof]);
+                            PSLObject* no = PSLObject.allocate(context);
+                            no.raw = rd;
+                            push(no);
+
+                        } else {
+                            throw new InterpreterFailure("csizeof expects a type operand.");
+
+                        }
+                    });
+                    break;
+
+                case 0xCD: // prepcif
+                    use3((PSLObject* a, PSLObject* b, PSLObject* c) {
+                        if (!a.isArray && a.raw !is null &&
+                            a.raw.data.length == ptrdiff_t.sizeof &&
+                            b.isArray &&
+                            !c.isArray && c.raw !is null &&
+                            c.raw.data.length == ptrdiff_t.sizeof) {
+
+                            // get out what data we can immediately
+                            ffi_type* rtype = *(cast(ffi_type**) a.raw.data.ptr);
+                            ptrdiff_t abi = *(cast(ptrdiff_t*) c.raw.data.ptr);
+                            if (abi == 0) abi = ffi_abi.FFI_DEFAULT_ABI;
+
+                            // then start making the array
+                            ffi_type** atypes = cast(ffi_type**)
+                                malloc((b.arr.arr.length + 1) * (ffi_type*).sizeof);
+                            atypes[0..b.arr.arr.length+1] = null;
+
+                            foreach (i, elem; b.arr.arr) {
+                                if (!elem.isArray && elem.raw !is null &&
+                                    elem.raw.data.length == ptrdiff_t.sizeof) {
+                                    atypes[i] = *(cast(ffi_type**) elem.raw.data.ptr);
+                                }
+                            }
+
+                            // finally, make the cif
+                            ffi_cif* cif = cast(ffi_cif*)
+                                malloc(ffi_cif.sizeof);
+                            if (ffi_prep_cif(cif, cast(ffi_abi) abi,
+                                             b.arr.arr.length, rtype, atypes) !=
+                                ffi_status.FFI_OK) {
+                                // there was a problem, so push null
+                                push(pslNull);
+
+                            } else {
+                                PSLRawData* rd = PSLRawData.allocate(
+                                    (cast(ubyte*) &cif)[0..(ffi_cif*).sizeof]);
+                                PSLObject* no = PSLObject.allocate(context);
+                                no.raw = rd;
+                                push(no);
+
+                            }
+
+                        } else {
+                            throw new InterpreterFailure("Invalid arguments for prepcif.");
+
+                        }
+
+                    });
+                    break;
+
+                case 0xCE: // ccall
+                    use3((PSLObject* a, PSLObject* b, PSLObject* c) {
+                        if (!a.isArray && a.raw !is null &&
+                            a.raw.data.length == ptrdiff_t.sizeof &&
+                            !b.isArray && a.raw !is null &&
+                            b.raw.data.length == ptrdiff_t.sizeof &&
+                            c.isArray) {
+                            // get out the cif and pointer
+                            ffi_cif* cif = *(cast(ffi_cif**) a.raw.data.ptr);
+                            void* fn = *(cast(void**) b.raw.data.ptr);
+
+                            // then construct the arguments
+                            void*[] args = (cast(void**) alloca(
+                                    c.arr.arr.length * (void*).sizeof))
+                                    [0..c.arr.arr.length];
+                            foreach (i, elem; c.arr.arr) {
+                                if (!elem.isArray && elem.raw !is null) {
+                                    args[i] = cast(void*) elem.raw.data.ptr;
+                                }
+                            }
+
+                            // and prepare for the return value
+                            ubyte* ret = (cast(ubyte*) alloca(cif.rtype.size));
+
+                            // call the function
+                            ffi_call(cif, fn, cast(void*) ret, args.ptr);
+
+                            // then put the return value in a raw data object
+                            PSLRawData* rd = PSLRawData.allocate(
+                                ret[0..cif.rtype.size]);
+                            PSLObject* no = PSLObject.allocate(context);
+                            no.raw = rd;
+                            push(no);
+
+                        } else {
+                            throw new InterpreterFailure("Invalid arguments for ccall.");
+
+                        }
+                    });
+                    break;
+
                 case 0xD0: // dsrcfile
                     use1((PSLObject* a) {
                         if (!a.isArray && a.raw !is null) {
