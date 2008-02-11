@@ -91,11 +91,13 @@ var C = Object : [
     };
 
     get = (ptr as NativeNumber, sz as NativeNumber) {
-        opString(psl {
+        var ret = CData : [];
+        ret.__value = psl {
             this "ptr" pul_var member pul_eval "__value" member
             this "sz"  pul_var member pul_eval "__value" member
             cget
-        })
+        };
+        return(ret);
     };
 
     set = (ptr as NativeNumber, value as String) {
@@ -141,8 +143,11 @@ var C = Object : [
                 this "nargs" pul_var member pul_eval
 
                 // elem as CData
+                /* FIXME
                 this "CData" pul_var member pul_eval 1 integer array
                 this "elem"  pul_var member pul_eval "opAs" member call
+                "__value" member */
+                this "elem" pul_var member pul_eval "__value" member
 
                 // combine them
                 1 integer array aconcat
