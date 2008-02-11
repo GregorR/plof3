@@ -31,7 +31,7 @@ var opNumber = (x) {
 pslbnf {
     plof_literal = number => {
         push0 0 integer index
-        {1 integer array
+        {integer 1 integer array
          this "opNumber" pul_var member pul_eval call} concat
         wrap {pul_funcwrap} concat
     }
