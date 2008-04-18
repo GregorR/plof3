@@ -171,10 +171,13 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
         c.gc.blessDown();
         d.gc.blessDown();
     }
-    PSLObject* call(PSLObject* incontext, ubyte[] npsl) {
+    PSLObject* call(PSLObject* called, PSLObject* incontext, ubyte[] npsl) {
         // Create a context
         PSLObject* ncontext = PSLObject.allocate(incontext);
         ncontext.gc.blessUp();
+
+        // set +procedure
+        ncontext.members.add("+procedure", cast(PlofGCable*) called);
 
         // then call
         PSLObject* thrown = interpret(npsl, stack, ncontext, false, prp);
@@ -251,13 +254,13 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
             // perform the procedure
             if (res) {
                 if (!procy.isArray && procy.raw !is null) {
-                    thrown = call(procy.parent, procy.raw.data);
+                    thrown = call(procy, procy.parent, procy.raw.data);
                 } else {
                     throw new InterpreterFailure("Expected procedure as argument to integer comparison.");
                 }
             } else {
                 if (!procn.isArray && procn.raw !is null) {
-                    thrown = call(procy.parent, procn.raw.data);
+                    thrown = call(procy, procy.parent, procn.raw.data);
                 } else {
                     throw new InterpreterFailure("Expected procedure as argument to integer comparison.");
                 }
@@ -328,13 +331,13 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
             // perform the procedure
             if (res) {
                 if (!procy.isArray && procy.raw !is null) {
-                    thrown = call(procy.parent, procy.raw.data);
+                    thrown = call(procy, procy.parent, procy.raw.data);
                 } else {
                     throw new InterpreterFailure("Expected procedure as argument to floating point comparison.");
                 }
             } else {
                 if (!procn.isArray && procn.raw !is null) {
-                    thrown = call(procy.parent, procn.raw.data);
+                    thrown = call(procn, procn.parent, procn.raw.data);
                 } else {
                     throw new InterpreterFailure("Expected procedure as argument to floating point comparison.");
                 }
@@ -362,7 +365,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
             // if immediate, only run immediate commands
             if (immediate) {
                 if (cmd == 0xFE) { // immediate
-                    call(context, sub);
+                    call(pslNull, context, sub);
                 }
                 continue;
             }
@@ -500,7 +503,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     PSLObject* thrown;
                     use1((PSLObject* a) {
                         if (!a.isArray && a.raw !is null) {
-                            thrown = call(a.parent, a.raw.data);
+                            thrown = call(a, a.parent, a.raw.data);
                         } else {
                             throw new InterpreterFailure("call expects a procedure operand.");
                         }
@@ -546,7 +549,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                             throw new InterpreterFailure("catch expects procedure operands.");
                         }
     
-                        thrown = call(a.parent, proca);
+                        thrown = call(a, a.parent, proca);
     
                         if (thrown !is null) {
                             // it threw, so call b
@@ -556,7 +559,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                             thrown.gc.blessDown();
     
                             // then continue
-                            thrown = call(b.parent, procb);
+                            thrown = call(b, b.parent, procb);
                         }
                     });
     
@@ -576,13 +579,13 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     use4((PSLObject* a, PSLObject* b, PSLObject* procy, PSLObject* procn) {
                         if (a is b) {
                             if (!procy.isArray && procy.raw !is null) {
-                                thrown = call(procy.parent, procy.raw.data);
+                                thrown = call(procy, procy.parent, procy.raw.data);
                             } else {
                                 throw new InterpreterFailure("cmp expects procedure operands.");
                             }
                         } else {
                             if (!procn.isArray && procn.raw !is null) {
-                                thrown = call(procn.parent, procn.raw.data);
+                                thrown = call(procn, procn.parent, procn.raw.data);
                             } else {
                                 throw new InterpreterFailure("cmp expects procedure operands.");
                             }
