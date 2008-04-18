@@ -412,7 +412,7 @@ class RegexTerminal : GrammarElem {
                 &err, &erroffset,
                 null);
         if (_regex is null) {
-            throw new RegexCompilationException(fromUtf8z(err));
+            throw new RegexCompilationException(fromStringz(err));
         }
     }
 
