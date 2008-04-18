@@ -697,6 +697,17 @@ pslbnf {
 
         { memberset throw } concat
     }
+    plof_group = white /include/ white /\(/ white /[A-Za-z0-9_\-\.]+/ white /\)/ => {
+        // get the file name
+        push0 5 integer index call
+
+        // include it
+        push0
+        include
+
+        // then parse it
+        "top" push2 parse
+    }
     plof_group = white /forceEval/ white /\(/ plof_semicolon white /\)/ => {
         push0 4 integer index
         { pul_forceEval } concat
@@ -920,6 +931,7 @@ pslbnf {
         /()(?!forceEval[^A-Za-z0-9_])/
         /()(?!is[^A-Za-z0-9_])/
         /()(?!in[^A-Za-z0-9_])/
+        /()(?!include[^A-Za-z0-9_])/
         /()(?!parent[^A-Za-z0-9_])/
         /()(?!return[^A-Za-z0-9_])/
         /()(?!var[^A-Za-z0-9_])/

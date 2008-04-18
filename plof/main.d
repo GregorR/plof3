@@ -40,6 +40,8 @@ import plof.psl.file;
 import plof.psl.interp;
 import plof.psl.pslobject;
 
+import plof.searchpath.searchpath;
+
 int main(char[][] args)
 {
     char[][] pslFiles;
@@ -50,7 +52,7 @@ int main(char[][] args)
 
     /// Figure out the base search path
     char[] exePath = Environment.exePath(args[0]).toString();
-    char[] exeFP = (new FilePath(exePath)).folder();
+    plofExeFP = (new FilePath(exePath)).folder();
 
     /// Parse arguments for PSL or Plof files
     int argi;
@@ -114,58 +116,8 @@ int main(char[][] args)
     }
 
     // Figure out where everything is
-    void normalizePaths(char[][] files) {
-        for (int i = 0; i < files.length; i++) {
-            auto fp = new FilePath(files[i]);
-            if (!fp.isAbsolute()) {
-                // not absolute, so find it
-                if (!fp.exists()) {
-                    // in some search path
-                    FilePath fp2;
-
-                    if (plof.prp.prp.enableDebug) {
-                        // 1) share/plof/include/debug
-                        fp2 = new FilePath(FilePath.join(
-                            [exeFP, "../share/plof/include/debug", fp.toString()]));
-                        if (fp2.exists()) {
-                            files[i] = fp2.toString();
-                            continue;
-                        }
-
-                        // 2) plof_include/debug
-                        fp2 = new FilePath(FilePath.join(
-                            [exeFP, "plof_include/debug", fp.toString()]));
-                        if (fp2.exists()) {
-                            files[i] = fp2.toString();
-                            continue;
-                        }
-
-                    }
-
-                    // 3) share/plof/include
-                    fp2 = new FilePath(FilePath.join(
-                        [exeFP, "../share/plof/include", fp.toString()]));
-                    if (fp2.exists()) {
-                        files[i] = fp2.toString();
-                        continue;
-                    }
-
-                    // 4) plof_include
-                    fp2 = new FilePath(FilePath.join(
-                        [exeFP, "plof_include", fp.toString()]));
-                    if (fp2.exists()) {
-                        files[i] = fp2.toString();
-                        continue;
-                    }
-
-                    Stderr("File ")(files[i])(" not found!").newline;
-                    exit(1);
-                }
-            }
-        }
-    }
-    normalizePaths(pslFiles);
-    normalizePaths(plofFiles);
+    plofSearchPath(pslFiles);
+    plofSearchPath(plofFiles);
 
     // Now set up a base environment ...
     PSLStack* stack = PSLStack.allocate();

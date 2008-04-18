@@ -166,6 +166,7 @@ gadd
 "pslOp" "white" "/gremstop/" "token" 3 integer array {{gremstop}} gadd
 "pslOp" "white" "/gt/" "token" 3 integer array {{gt}} gadd
 "pslOp" "white" "/gte/" "token" 3 integer array {{gte}} gadd
+"pslOp" "white" "/include/" "token" 3 integer array {{include}} gadd
 "pslOp" "white" "/index/" "token" 3 integer array {{index}} gadd
 "pslOp" "white" "/indexset/" "token" 3 integer array {{indexset}} gadd
 "pslOp" "white" "/integer/" "token" 3 integer array {{integer}} gadd

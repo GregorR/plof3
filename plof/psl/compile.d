@@ -169,6 +169,7 @@ static this() {
     "dsrccol"   : 0xD2,
     "print"     : 0xE0,
     "debug"     : 0xE1,
+    "include"   : 0xEE,
     "parse"     : 0xEF,
     "gadd"      : 0xF0,
     "grem"      : 0xF1,

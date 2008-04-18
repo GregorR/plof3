@@ -25,6 +25,8 @@
 
 module plof.prp.prp;
 
+import tango.io.Stdout;
+
 import tango.stdc.stdlib;
 
 import plof.prp.iprp;
@@ -120,7 +122,7 @@ class PlofRuntimeParser : IPlofRuntimeParser {
             else
                 tproduction = _grammar[productionName] =
                     new Production(cast(char[]) productionName);
-            ParserPSL psltarget = new ParserPSL;
+            ParserPSL psltarget = new ParserPSL(this);
             psltarget.code.length = production.length;
 
             // Give it the appropriate callback
@@ -203,6 +205,8 @@ alias UGRHS[] UProduction;
 
 /// A class wrapping PSL code from the parser
 class ParserPSL {
+    this(PlofRuntimeParser sprp) { prp = sprp; }
+
     /// Interpret the associated code with the given PSLObject* args
     void* interp(ParseResult* res, void*[] args)
     {
@@ -226,7 +230,7 @@ class ParserPSL {
         no.gc.refUp();
 
         // and run it
-        interpret(code[res.choice], stack, context);
+        interpret(code[res.choice], stack, context, false, prp);
 
         // get the top element off the stack
         no = stack.stack[$-1];
@@ -296,4 +300,7 @@ class ParserPSL {
     }
 
     private ubyte[][] code;
+
+    // the runtime parser that created this
+    PlofRuntimeParser prp;
 }

@@ -25,6 +25,7 @@
 
 module plof.psl.interp;
 
+import tango.io.File;
 import tango.io.Stdout;
 
 import tango.stdc.stdlib;
@@ -40,6 +41,8 @@ import plof.psl.bignum;
 import plof.psl.gc;
 import plof.psl.pslobject;
 import plof.psl.treemap;
+
+import plof.searchpath.searchpath;
 
 import libffi.libffi;
 
@@ -1743,8 +1746,64 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                 case 0xE1: // FAKE: debug
                     Stdout("STACK LENGTH: ")(stack.stack.length).newline;
                     break;
+
+                case 0xEE: // include
+                    use1((PSLObject* a) {
+                        if (!a.isArray && a.raw !is null) {
+                            // get the file name
+                            char[][] flist;
+                            flist ~= cast(char[]) a.raw.data.dup;
+
+                            // figure out its real path
+                            plofSearchPath(flist);
+
+                            // and read it
+                            ubyte[] fcont = cast(ubyte[]) (new File(flist[0])).read();
+
+                            // push the content
+                            PSLObject* no = PSLObject.allocate(context);
+                            no.raw = PSLRawData.allocate(fcont);
+                            push(no);
+
+                        } else {
+                            throw new InterpreterFailure(
+                                "include expects a raw data operand.");
+                        }
+                    });
+                    break;
     
                 case 0xEF: // parse
+                    use3((PSLObject* a, PSLObject* b, PSLObject* c) {
+                        if (!a.isArray && a.raw !is null &&
+                            !b.isArray && b.raw !is null &&
+                            !c.isArray && c.raw !is null &&
+                            prp !is null) {
+                            // get the top symbol and code
+                            char[] code = cast(char[]) a.raw.data.dup;
+                            ubyte[] top = b.raw.data.dup;
+                            char[] file = cast(char[]) c.raw.data.dup;
+
+                            // parse the raw data
+                            ubyte[] psl = prp.parse(code, top, file);
+
+                            // scream and cry if it failed to parse
+                            if (code.length) {
+                                throw new InterpreterFailure(
+                                    "Failed to parse " ~ file ~ ". Remaining: '" ~
+                                    code ~ "'");
+                            }
+
+                            // otherwise, return it
+                            PSLObject* no = PSLObject.allocate(context);
+                            no.raw = PSLRawData.allocate(psl);
+                            push(no);
+
+                        } else {
+                            throw new InterpreterFailure(
+                                    "parse expects three raw data operands.");
+
+                        }
+                    });
                     break;
     
                 case 0xF0: // gadd
