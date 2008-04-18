@@ -759,12 +759,15 @@ pslbnf {
         push0 0 integer index
         push1 3 integer index concat
     }
-    plof_param = plof_identifier => {
+    plof_param = plof_curry plof_identifier => {
         // we have: args index
 
+        // get the currying code
+        push0 0 integer index
+
         // get the name context
-        {pul_fc}
-        push1 0 integer index concat
+        {pul_fc} concat
+        push1 1 integer index concat
         
         // now get the actual argument and set it
         {push3 push3 index memberset
@@ -772,12 +775,15 @@ pslbnf {
          // then increase the index
          1 integer add} concat
     }
-    plof_param = plof_identifier white /as/ plof_identifier => {
+    plof_param = plof_curry plof_identifier white /as/ plof_identifier => {
         // we have: args index
 
+        // get the currying code
+        push0 0 integer index
+
         // get the type
-        {this}
-        push1 3 integer index concat
+        {this} concat
+        push1 4 integer index concat
         {pul_var member 1 integer array
 
          // we have: args index [type]
@@ -794,11 +800,41 @@ pslbnf {
 
          // and finally, set it
          pul_fc} concat
-        push1 0 integer index concat
+        push1 1 integer index concat
         {push2 memberset pop
 
          // then increase the index
          1 integer add} concat
+    }
+
+    // currying code
+    plof_curry = white => {
+        // we have: args index
+        {
+            push1 length push1
+            {
+                // not enough arguments. Curry!
+                
+                // pop off the index
+                pop
+
+                // make the array of arguments itself an argument
+                1 integer array
+
+                // get opCurry
+                pul_fc "+procedure" member
+                "opCurry" member pul_eval
+
+                // and call it
+                call
+
+                // then throw the result
+                new
+                push0 "__pul_ret_fc" pul_fc memberset
+                push0 "__pul_ret_val" push3 memberset
+                throw
+            } {} lte
+        }
     }
 
     // Arguments in a function call
@@ -822,7 +858,7 @@ pslbnf {
             this "__pul_args" push2 memberset pop
             this "args"
             {
-                this "__pul_args" member
+                this "__pul_args" pul_var member
                 1 integer array
                 this "opArray" pul_var member pul_eval call
             } pul_funcwrap memberset
@@ -840,7 +876,7 @@ pslbnf {
             this "__pul_args" push2 memberset pop
             this "args"
             {
-                this "__pul_args" member
+                this "__pul_args" pul_var member
                 1 integer array
                 this "opArray" pul_var member pul_eval call
             } pul_funcwrap memberset
@@ -1042,6 +1078,24 @@ plof {
     Object.opCombine.parent = Object;
     Function.opCombine = Object.opCombine : [];
     Function.opCombine.parent = Function;
+
+    // opCurry curries a function
+    Function.opCurry = (setargs) {
+        {
+            psl {
+                // call the function (this) with setargs and args
+                this "setargs" pul_var member pul_eval
+                this "args" pul_var member pul_eval
+
+                // add the new args to the old args
+                aconcat
+
+                // and call
+                this "this" pul_var member pul_eval call
+            }
+        }
+    };
+    Function.opCurry.parent = Function;
 
     // the opFunction function, which combines functions with Function
     opFunction = (x) {
