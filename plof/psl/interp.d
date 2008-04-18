@@ -1728,15 +1728,6 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                             } else {
                                 Stdout(cast(char[]) a.raw.data).newline;
                             }
-                            if (a.raw.data.length == ptrdiff_t.sizeof) {
-                                Stdout(" = ")(*(cast(ptrdiff_t*) a.raw.data.ptr)).newline;
-                            } else {
-                                Stdout(" = ");
-                                foreach (c; a.raw.data) {
-                                    Stdout.format("{:X} ", c);
-                                }
-                                Stdout.newline;
-                            }
                         } else {
                             if (a is pslNull) {
                                 Stdout("NULL").newline;
