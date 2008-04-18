@@ -581,28 +581,66 @@ pslbnf {
     // Groups
     plof_group = plof_var => {0index}
     plof_group = white /\(/ plof_params white /\)/ white /\{/ plof_function white /\}/ => {
-        // plof_params actually returns code to convert the args to names
+        // set the function context
+        {this "__pul_fc" this memberset}
 
         // combine both bits of code into the full function
-        push0 2 integer index
-        push1 7 integer index concat wrap
+        push1 2 integer index
+        push2 7 integer index concat wrap concat
+
+        // catch returns
+        {
+            {
+                push0 "__pul_ret_fc" member pul_fc
+                {
+                    // our return
+                    "__pul_ret_val" member
+                }
+                {
+                    // not ours
+                    throw
+                } cmp
+            } catch
+        } concat wrap
 
         // then set the function's parent properly
-        {push0 pul_fc parentset
+        {
+            push0 pul_fc parentset
 
-         // and put it in a Function object
-         1 integer array
-         this "opFunction" pul_var member pul_eval call
+            // and put it in a Function object
+            1 integer array
+            this "opFunction" pul_var member pul_eval call
         } concat
     }
     plof_group = white /\{/ plof_function white /\}/ => {
-        // make the function
-        push0 2 integer index wrap
-        {push0 pul_fc parentset
+        // set the function context
+        {this "__pul_fc" this memberset}
 
-         // then put it in a Function object
-         1 integer array
-         this "opFunction" pul_var member pul_eval call} concat
+        // make the function
+        push1 2 integer index wrap concat
+
+        // catch returns
+        {
+            {
+                push0 "__pul_ret_fc" member pul_fc
+                {
+                    // our return
+                    "__pul_ret_val" member
+                }
+                {
+                    // not ours
+                    throw
+                } cmp
+            } catch
+        } concat wrap
+
+        {
+            push0 pul_fc parentset
+
+            // then put it in a Function object
+            1 integer array
+            this "opFunction" pul_var member pul_eval call
+        } concat
     }
     plof_group = white /\(/ plof_semicolon white /\)/ => {
         push0 2 integer index
@@ -725,7 +763,7 @@ pslbnf {
         // we have: args index
 
         // get the name context
-        {this}
+        {pul_fc}
         push1 0 integer index concat
         
         // now get the actual argument and set it
@@ -755,7 +793,7 @@ pslbnf {
          // we have: args index arg
 
          // and finally, set it
-         this} concat
+         pul_fc} concat
         push1 0 integer index concat
         {push2 memberset pop
 
@@ -779,54 +817,37 @@ pslbnf {
 
     // Function content
     plof_function = plof_statements => {
-        // FIXME: try/catch
-        // set the function context
-        {this "__pul_fc" this memberset
+        // args -> "args"
+        {
+            this "__pul_args" push2 memberset pop
+            this "args"
+            {
+                this "__pul_args" member
+                1 integer array
+                this "opArray" pul_var member pul_eval call
+            } pul_funcwrap memberset
+        }
 
-         // args -> "args"
-         1 integer array
-         this "opArray" pul_var member pul_eval call
-         this "args" push2 memberset pop}
-
-        // then the actual content, in a sub-function
-        push1 0 integer index
+        // then the actual content
+        push1 0 integer index concat
         
         // which returns null
-        { null } concat wrap concat
-
-        // catch returns
-        { {push0 "__pul_ret_fc" member pul_fc
-           {
-               // this was in this context, so get the return
-               "__pul_ret_val" member
-           }
-           {
-               // in a different context, so throw it
-               throw
-           } cmp
-          } catch
-        } concat
+        { null } concat
     }
     plof_function = plof_comma => {
-        // basic setup
-        {this "__pul_fc" this memberset
-         this "args" push2 memberset pop}
+        // args -> "args"
+        {
+            this "__pul_args" push2 memberset pop
+            this "args"
+            {
+                this "__pul_args" member
+                1 integer array
+                this "opArray" pul_var member pul_eval call
+            } pul_funcwrap memberset
+        }
 
         // the actual content
-        push1 0 integer index wrap concat
-
-        // catch returns
-        { {push0 "__pul_ret_fc" member pul_fc
-           {
-               // this was in this context, so get the return
-               "__pul_ret_val" member
-           }
-           {
-               // in a different context, so throw it
-               throw
-           } cmp
-          } catch
-        } concat
+        push1 0 integer index concat
     }
 
     // Object descriptor
