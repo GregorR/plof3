@@ -704,6 +704,7 @@ pslbnf {
         // now try .psl
         push0 ".psl" concat push0
         include
+        // stack: basename base.psl content
 
         push0 null
         {
@@ -712,6 +713,7 @@ pslbnf {
             // .psl not found, try .plof
             push0 ".plof" concat push0
             include
+            // stack: basename base.plof content
 
             push0 null
             {
@@ -722,6 +724,8 @@ pslbnf {
 
         // then parse it
         "top" push2 parse
+
+        { null } concat
     }
     plof_group = white /forceEval/ white /\(/ plof_semicolon white /\)/ => {
         push0 4 integer index

@@ -26,6 +26,7 @@
 module plof.psl.interp;
 
 import tango.io.File;
+import tango.io.FilePath;
 import tango.io.Stdout;
 
 import tango.stdc.stdlib;
@@ -1806,13 +1807,13 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                                 psl = pslProgramData(cast(ubyte[]) code);
                             } else {
                                 psl = prp.parse(code, top, file);
-                            }
 
-                            // scream and cry if it failed to parse
-                            if (code.length) {
-                                throw new InterpreterFailure(
-                                    "Failed to parse " ~ file ~ ". Remaining: '" ~
-                                    code ~ "'");
+                                // scream and cry if it failed to parse
+                                if (code.length) {
+                                    throw new InterpreterFailure(
+                                        "Failed to parse " ~ file ~ ". Remaining: '" ~
+                                        code ~ "'");
+                                }
                             }
 
                             // otherwise, return it

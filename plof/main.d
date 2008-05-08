@@ -48,7 +48,7 @@ int main(char[][] args)
     char[][] plofFiles;
     char[] outFile;
     ubyte[] outPSL;
-    bool interactive;
+    bool interactive, defaultPSL;
 
     /// Figure out the base search path
     char[] exePath = Environment.exePath(args[0]).toString();
@@ -112,7 +112,11 @@ int main(char[][] args)
 
     // If no base PSL file was supplied, use std.psl
     if (pslFiles.length == 0) {
+        defaultPSL = true;
         pslFiles ~= "std.psl";
+
+    } else {
+        defaultPSL = false;
     }
 
     // Figure out where everything is
@@ -137,7 +141,10 @@ int main(char[][] args)
 
         // Then run or compile the rest
         if (outFile.length) {
-            outPSL ~= psl;
+            if (!defaultPSL) {
+                // only output it if it was requested (is not a default include)
+                outPSL ~= psl;
+            }
         } else {
             interpret(psl, stack, context);
             stack.truncate(0);
