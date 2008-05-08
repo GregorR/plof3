@@ -701,9 +701,24 @@ pslbnf {
         // get the file name
         push0 5 integer index call
 
-        // include it
-        push0
+        // now try .psl
+        push0 ".psl" concat push0
         include
+
+        push0 null
+        {
+            pop pop
+
+            // .psl not found, try .plof
+            push0 ".plof" concat push0
+            include
+
+            push0 null
+            {
+                // really not found, borkbork
+                "FILE NOT FOUND" print
+            } {} cmp
+        } {} cmp
 
         // then parse it
         "top" push2 parse
