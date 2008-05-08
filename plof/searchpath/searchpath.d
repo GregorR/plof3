@@ -75,9 +75,6 @@ void plofSearchPath(char[][] files) {
                     files[i] = fp2.toString();
                     continue;
                 }
-
-                Stderr("File ")(files[i])(" not found!").newline;
-                exit(1);
             }
         }
     }

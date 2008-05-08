@@ -27,6 +27,13 @@ module plof.psl.file;
 
 import plof.psl.bignum;
 
+/// Is this a PSL file?
+bool isPSLFile(ubyte[] f)
+{
+    return (f.length > 8 &&
+            f[0..8] == cast(ubyte[]) "\x9E\x50\x53\x4C\x17\xF2\x58\x8C");
+}
+
 /// Get the PSL program data out of a PSL file
 ubyte[] pslProgramData(ubyte[] f)
 {

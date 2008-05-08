@@ -38,6 +38,7 @@ version (Posix) {
 import plof.prp.iprp;
 
 import plof.psl.bignum;
+import plof.psl.file;
 import plof.psl.gc;
 import plof.psl.pslobject;
 import plof.psl.treemap;
@@ -1757,13 +1758,28 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                             // figure out its real path
                             plofSearchPath(flist);
 
-                            // and read it
-                            ubyte[] fcont = cast(ubyte[]) (new File(flist[0])).read();
+                            // make sure it was found
+                            if ((new FilePath(flist[0])).exists()) {
+                                // and read it
+                                try {
+                                    ubyte[] fcont = cast(ubyte[]) (new File(flist[0])).read();
 
-                            // push the content
-                            PSLObject* no = PSLObject.allocate(context);
-                            no.raw = PSLRawData.allocate(fcont);
-                            push(no);
+                                    // push the content
+                                    PSLObject* no = PSLObject.allocate(context);
+                                    no.raw = PSLRawData.allocate(fcont);
+                                    push(no);
+
+                                } catch (Exception) {
+                                    // couldn't read the file
+                                    push(pslNull);
+
+                                }
+
+                            } else {
+                                // couldn't find the file
+                                push(pslNull);
+
+                            }
 
                         } else {
                             throw new InterpreterFailure(
@@ -1784,7 +1800,13 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                             char[] file = cast(char[]) c.raw.data.dup;
 
                             // parse the raw data
-                            ubyte[] psl = prp.parse(code, top, file);
+                            ubyte[] psl;
+                            if (isPSLFile(cast(ubyte[]) code)) {
+                                // as a PSL file
+                                psl = pslProgramData(cast(ubyte[]) code);
+                            } else {
+                                psl = prp.parse(code, top, file);
+                            }
 
                             // scream and cry if it failed to parse
                             if (code.length) {
