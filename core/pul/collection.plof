@@ -143,6 +143,3 @@ var array = {
 
     return(res);
 };
-
-// The list of version constants
-var versions = opArray(psl { version });

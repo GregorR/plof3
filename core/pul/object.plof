@@ -251,6 +251,8 @@ Object.opAs = (x) {
     return(ret);
 };
 Object.opAs.parent = Object;
+Function.opAs = Object.opAs : [];
+Function.opAs.parent = Function;
 
 // opIs does a basic typecheck
 Object.opIs = (x) {
@@ -317,3 +319,5 @@ Object.opIs = (x) {
     return(ret);
 };
 Object.opIs.parent = Object;
+Function.opIs = Object.opIs : [];
+Function.opIs.parent = Function;

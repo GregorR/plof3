@@ -333,6 +333,11 @@ pslbnf {
     plofW = white /plof/ token white /\{/ plof_statements white /\}/ white /;/ white => {
         push0 5 integer index
     }
+
+    /* And a similar wrapper for Plof in PSL
+    pslOp = white /plof/ white /\{/ plof_semicolon white /\}/ => {
+        push0 4 integer index
+    }*/
     
     // Any number of Plof statements
     plof_statements = plof_statements_sub => {0index}
@@ -727,6 +732,13 @@ pslbnf {
 
         { null } concat
     }
+    plof_group = white /rtInclude/ white /\(/ white /[A-Za-z0-9_\-\.]+/ white /\)/ => {
+        // runtime include
+        push0 5 integer index
+        { include "top" } concat
+        push1 5 integer index concat
+        { parse call null } concat
+    }
     plof_group = white /forceEval/ white /\(/ plof_semicolon white /\)/ => {
         push0 4 integer index
         { pul_forceEval } concat
@@ -953,6 +965,7 @@ pslbnf {
         /()(?!include[^A-Za-z0-9_])/
         /()(?!parent[^A-Za-z0-9_])/
         /()(?!return[^A-Za-z0-9_])/
+        /()(?!rtInclude[^A-Za-z0-9_])/
         /()(?!var[^A-Za-z0-9_])/
         => {{}}
 };
