@@ -101,6 +101,16 @@ var Array = IndexableCollection : [
         ));
     };
 
+    opContains = (x) {
+        var ret = False;
+        each((y) {
+            if((x == y), (
+                ret = True;
+            ));
+        });
+        return(ret);
+    };
+
     dup = {
         this:[];
     };
