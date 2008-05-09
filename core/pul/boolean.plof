@@ -30,7 +30,7 @@ var Boolean = Object : [
 ];
 var True = Boolean : [
     ifTrue = (x) {x};
-    opNot = {True};
+    opNot = {False};
 
     /// short circuited or
     opOr = (x) {True};
@@ -40,7 +40,7 @@ var True = Boolean : [
 ];
 var False = Boolean : [
     ifFalse = (x) {x};
-    opNot = {False};
+    opNot = {True};
 
     /// or isn't short-circuited
     opOr = (x) {x as Boolean};
