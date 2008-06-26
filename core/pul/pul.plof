@@ -159,6 +159,7 @@ psl {
         push1 null
         {
             // it's null, byebye!
+            "Undefined variable " push1 concat print null throw
             pop null
         }
         {
