@@ -1052,6 +1052,9 @@ plof {
 
             // pop off the function, leaving only the indirection object
             pop
+
+            // and make sure the indirection object itself has the correct parent
+            push0 this "x" pul_var member pul_eval parentset
         } };
 
         // then go through each element
@@ -1077,7 +1080,7 @@ plof {
                 // reparent it if the parent is the old object
                 push0 parent this "this" pul_var member pul_eval
                 {
-                    this "reparent" pul_var member pul_eval call pul_eval
+                    this "reparent" pul_var member pul_eval call
 
                     // then reset it
                     memberset
