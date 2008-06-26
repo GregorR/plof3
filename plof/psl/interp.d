@@ -1793,8 +1793,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     use3((PSLObject* a, PSLObject* b, PSLObject* c) {
                         if (!a.isArray && a.raw !is null &&
                             !b.isArray && b.raw !is null &&
-                            !c.isArray && c.raw !is null &&
-                            prp !is null) {
+                            !c.isArray && c.raw !is null) {
                             // get the top symbol and code
                             char[] code = cast(char[]) a.raw.data.dup;
                             ubyte[] top = b.raw.data.dup;
@@ -1806,6 +1805,11 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                                 // as a PSL file
                                 psl = pslProgramData(cast(ubyte[]) code);
                             } else {
+                                if (prp is null) {
+                                    throw new InterpreterFailure(
+                                        "Cannot parse .plof files outside of immediate blocks.");
+                                }
+
                                 psl = prp.parse(code, top, file);
 
                                 // scream and cry if it failed to parse
