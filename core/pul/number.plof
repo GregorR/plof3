@@ -117,7 +117,7 @@ var NativeNumber = Number : [
 
     // Arithmetic functions
     arithOp = (x, op) {
-        var res = NativeNumber : [];
+        var res = NativeNumber;
         x = x as NativeNumber;
 
         psl {
