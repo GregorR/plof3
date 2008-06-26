@@ -36,6 +36,7 @@ import tango.stdc.stdlib;
 
 import plof.prp.prp;
 
+import plof.psl.bignum;
 import plof.psl.file;
 import plof.psl.interp;
 import plof.psl.pslobject;
@@ -158,6 +159,12 @@ int main(char[][] args)
         if (fcont.length) {
             Stderr("Failed to parse! Remaining: '")(fcont)("'").newline;
         }
+
+        /* (for nasty debugging) Add an annotation
+        ubyte[] bnbuf;
+        bnbuf.length = bignumBytesReq(plofFile.length);
+        intToPSLBignum(plofFile.length, bnbuf);
+        psl = [cast(ubyte) 0xFF] ~ bnbuf ~ cast(ubyte[]) plofFile ~ [cast(ubyte) 0xE0] ~ psl; */
         
         // Run or compile it
         if (outFile.length) {
