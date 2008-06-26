@@ -1,11 +1,10 @@
 /* the 'version' array is present in all NFIs, but needs to be translated to a
  * Plof array of Plof strings */
 var versions = opArray(psl { version });
-versions.apply((__psl_str) {
-    return(opString(__psl_str));
-});
+versions.apply(opString);
 
 // then include (at runtime) the appropriate NFI
 /*if(("CNFI" in versions), (
     rtInclude(cnfi.psl);
 )); // need opEquals on Strings for this */
+rtInclude(cnfi.psl);
