@@ -770,7 +770,7 @@ pslbnf {
         // assert that the name exists
         {pul_fc}
         push1 3 integer index concat
-        {push1 push1 null memberset pul_varwrap} concat
+        {push1 push1 this "Object" pul_var member memberset pul_varwrap} concat
     }
 
     // Literals
