@@ -899,7 +899,7 @@ pslbnf {
         // args -> "args"
         {
             this "__pul_args" push2 memberset pop
-            this "args"
+            pul_fc "args"
             {
                 this "__pul_args" pul_var member
                 1 integer array
@@ -917,7 +917,7 @@ pslbnf {
         // args -> "args"
         {
             this "__pul_args" push2 memberset pop
-            this "args"
+            pul_fc "args"
             {
                 this "__pul_args" pul_var member
                 1 integer array
