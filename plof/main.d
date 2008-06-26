@@ -187,11 +187,17 @@ int main(char[][] args)
             } else {
                 Stdout("Plof> ").flush();
             }
-            line = Cin.copyln();
-            if (line == "") {
+            
+            if (!Cin.readln(line)) {
+                // end of input
+                Stdout.newline;
+                break;
+
+            } else if (line == "") {
                 // blank line, cancel whatever we're doing
                 code = "";
                 continue;
+
             } else {
                 code ~= line ~ "\n";
             }
