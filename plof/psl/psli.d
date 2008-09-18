@@ -28,6 +28,8 @@ module plof.psl.psli;
 import tango.io.Console;
 import tango.io.File;
 
+import tango.math.Math;
+
 import plof.psl.file;
 import plof.psl.interp;
 

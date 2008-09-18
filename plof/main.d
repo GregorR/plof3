@@ -30,6 +30,8 @@ import tango.io.File;
 import tango.io.FilePath;
 import tango.io.Stdout;
 
+import tango.math.Math;
+
 import tango.sys.Environment;
 
 import tango.stdc.stdlib;

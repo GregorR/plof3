@@ -27,7 +27,7 @@ module plof.prp.packrat_test;
 
 import tango.io.Stdout;
 
-import tango.math.Random;
+import tango.math.random.Kiss;
 
 import tango.time.StopWatch;
 
@@ -54,11 +54,11 @@ int main()
 
         // put in random numbers
         for (int j = 0; j < l; j += 2) {
-            inp[j] = (Random.shared.next % 10) + '0';
+            inp[j] = (Kiss.shared.toInt % 10) + '0';
         }
         // and random operators
         for (int j = 1; j < l; j += 2) {
-            if (Random.shared.next & 0x1) {
+            if (Kiss.shared.toInt & 0x1) {
                 inp[j] = '*';
             } else {
                 inp[j] = '+';

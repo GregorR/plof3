@@ -873,14 +873,14 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                                 case 8:
                                     static if(ptrdiff_t.sizeof >= 8) {
                                         val =
-                                            (a.raw.data[0] << 56) |
-                                            (a.raw.data[1] << 48) |
-                                            (a.raw.data[2] << 40) |
-                                            (a.raw.data[3] << 32) |
-                                            (a.raw.data[4] << 24) |
-                                            (a.raw.data[5] << 16) |
-                                            (a.raw.data[6] << 8) |
-                                            (a.raw.data[7]);
+                                            (cast(ptrdiff_t) a.raw.data[0] << 56) |
+                                            (cast(ptrdiff_t) a.raw.data[1] << 48) |
+                                            (cast(ptrdiff_t) a.raw.data[2] << 40) |
+                                            (cast(ptrdiff_t) a.raw.data[3] << 32) |
+                                            (cast(ptrdiff_t) a.raw.data[4] << 24) |
+                                            (cast(ptrdiff_t) a.raw.data[5] << 16) |
+                                            (cast(ptrdiff_t) a.raw.data[6] << 8) |
+                                            (cast(ptrdiff_t) a.raw.data[7]);
                                     } else {
                                         val =
                                             (a.raw.data[4] << 24) |
