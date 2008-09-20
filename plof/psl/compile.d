@@ -111,7 +111,6 @@ static this() {
     "member"    : 0x0E,
     "memberset" : 0x0F,
     "parent"    : 0x10,
-    "parentset" : 0x11,
     "call"      : 0x12,
     "return"    : 0x13,
     "throw"     : 0x14,
