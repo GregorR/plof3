@@ -105,9 +105,6 @@ void interpret(ubyte[] psl, bool immediate = false, IPlofRuntimeParser prp = nul
 PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                      bool immediate = false, IPlofRuntimeParser prp = null)
 {
-    // keep track of the topmost element of the stack we didn't push
-    int lastlen = stack.stack.length;
-
     // for debugging purposes, the filename, line and column
     char[] dfile;
     int dline = -1, dcol = -1;
@@ -117,17 +114,10 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
         stack.stack ~= x;
         x.gc.refUp();
     }
-    void checkLL()
-    {
-        if (stack.stack.length < lastlen) {
-            lastlen = stack.stack.length;
-        }
-    }
     void pop() {
         if (stack.stack.length > 0) {
             stack.stack[$-1].gc.refDown();
             stack.stack.length = stack.stack.length - 1;
-            checkLL();
         }
     }
     PSLObject* popBless() {
@@ -135,7 +125,6 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
         if (stack.stack.length > 0) {
             r = stack.stack[$-1];
             stack.stack.length = stack.stack.length - 1;
-            checkLL();
             r.gc.blessUp();
             r.gc.refDown();
         } else {
@@ -177,21 +166,36 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
         d.gc.blessDown();
     }
     PSLObject* call(PSLObject* called, PSLObject* incontext, ubyte[] npsl) {
-        // Create a context
+        // Create a stack,
+        PSLStack* nstack = PSLStack.allocate();
+        nstack.gc.blessUp();
+
+        // transfer the argument
+        PSLObject* arg = popBless();
+        nstack.stack ~= arg;
+        arg.gc.refUp();
+        arg.gc.blessDown();
+
+        // and a master context,
         PSLObject* ncontext = PSLObject.allocate(incontext);
         ncontext.gc.blessUp();
 
         // set +procedure
         ncontext.members.add("+procedure", cast(PlofGCable*) called);
 
-        // then call
-        PSLObject* thrown = interpret(npsl, stack, ncontext, false, prp);
+        // and run it
+        PSLObject* thrown = interpret(npsl, nstack, ncontext, immediate, prp);
 
-        // the interpretation could have popped, so check our lastlen
-        checkLL();
+        // get the argument back
+        if (nstack.stack.length) {
+            push(nstack.stack[$-1]);
+	} else {
+	    push(pslNull);
+	}
 
-        // and get rid of the context
+        // then get rid of the context and stack
         ncontext.gc.blessDown();
+        nstack.gc.blessDown();
 
         return thrown;
     }
@@ -412,7 +416,9 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
     
                 case 0x0C: // new
                 {
-                    PSLObject* no = PSLObject.allocate(context);
+                    PSLObject* spar = popBless();
+                    PSLObject* no = PSLObject.allocate(spar);
+		    spar.gc.blessDown();
                     push(no);
                     break;
                 }
@@ -497,12 +503,6 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
     
-                case 0x11: // parentset
-                    use2((PSLObject* a, PSLObject* b) {
-                        a.parent = b;
-                    });
-                    break;
-    
                 case 0x12: // call
                 {
                     PSLObject* thrown;
@@ -516,7 +516,6 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
     
                     // if it threw, die
                     if (thrown !is null) {
-                        stack.truncate(lastlen);
                         return thrown;
                     }
                     break;
@@ -530,9 +529,6 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     // get the object to throw,
                     PSLObject* tothrow = popBless();
                     
-                    // then truncate the stack
-                    stack.truncate(lastlen);
-    
                     // and throw it
                     return tothrow;
                 }
@@ -570,7 +566,6 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
     
                     if (thrown !is null) {
                         // something was thrown that was not cought, so throw it further
-                        stack.truncate(lastlen);
                         return thrown;
                     }
     
@@ -599,7 +594,6 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
     
                     if (thrown !is null) {
                         // one side or the other threw, so throw
-                        stack.truncate(lastlen);
                         return thrown;
                     }
                     break;
@@ -997,7 +991,6 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
     
                     if (thrown !is null) {
                         // threw something, so bail out
-                        stack.truncate(lastlen);
                         return thrown;
                     }
                     break;
@@ -1196,7 +1189,6 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
     
                     if (thrown !is null) {
                         // threw something, so bail out
-                        stack.truncate(lastlen);
                         return thrown;
                     }
                     break;
