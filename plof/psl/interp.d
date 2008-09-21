@@ -517,6 +517,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                                     push(b);
                                     return;
                                 }
+                                a = a.parent;
                             }
 
                             // not found!
