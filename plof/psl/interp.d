@@ -1751,6 +1751,8 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                                 Stdout("Long string (procedure?)").newline;
                             } else {
                                 Stdout(cast(char[]) a.raw.data).newline;
+                                if (a.raw.data.length == ptrdiff_t.sizeof)
+                                    Stdout("Integer value: ")(*(cast(ptrdiff_t*) a.raw.data.ptr)).newline;
                             }
                         } else {
                             if (a is pslNull) {
