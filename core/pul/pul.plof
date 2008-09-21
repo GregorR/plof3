@@ -1,0 +1,341 @@
+/*
+ * The Plof User Language basic definitions. This file gets you from the grammar defined in base.psl
+ * to a functional PUL grammar, and creates mostly-empty Object and Function objects. object.pul
+ * should be loaded next to flesh out the important objects.
+ *
+ *  Copyright (c) 2007, 2008  Gregor Richards
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to
+ *  deal in the Software without restriction, including without limitation the
+ *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *  sell copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *  IN THE SOFTWARE.
+ */
+
+// Whatever primary is set to is the primary language. This indirection makes it easily switchable
+__grammar_add(top, primary, push0 0 integer index);
+
+// Basic PSL: psl { psl code here };
+__grammar_add(top, psl, push0 0 integer index);
+__grammar_add(psl,
+              white /psl/ token white /\{/ white pslOps /\}/ white /;/ white,
+              push0 6 integer index);
+
+// PSL BNF: pslbnf { production = target => { code } };
+__grammar_add(top, pslbnf, push0 0 integer index);
+__grammar_add(pslbnf,
+              white /pslbnf/ white token /\{/ white pslbnf_productions /\}/ white /;/ white,
+              push0 6 integer index {[gcommit]} concat);
+__grammar_add(pslbnf_productions,
+              pslbnf_productions pslbnf_production,
+              push0 0 integer index push1 1 integer index concat);
+__grammar_add(pslbnf_productions,
+              pslbnf_production,
+              push0 0 integer index);
+__grammar_add(pslbnf_production,
+              /[A-Za-z_][A-Za-z0-9_]*/ white /=/ white pslbnf_targets
+                  /=>/ white /\{/ white pslOps /\}/ white,
+              push0 0 integer index
+                  push1 4 integer index
+                  push2 9 integer index wrap
+                  {gadd}
+                  concat concat concat iwrap);
+__grammar_add(pslbnf_production,
+              /[A-Za-z_][A-Za-z0-9_]*/ white /=>/ white /[A-Za-z_][A-Za-z0-9_]*/ white /;/ white,
+
+              // set that->next to this->next, then this->next to that */
+
+              {global} "grammar_" null push3 0 integer index call concat "_next" concat wrap concat {member} concat
+              // inner stack: global.grammar_<this>_next
+              {global} concat "grammar_" null push3 4 integer index call concat "_next" concat wrap concat
+              // inner stack: global.grammar_<this>_next global "grammar_<that>_next"
+              {push2 memberset} concat
+              // inner stack: global.grammar_<this>_next
+
+              null push2 4 integer index call "_next" concat wrap concat
+              {push0 grem} concat
+              // inner stack: global.grammar_<this>_next "<that>_next"
+              {push1 1 integer array {push0 0 integer index} gadd pop} concat
+              // inner stack:
+
+              // now this->next = that
+              null push2 4 integer index call wrap concat
+              // inner stack: "<that>"
+              {global} concat "grammar_" null push3 0 integer index call concat "_next" concat wrap concat
+              // inner stack: "<that>" global "grammar_<this>_next"
+              {push2 memberset} concat
+              // inner stack: "<that>"
+
+              null push2 0 integer index call "_next" concat wrap concat
+              {push0 grem} concat
+              // inner stack: "<that>" "<that>_next"
+              {push1 1 integer array {push0 0 integer index} gadd pop} concat
+              // inner stack:
+
+              // wrap it all up in an immediate
+              iwrap);
+__grammar_add(pslbnf_targets,
+              pslbnf_targets pslbnf_target,
+              push0 0 integer index
+                  push1 1 integer index
+                  {aconcat}
+                  concat concat);
+__grammar_add(pslbnf_targets,
+              pslbnf_target,
+              push0 0 integer index);
+__grammar_add(pslbnf_target,
+              /[A-Za-z_][A-Za-z0-9_]*/ white,
+              push0 0 integer index
+                  {1 integer array}
+                  concat);
+__grammar_add(pslbnf_target,
+              /(\/([^\\\/]*\\.)*[^\\\/]*\/)/ white,
+              push0 0 integer index
+                  {1 integer array}
+                  concat);
+__grammar_commit();
+
+psl {
+    /* PUL objects can potentially be unevaluated. This function evaluates
+     * unevaluated objects, or just returns the object if it has been evaluated */
+    global "__pul_eval" {
+        // is __pul_v set?
+        push0 "__pul_v" member null
+        {
+            // no __pul_v, how 'bout __pul_e?
+            push0 "__pul_e" member null
+            {
+                // neither, it's just a value
+            }
+            {
+                // __pul_e is set, call it
+                null push1 "__pul_e" member call
+                global "__pul_eval" member call
+            } cmp
+        }
+        {
+            // __pul_v is set, use it
+            "__pul_v" member
+            global "__pul_eval" member call
+        } cmp
+    } memberset
+
+    global "__pul_forceEval" {
+        // is __pul_e set?
+        push0 push0 "__pul_e" member null
+        {
+            // neither, it's just a value
+        }
+        {
+            // call __pul_e
+            null push1 "__pul_e" member call
+            global "__pul_eval" member call
+        } cmp
+    } memberset
+
+    // PUL returns are by-ref, so you can set through them. __pul_set does so
+    global "__pul_set" {
+        // arg: [byref object, new value]
+
+        // make sure __pul_s is set
+        push0 0 integer index "__pul_s" member null
+        {
+            // not set: This should be handled better (FIXME)
+        }
+        {
+            // OK, set it
+            push0 1 integer index
+            push1 0 integer index "__pul_s" member call
+        } cmp
+    } memberset
+
+    // create an unevaluated value from a procedure
+    global "__pul_funcwrap" {
+        // arg: procedure
+
+        // put the procedure in a variable
+        this "proc" push2 memberset
+
+        // then make an object
+        null new
+
+        // first, __pul_e
+        push0 "__pul_e" {
+            null this "proc" resolve member call
+            global "__pul_eval" member call
+        } memberset
+
+        // then __pul_f
+        push0 "__pul_s" {
+            null this "proc" resolve member call
+            push1 2 integer array
+            global "__pul_set" member call
+        } memberset
+    } memberset
+
+    // create an unevaluated value from a variable
+    global "__pul_varwrap" {
+        // arg: [context, name]
+
+        // put the argument in a var
+        this "arg" push2 memberset
+
+        // then make an object
+        null new
+
+        // first, __pul_e
+        push0 "__pul_e" {
+            this "arg" resolve member
+            push0 0 integer index
+            push1 1 integer index
+            member
+        } memberset
+
+        // then, __pul_s
+        push0 "__pul_s" {
+            this "arg" resolve member
+            push0 0 integer index
+            push1 1 integer index
+            push3
+            memberset
+        } memberset
+    } memberset
+
+    // PUL functions are marked with the variable __pul_fc. This finds it
+    global "__pul_fcontext" {
+        // arg: context
+        "__pul_fc" resolve pop
+    } memberset
+};
+
+// some convenient pseudo-ops
+pslbnf {
+    pslOp = /pul_eval/ token white => {
+        {global "__pul_eval" member call}
+    }
+
+    pslOp = /pul_forceEval/ token white => {
+        {global "__pul_forceEval" member call}
+    }
+
+    pslOp = /pul_set/ token white => {
+        {2 integer array global "__pul_set" member call pop}
+    }
+
+    pslOp = /pul_funcwrap/ token white => {
+        {global "__pul_funcwrap" member call}
+    }
+
+    pslOp = /pul_varwrap/ token white => {
+        {2 integer array global "__pul_varwrap" member call}
+    }
+
+    pslOp = /pul_fcontext/ token white => {
+        {this global "__pul_fcontext" member call}
+    }
+};
+
+// the base PUL grammar
+pslbnf {
+    top = white top_next => { push0 1 integer index }
+    top => plof_statement;
+
+    plof_statement = plof_statement_next /;/ white => {
+        push0 0 integer index {pul_eval pop} concat
+    }
+    plof_statement => plof_comma;
+
+    plof_semicolon = plof_semicolon /;/ white plof_semicolon_next => {
+        push0 0 integer index {pul_eval pop} concat
+        push1 3 integer index concat
+        wrap {pul_funcwrap} concat
+    }
+    plof_semicolon = plof_semicolon /;/ white => {
+        push0 0 integer index {pul_eval pop null} concat
+        wrap {pul_funcwrap} concat
+    }
+    plof_semicolon = plof_semicolon_next => { push0 0 integer index }
+    plof_semicolon => plof_comma;
+
+    plof_comma = plof_comma /,/ white plof_comma_next => {
+        push0 0 integer index {pul_eval pop} concat
+        push1 3 integer index concat
+        wrap {pul_funcwrap} concat
+    }
+    plof_comma = plof_comma_next => { push0 0 integer index }
+    plof_comma => plof_assign;
+
+    plof_assign = plof_assign_next /:=/ white plof_assign => {
+        push0 0 integer index
+        push1 3 integer index concat
+        {pul_eval pul_set} concat
+        wrap {pul_funcwrap} concat
+    }
+    plof_assign = plof_assign_next => { push0 0 integer index }
+    plof_assign => plof_bind;
+
+    plof_bind = plof_bind_next /=/ white plof_bind => {
+        push0 0 integer index
+        push1 3 integer index concat
+        {pul_set} concat
+        wrap {pul_funcwrap} concat
+    }
+    plof_bind = plof_bind_next => { push0 0 integer index }
+    plof_bind => plof_group;
+
+    plof_group = /\(/ white plof_semicolon /\)/ white => {
+        push0 2 integer index
+    }
+    plof_group = plof_group /\./ white plof_identifier => {
+        push0 0 integer index
+        push1 3 integer index concat
+        {member} concat wrap
+        {pul_funcwrap} concat
+    }
+    plof_group = plof_group_next => { push0 0 integer index }
+    plof_group => plof_var;
+
+    plof_var = /var/ token white plof_identifier => {
+        {pul_fcontext}
+        push1 3 integer index concat
+        {push1 push1 null memberset pul_varwrap} concat
+        wrap {pul_funcwrap} concat
+    }
+    plof_var = plof_var_next => { push0 0 integer index }
+    plof_var => plof_literal;
+
+    plof_literal = /psl/ token white /\{/ white pslOps /\}/ white => {
+        push0 5 integer index
+        wrap {pul_funcwrap} concat
+    }
+    plof_literal = plof_literal_next => { push0 0 integer index }
+    plof_literal => plof_ident;
+
+    plof_ident = plof_identifier => {
+        {pul_fcontext}
+        push0 0 integer index concat
+        {resolve} concat
+        wrap {pul_funcwrap} concat
+    }
+
+    plof_identifier = /[A-Za-z_][A-Za-z0-9_]*/ token white => {
+        push0 0 integer index
+    }
+};
+
+// the top context is a PUL fcontext
+psl {
+    this "__pul_fc" this memberset
+};
