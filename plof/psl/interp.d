@@ -184,7 +184,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
         ncontext.members.add("+procedure", cast(PlofGCable*) called);
 
         // and run it
-        PSLObject* thrown = interpret(npsl, nstack, ncontext, immediate, prp);
+        PSLObject* thrown = interpret(npsl, nstack, ncontext, false, prp);
 
         // get the argument back
         if (nstack.stack.length) {
@@ -500,6 +500,32 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                 case 0x10: // parent
                     use1((PSLObject* a) {
                         push(a.parent);
+                    });
+                    break;
+
+                case 0x11: // resolve
+                    use2((PSLObject* a, PSLObject* b) {
+                        if (!b.isArray && b.raw !is null) {
+                            // get the name ...
+                            char[] name = cast(char[]) b.raw.data;
+
+                            // and look for it
+                            while (a != pslNull) {
+                                if (a.members.get(name) !is null) {
+                                    // found it!
+                                    push(a);
+                                    push(b);
+                                    return;
+                                }
+                            }
+
+                            // not found!
+                            push(pslNull);
+                            push(pslNull);
+
+                        } else {
+                            throw new InterpreterFailure("resolve's second parameter must be raw data.");
+                        }
                     });
                     break;
     

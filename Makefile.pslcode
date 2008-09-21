@@ -5,8 +5,7 @@ PLOFC=./plofc
 BASE_PSL_SOURCE=core/base/base.apsl
 
 # pul.psl is the minimum required for a PUL system
-PUL_PSL_SOURCE=base.psl
-#core/pul/pul.plof
+PUL_PSL_SOURCE=base.psl core/pul/pul.plof
 
 # std.psl is the PUL standard library
 STD_PSL_SOURCE=

@@ -1,44 +1,44 @@
 [
 "top"
+"white" "base"
+2 integer array
+{push0 1 integer index}
+gadd
+
 "base"
-1 integer array
+"gadd" "/;/" "white"
+3 integer array
 {push0 0 integer index}
 gadd
 
 "base"
-"gadd" "white" "/;/" "white"
-4 integer array
+"grem" "/;/" "white"
+3 integer array
 {push0 0 integer index}
 gadd
 
 "base"
-"grem" "white" "/;/" "white"
-4 integer array
-{push0 0 integer index}
-gadd
-
-"base"
-"gcommit" "white" "/;/" "white"
-4 integer array
+"gcommit" "/;/" "white"
+3 integer array
 {push0 0 integer index}
 gadd
 
 "gadd"
-"white" "/__grammar_add/" "token" "white" "/\(/" "white" "/[a-zA-Z0-9_]+/" "white" "/,/" "grammarElems" "white" "/,/" "pslOps" "white" "/\)/"
-15 integer array
-{push0 6 integer index push1 9 integer index push2 12 integer index wrap {gadd} concat concat concat
+"/__grammar_add/" "white" "token" "white" "/\(/" "white" "/[a-zA-Z0-9_]+/" "white" "/,/" "white" "grammarElems" "/,/" "white" "pslOps" "/\)/" "white"
+16 integer array
+{push0 6 integer index push1 10 integer index concat push1 13 integer index wrap concat {gadd} concat
  iwrap}
 gadd
 
 "grem"
-"white" "/__grammar_rem/" "token" "white" "/\(/" "white" "/[a-zA-Z0-9_]+/" "white" "/\)/"
-9 integer array
+"/__grammar_rem/" "white" "token" "white" "/\(/" "white" "/[a-zA-Z0-9_]+/" "white" "/\)/" "white"
+10 integer array
 {push0 6 integer index {grem} concat
  iwrap}
 gadd
 
 "gcommit"
-"white" "/__grammar_commit/" "token" "white" "/\(/" "white" "/\)/"
+"/__grammar_commit/" "token" "white" "/\(/" "white" "/\)/" "white"
 7 integer array
 {{[gcommit]}}
 gadd
@@ -56,15 +56,15 @@ gadd
 gadd
 
 "grammarElem"
-"white" "/[a-zA-Z0-9_]+/"
+"/[a-zA-Z0-9_]+/" "white"
 2 integer array
-{push0 1 integer index}
+{push0 0 integer index}
 gadd
 
 "grammarElem"
-"white" "/(\/([^\/\\]*\\.)*[^\/\\]*\/)/"
+"/(\/([^\/\\]*\\.)*[^\/\\]*\/)/" "white"
 2 integer array
-{push0 1 integer index}
+{push0 0 integer index}
 gadd
 
 "pslOps"
@@ -92,33 +92,33 @@ gadd
 gadd
 
 "pslOp"
-"white" "/\{/" "pslOps" "white" "/\}/"
+"/\{/" "white" "pslOps" "/\}/" "white"
 5 integer array
 {push0 2 integer index wrap}
 gadd
 
 "pslOp"
-"white" "/\{/" "white" "/\}/"
+"/\{/" "white" "/\}/" "white"
 4 integer array
 {{{}}}
 gadd
 
 "pslOp"
-"white" "/\[/" "pslOps" "white" "/\]/"
+"/\[/" "white" "pslOps" "/\]/" "white"
 5 integer array
 {push0 2 integer index iwrap}
 gadd
 
 "pslOp"
-"white" "/\[/" "white" "/\]/"
+"/\[/" "white" "/\]/" "white"
 4 integer array
 {{{}}}
 gadd
 
 "pslOp"
-"white" "/\x22/" "/[^\x22]*/" "/\x22/"
+"/\x22/" "/[^\x22]*/" "/\x22/" "white"
 4 integer array
-{push0 2 integer index}
+{push0 1 integer index}
 gadd
 
 "pslOp"
@@ -126,90 +126,91 @@ gadd
 1 integer array
 {push0 0 integer index}
 gadd
-
-"pslOp" "white" "/aconcat/" "token" 3 integer array {{aconcat}} gadd
-"pslOp" "white" "/add/" "token" 3 integer array {{add}} gadd
-"pslOp" "white" "/and/" "token" 3 integer array {{and}} gadd
-"pslOp" "white" "/array/" "token" 3 integer array {{array}} gadd
-"pslOp" "white" "/byte/" "token" 3 integer array {{byte}} gadd
-"pslOp" "white" "/call/" "token" 3 integer array {{call}} gadd
-"pslOp" "white" "/catch/" "token" 3 integer array {{catch}} gadd
-"pslOp" "white" "/cmp/" "token" 3 integer array {{cmp}} gadd
-"pslOp" "white" "/combine/" "token" 3 integer array {{combine}} gadd
-"pslOp" "white" "/concat/" "token" 3 integer array {{concat}} gadd
-"pslOp" "white" "/debug/" "token" 3 integer array {{debug}} gadd
-"pslOp" "white" "/div/" "token" 3 integer array {{div}} gadd
-"pslOp" "white" "/dsrccol/" "token" 3 integer array {{dsrccol}} gadd
-"pslOp" "white" "/dsrcfile/" "token" 3 integer array {{dsrcfile}} gadd
-"pslOp" "white" "/dsrcline/" "token" 3 integer array {{dsrcline}} gadd
-"pslOp" "white" "/eq/" "token" 3 integer array {{eq}} gadd
-"pslOp" "white" "/fadd/" "token" 3 integer array {{fadd}} gadd
-"pslOp" "white" "/fdiv/" "token" 3 integer array {{fdiv}} gadd
-"pslOp" "white" "/feq/" "token" 3 integer array {{feq}} gadd
-"pslOp" "white" "/fgt/" "token" 3 integer array {{fgt}} gadd
-"pslOp" "white" "/fgte/" "token" 3 integer array {{fgte}} gadd
-"pslOp" "white" "/fint/" "token" 3 integer array {{fint}} gadd
-"pslOp" "white" "/float/" "token" 3 integer array {{float}} gadd
-"pslOp" "white" "/flt/" "token" 3 integer array {{flt}} gadd
-"pslOp" "white" "/flte/" "token" 3 integer array {{flte}} gadd
-"pslOp" "white" "/fmod/" "token" 3 integer array {{fmod}} gadd
-"pslOp" "white" "/fmul/" "token" 3 integer array {{fmul}} gadd
-"pslOp" "white" "/fne/" "token" 3 integer array {{fne}} gadd
-"pslOp" "white" "/fsub/" "token" 3 integer array {{fsub}} gadd
-"pslOp" "white" "/gadd/" "token" 3 integer array {{gadd}} gadd
-"pslOp" "white" "/gaddgroup/" "token" 3 integer array {{gaddgroup}} gadd
-"pslOp" "white" "/gaddstop/" "token" 3 integer array {{gaddstop}} gadd
-"pslOp" "white" "/gcommit/" "token" 3 integer array {{gcommit}} gadd
-"pslOp" "white" "/global/" "token" 3 integer array {{global}} gadd
-"pslOp" "white" "/grem/" "token" 3 integer array {{grem}} gadd
-"pslOp" "white" "/gremgroup/" "token" 3 integer array {{gremgroup}} gadd
-"pslOp" "white" "/gremstop/" "token" 3 integer array {{gremstop}} gadd
-"pslOp" "white" "/gt/" "token" 3 integer array {{gt}} gadd
-"pslOp" "white" "/gte/" "token" 3 integer array {{gte}} gadd
-"pslOp" "white" "/include/" "token" 3 integer array {{include}} gadd
-"pslOp" "white" "/index/" "token" 3 integer array {{index}} gadd
-"pslOp" "white" "/indexset/" "token" 3 integer array {{indexset}} gadd
-"pslOp" "white" "/integer/" "token" 3 integer array {{integer}} gadd
-"pslOp" "white" "/intwidth/" "token" 3 integer array {{intwidth}} gadd
-"pslOp" "white" "/iwrap/" "token" 3 integer array {{iwrap}} gadd
-"pslOp" "white" "/length/" "token" 3 integer array {{length}} gadd
-"pslOp" "white" "/lengthset/" "token" 3 integer array {{lengthset}} gadd
-"pslOp" "white" "/loop/" "token" 3 integer array {{loop}} gadd
-"pslOp" "white" "/lt/" "token" 3 integer array {{lt}} gadd
-"pslOp" "white" "/lte/" "token" 3 integer array {{lte}} gadd
-"pslOp" "white" "/member/" "token" 3 integer array {{member}} gadd
-"pslOp" "white" "/members/" "token" 3 integer array {{members}} gadd
-"pslOp" "white" "/memberset/" "token" 3 integer array {{memberset}} gadd
-"pslOp" "white" "/mod/" "token" 3 integer array {{mod}} gadd
-"pslOp" "white" "/mul/" "token" 3 integer array {{mul}} gadd
-"pslOp" "white" "/nand/" "token" 3 integer array {{nand}} gadd
-"pslOp" "white" "/ne/" "token" 3 integer array {{ne}} gadd
-"pslOp" "white" "/new/" "token" 3 integer array {{new}} gadd
-"pslOp" "white" "/nor/" "token" 3 integer array {{nor}} gadd
-"pslOp" "white" "/null/" "token" 3 integer array {{null}} gadd
-"pslOp" "white" "/nxor/" "token" 3 integer array {{nxor}} gadd
-"pslOp" "white" "/or/" "token" 3 integer array {{or}} gadd
-"pslOp" "white" "/parent/" "token" 3 integer array {{parent}} gadd
-"pslOp" "white" "/parse/" "token" 3 integer array {{parse}} gadd
-"pslOp" "white" "/pop/" "token" 3 integer array {{pop}} gadd
-"pslOp" "white" "/print/" "token" 3 integer array {{print}} gadd
-"pslOp" "white" "/push0/" "token" 3 integer array {{push0}} gadd
-"pslOp" "white" "/push1/" "token" 3 integer array {{push1}} gadd
-"pslOp" "white" "/push2/" "token" 3 integer array {{push2}} gadd
-"pslOp" "white" "/push3/" "token" 3 integer array {{push3}} gadd
-"pslOp" "white" "/push4/" "token" 3 integer array {{push4}} gadd
-"pslOp" "white" "/push5/" "token" 3 integer array {{push5}} gadd
-"pslOp" "white" "/push6/" "token" 3 integer array {{push6}} gadd
-"pslOp" "white" "/push7/" "token" 3 integer array {{push7}} gadd
-"pslOp" "white" "/return/" "token" 3 integer array {{return}} gadd
-"pslOp" "white" "/sl/" "token" 3 integer array {{sl}} gadd
-"pslOp" "white" "/sr/" "token" 3 integer array {{sr}} gadd
-"pslOp" "white" "/sub/" "token" 3 integer array {{sub}} gadd
-"pslOp" "white" "/this/" "token" 3 integer array {{this}} gadd
-"pslOp" "white" "/throw/" "token" 3 integer array {{throw}} gadd
-"pslOp" "white" "/version/" "token" 3 integer array {{version}} gadd
-"pslOp" "white" "/wrap/" "token" 3 integer array {{wrap}} gadd
-"pslOp" "white" "/xor/" "token" 3 integer array {{xor}} gadd
+ 
+"pslOp" "/aconcat/" "token" "white" 3 integer array {{aconcat}} gadd
+"pslOp" "/add/" "token" "white" 3 integer array {{add}} gadd
+"pslOp" "/and/" "token" "white" 3 integer array {{and}} gadd
+"pslOp" "/array/" "token" "white" 3 integer array {{array}} gadd
+"pslOp" "/byte/" "token" "white" 3 integer array {{byte}} gadd
+"pslOp" "/call/" "token" "white" 3 integer array {{call}} gadd
+"pslOp" "/catch/" "token" "white" 3 integer array {{catch}} gadd
+"pslOp" "/cmp/" "token" "white" 3 integer array {{cmp}} gadd
+"pslOp" "/combine/" "token" "white" 3 integer array {{combine}} gadd
+"pslOp" "/concat/" "token" "white" 3 integer array {{concat}} gadd
+"pslOp" "/debug/" "token" "white" 3 integer array {{debug}} gadd
+"pslOp" "/div/" "token" "white" 3 integer array {{div}} gadd
+"pslOp" "/dsrccol/" "token" "white" 3 integer array {{dsrccol}} gadd
+"pslOp" "/dsrcfile/" "token" "white" 3 integer array {{dsrcfile}} gadd
+"pslOp" "/dsrcline/" "token" "white" 3 integer array {{dsrcline}} gadd
+"pslOp" "/eq/" "token" "white" 3 integer array {{eq}} gadd
+"pslOp" "/fadd/" "token" "white" 3 integer array {{fadd}} gadd
+"pslOp" "/fdiv/" "token" "white" 3 integer array {{fdiv}} gadd
+"pslOp" "/feq/" "token" "white" 3 integer array {{feq}} gadd
+"pslOp" "/fgt/" "token" "white" 3 integer array {{fgt}} gadd
+"pslOp" "/fgte/" "token" "white" 3 integer array {{fgte}} gadd
+"pslOp" "/fint/" "token" "white" 3 integer array {{fint}} gadd
+"pslOp" "/float/" "token" "white" 3 integer array {{float}} gadd
+"pslOp" "/flt/" "token" "white" 3 integer array {{flt}} gadd
+"pslOp" "/flte/" "token" "white" 3 integer array {{flte}} gadd
+"pslOp" "/fmod/" "token" "white" 3 integer array {{fmod}} gadd
+"pslOp" "/fmul/" "token" "white" 3 integer array {{fmul}} gadd
+"pslOp" "/fne/" "token" "white" 3 integer array {{fne}} gadd
+"pslOp" "/fsub/" "token" "white" 3 integer array {{fsub}} gadd
+"pslOp" "/gadd/" "token" "white" 3 integer array {{gadd}} gadd
+"pslOp" "/gaddgroup/" "token" "white" 3 integer array {{gaddgroup}} gadd
+"pslOp" "/gaddstop/" "token" "white" 3 integer array {{gaddstop}} gadd
+"pslOp" "/gcommit/" "token" "white" 3 integer array {{gcommit}} gadd
+"pslOp" "/global/" "token" "white" 3 integer array {{global}} gadd
+"pslOp" "/grem/" "token" "white" 3 integer array {{grem}} gadd
+"pslOp" "/gremgroup/" "token" "white" 3 integer array {{gremgroup}} gadd
+"pslOp" "/gremstop/" "token" "white" 3 integer array {{gremstop}} gadd
+"pslOp" "/gt/" "token" "white" 3 integer array {{gt}} gadd
+"pslOp" "/gte/" "token" "white" 3 integer array {{gte}} gadd
+"pslOp" "/include/" "token" "white" 3 integer array {{include}} gadd
+"pslOp" "/index/" "token" "white" 3 integer array {{index}} gadd
+"pslOp" "/indexset/" "token" "white" 3 integer array {{indexset}} gadd
+"pslOp" "/integer/" "token" "white" 3 integer array {{integer}} gadd
+"pslOp" "/intwidth/" "token" "white" 3 integer array {{intwidth}} gadd
+"pslOp" "/iwrap/" "token" "white" 3 integer array {{iwrap}} gadd
+"pslOp" "/length/" "token" "white" 3 integer array {{length}} gadd
+"pslOp" "/lengthset/" "token" "white" 3 integer array {{lengthset}} gadd
+"pslOp" "/loop/" "token" "white" 3 integer array {{loop}} gadd
+"pslOp" "/lt/" "token" "white" 3 integer array {{lt}} gadd
+"pslOp" "/lte/" "token" "white" 3 integer array {{lte}} gadd
+"pslOp" "/member/" "token" "white" 3 integer array {{member}} gadd
+"pslOp" "/members/" "token" "white" 3 integer array {{members}} gadd
+"pslOp" "/memberset/" "token" "white" 3 integer array {{memberset}} gadd
+"pslOp" "/mod/" "token" "white" 3 integer array {{mod}} gadd
+"pslOp" "/mul/" "token" "white" 3 integer array {{mul}} gadd
+"pslOp" "/nand/" "token" "white" 3 integer array {{nand}} gadd
+"pslOp" "/ne/" "token" "white" 3 integer array {{ne}} gadd
+"pslOp" "/new/" "token" "white" 3 integer array {{new}} gadd
+"pslOp" "/nor/" "token" "white" 3 integer array {{nor}} gadd
+"pslOp" "/null/" "token" "white" 3 integer array {{null}} gadd
+"pslOp" "/nxor/" "token" "white" 3 integer array {{nxor}} gadd
+"pslOp" "/or/" "token" "white" 3 integer array {{or}} gadd
+"pslOp" "/parent/" "token" "white" 3 integer array {{parent}} gadd
+"pslOp" "/parse/" "token" "white" 3 integer array {{parse}} gadd
+"pslOp" "/pop/" "token" "white" 3 integer array {{pop}} gadd
+"pslOp" "/print/" "token" "white" 3 integer array {{print}} gadd
+"pslOp" "/push0/" "token" "white" 3 integer array {{push0}} gadd
+"pslOp" "/push1/" "token" "white" 3 integer array {{push1}} gadd
+"pslOp" "/push2/" "token" "white" 3 integer array {{push2}} gadd
+"pslOp" "/push3/" "token" "white" 3 integer array {{push3}} gadd
+"pslOp" "/push4/" "token" "white" 3 integer array {{push4}} gadd
+"pslOp" "/push5/" "token" "white" 3 integer array {{push5}} gadd
+"pslOp" "/push6/" "token" "white" 3 integer array {{push6}} gadd
+"pslOp" "/push7/" "token" "white" 3 integer array {{push7}} gadd
+"pslOp" "/resolve/" "token" "white" 3 integer array {{resolve}} gadd
+"pslOp" "/return/" "token" "white" 3 integer array {{return}} gadd
+"pslOp" "/sl/" "token" "white" 3 integer array {{sl}} gadd
+"pslOp" "/sr/" "token" "white" 3 integer array {{sr}} gadd
+"pslOp" "/sub/" "token" "white" 3 integer array {{sub}} gadd
+"pslOp" "/this/" "token" "white" 3 integer array {{this}} gadd
+"pslOp" "/throw/" "token" "white" 3 integer array {{throw}} gadd
+"pslOp" "/version/" "token" "white" 3 integer array {{version}} gadd
+"pslOp" "/wrap/" "token" "white" 3 integer array {{wrap}} gadd
+"pslOp" "/xor/" "token" "white" 3 integer array {{xor}} gadd
 
 "white"
 "/(([ \t\r\n]*(\/\/[^\r\n]*[\r\n])?(\/\*([^\*]*\*[^\/])*[^\*]*\*\/)?)*)/"
@@ -224,9 +225,9 @@ gadd
 gadd
 
 "number"
-"white" "digits" "token"
+"digits" "token" "white"
 3 integer array
-{push0 1 integer index
+{push0 0 integer index
  push0 24 integer sr byte
  push1 16 integer sr byte
  push2 8 integer sr byte

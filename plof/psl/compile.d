@@ -111,6 +111,7 @@ static this() {
     "member"    : 0x0E,
     "memberset" : 0x0F,
     "parent"    : 0x10,
+    "resolve"   : 0x11,
     "call"      : 0x12,
     "return"    : 0x13,
     "throw"     : 0x14,
@@ -180,9 +181,9 @@ static this() {
     ];
 
     /* foreach (op; pslOps.keys.dup.sort) {
-        Stdout("\"pslOp\" \"white\" \"/")
+        Stdout("\"pslOp\" \"/")
               (op)
-              ("/\" \"token\" 3 integer array {{")
+              ("/\" \"token\" \"white\" 3 integer array {{")
               (op)
               ("}} gadd").newline;
     } */
