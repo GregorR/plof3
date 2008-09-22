@@ -362,8 +362,8 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
             ubyte cmd = psl[i];
             ubyte[] sub;
     
-            if (cmd >= 0xFE) {
-                // 0xFE and 0xFF have data, so get that too
+            if (cmd >= 0xFC) {
+                // 0xFC through 0xFF have data, so get that too
                 i++;
                 uint len;
                 i += pslBignumToInt(psl[i..$], len);
@@ -373,7 +373,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
     
             // if immediate, only run immediate commands
             if (immediate) {
-                if (cmd == 0xFE) { // immediate
+                if (cmd == 0xFD) { // immediate
                     call(pslNull, context, sub);
                 }
                 continue;
@@ -670,9 +670,9 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
     
                         // store the necessary data
                         if (cmd == 0x18) {
-                            outdata[0] = 0xFF; // raw
+                            outdata[0] = 0xFE; // raw
                         } else {
-                            outdata[0] = 0xFE; // immediate
+                            outdata[0] = 0xFD; // immediate
                         }
                         intToPSLBignum(data.length, outdata[1..bnlen+1]);
                         outdata[bnlen+1..$] = data[];
@@ -1883,15 +1883,17 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
     
-                case 0xFD: // gcommit
+                case 0xFB: // gcommit
                     if (prp !is null) {
                         prp.gcommit();
                     }
                     break;
     
-                case 0xFE: // immediate, not yet implemented usefully
+                case 0xFC: // marker
+                case 0xFD: // immediate
                     break;
     
+                case 0xFE: // code
                 case 0xFF: // raw
                 {
                     PSLRawData* rd = PSLRawData.allocate(sub);

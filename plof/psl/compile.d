@@ -43,9 +43,9 @@ ubyte[] pslCompile(char[] asmtxt)
             ubyte[] proc = pslCompile(op[1..$-1]);
             
             if (op[0] == '{') {
-                ret ~= cast(ubyte) 0xFF;
-            } else if (op[0] == '[') {
                 ret ~= cast(ubyte) 0xFE;
+            } else if (op[0] == '[') {
+                ret ~= cast(ubyte) 0xFD;
             }
 
             ret ~= pslBignum(proc.length) ~ proc;
@@ -177,7 +177,7 @@ static this() {
     "gremstop"  : 0xF3,
     "gaddgroup" : 0xF4,
     "gremgroup" : 0xF5,
-    "gcommit"   : 0xFD
+    "gcommit"   : 0xFB
     ];
 
     /* foreach (op; pslOps.keys.dup.sort) {
