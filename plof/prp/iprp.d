@@ -2,7 +2,7 @@
  * Interface for prp, for use by psl (which shouldn't import plof.prp.prp)
  *
  * License:
- *  Copyright (c) 2007  Gregor Richards
+ *  Copyright (c) 2007, 2008  Gregor Richards
  *  
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
