@@ -41,6 +41,7 @@ import plof.prp.iprp;
 import plof.psl.bignum;
 import plof.psl.file;
 import plof.psl.gc;
+import plof.psl.psl;
 import plof.psl.pslobject;
 import plof.psl.treemap;
 
@@ -362,7 +363,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
             ubyte cmd = psl[i];
             ubyte[] sub;
     
-            if (cmd >= 0xFC) {
+            if (cmd >= psl_marker) {
                 // 0xFC through 0xFF have data, so get that too
                 i++;
                 uint len;
@@ -373,7 +374,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
     
             // if immediate, only run immediate commands
             if (immediate) {
-                if (cmd == 0xFD) { // immediate
+                if (cmd == psl_immediate) {
                     call(pslNull, context, sub);
                 }
                 continue;
@@ -381,14 +382,14 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
     
             // now just switch off on the action
             switch (cmd) {
-                case 0x00:
-                case 0x01:
-                case 0x02:
-                case 0x03:
-                case 0x04:
-                case 0x05:
-                case 0x06:
-                case 0x07: // push0-push7
+                case psl_push0:
+                case psl_push1:
+                case psl_push2:
+                case psl_push3:
+                case psl_push4:
+                case psl_push5:
+                case psl_push6:
+                case psl_push7:
                     if (stack.stack.length < cmd + 1) {
                         // just push a null
                         push(pslNull);
@@ -398,32 +399,32 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     }
                     break;
     
-                case 0x08: // pop
+                case psl_pop:
                     pop();
                     break;
     
-                case 0x09: // this
+                case psl_this:
                     push(context);
                     break;
     
-                case 0x0A: // null
+                case psl_null:
                     push(pslNull);
                     break;
     
-                case 0x0B: // global
+                case psl_global:
                     push(pslGlobal);
                     break;
     
-                case 0x0C: // new
+                case psl_new:
                 {
-                    PSLObject* spar = popBless();
-                    PSLObject* no = PSLObject.allocate(spar);
-		    spar.gc.blessDown();
-                    push(no);
+                    use1((PSLObject* a) {
+                        PSLObject* no = PSLObject.allocate(a);
+                        push(no);
+                    });
                     break;
                 }
     
-                case 0x0D: // combine
+                case psl_combine:
                     use2((PSLObject* a, PSLObject* b) {
                         PSLObject* no = PSLObject.allocate(context);
     
@@ -467,7 +468,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
     
-                case 0x0E: // member
+                case psl_member:
                     use2((PSLObject* a, PSLObject* b) {
                         if (b.isArray || b.raw is null) {
                             // bad choice
@@ -485,7 +486,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
     
-                case 0x0F: // memberset
+                case psl_memberset:
                     use3((PSLObject* a, PSLObject* b, PSLObject* c) {
                         if (!b.isArray && b.raw !is null) {
                             a.members.add(
@@ -497,13 +498,13 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
     
-                case 0x10: // parent
+                case psl_parent:
                     use1((PSLObject* a) {
                         push(a.parent);
                     });
                     break;
 
-                case 0x11: // resolve
+                case psl_resolve:
                     use2((PSLObject* a, PSLObject* b) {
                         if (!b.isArray && b.raw !is null) {
                             // get the name ...
@@ -530,7 +531,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
     
-                case 0x12: // call
+                case psl_call:
                 {
                     PSLObject* thrown;
                     use1((PSLObject* a) {
@@ -548,10 +549,10 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
                 }
     
-                case 0x13: // return
+                case psl_return:
                     return null; // well that was obvious
     
-                case 0x14: // throw
+                case psl_throw:
                 {
                     // get the object to throw,
                     PSLObject* tothrow = popBless();
@@ -560,7 +561,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     return tothrow;
                 }
     
-                case 0x15: // catch
+                case psl_catch:
                 {
                     PSLObject* thrown;
     
@@ -599,7 +600,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
                 }
     
-                case 0x16: // cmp
+                case psl_cmp:
                 {
                     PSLObject* thrown;
                     
@@ -626,7 +627,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
                 }
     
-                case 0x17: // concat
+                case psl_concat:
                     use2((PSLObject* a, PSLObject* b) {
                         // get the left and right data
                         ubyte[] left, right;
@@ -653,7 +654,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
                     
-                case 0x18: // wrap
+                case psl_wrap:
                     use2((PSLObject* a, PSLObject* b) {
                         // extract the raw data
                         ubyte[] data, outdata;
@@ -691,12 +692,12 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
     
-                case 0x1A: // loop
+                case psl_loop:
                     // simple
                     i = -1;
                     break;
     
-                case 0x20: // array
+                case psl_array:
                     use1((PSLObject* olen) {
                         // get the real length out of the object
                         uint len;
@@ -724,7 +725,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
     
-                case 0x21: // aconcat
+                case psl_aconcat:
                     use2((PSLObject* a, PSLObject* b) {
                         // get the left and right arrays
                         PSLObject*[] left, right;
@@ -751,7 +752,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
     
-                case 0x22: // length
+                case psl_length:
                     use1((PSLObject* a) {
                         // get the array itself
                         PSLObject*[] arr;
@@ -775,7 +776,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
     
-                case 0x23: // lengthset
+                case psl_lengthset:
                     use2((PSLObject* a, PSLObject* b) {
                         // if the left object isn't an array, this makes no sense
                         if (!a.isArray || b.isArray || b.raw is null ||
@@ -791,7 +792,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
     
-                case 0x24: // index
+                case psl_index:
                     use2((PSLObject* a, PSLObject* b) {
                         // get the array,
                         PSLObject*[] arr;
@@ -819,7 +820,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
     
-                case 0x25: // indexset
+                case psl_indexset:
                     use3((PSLObject* a, PSLObject* b, PSLObject* c) {
                         // if this isn't an array, bail out
                         if (!a.isArray)
@@ -847,7 +848,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
     
-                case 0x26: // members
+                case psl_members:
                     use1((PSLObject* a) {
                         PSLObject*[] members;
     
@@ -867,7 +868,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
     
-                case 0x70: // integer
+                case psl_integer:
                     use1((PSLObject* a) {
                         ptrdiff_t val = 0;
     
@@ -931,7 +932,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
     
-                case 0x71: // intwidth
+                case psl_intwidth:
                 {
                     ptrdiff_t wid = ptrdiff_t.sizeof;
     
@@ -948,69 +949,69 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
                 }
     
-                case 0x72: // mul
+                case psl_mul:
                     intop((ptrdiff_t left, ptrdiff_t right) {
                         return left * right;
                     });
                     break;
     
-                case 0x73: // div
+                case psl_div:
                     intop((ptrdiff_t left, ptrdiff_t right) {
                         return left / right;
                     });
                     break;
     
-                case 0x74: // mod
+                case psl_mod:
                     intop((ptrdiff_t left, ptrdiff_t right) {
                         return left % right;
                     });
                     break;
     
-                case 0x76: // add
+                case psl_add:
                     intop((ptrdiff_t left, ptrdiff_t right) {
                         return left + right;
                     });
                     break;
     
-                case 0x77: // sub
+                case psl_sub:
                     intop((ptrdiff_t left, ptrdiff_t right) {
                         return left - right;
                     });
                     break;
     
-                case 0x78:
-                case 0x79:
-                case 0x7A:
-                case 0x7B:
-                case 0x7C:
-                case 0x7D: // integer comparisons
+                case psl_lt:
+                case psl_lte:
+                case psl_eq:
+                case psl_ne:
+                case psl_gt:
+                case psl_gte: // integer comparisons
                 {
                     PSLObject* thrown =
                         intcmp((ptrdiff_t left, ptrdiff_t right) {
                             bool res;
     
                             switch (cmd) {
-                                case 0x78: // lt
+                                case psl_lt:
                                     res = (left < right);
                                     break;
     
-                                case 0x79: // lte
+                                case psl_lte:
                                     res = (left <= right);
                                     break;
     
-                                case 0x7A: // eq
+                                case psl_eq:
                                     res = (left == right);
                                     break;
     
-                                case 0x7B: // ne
+                                case psl_ne:
                                     res = (left != right);
                                     break;
     
-                                case 0x7C: // gt
+                                case psl_gt:
                                     res = (left > right);
                                     break;
     
-                                case 0x7D: // gte
+                                case psl_gte:
                                     res = (left >= right);
                                     break;
                             }
@@ -1025,55 +1026,55 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
                 }
     
-                case 0x7E: // sl
+                case psl_sl:
                     intop((ptrdiff_t left, ptrdiff_t right) {
                         return left << right;
                     });
                     break;
     
-                case 0x7F: // sr
+                case psl_sr:
                     intop((ptrdiff_t left, ptrdiff_t right) {
                         return left >> right;
                     });
                     break;
     
-                case 0x80: // bitwise or
+                case psl_or:
                     intop((ptrdiff_t left, ptrdiff_t right) {
                         return left | right;
                     });
                     break;
     
-                case 0x81: // nor
+                case psl_nor:
                     intop((ptrdiff_t left, ptrdiff_t right) {
                         return ~(left | right);
                     });
                     break;
     
-                case 0x82: // xor
+                case psl_xor:
                     intop((ptrdiff_t left, ptrdiff_t right) {
                         return left ^ right;
                     });
                     break;
     
-                case 0x83: // nxor
+                case psl_nxor:
                     intop((ptrdiff_t left, ptrdiff_t right) {
                         return ~(left ^ right);
                     });
                     break;
     
-                case 0x84: // and
+                case psl_and:
                     intop((ptrdiff_t left, ptrdiff_t right) {
                         return left & right;
                     });
                     break;
     
-                case 0x85: // nand
+                case psl_nand:
                     intop((ptrdiff_t left, ptrdiff_t right) {
                         return ~(left & right);
                     });
                     break;
     
-                case 0x8E: // byte
+                case psl_byte:
                     use1((PSLObject* a) {
                         if (!a.isArray && a.raw !is null &&
                             a.raw.data.length == ptrdiff_t.sizeof) {
@@ -1097,7 +1098,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
     
-                case 0x90: // float
+                case psl_float:
                     use1((PSLObject* a) {
                         if (!a.isArray && a.raw !is null &&
                             a.raw.data.length == ptrdiff_t.sizeof) {
@@ -1121,7 +1122,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
     
-                case 0x91: // fint
+                case psl_fint:
                     use1((PSLObject* a) {
                         if (!a.isArray && a.raw !is null &&
                             a.raw.data.length == real.sizeof) {
@@ -1146,69 +1147,69 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
     
-                case 0x92: // fmul
+                case psl_fmul:
                     floatop((real a, real b) {
                         return a * b;
                     });
                     break;
     
-                case 0x93: // fdiv
+                case psl_fdiv:
                     floatop((real a, real b) {
                         return a / b;
                     });
                     break;
     
-                case 0x94: // fmod
+                case psl_fmod:
                     floatop((real a, real b) {
                         return a % b;
                     });
                     break;
     
-                case 0x96: // fadd
+                case psl_fadd:
                     floatop((real a, real b) {
                         return a + b;
                     });
                     break;
     
-                case 0x97: // fsub
+                case psl_fsub:
                     floatop((real a, real b) {
                         return a - b;
                     });
                     break;
     
-                case 0x98:
-                case 0x99:
-                case 0x9A:
-                case 0x9B:
-                case 0x9C:
-                case 0x9D: // float comparisons
+                case psl_flt:
+                case psl_flte:
+                case psl_feq:
+                case psl_fne:
+                case psl_fgt:
+                case psl_fgte: // float comparisons
                 {
                     PSLObject* thrown =
                         floatcmp((real left, real right) {
                             bool res;
     
                             switch (cmd) {
-                                case 0x98: // flt
+                                case psl_flt: // flt
                                     res = (left < right);
                                     break;
     
-                                case 0x99: // lte
+                                case psl_flte: // flte
                                     res = (left <= right);
                                     break;
     
-                                case 0x9A: // feq
+                                case psl_feq: // feq
                                     res = (left == right);
                                     break;
     
-                                case 0x9B: // fne
+                                case psl_fne: // fne
                                     res = (left != right);
                                     break;
     
-                                case 0x9C: // fgt
+                                case psl_fgt: // fgt
                                     res = (left > right);
                                     break;
     
-                                case 0x9D: // fgte
+                                case psl_fgte: // fgte
                                     res = (left >= right);
                                     break;
                             }
@@ -1223,7 +1224,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
                 }
 
-                case 0xC0: // version
+                case psl_version:
                 {
                     // make the object ...
                     PSLObject* no = PSLObject.allocate(context);
@@ -1297,7 +1298,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                 /* * * * * * * * * *
                  * C INTERFACE     *
                  * * * * * * * * * */
-                case 0xC1: // dlopen
+                case psl_dlopen:
                     use1((PSLObject* a) {
                         if (!a.isArray && a.raw !is null) {
                             // try to open this file
@@ -1322,7 +1323,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
 
-                case 0xC2: // dlclose
+                case psl_dlclose:
                     use1((PSLObject* a) {
                         if (!a.isArray && a.raw !is null &&
                             a.raw.data.length == ptrdiff_t.sizeof) {
@@ -1335,7 +1336,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
 
-                case 0xC3: // dlsym
+                case psl_dlsym:
                     use2((PSLObject* a, PSLObject* b) {
                         if (!b.isArray && b.raw !is null) {
                             void* handle = null; // RTLD_DEFAULT is usually null
@@ -1372,7 +1373,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
 
-                case 0xC4: // cmalloc
+                case psl_cmalloc:
                     use1((PSLObject* a) {
                         if (!a.isArray && a.raw !is null &&
                             a.raw.data.length == ptrdiff_t.sizeof) {
@@ -1397,7 +1398,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
 
-                case 0xC5: // cfree
+                case psl_cfree:
                     use1((PSLObject* a) {
                         if (!a.isArray && a.raw !is null &&
                             a.raw.data.length == ptrdiff_t.sizeof) {
@@ -1410,7 +1411,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
 
-                case 0xC6: // cget
+                case psl_cget:
                     use2((PSLObject* a, PSLObject* b) {
                         if (!a.isArray && a.raw !is null &&
                             a.raw.data.length == ptrdiff_t.sizeof &&
@@ -1436,7 +1437,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
 
-                case 0xC7: // cset
+                case psl_cset:
                     use2((PSLObject* a, PSLObject* b) {
                         if (!a.isArray && a.raw !is null &&
                             a.raw.data.length == ptrdiff_t.sizeof &&
@@ -1455,7 +1456,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
 
-                case 0xC8: // ctype
+                case psl_ctype:
                     use1((PSLObject* a) {
                         if (!a.isArray && a.raw !is null &&
                             a.raw.data.length == ptrdiff_t.sizeof) {
@@ -1591,12 +1592,12 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
 
-                /+ case 0xC9: // cstruct
+                /+ case psl_cstruct: // cstruct
                     use1((PSLObject* a) {
                         if (a.isArray) {
                             //  +/
 
-                case 0xCA: // csizeof
+                case psl_csizeof:
                     use1((PSLObject* a) {
                         if (!a.isArray && a.raw !is null &&
                             a.raw.data.length == ptrdiff_t.sizeof) {
@@ -1618,7 +1619,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
 
-                case 0xCD: // prepcif
+                case psl_prepcif:
                     use3((PSLObject* a, PSLObject* b, PSLObject* c) {
                         if (!a.isArray && a.raw !is null &&
                             a.raw.data.length == ptrdiff_t.sizeof &&
@@ -1669,7 +1670,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
 
-                case 0xCE: // ccall
+                case psl_ccall:
                     use3((PSLObject* a, PSLObject* b, PSLObject* c) {
                         if (!a.isArray && a.raw !is null &&
                             a.raw.data.length == ptrdiff_t.sizeof &&
@@ -1710,7 +1711,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
 
-                case 0xD0: // dsrcfile
+                case psl_dsrcfile:
                     use1((PSLObject* a) {
                         if (!a.isArray && a.raw !is null) {
                             if (dfile.length == 0) {
@@ -1722,7 +1723,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
 
-                case 0xD1: // dsrcline
+                case psl_dsrcline:
                     use1((PSLObject* a) {
                         if (!a.isArray && a.raw !is null &&
                             a.raw.data.length == ptrdiff_t.sizeof) {
@@ -1734,7 +1735,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
     
-                case 0xD2: // dsrccol
+                case psl_dsrccol:
                     use1((PSLObject* a) {
                         if (!a.isArray && a.raw !is null &&
                             a.raw.data.length == ptrdiff_t.sizeof) {
@@ -1746,7 +1747,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
 
-                case 0xE0: // FAKE: print
+                case psl_print: // FAKE
                     use1((PSLObject* a) {
                         if (!a.isArray && a.raw !is null) {
                             if (a.raw.data.length > 80) {
@@ -1768,11 +1769,11 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
     
-                case 0xE1: // FAKE: debug
+                case psl_debug: // FAKE
                     Stdout("STACK LENGTH: ")(stack.stack.length).newline;
                     break;
 
-                case 0xEE: // include
+                case psl_include:
                     use1((PSLObject* a) {
                         if (!a.isArray && a.raw !is null) {
                             // get the file name
@@ -1812,7 +1813,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
     
-                case 0xEF: // parse
+                case psl_parse:
                     use3((PSLObject* a, PSLObject* b, PSLObject* c) {
                         if (!a.isArray && a.raw !is null &&
                             !b.isArray && b.raw !is null &&
@@ -1856,7 +1857,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
     
-                case 0xF0: // gadd
+                case psl_gadd:
                     use3((PSLObject* a, PSLObject* b, PSLObject* c) {
                         if (!a.isArray && a.raw !is null &&
                             b.isArray &&
@@ -1877,7 +1878,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
     
-                case 0xF1: // grem
+                case psl_grem:
                     use1((PSLObject* a) {
                         if (!a.isArray && a.raw !is null && prp !is null) {
                             prp.grem(a.raw.data.dup);
@@ -1885,18 +1886,18 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
     
-                case 0xFB: // gcommit
+                case psl_gcommit:
                     if (prp !is null) {
                         prp.gcommit();
                     }
                     break;
     
-                case 0xFC: // marker
-                case 0xFD: // immediate
+                case psl_marker:
+                case psl_immediate:
                     break;
     
-                case 0xFE: // code
-                case 0xFF: // raw
+                case psl_code:
+                case psl_raw:
                 {
                     PSLRawData* rd = PSLRawData.allocate(sub);
                     PSLObject* no = PSLObject.allocate(context);
