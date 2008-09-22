@@ -119,7 +119,6 @@ static this() {
     "cmp"       : 0x16,
     "concat"    : 0x17,
     "wrap"      : 0x18,
-    "iwrap"     : 0x19,
     "loop"      : 0x1A,
     "array"     : 0x20,
     "aconcat"   : 0x21,

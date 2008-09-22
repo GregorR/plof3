@@ -654,14 +654,20 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
                     
                 case 0x18: // wrap
-                case 0x19: // iwrap
-                    use1((PSLObject* a) {
+                    use2((PSLObject* a, PSLObject* b) {
                         // extract the raw data
                         ubyte[] data, outdata;
-                        if (!a.isArray && a.raw !is null) {
+                        ubyte op;
+                        if (!a.isArray && a.raw !is null &&
+                            !b.isArray && b.raw !is null) {
                             data = a.raw.data;
+                            if (b.raw.data.length == 0) {
+                                throw new InterpreterFailure("The second operand to wrap must contain an operation.");
+                            } else {
+                                op = b.raw.data[0];
+                            }
                         } else {
-                            throw new InterpreterFailure("wrap expects a raw data operand.");
+                            throw new InterpreterFailure("wrap expects two raw data operands.");
                         }
     
                         // allocate enough space to store it all
@@ -669,11 +675,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                         outdata.length = bnlen + data.length + 1;
     
                         // store the necessary data
-                        if (cmd == 0x18) {
-                            outdata[0] = 0xFE; // raw
-                        } else {
-                            outdata[0] = 0xFD; // immediate
-                        }
+                        outdata[0] = op;
                         intToPSLBignum(data.length, outdata[1..bnlen+1]);
                         outdata[bnlen+1..$] = data[];
     

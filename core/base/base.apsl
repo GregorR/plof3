@@ -26,15 +26,15 @@ gadd
 "gadd"
 "/__grammar_add/" "white" "token" "white" "/\(/" "white" "/[a-zA-Z0-9_]+/" "white" "/,/" "white" "grammarElems" "/,/" "white" "pslOps" "/\)/" "white"
 16 integer array
-{push0 6 integer index push1 10 integer index concat push1 13 integer index wrap concat {gadd} concat
- iwrap}
+{push0 6 integer index push1 10 integer index concat push1 13 integer index {{}} wrap concat {gadd} concat
+ {[]} wrap}
 gadd
 
 "grem"
 "/__grammar_rem/" "white" "token" "white" "/\(/" "white" "/[a-zA-Z0-9_]+/" "white" "/\)/" "white"
 10 integer array
 {push0 6 integer index {grem} concat
- iwrap}
+ {[]} wrap}
 gadd
 
 "gcommit"
@@ -94,7 +94,7 @@ gadd
 "pslOp"
 "/\{/" "white" "pslOps" "/\}/" "white"
 5 integer array
-{push0 2 integer index wrap}
+{push0 2 integer index {{}} wrap}
 gadd
 
 "pslOp"
@@ -106,7 +106,7 @@ gadd
 "pslOp"
 "/\[/" "white" "pslOps" "/\]/" "white"
 5 integer array
-{push0 2 integer index iwrap}
+{push0 2 integer index {[]} wrap}
 gadd
 
 "pslOp"
@@ -171,7 +171,6 @@ gadd
 "pslOp" "/indexset/" "token" "white" 3 integer array {{indexset}} gadd
 "pslOp" "/integer/" "token" "white" 3 integer array {{integer}} gadd
 "pslOp" "/intwidth/" "token" "white" 3 integer array {{intwidth}} gadd
-"pslOp" "/iwrap/" "token" "white" 3 integer array {{iwrap}} gadd
 "pslOp" "/length/" "token" "white" 3 integer array {{length}} gadd
 "pslOp" "/lengthset/" "token" "white" 3 integer array {{lengthset}} gadd
 "pslOp" "/loop/" "token" "white" 3 integer array {{loop}} gadd
@@ -212,6 +211,26 @@ gadd
 "pslOp" "/wrap/" "token" "white" 3 integer array {{wrap}} gadd
 "pslOp" "/xor/" "token" "white" 3 integer array {{xor}} gadd
 
+
+"pslOp"
+"/cwrap/" "token" "white"
+3 integer array
+{{ {{}} wrap }}
+gadd
+
+"pslOp"
+"/swrap/" "token" "white"
+3 integer array
+{{ {""} wrap }}
+gadd
+
+"pslOp"
+"/iwrap/" "token" "white"
+3 integer array
+{{ {[]} wrap }}
+gadd
+
+
 "white"
 "/(([ \t\r\n]*(\/\/[^\r\n]*[\r\n])?(\/\*([^\*]*\*[^\/])*[^\*]*\*\/)?)*)/"
 1 integer array
@@ -232,7 +251,7 @@ gadd
  push1 16 integer sr byte
  push2 8 integer sr byte
  push3 byte
- concat concat concat wrap}
+ concat concat concat {{}} wrap}
 gadd
 
 "digits"

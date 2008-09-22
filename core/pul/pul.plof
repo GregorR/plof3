@@ -49,36 +49,36 @@ __grammar_add(pslbnf_production,
                   /=>/ white /\{/ white pslOps /\}/ white,
               push0 0 integer index
                   push1 4 integer index
-                  push2 9 integer index wrap
+                  push2 9 integer index cwrap
                   {gadd}
                   concat concat concat iwrap);
 __grammar_add(pslbnf_production,
               /[A-Za-z_][A-Za-z0-9_]*/ white /=>/ white /[A-Za-z_][A-Za-z0-9_]*/ white /;/ white,
 
-              // set that->next to this->next, then this->next to that */
+              // set that->next to this->next, then this->next to that
 
-              {global} "grammar_" null push3 0 integer index call concat "_next" concat wrap concat {member} concat
+              {global} "grammar_" null push3 0 integer index call concat "_next" concat swrap concat {member} concat
               // inner stack: global.grammar_<this>_next
-              {global} concat "grammar_" null push3 4 integer index call concat "_next" concat wrap concat
+              {global} concat "grammar_" null push3 4 integer index call concat "_next" concat swrap concat
               // inner stack: global.grammar_<this>_next global "grammar_<that>_next"
               {push2 memberset} concat
               // inner stack: global.grammar_<this>_next
 
-              null push2 4 integer index call "_next" concat wrap concat
+              null push2 4 integer index call "_next" concat swrap concat
               {push0 grem} concat
               // inner stack: global.grammar_<this>_next "<that>_next"
               {push1 1 integer array {push0 0 integer index} gadd pop} concat
               // inner stack:
 
               // now this->next = that
-              null push2 4 integer index call wrap concat
+              push1 4 integer index concat
               // inner stack: "<that>"
-              {global} concat "grammar_" null push3 0 integer index call concat "_next" concat wrap concat
+              {global} concat "grammar_" null push3 0 integer index call concat "_next" concat swrap concat
               // inner stack: "<that>" global "grammar_<this>_next"
               {push2 memberset} concat
               // inner stack: "<that>"
 
-              null push2 0 integer index call "_next" concat wrap concat
+              null push2 0 integer index call "_next" concat swrap concat
               {push0 grem} concat
               // inner stack: "<that>" "<that>_next"
               {push1 1 integer array {push0 0 integer index} gadd pop} concat
@@ -260,11 +260,11 @@ pslbnf {
     plof_semicolon = plof_semicolon /;/ white plof_semicolon_next => {
         push0 0 integer index {pul_eval pop} concat
         push1 3 integer index concat
-        wrap {pul_funcwrap} concat
+        cwrap {pul_funcwrap} concat
     }
     plof_semicolon = plof_semicolon /;/ white => {
         push0 0 integer index {pul_eval pop null} concat
-        wrap {pul_funcwrap} concat
+        cwrap {pul_funcwrap} concat
     }
     plof_semicolon = plof_semicolon_next => { push0 0 integer index }
     plof_semicolon => plof_comma;
@@ -272,7 +272,7 @@ pslbnf {
     plof_comma = plof_comma /,/ white plof_comma_next => {
         push0 0 integer index {pul_eval pop} concat
         push1 3 integer index concat
-        wrap {pul_funcwrap} concat
+        cwrap {pul_funcwrap} concat
     }
     plof_comma = plof_comma_next => { push0 0 integer index }
     plof_comma => plof_assign;
@@ -281,7 +281,7 @@ pslbnf {
         push0 0 integer index
         push1 3 integer index concat
         {pul_eval pul_set} concat
-        wrap {pul_funcwrap} concat
+        cwrap {pul_funcwrap} concat
     }
     plof_assign = plof_assign_next => { push0 0 integer index }
     plof_assign => plof_bind;
@@ -290,7 +290,7 @@ pslbnf {
         push0 0 integer index
         push1 3 integer index concat
         {pul_set} concat
-        wrap {pul_funcwrap} concat
+        cwrap {pul_funcwrap} concat
     }
     plof_bind = plof_bind_next => { push0 0 integer index }
     plof_bind => plof_group;
@@ -301,7 +301,7 @@ pslbnf {
     plof_group = plof_group /\./ white plof_identifier => {
         push0 0 integer index
         push1 3 integer index concat
-        {member} concat wrap
+        {member} concat cwrap
         {pul_funcwrap} concat
     }
     plof_group = plof_group_next => { push0 0 integer index }
@@ -311,14 +311,14 @@ pslbnf {
         {pul_fcontext}
         push1 3 integer index concat
         {push1 push1 null memberset pul_varwrap} concat
-        wrap {pul_funcwrap} concat
+        cwrap {pul_funcwrap} concat
     }
     plof_var = plof_var_next => { push0 0 integer index }
     plof_var => plof_literal;
 
     plof_literal = /psl/ token white /\{/ white pslOps /\}/ white => {
         push0 5 integer index
-        wrap {pul_funcwrap} concat
+        cwrap {pul_funcwrap} concat
     }
     plof_literal = plof_literal_next => { push0 0 integer index }
     plof_literal => plof_ident;
@@ -327,7 +327,7 @@ pslbnf {
         {pul_fcontext}
         push0 0 integer index concat
         {resolve} concat
-        wrap {pul_funcwrap} concat
+        cwrap {pul_funcwrap} concat
     }
 
     plof_identifier = /[A-Za-z_][A-Za-z0-9_]*/ token white => {
