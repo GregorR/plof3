@@ -200,6 +200,7 @@ gadd
 "pslOp" "/push5/" "token" "white" 3 integer array {{push5}} gadd
 "pslOp" "/push6/" "token" "white" 3 integer array {{push6}} gadd
 "pslOp" "/push7/" "token" "white" 3 integer array {{push7}} gadd
+"pslOp" "/replace/" "token" "white" 3 integer array {{replace}} gadd
 "pslOp" "/resolve/" "token" "white" 3 integer array {{resolve}} gadd
 "pslOp" "/return/" "token" "white" 3 integer array {{return}} gadd
 "pslOp" "/sl/" "token" "white" 3 integer array {{sl}} gadd

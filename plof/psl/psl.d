@@ -51,6 +51,7 @@ const ubyte psl_cmp       = 0x16;
 const ubyte psl_concat    = 0x17;
 const ubyte psl_wrap      = 0x18;
 const ubyte psl_loop      = 0x1A;
+const ubyte psl_replace   = 0x1C;
 const ubyte psl_array     = 0x20;
 const ubyte psl_aconcat   = 0x21;
 const ubyte psl_length    = 0x22;

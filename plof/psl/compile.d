@@ -122,6 +122,7 @@ static this() {
     "concat"    :psl_concat,
     "wrap"      :psl_wrap,
     "loop"      :psl_loop,
+    "replace"   :psl_replace,
     "array"     :psl_array,
     "aconcat"   :psl_aconcat,
     "length"    :psl_length,

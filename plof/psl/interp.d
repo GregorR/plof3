@@ -43,6 +43,7 @@ import plof.psl.file;
 import plof.psl.gc;
 import plof.psl.psl;
 import plof.psl.pslobject;
+import plof.psl.replace;
 import plof.psl.treemap;
 
 import plof.searchpath.searchpath;
@@ -695,6 +696,30 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                 case psl_loop:
                     // simple
                     i = -1;
+                    break;
+
+                case psl_replace:
+                    use3((PSLObject* a, PSLObject* b, PSLObject* c) {
+                        if (!a.isArray && a.raw !is null &&
+                            !b.isArray && b.raw !is null &&
+                            !c.isArray && c.raw !is null) {
+                            ubyte[] newdat = pslfreplace(a.raw.data, b.raw.data, c.raw.data);
+
+                            // make the raw data object
+                            PSLRawData* rd = PSLRawData.allocate(newdat);
+
+                            // make the output object
+                            PSLObject* no = PSLObject.allocate(a.parent);
+                            no.raw = rd;
+
+                            // then push it
+                            push(no);
+
+                        } else {
+                            throw new InterpreterFailure("replace expects three raw data operands.");
+
+                        }
+                    });
                     break;
     
                 case psl_array:
