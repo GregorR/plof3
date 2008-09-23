@@ -252,7 +252,18 @@ gadd
  push1 16 integer sr byte
  push2 8 integer sr byte
  push3 byte
- concat concat concat {{}} wrap}
+ concat concat concat {""} wrap}
+gadd
+
+"marker"
+"/\$/" "digits" "token" "white"
+4 integer array
+{push0 1 integer index
+ push0 24 integer sr byte
+ push1 16 integer sr byte
+ push2 8 integer sr byte
+ push3 byte
+ concat concat concat "ü" wrap}
 gadd
 
 "digits"
