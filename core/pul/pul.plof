@@ -105,6 +105,30 @@ __grammar_add(pslbnf_target,
               push0 0 integer index
                   {1 integer array}
                   concat);
+__grammar_add(pslbnf_target,
+              /"/ /[A-Za-z0-9_]+/ /"/ white,
+              // force this to be its own token production in the grammar
+              null push1 1 integer index call
+
+              // get the name of the production
+              "token_" push1 concat swrap
+
+              // remove it if it already exists
+              {push0 push0 grem} concat
+
+              // now make the regex
+              "/"
+              push2 concat
+              "/" concat
+              swrap concat
+
+              // and gadd it
+              {
+                  "token" "white" 3 integer array
+                  {0 integer index}
+                  gadd
+                  1 integer array
+              } concat);
 __grammar_commit();
 
 psl {
@@ -222,27 +246,27 @@ psl {
 
 // some convenient pseudo-ops
 pslbnf {
-    pslOp = /pul_eval/ token white => {
+    pslOp = "pul_eval" => {
         {global "__pul_eval" member call}
     }
 
-    pslOp = /pul_forceEval/ token white => {
+    pslOp = "pul_forceEval" => {
         {global "__pul_forceEval" member call}
     }
 
-    pslOp = /pul_set/ token white => {
+    pslOp = "pul_set" => {
         {2 integer array global "__pul_set" member call pop}
     }
 
-    pslOp = /pul_funcwrap/ token white => {
+    pslOp = "pul_funcwrap" => {
         {global "__pul_funcwrap" member call}
     }
 
-    pslOp = /pul_varwrap/ token white => {
+    pslOp = "pul_varwrap" => {
         {2 integer array global "__pul_varwrap" member call}
     }
 
-    pslOp = /pul_fcontext/ token white => {
+    pslOp = "pul_fcontext" => {
         {this global "__pul_fcontext" member call}
     }
 };
@@ -307,17 +331,17 @@ pslbnf {
     plof_group = plof_group_next => { push0 0 integer index }
     plof_group => plof_var;
 
-    plof_var = /var/ token white plof_identifier => {
+    plof_var = "var" plof_identifier => {
         {pul_fcontext}
-        push1 3 integer index concat
+        push1 1 integer index concat
         {push1 push1 null memberset pul_varwrap} concat
         cwrap {pul_funcwrap} concat
     }
     plof_var = plof_var_next => { push0 0 integer index }
     plof_var => plof_literal;
 
-    plof_literal = /psl/ token white /\{/ white pslOps /\}/ white => {
-        push0 5 integer index
+    plof_literal = "psl" /\{/ white pslOps /\}/ white => {
+        push0 3 integer index
         cwrap {pul_funcwrap} concat
     }
     plof_literal = /\$/ digits token white => {
@@ -349,8 +373,8 @@ psl {
 pslbnf {
     top = plofbnf => { push0 0 integer index }
 
-    plofbnf = /plofbnf/ white /\{/ white plofbnf_productions /\}/ white /;/ white => {
-        push0 4 integer index
+    plofbnf = "plofbnf" /\{/ white plofbnf_productions /\}/ white /;/ white => {
+        push0 3 integer index
         {[gcommit]} concat
     }
 
@@ -366,7 +390,7 @@ pslbnf {
     plofbnf_production =
         /[A-Za-z_][A-Za-z0-9_]*/ white /=/ white
         pslbnf_targets /=>/ white
-        /plof/ token white /\{/ white plof_semicolon /\}/ white => {
+        "plof" /\{/ white plof_semicolon /\}/ white => {
 
         // push the name and targets
         push0 0 integer index
@@ -376,7 +400,7 @@ pslbnf {
         { {} {} {} {} {} {} {} {} {} {} 10 integer array aconcat }
 
         // parse the code ...
-        push2 12 integer index cwrap concat
+        push2 10 integer index cwrap concat
 
         {
             // replace markers
