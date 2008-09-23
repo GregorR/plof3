@@ -378,7 +378,7 @@ pslbnf {
 
     plof_ident = plof_identifier => {
         {pul_fcontext}
-        push0 0 integer index concat
+        push1 0 integer index concat
         {resolve} concat
         cwrap {pul_funcwrap} concat
     }
