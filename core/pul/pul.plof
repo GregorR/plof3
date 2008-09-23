@@ -24,9 +24,6 @@
  *  IN THE SOFTWARE.
  */
 
-// Whatever primary is set to is the primary language. This indirection makes it easily switchable
-__grammar_add(top, primary, push0 0 integer index);
-
 // Basic PSL: psl { psl code here };
 __grammar_add(top, psl, push0 0 integer index);
 __grammar_add(psl,
@@ -36,7 +33,7 @@ __grammar_add(psl,
 // PSL BNF: pslbnf { production = target => { code } };
 __grammar_add(top, pslbnf, push0 0 integer index);
 __grammar_add(pslbnf,
-              white /pslbnf/ white token /\{/ white pslbnf_productions /\}/ white /;/ white,
+              white /pslbnf/ token white /\{/ white pslbnf_productions /\}/ white /;/ white,
               push0 6 integer index {[gcommit]} concat);
 __grammar_add(pslbnf_productions,
               pslbnf_productions pslbnf_production,
@@ -96,15 +93,16 @@ __grammar_add(pslbnf_targets,
               pslbnf_target,
               push0 0 integer index);
 __grammar_add(pslbnf_target,
-              /[A-Za-z_][A-Za-z0-9_]*/ white,
+              /[A-Za-z_][A-Za-z0-9_]*/ token white,
               push0 0 integer index
                   {1 integer array}
                   concat);
 __grammar_add(pslbnf_target,
-              /(\/([^\\\/]*\\.)*[^\\\/]*\/)/ white,
+              /(\/([^\\\/]*\\.)*[^\\\/]*\/)/ token white,
               push0 0 integer index
                   {1 integer array}
                   concat);
+
 __grammar_add(pslbnf_target,
               /"/ /[A-Za-z0-9_]+/ /"/ white,
               // force this to be its own token production in the grammar
@@ -125,10 +123,36 @@ __grammar_add(pslbnf_target,
               // and gadd it
               {
                   "token" "white" 3 integer array
-                  {0 integer index}
+                  {push0 0 integer index}
                   gadd
                   1 integer array
               } concat);
+
+__grammar_add(pslbnf_target,
+              /"/ /([^A-Za-z0-9_]([^\\\/"]*\\.)*[^\\\/"]*)/ /"/ white,
+              // force this to be its own token production in the grammar
+              null push1 1 integer index call
+
+              // get the name of the production
+              "token_" push1 concat swrap
+
+              // remove it if it already exists
+              {push0 push0 grem} concat
+
+              // now make the regex
+              "/"
+              push2 concat
+              "/" concat
+              swrap concat
+
+              // and gadd it
+              {
+                  "white" 2 integer array
+                  {push0 0 integer index}
+                  gadd
+                  1 integer array
+              } concat);
+
 __grammar_commit();
 
 psl {
@@ -276,55 +300,55 @@ pslbnf {
     top = white top_next => { push0 1 integer index }
     top => plof_statement;
 
-    plof_statement = plof_statement_next /;/ white => {
+    plof_statement = plof_statement_next ";" => {
         push0 0 integer index {pul_eval pop} concat
     }
     plof_statement => plof_comma;
 
-    plof_semicolon = plof_semicolon /;/ white plof_semicolon_next => {
+    plof_semicolon = plof_semicolon ";" plof_semicolon_next => {
         push0 0 integer index {pul_eval pop} concat
         push1 3 integer index concat
         cwrap {pul_funcwrap} concat
     }
-    plof_semicolon = plof_semicolon /;/ white => {
+    plof_semicolon = plof_semicolon ";" => {
         push0 0 integer index {pul_eval pop null} concat
         cwrap {pul_funcwrap} concat
     }
     plof_semicolon = plof_semicolon_next => { push0 0 integer index }
     plof_semicolon => plof_comma;
 
-    plof_comma = plof_comma /,/ white plof_comma_next => {
+    plof_comma = plof_comma "," plof_comma_next => {
         push0 0 integer index {pul_eval pop} concat
-        push1 3 integer index concat
+        push1 2 integer index concat
         cwrap {pul_funcwrap} concat
     }
     plof_comma = plof_comma_next => { push0 0 integer index }
     plof_comma => plof_assign;
 
-    plof_assign = plof_assign_next /:=/ white plof_assign => {
+    plof_assign = plof_assign_next ":=" plof_assign => {
         push0 0 integer index
-        push1 3 integer index concat
+        push1 2 integer index concat
         {pul_eval pul_set} concat
         cwrap {pul_funcwrap} concat
     }
     plof_assign = plof_assign_next => { push0 0 integer index }
     plof_assign => plof_bind;
 
-    plof_bind = plof_bind_next /=/ white plof_bind => {
+    plof_bind = plof_bind_next "=" plof_bind => {
         push0 0 integer index
-        push1 3 integer index concat
+        push1 2 integer index concat
         {pul_set} concat
         cwrap {pul_funcwrap} concat
     }
     plof_bind = plof_bind_next => { push0 0 integer index }
     plof_bind => plof_group;
 
-    plof_group = /\(/ white plof_semicolon /\)/ white => {
-        push0 2 integer index
+    plof_group = "\(" plof_semicolon "\)" => {
+        push0 1 integer index
     }
-    plof_group = plof_group /\./ white plof_identifier => {
+    plof_group = plof_group "\." plof_identifier => {
         push0 0 integer index
-        push1 3 integer index concat
+        push1 2 integer index concat
         {member} concat cwrap
         {pul_funcwrap} concat
     }
@@ -340,8 +364,8 @@ pslbnf {
     plof_var = plof_var_next => { push0 0 integer index }
     plof_var => plof_literal;
 
-    plof_literal = "psl" /\{/ white pslOps /\}/ white => {
-        push0 3 integer index
+    plof_literal = "psl" "\{" pslOps "\}" => {
+        push0 2 integer index
         cwrap {pul_funcwrap} concat
     }
     plof_literal = /\$/ digits token white => {
