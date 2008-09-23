@@ -447,3 +447,56 @@ pslbnf {
         iwrap
     }
 };
+
+
+// The most important object in the game, Object
+psl {
+    this "Object" this new memberset null
+};
+
+
+// Basic object definition
+pslbnf {
+    plof_bind => plof_combine;
+
+    plof_combine = plof_combine ":" "\[" plof_obj_defs "\]" => {
+        // push the initial object
+        push0 0 integer index
+
+        // duplicate it
+        {pul_eval null new combine} concat
+
+        // then call the combining function
+        push1 3 integer index cwrap concat
+        {call} concat
+
+        // wrap the whole thing up
+        cwrap {pul_funcwrap} concat
+    }
+    plof_combine = plof_combine_next => {
+        push0 0 integer index
+    }
+
+    plof_obj_defs = plof_obj_defs plof_obj_defs_next => {
+        push0 0 integer index
+        push1 1 integer index concat
+    }
+    plof_obj_defs = plof_obj_defs_next => {
+        push0 0 integer index
+    }
+    plof_obj_defs => plof_obj_def;
+
+    plof_obj_def = plof_identifier ":=" plof_obj_def_next ";" => {
+        {push0}
+        push1 0 integer index concat
+        push1 2 integer index concat
+        {pul_eval memberset} concat
+    }
+    plof_obj_def = plof_identifier "=" plof_obj_def_next ";" => {
+        {push0}
+        push1 0 integer index concat
+        push1 2 integer index concat
+        {memberset} concat
+    }
+    plof_obj_def => plof_bind_next;
+};

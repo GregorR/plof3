@@ -1,15 +1,4 @@
-var print = (x) {
-    psl { this "x" pul_var member pul_eval print null }
+var a := Object : [ a := psl { 3 integer }; ];
+psl {
+    this "a" resolve member "a" member print null
 };
-var libc = C.dlopen("libc.so.6");
-
-// copy "Hello, world!" into a buffer
-var buf = C.malloc(15);
-C.set(buf, "Hello, world!\0");
-
-// then get puts
-var puts = C.dlsym(libc, "puts");
-var putscif = C.prepcif(C.int, array(C.pointer), 0);
-
-// and print
-C.call(putscif, puts, array(buf));
