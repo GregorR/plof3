@@ -1,0 +1,10 @@
+plofbnf {
+    plof_literal => plof_foobar;
+
+    plof_foobar = /!!!/ white => plof {
+        psl { $0 print null }
+    }
+    plof_foobar = plof_foobar_next => {push0 0 integer index}
+};
+
+!!!;

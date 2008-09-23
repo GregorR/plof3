@@ -320,6 +320,11 @@ pslbnf {
         push0 5 integer index
         cwrap {pul_funcwrap} concat
     }
+    plof_literal = /\$/ digits token white => {
+        null push1 1 integer index call
+        integer
+        {$0} wrap
+    }
     plof_literal = plof_literal_next => { push0 0 integer index }
     plof_literal => plof_ident;
 
@@ -338,4 +343,59 @@ pslbnf {
 // the top context is a PUL fcontext
 psl {
     this "__pul_fc" this memberset
+};
+
+// now plofbnf
+pslbnf {
+    top = plofbnf => { push0 0 integer index }
+
+    plofbnf = /plofbnf/ white /\{/ white plofbnf_productions /\}/ white /;/ white => {
+        push0 4 integer index
+        {[gcommit]} concat
+    }
+
+    plofbnf_productions = plofbnf_productions plofbnf_production => {
+        push0 0 integer index
+        push1 1 integer index concat
+    }
+    plofbnf_productions = plofbnf_production => {
+        push0 0 integer index
+    }
+
+    plofbnf_production = pslbnf_production => { push0 0 integer index }
+    plofbnf_production =
+        /[A-Za-z_][A-Za-z0-9_]*/ white /=/ white
+        pslbnf_targets /=>/ white
+        /plof/ token white /\{/ white plof_semicolon /\}/ white => {
+
+        // push the name and targets
+        push0 0 integer index
+        push1 4 integer index concat
+
+        // add needless members since our replacement is useless
+        { {} {} {} {} {} {} {} {} {} {} 10 integer array aconcat }
+
+        // parse the code ...
+        push2 12 integer index cwrap concat
+
+        {
+            // replace markers
+            0 integer push2 0 integer index replace
+            1 integer push2 1 integer index replace
+            2 integer push2 2 integer index replace
+            3 integer push2 3 integer index replace
+            4 integer push2 4 integer index replace
+            5 integer push2 5 integer index replace
+            6 integer push2 6 integer index replace
+            7 integer push2 7 integer index replace
+            8 integer push2 8 integer index replace
+            9 integer push2 9 integer index replace
+        } concat cwrap concat
+
+        // gadd the whole thing
+        {gadd} concat
+
+        // make it immediate
+        iwrap
+    }
 };

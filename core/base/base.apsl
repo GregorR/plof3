@@ -126,6 +126,12 @@ gadd
 1 integer array
 {push0 0 integer index}
 gadd
+
+"pslOp"
+"marker"
+1 integer array
+{push0 0 integer index}
+gadd
  
 "pslOp" "/aconcat/" "token" "white" 3 integer array {{aconcat}} gadd
 "pslOp" "/add/" "token" "white" 3 integer array {{add}} gadd
@@ -256,14 +262,10 @@ gadd
 gadd
 
 "marker"
-"/\$/" "digits" "token" "white"
-4 integer array
-{push0 1 integer index
- push0 24 integer sr byte
- push1 16 integer sr byte
- push2 8 integer sr byte
- push3 byte
- concat concat concat "ü" wrap}
+"/\$/" "number"
+2 integer array
+{null push1 1 integer index call
+ integer "ü" wrap}
 gadd
 
 "digits"
