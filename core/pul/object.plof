@@ -1,0 +1,65 @@
+/*
+ * Object's basic members
+ *
+ *  Copyright (c) 2008  Gregor Richards
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to
+ *  deal in the Software without restriction, including without limitation the
+ *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *  sell copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *  IN THE SOFTWARE.
+ */
+
+Object.opMember := psl { {
+    // args: [name, next context]
+
+    push0 0 integer index
+    push1 1 integer index
+
+    this "this" resolve member
+
+    // first check if we have this ourselves
+    push3 push1 push4 member null
+    {
+        // check the name and opMember
+        push0 0 integer index "opMember"
+
+        // don't have it ourself, use the next context
+        push2 1 integer index
+        push2 push2 2 integer array
+        resolve
+        4 integer array
+
+        // now check which we found
+        push0 1 integer index
+        push1 3 integer index
+        {
+            // got opMember, recurse
+            push0 0 integer index
+            push1 2 integer index parent 2 integer array
+            push1 2 integer index "opMember" member pul_eval call
+        }
+        {
+            // just get the member
+            push0 2 integer index
+            push1 0 integer index
+            member
+        } cmp
+    }
+    {
+        // had it ourself, just use that
+        this "this" resolve member push1 0 integer index member
+    } cmp
+} };

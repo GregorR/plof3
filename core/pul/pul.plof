@@ -217,7 +217,7 @@ psl {
         this "proc" push2 memberset
 
         // then make an object
-        null new
+        new
 
         // first, __pul_e
         push0 "__pul_e" {
@@ -241,14 +241,27 @@ psl {
         this "arg" push2 memberset
 
         // then make an object
-        null new
+        new
 
         // first, __pul_e
         push0 "__pul_e" {
             this "arg" resolve member
             push0 0 integer index
-            push1 1 integer index
-            member
+
+            // check for opMember
+            "opMember" member null
+            {
+                // no opMember, just get the member
+                push0 0 integer index
+                push1 1 integer index
+                member
+            }
+            {
+                push0 1 integer index null 2 integer array
+                push1 0 integer index "opMember" member
+                global "__pul_eval" member call
+                call
+            } cmp
         } memberset
 
         // then, __pul_s
@@ -305,6 +318,11 @@ pslbnf {
     }
     plof_statement => plof_comma;
 
+    // allow Plof in PSL
+    pslOp = "plof" "\{" plof_semicolon "\}" => {
+        push0 2 integer index
+    }
+
     plof_semicolon = plof_semicolon ";" plof_semicolon_next => {
         push0 0 integer index {pul_eval pop} concat
         push1 3 integer index concat
@@ -346,6 +364,19 @@ pslbnf {
     plof_group = "\(" plof_semicolon "\)" => {
         push0 1 integer index
     }
+    plof_group = plof_group "\(" plof_args "\)" => {
+        // get the args
+        push0 2 integer index
+
+        // and the function
+        push1 0 integer index concat
+
+        // and call it
+        {pul_eval call} concat
+
+        // wrap it up
+        cwrap {pul_funcwrap} concat
+    }
     plof_group = plof_group "\." plof_identifier => {
         push0 0 integer index
         push1 2 integer index concat
@@ -377,9 +408,35 @@ pslbnf {
     plof_literal => plof_ident;
 
     plof_ident = plof_identifier => {
-        {pul_fcontext}
-        push1 0 integer index concat
-        {resolve} concat
+        // the name we're actually looking for
+        push0 0 integer index
+
+        // use opMember if possible
+        {
+            "opMember"
+
+            // look in the current function context
+            pul_fcontext push2 push2 2 integer array resolve
+            4 integer array
+
+            // now check whether we used opMember or the name
+            push0 1 integer index
+            push1 3 integer index
+            {
+                // used opMember: args = [name, next context]
+                push0 0 integer index
+                push1 2 integer index parent 2 integer array
+                push1 2 integer index "opMember" member pul_eval call
+            }
+            {
+                // no opMember
+                push0 2 integer index
+                push1 0 integer index
+                member
+            } cmp
+        } concat
+
+        // wrap it up
         cwrap {pul_funcwrap} concat
     }
 
@@ -449,9 +506,69 @@ pslbnf {
 };
 
 
+// Integers
+psl {
+    // basic opInteger, filled in later
+    pul_fcontext "opInteger" {
+        new push0 "__pul_val" push3 memberset
+    } memberset
+};
+pslbnf {
+    plof_literal = digits token white => {
+        push0 0 integer index
+        {
+            // make it a host integer
+            integer
+
+            // call opInteger to wrap it up
+            this "opInteger" resolve member call
+        } concat
+
+        cwrap {pul_funcwrap} memberset
+    }
+};
+
+// Arrays
+psl {
+    // basic opArray, to be filled in later
+    pul_fcontext "opArray" {
+        new push0 "__pul_val" push3 memberset
+    } memberset
+};
+pslbnf {
+    plof_group = plof_group "\[" plof_semicolon "\]" => {
+        // get the group ...
+        push0 0 integer index
+        {pul_eval "__pul_val" member} concat
+
+        // and the index
+        push1 2 integer index concat
+        {
+            pul_eval "__pul_val" member
+
+            index
+        } concat
+
+        cwrap {pul_funcwrap} memberset
+    }
+};
+
+
 // The most important object in the game, Object
 psl {
-    this "Object" this new memberset null
+    new push0 pul_fcontext parentset
+
+    // top.Object = ...
+    pul_fcontext "Object" push2 memberset
+
+    // Object.this = Object
+    push0 "this" push2 memberset
+
+    // Object.__pul_type = [Object]
+    push0 "__pul_type"
+        push2 1 integer array 
+        push0 push4 parentset
+    memberset
 };
 
 
@@ -460,17 +577,45 @@ pslbnf {
     plof_bind => plof_combine;
 
     plof_combine = plof_combine ":" "\[" plof_obj_defs "\]" => {
-        // push the initial object
+        // get the old object
         push0 0 integer index
 
-        // duplicate it
-        {pul_eval null new combine} concat
+        // set the basic stuff in the new object
+        {
+            new push0 pul_fcontext parentset
 
-        // then call the combining function
+            // object.this = object
+            push0 "this" push2 memberset
+
+            // objects are function contexts
+            push0 "__pul_fc" push2 memberset
+
+            // their type is based on the parent type
+            push0 "__pul_type"
+                push2 1 integer array
+                push4 "__pul_type" member pul_eval
+                aconcat
+                push0 push4 parentset
+            memberset
+
+            // copy opMember
+            push0 "opMember"
+                push3 "opMember" member
+                new combine push0 push4 parentset
+            memberset
+
+            push0
+        } concat
+
+        // then run the extender
         push1 3 integer index cwrap concat
-        {call} concat
 
-        // wrap the whole thing up
+        {
+            // stack: old new new extender
+            push0 push2 parentset call pop
+        } concat
+
+        // wrap
         cwrap {pul_funcwrap} concat
     }
     plof_combine = plof_combine_next => {
@@ -484,19 +629,16 @@ pslbnf {
     plof_obj_defs = plof_obj_defs_next => {
         push0 0 integer index
     }
+    plof_obj_defs = white => {
+        {}
+    }
     plof_obj_defs => plof_obj_def;
 
     plof_obj_def = plof_identifier ":=" plof_obj_def_next ";" => {
         {push0}
         push1 0 integer index concat
         push1 2 integer index concat
-        {pul_eval memberset} concat
-    }
-    plof_obj_def = plof_identifier "=" plof_obj_def_next ";" => {
-        {push0}
-        push1 0 integer index concat
-        push1 2 integer index concat
-        {memberset} concat
+        {pul_eval push0 push4 parentset memberset} concat
     }
     plof_obj_def => plof_bind_next;
 };

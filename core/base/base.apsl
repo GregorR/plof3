@@ -195,6 +195,7 @@ gadd
 "pslOp" "/nxor/" "token" "white" 3 integer array {{nxor}} gadd
 "pslOp" "/or/" "token" "white" 3 integer array {{or}} gadd
 "pslOp" "/parent/" "token" "white" 3 integer array {{parent}} gadd
+"pslOp" "/parentset/" "token" "white" 3 integer array {{parentset}} gadd
 "pslOp" "/parse/" "token" "white" 3 integer array {{parse}} gadd
 "pslOp" "/pop/" "token" "white" 3 integer array {{pop}} gadd
 "pslOp" "/print/" "token" "white" 3 integer array {{print}} gadd

@@ -418,16 +418,14 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
     
                 case psl_new:
                 {
-                    use1((PSLObject* a) {
-                        PSLObject* no = PSLObject.allocate(a);
-                        push(no);
-                    });
+                    PSLObject* no = PSLObject.allocate(context);
+                    push(no);
                     break;
                 }
     
                 case psl_combine:
                     use2((PSLObject* a, PSLObject* b) {
-                        PSLObject* no = PSLObject.allocate(context);
+                        PSLObject* no = PSLObject.allocate(b.parent);
     
                         // add elements of a, b
                         a.members.foreachVal((char[] name, PlofGCable* val) {
@@ -505,30 +503,9 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     });
                     break;
 
-                case psl_resolve:
+                case psl_parentset:
                     use2((PSLObject* a, PSLObject* b) {
-                        if (!b.isArray && b.raw !is null) {
-                            // get the name ...
-                            char[] name = cast(char[]) b.raw.data;
-
-                            // and look for it
-                            while (a != pslNull) {
-                                if (a.members.get(name) !is null) {
-                                    // found it!
-                                    push(a);
-                                    push(b);
-                                    return;
-                                }
-                                a = a.parent;
-                            }
-
-                            // not found!
-                            push(pslNull);
-                            push(pslNull);
-
-                        } else {
-                            throw new InterpreterFailure("resolve's second parameter must be raw data.");
-                        }
+                        a.parent = b;
                     });
                     break;
     
@@ -692,6 +669,62 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                         push(no);
                     });
                     break;
+
+                case psl_resolve:
+                    use2((PSLObject* a, PSLObject* b) {
+                        if (!b.isArray && b.raw !is null) {
+                            // get the name ...
+                            char[] name = cast(char[]) b.raw.data;
+
+                            // and look for it
+                            while (a != pslNull) {
+                                if (a.members.get(name) !is null) {
+                                    // found it!
+                                    push(a);
+                                    push(b);
+                                    return;
+                                }
+                                a = a.parent;
+                            }
+
+                            // not found!
+                            push(pslNull);
+                            push(pslNull);
+
+                        } else if (b.isArray) {
+                            // collect all the names
+                            char[][] names = (cast(char[]*) alloca((char[]).sizeof * b.arr.arr.length))
+                                    [0..b.arr.arr.length];
+                            for (int i = 0; i < b.arr.arr.length; i++) {
+                                PSLObject* subo = b.arr.arr[i];
+                                if (!subo.isArray && subo.raw !is null) {
+                                    names[i] = cast(char[]) subo.raw.data;
+                                } else {
+                                    names[i] = null;
+                                }
+                            }
+
+                            // then look for it
+                            while (a != pslNull) {
+                                for (int i = 0; i < names.length; i++) {
+                                    char[] name = names[i];
+                                    if (name.length && a.members.get(name) !is null) {
+                                        // found it!
+                                        push(a);
+                                        push(b.arr.arr[i]);
+                                        return;
+                                    }
+                                }
+                                a = a.parent;
+                            }
+
+                            // not found!
+                            push(pslNull);
+                            push(pslNull);
+
+                        }
+                     });
+                     break;
     
                 case psl_loop:
                     // simple
@@ -1775,7 +1808,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                 case psl_print: // FAKE
                     use1((PSLObject* a) {
                         if (!a.isArray && a.raw !is null) {
-                            if (a.raw.data.length > 80) {
+                            if (a.raw.data.length > 500) {
                                 Stdout("Long string (procedure?)").newline;
                             } else {
                                 Stdout(cast(char[]) a.raw.data).newline;
