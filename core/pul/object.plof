@@ -25,41 +25,100 @@
 Object.opMember := psl { {
     // args: [name, next context]
 
-    push0 0 integer index
-    push1 1 integer index
+    this "name" push2 0 integer index memberset
+    this "next" push2 1 integer index memberset
 
-    this "this" resolve member
-
-    // first check if we have this ourselves
-    push3 push1 push4 member null
+    // first check if we have this
+    null this "this" resolve member this "name" member member null
     {
-        // check the name and opMember
-        push0 0 integer index "opMember"
-
-        // don't have it ourself, use the next context
-        push2 1 integer index
-        push2 push2 2 integer array
-        resolve
-        4 integer array
-
-        // now check which we found
-        push0 1 integer index
-        push1 3 integer index
+        // it's not here, try the type
+        this "__pul_type" resolve member 1 integer 2 integer array
         {
-            // got opMember, recurse
-            push0 0 integer index
-            push1 2 integer index parent 2 integer array
-            push1 2 integer index "opMember" member pul_eval call
+            // args: [type, index]
+
+            // make sure we're not beyond the end of the array
+            push0 0 integer index length push1 1 integer index
+            {
+                // not found
+                new
+                push0 "__pul_opmember_search" new memberset
+                push0 "__pul_opmember_found" null memberset
+                throw
+            }
+            {
+                // OK, check if that type has this
+                push0 0 integer index push1 1 integer index index
+                
+                push0 this "name" resolve member member null
+                {}
+                {
+                    // found it, get it
+                    push0 this "name" resolve member member 
+
+                    // then duplicate it
+                    this "opDuplicate" resolve member call
+
+                    // reparent it
+                    push0 this "this" resolve member parentset
+
+                    // and assign it into us
+                    this "this" resolve member this "name" resolve member push2 memberset
+
+                    // then throw it
+                    new
+                    push0 "__pul_opmember_search" new memberset
+                    push0 "__pul_opmember_found" push3 memberset
+                    throw
+                } cmp
+            } lte
+
+            // add and loop
+            1 integer push1 1 integer index 1 integer add indexset
+            loop
         }
         {
-            // just get the member
-            push0 2 integer index
-            push1 0 integer index
-            member
-        } cmp
+            // is this our response?
+            push0 "__pul_opmember_search" null
+            {
+                // no, throw it again
+                throw
+            }
+            {
+                // Yes. Is it null?
+                "__pul_opmember_found" member push0 null
+                {
+                    // Yes. Check with the next guy.
+                    this "name" resolve member "opMember"
+                    this "next" resolve member
+                    push2 push2 2 integer array resolve
+                    4 integer array
+
+                    // now check whether we used opMember or the name
+                    push0 1 integer index
+                    push1 3 integer index
+                    {
+                        // used opMember, call it
+                        push0 0 integer index
+                        push1 2 integer index parent 2 integer array
+                        push1 2 integer index "opMember" member pul_eval call
+                    }
+                    {
+                        // no opMember
+                        push0 2 integer index
+                        push1 0 integer index
+                        member
+                    } cmp
+                }
+                {
+                    // Found it, just pass it along.
+                } cmp
+            } cmp
+        } catch
     }
     {
-        // had it ourself, just use that
-        this "this" resolve member push1 0 integer index member
+        // we have it, simple enough
+        this "this" resolve member
+        this "name" resolve member
+        member
     } cmp
 } };

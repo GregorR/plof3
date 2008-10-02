@@ -225,7 +225,7 @@ psl {
             global "__pul_eval" member call
         } memberset
 
-        // then __pul_f
+        // then __pul_s
         push0 "__pul_s" {
             null this "proc" resolve member call
             push1 2 integer array
@@ -379,9 +379,10 @@ pslbnf {
     }
     plof_group = plof_group "\." plof_identifier => {
         push0 0 integer index
+        {pul_eval} concat
         push1 2 integer index concat
-        {member} concat cwrap
-        {pul_funcwrap} concat
+        {pul_varwrap} concat
+        cwrap {pul_funcwrap} concat
     }
     plof_group = plof_group_next => { push0 0 integer index }
     plof_group => plof_var;
@@ -569,6 +570,47 @@ psl {
         push2 1 integer array 
         push0 push4 parentset
     memberset
+
+    // opDuplicate to duplicate objects
+    pul_fcontext "opDuplicate"
+    {
+        // make the new object
+        new combine
+
+        // object.this = object
+        push0 "this" push2 memberset
+
+        // objects are function contexts
+        push0 "__pul_fc" push2 memberset
+
+        // their type is based on the parent type (if set)
+        push0 "__pul_type" member null
+        {
+            // no parent type
+            push0 "__pul_type"
+                push2 1 integer array
+            memberset
+        }
+        {
+            // use the parent type
+            push0 "__pul_type"
+                push2 1 integer array
+                push3 "__pul_type" member pul_eval
+                aconcat
+                push0 push4 parentset
+            memberset
+        } cmp
+
+        // copy opMember (if set)
+        push0 "opMember" member null
+        {}
+        {
+            push0 "opMember"
+                push2 "opMember" member pul_eval
+                new combine push0 push4 parentset
+            memberset
+        } cmp
+    } memberset
 };
 
 
@@ -577,39 +619,17 @@ pslbnf {
     plof_bind => plof_combine;
 
     plof_combine = plof_combine ":" "\[" plof_obj_defs "\]" => {
-        // get the old object
+        // call opDuplicate
         push0 0 integer index
-
-        // set the basic stuff in the new object
         {
-            new push0 pul_fcontext parentset
-
-            // object.this = object
-            push0 "this" push2 memberset
-
-            // objects are function contexts
-            push0 "__pul_fc" push2 memberset
-
-            // their type is based on the parent type
-            push0 "__pul_type"
-                push2 1 integer array
-                push4 "__pul_type" member pul_eval
-                aconcat
-                push0 push4 parentset
-            memberset
-
-            // copy opMember
-            push0 "opMember"
-                push3 "opMember" member
-                new combine push0 push4 parentset
-            memberset
-
+            pul_eval
+            push0 this "opDuplicate" resolve member call
+            push0 push2 parentset
             push0
         } concat
 
         // then run the extender
         push1 3 integer index cwrap concat
-
         {
             // stack: old new new extender
             push0 push2 parentset call pop
