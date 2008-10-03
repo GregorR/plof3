@@ -22,11 +22,60 @@
  *  IN THE SOFTWARE.
  */
 
-Object.opMember := psl { {
-    // args: [name, next context]
+// the Function type will be filled in later, but for the moment we can just stub it
+var Function = Object : [];
 
-    this "name" push2 0 integer index memberset
-    this "next" push2 1 integer index memberset
+// trivial plof function calls
+plofbnf {
+
+    plof_group = plof_group_next "\(" plof_args "\)" => plof {
+        psl { 0 array $0 pul_eval call }
+    }
+
+
+    plof_args = white => plof {
+        psl { 0 integer array }
+    }
+
+    plof_args = plof_args "," plof_args_next => plof {
+        psl { $0 pul_eval $2 pul_eval aconcat }
+    }
+
+    plof_args = plof_args_next => plof {
+        $0
+    }
+
+    plof_args => plof_arg;
+
+    plof_arg = plof_comma_next => plof {
+        psl { $0 1 integer array }
+    }
+};
+
+// trivial plof function definitions
+plofbnf {
+    plof_group = "\{" plof_semicolon "\}" => plof {
+        opFunction(psl { {$1} })
+    }
+};
+
+// FIXME: Should use proper combination
+var opFunction = Function:psl { {
+    // get the procedure
+    this "proc" push2 0 integer index pul_eval memberset
+
+    // combine it with Function
+    plof { Function:proc } pul_eval 
+} };
+
+
+// opMember is a function ...
+Object.opMember = { psl {
+    // args: [name, next context]
+    pul_eval
+
+    this "name" push2 0 integer index pul_eval memberset
+    this "next" push2 1 integer index pul_eval memberset
 
     // first check if we have this
     null this "this" resolve member this "name" member member null
@@ -122,3 +171,60 @@ Object.opMember := psl { {
         member
     } cmp
 } };
+Object.opMember.parent = Object;
+
+
+// more advanced function syntax
+plofbnf {
+    plof_group = "\(" plof_params "\)" "\{" plof_semicolon "\}" => {
+        // make this a function context
+        {this "__pul_fc" this memberset 0 integer index}
+
+        // set up the args
+        push1 1 integer index concat
+        {
+            pop
+
+            // then name them "args"
+            this "args" push2 memberset pop
+        } concat
+        
+        // then run the function itself
+        push1 4 integer index concat
+
+        // wrap it up with opFunction
+        cwrap {1 integer array this "opFunction" resolve member call} concat
+    }
+
+    
+    plof_params = white => {
+        {}
+    }
+
+    plof_params = plof_params "," plof_params_next => {
+        push0 0 integer index
+        push1 2 integer index concat
+    }
+
+    plof_params = plof_params_next => {
+        push0 0 integer index
+    }
+
+    plof_params => plof_param;
+
+
+    // type annotations to come later
+    plof_param = plof_identifier => {
+        // this.name ...
+        {this}
+        push1 0 integer index concat
+
+        // = the val
+        {
+            push3 push3 index memberset
+        
+            // and increment
+            1 integer add
+        } concat
+    }
+};

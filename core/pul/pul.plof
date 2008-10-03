@@ -274,6 +274,31 @@ psl {
         } memberset
     } memberset
 
+    // create an unevaluated value for the parent of an object
+    global "__pul_parentwrap" {
+        // arg: object
+
+        // put the argument in a var
+        this "obj" push2 memberset
+
+        // then make an object
+        new
+
+        // first, __pul_e
+        push0 "__pul_e" {
+            this "obj" resolve member
+            parent
+        } memberset
+
+        // then, __pul_s
+        push0 "__pul_s" {
+            this "obj" resolve member
+            push1
+            parentset
+        } memberset
+    } memberset
+
+
     // PUL functions are marked with the variable __pul_fc. This finds it
     global "__pul_fcontext" {
         // arg: context
@@ -301,6 +326,10 @@ pslbnf {
 
     pslOp = "pul_varwrap" => {
         {2 integer array global "__pul_varwrap" member call}
+    }
+
+    pslOp = "pul_parentwrap" => {
+        {global "__pul_parentwrap" member call}
     }
 
     pslOp = "pul_fcontext" => {
@@ -343,7 +372,7 @@ pslbnf {
     plof_comma = plof_comma_next => { push0 0 integer index }
     plof_comma => plof_assign;
 
-    plof_assign = plof_assign_next ":=" plof_assign => {
+    plof_assign = plof_assign_next "=" plof_assign => {
         push0 0 integer index
         push1 2 integer index concat
         {pul_eval pul_set} concat
@@ -352,7 +381,7 @@ pslbnf {
     plof_assign = plof_assign_next => { push0 0 integer index }
     plof_assign => plof_bind;
 
-    plof_bind = plof_bind_next "=" plof_bind => {
+    plof_bind = "let" plof_bind_next "=" plof_bind => {
         push0 0 integer index
         push1 2 integer index concat
         {pul_set} concat
@@ -382,6 +411,11 @@ pslbnf {
         {pul_eval} concat
         push1 2 integer index concat
         {pul_varwrap} concat
+        cwrap {pul_funcwrap} concat
+    }
+    plof_group = plof_group "\." "parent" => {
+        push0 0 integer index
+        {pul_eval pul_parentwrap} concat
         cwrap {pul_funcwrap} concat
     }
     plof_group = plof_group_next => { push0 0 integer index }
@@ -441,9 +475,21 @@ pslbnf {
         cwrap {pul_funcwrap} concat
     }
 
-    plof_identifier = /[A-Za-z_][A-Za-z0-9_]*/ token white => {
+    plof_identifier = plof_notkeyword /[A-Za-z_][A-Za-z0-9_]*/ token white => {
         push0 0 integer index
     }
+
+    plof_notkeyword =
+        /()(?!as[^A-Za-z0-9_])/
+        /()(?!forceEval[^A-Za-z0-9_])/
+        /()(?!is[^A-Za-z0-9_])/
+        /()(?!in[^A-Za-z0-9_])/
+        /()(?!include[^A-Za-z0-9_])/
+        /()(?!parent[^A-Za-z0-9_])/
+        /()(?!return[^A-Za-z0-9_])/
+        /()(?!rtInclude[^A-Za-z0-9_])/
+        /()(?!var[^A-Za-z0-9_])/
+        => {{}}
 };
 
 // the top context is a PUL fcontext
@@ -611,6 +657,8 @@ psl {
             memberset
         } cmp
     } memberset
+
+    // opCombine is defined below as it depends on duplication
 };
 
 
@@ -624,7 +672,6 @@ pslbnf {
         {
             pul_eval
             push0 this "opDuplicate" resolve member call
-            push0 push2 parentset
             push0
         } concat
 
@@ -633,6 +680,24 @@ pslbnf {
         {
             // stack: old new new extender
             push0 push2 parentset call pop
+        } concat
+
+        // wrap
+        cwrap {pul_funcwrap} concat
+    }
+    plof_combine = plof_combine ":" plof_combine_next => {
+        // combine them
+        push0 0 integer index
+        {pul_eval} concat
+        push1 2 integer index
+        {
+            pul_eval push1 push1 combine
+
+            // stack: old1 old2 new
+
+            // then call opCombine
+            3 integer array
+            push0 this "opCombine" resolve member call
         } concat
 
         // wrap
@@ -654,11 +719,145 @@ pslbnf {
     }
     plof_obj_defs => plof_obj_def;
 
-    plof_obj_def = plof_identifier ":=" plof_obj_def_next ";" => {
+    plof_obj_def = plof_identifier "=" plof_obj_def_next ";" => {
         {push0}
         push1 0 integer index concat
         push1 2 integer index concat
         {pul_eval push0 push4 parentset memberset} concat
     }
     plof_obj_def => plof_bind_next;
+};
+
+psl {
+    // opCombine reconciles combined objects
+    pul_fcontext "opCombine"
+    {
+        // arg: [old1, old2, new]
+        this "old1" push2 0 integer index memberset
+        this "old2" push2 1 integer index memberset
+        push0 2 integer index this "new" push2 memberset
+
+        // object.this = object
+        push0 "this" push2 memberset
+
+        // objects are function contexts
+        push0 "__pul_fc" push2 memberset
+        pop
+
+        // their type is based on the parent types (if set)
+        this "old1" member "__pul_type" member pul_eval null
+        {
+            // none on the left, how 'bout the right
+            this "old2" resolve member "__pul_type" member pul_eval null
+            {
+                // none on either side, just use itself
+                this "new" resolve "__pul_type"
+                    push1 1 integer array
+                memberset
+            }
+            {
+                // right but not left
+                this "new" resolve "__pul_type"
+                    push1 1 integer array
+                    this "old2" resolve "__pul_type" member pul_eval
+                    aconcat
+                memberset
+            } cmp
+        }
+        {
+            // left is set, how 'bout the right
+            this "old2" resolve member "__pul_type" member pul_eval null
+            {
+                // left but not right
+                this "new" resolve "__pul_type"
+                    push1 1 integer array
+                    this "old1" resolve "__pul_type" member pul_eval
+                    aconcat
+                memberset
+            }
+            {
+                // both set
+                this "new" resolve "__pul_type"
+                    push1 1 integer array
+                    this "old2" resolve "__pul_type" member pul_eval
+                    aconcat
+                    this "old1" resolve "__pul_type" member pul_eval
+                    aconcat
+                memberset
+            } cmp
+        } cmp
+
+        // reparent all members
+        this "new" member
+        push0 members
+        0 integer
+        3 integer array
+        {
+            // args: [object, members, index]
+
+            // have we finished?
+            push0 1 integer index length
+            push1 2 integer index
+            {
+                // yes, we're done
+                new
+                    push0 "__pul_opcombine_done" new memberset
+                throw
+            }
+            {
+                // no, check this one
+                push0 0 integer index
+                    push1 1 integer index
+                        push2 2 integer index
+                    index
+                member
+
+                // if the parent is one of the old ones, we'll set reparent
+                this "reparent" null memberset
+
+                push0 parent this "old1" resolve member
+                {
+                    this "reparent" new memberset
+                } {} cmp
+
+                push0 parent this "old2" resolve member
+                {
+                    this "reparent" new memberset
+                } {} cmp
+
+                // now, reparent it if applicable
+                pop
+                this "reparent" member null
+                {}
+                {
+                    push0 0 integer index
+                        push1 1 integer index
+                            push2 2 integer index
+                        index
+
+                        // now we have the object and the name, so reparent it
+                        this "torep" push3 push3 member memberset
+
+                        plof { torep:[] } pul_eval push0 push3 parentset
+                    memberset
+                } cmp
+            } lte
+
+            // now step
+            2 integer
+                push1 2 integer index
+                    1 integer
+                add
+            indexset
+            loop
+        }
+        {
+            // was this our throw?
+            push0 "__pul_opcombine_done" member null
+            {
+                // nope
+                throw
+            } {} cmp
+        } catch
+    } memberset
 };
