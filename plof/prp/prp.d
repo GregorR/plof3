@@ -50,17 +50,16 @@ class PlofRuntimeParser : IPlofRuntimeParser {
         // Parse the code chunk-by-chunk
         while (code.length != 0) {
             GrammarElem topg = _grammar[top];
-            ParseResultArr* res = topg.parse(code, 0, file, line, col);
+            ParseResultArr res = topg.parse(code, 0, file, line, col);
             topg.clear();
 
             if (res.arr.length == 0) {
                 // Failed to parse, bail out
-                res.gc.blessDown();
                 return psl;
 
             } else {
                 // Run the associated commands to generate the PSL
-                PSLObject* ret = cast(PSLObject*) res.arr[0].runCommands();
+                PSLObject ret = cast(PSLObject) res.arr[0].runCommands();
 
                 // should have returned raw data
                 if (!ret.isArray && ret.raw !is null) {
@@ -71,9 +70,6 @@ class PlofRuntimeParser : IPlofRuntimeParser {
                     interpret(ret.raw.data, true, this);
                 }
 
-                // get rid of the data it returned
-                ret.gc.blessDown();
-
                 // bump the line and col
                 line = res.arr[0].eline;
                 col = res.arr[0].ecol;
@@ -81,8 +77,6 @@ class PlofRuntimeParser : IPlofRuntimeParser {
                 // Then take out whatever was parsed from the code
                 code = res.arr[0].remaining;
             }
-
-            res.gc.blessDown();
         }
 
         return psl;
@@ -169,7 +163,7 @@ class PlofRuntimeParser : IPlofRuntimeParser {
     }
 
     /// Callback for regexes
-    void* regexCallback(ParseResult* res, void*[] args)
+    void* regexCallback(ParseResult res, void*[] args)
     {
         // make a command to generate the result
         ubyte[] bignum;
@@ -180,12 +174,11 @@ class PlofRuntimeParser : IPlofRuntimeParser {
                        cast(ubyte[]) res.consumed);
 
         // put it in a PSLRawData
-        PSLRawData* rd = PSLRawData.allocate(cmd);
+        PSLRawData rd = new PSLRawData(cmd);
 
         // and in a PSLObject
-        PSLObject* no = PSLObject.allocate(pslNull);
+        PSLObject no = new PSLObject(pslNull);
         no.raw = rd;
-        no.gc.blessUp();
 
         return cast(void*) no;
     }
@@ -207,39 +200,30 @@ alias UGRHS[] UProduction;
 class ParserPSL {
     this(PlofRuntimeParser sprp) { prp = sprp; }
 
-    /// Interpret the associated code with the given PSLObject* args
-    void* interp(ParseResult* res, void*[] args)
+    /// Interpret the associated code with the given PSLObject args
+    void* interp(ParseResult res, void*[] args)
     {
         // Create a stack,
-        PSLStack* stack = PSLStack.allocate();
-        stack.gc.blessUp();
+        PSLStack stack = new PSLStack();
 
         // and a master context,
-        PSLObject* context = PSLObject.allocate(pslNull);
-        context.gc.blessUp();
+        PSLObject context = new PSLObject(pslNull);
 
         // an array to store the arguments,
-        PSLArray* arr = PSLArray.allocate(cast(PSLObject*[]) args);
+        PSLArray arr = new PSLArray(cast(PSLObject[]) args);
 
         // and put it in an object,
-        PSLObject* no = PSLObject.allocate(context);
+        PSLObject no = new PSLObject(context);
         no.arr = arr;
 
         // put the object on the stack
         stack.stack ~= no;
-        no.gc.refUp();
 
         // and run it
         interpret(code[res.choice], stack, context, false, prp);
 
         // get the top element off the stack
         no = stack.stack[$-1];
-
-        // reference it, deref the array
-        no.gc.blessUp();
-        foreach (i; args) {
-            (cast(PSLObject*) i).gc.blessDown();
-        }
 
         if (enableDebug &&
             !no.isArray && no.raw !is null &&
@@ -289,14 +273,10 @@ class ParserPSL {
             // finally, the original function
             debugbuf[i..$] = no.raw.data[];
 
-            no.raw = PSLRawData.allocate(debugbuf);
+            no.raw = new PSLRawData(debugbuf);
         }
 
-        // then get rid of them
-        context.gc.blessDown();
-        stack.gc.blessDown();
-
-        return no;
+        return cast(void*) no;
     }
 
     private ubyte[][] code;

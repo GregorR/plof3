@@ -29,30 +29,10 @@ import tango.text.Util;
 
 import tango.stdc.stdlib;
 
-import plof.psl.gc;
-
-/// A treemap, mapping char[]'s to PlofGCable's.
-struct PlofTreemap {
-    PlofGCable gc;
-
-    /// Allocate a treemap
-    static PlofTreemap* allocate()
-    {
-        PlofTreemap* ret = PlofGCable.allocate!(PlofTreemap)();
-        ret.gc.foreachRef = &ret.foreachRef;
-        return ret;
-    }
-
-    /// Foreach over elements
-    void foreachRef(void delegate(PlofGCable*) callback)
-    {
-        if (node !is null) {
-            callback(cast(PlofGCable*) node);
-        }
-    }
-
+/// A treemap, mapping char[]'s to void*'s.
+class PlofTreemap {
     // Foreach over values
-    void foreachVal(void delegate(char[] name, PlofGCable*) callback)
+    void foreachVal(void delegate(char[] name, void*) callback)
     {
         if (node !is null) {
             node.foreachVal(callback);
@@ -60,18 +40,17 @@ struct PlofTreemap {
     }
 
     /// Add an element
-    void add(char[] name, PlofGCable* val)
+    void add(char[] name, void* val)
     {
         if (node is null) {
-            node = PlofTreemapNode.allocate(name, val);
-            node.gc.refUp();
+            node = new PlofTreemapNode(name, val);
         } else {
             node.add(name, val);
         }
     }
 
     /// Get an element
-    PlofGCable* get(char[] name)
+    void* get(char[] name)
     {
         if (node is null)
             return null;
@@ -79,46 +58,24 @@ struct PlofTreemap {
     }
 
     /// The node which is the top of this treemap
-    PlofTreemapNode* node;
+    PlofTreemapNode node;
 }
 
 /// A treemap node
-struct PlofTreemapNode {
-    PlofGCable gc;
-
+class PlofTreemapNode {
     /// Allocate a treemap node with the given name and value
-    static PlofTreemapNode* allocate(char[] name, PlofGCable* val)
+    this(char[] name, void* val)
     {
-        PlofTreemapNode* ret = PlofGCable.allocate!(PlofTreemapNode)();
-        ret.gc.foreachRef = &ret.foreachRef;
-        ret.gc.destructor = &ret.destructor;
+        this.name = new char[name.length];
+        this.name[] = name[];
 
-        // duplicate the name with C allocation to avoid D's GC
-        ret.name = (cast(char*) malloc(name.length))[0..name.length];
-        ret.name[] = name[];
-
-        ret.hash = jhash(cast(ubyte*) name.ptr, name.length);
+        this.hash = jhash(cast(ubyte*) name.ptr, name.length);
         
-        ret.val = val;
-        val.refUp();
-        return ret;
-    }
-
-    /// Foreach over references
-    void foreachRef(void delegate(PlofGCable*) callback)
-    {
-        callback(cast(PlofGCable*) val);
-
-        if (left !is null) {
-            callback(cast(PlofGCable*) left);
-        }
-        if (right !is null) {
-            callback(cast(PlofGCable*) right);
-        }
+        this.val = val;
     }
 
     /// Standard foreach
-    void foreachVal(void delegate(char[], PlofGCable*) callback)
+    void foreachVal(void delegate(char[], void*) callback)
     {
         if (left !is null) {
             left.foreachVal(callback);
@@ -129,39 +86,29 @@ struct PlofTreemapNode {
         }
     }
 
-    void destructor()
-    {
-        free(name.ptr);
-    }
-
     /// Add an element under this treemap node
-    void add(char[] name, PlofGCable* val)
+    void add(char[] name, void* val)
     {
         add(name, jhash(cast(ubyte*) name.ptr, name.length), val);
     }
 
     /// Add an element under this treemap node with the given hash
-    void add(char[] name, uint hash, PlofGCable* val)
+    void add(char[] name, uint hash, void* val)
     {
         if (hash < this.hash) {
             if (left is null) {
-                left = PlofTreemapNode.allocate(name, val);
-                left.gc.refUp();
+                left = new PlofTreemapNode(name, val);
             } else {
                 left.add(name, hash, val);
             }
 
         } else if (hash == this.hash) {
             // replace
-            PlofGCable* lastval = this.val;
             this.val = val;
-            val.refUp();
-            lastval.refDown();
 
         } else {
             if (right is null) {
-                right = PlofTreemapNode.allocate(name, val);
-                right.gc.refUp();
+                right = new PlofTreemapNode(name, val);
             } else {
                 right.add(name, hash, val);
             }
@@ -169,13 +116,13 @@ struct PlofTreemapNode {
     }
 
     /// Get an element under this treemap node
-    PlofGCable* get(char[] name)
+    void* get(char[] name)
     {
         return get(jhash(cast(ubyte*) name.ptr, name.length));
     }
 
     /// Get an element under this treemap node with the given hash
-    PlofGCable* get(uint hash)
+    void* get(uint hash)
     {
         if (hash < this.hash) {
             if (left is null) {
@@ -200,8 +147,8 @@ struct PlofTreemapNode {
     // The actual mapping
     char[] name;
     uint hash;
-    PlofGCable* val;
+    void* val;
 
     // And child nodes
-    PlofTreemapNode* left, right;
+    PlofTreemapNode left, right;
 }

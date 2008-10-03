@@ -127,10 +127,8 @@ int main(char[][] args)
     plofSearchPath(plofFiles);
 
     // Now set up a base environment ...
-    PSLStack* stack = PSLStack.allocate();
-    stack.gc.blessUp();
-    PSLObject* context = PSLObject.allocate(pslNull);
-    context.gc.blessUp();
+    PSLStack stack = new PSLStack();
+    PSLObject context = new PSLObject(pslNull);
     PlofRuntimeParser prp = new PlofRuntimeParser;
 
     // Interpret all the PSL files ...

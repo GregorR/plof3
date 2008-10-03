@@ -30,34 +30,29 @@ module plof.prp.packrat;
 import tango.stdc.stdlib;
 import tango.stdc.stringz;
 
-import plof.psl.gc;
-
 import bcd.pcre.pcre;
 version (build) { pragma(link, "pcre"); }
 
 /** A grammatical element: Could be a terminal or nonterminal */
 class GrammarElem {
     /** Parse this grammar element, memoized */
-    ParseResultArr* parse(char[] inp, uint start, char[] file, uint line, uint col)
+    ParseResultArr parse(char[] inp, uint start, char[] file, uint line, uint col)
     {
         // if we don't have room to memoize this, make room
         if (memo.length <= start) {
             int oldlen = memo.length;
-            memo = (cast(ParseResultArr**) realloc(memo.ptr, (start + 1) * (ParseResultArr*).sizeof))
-                [0..(start+1)];
+            memo.length = start + 1;
             memo[oldlen..$] = null;
         }
 
         // check for already-memoized results
-        ParseResultArr* pr = memo[start];
+        ParseResultArr pr = memo[start];
         if (pr !is null) {
-            pr.gc.blessUp();
             return pr;
         }
 
         // otherwise, check and memoize
         pr = gparse(inp, start, file, line, col);
-        pr.gc.blessUp();
         memo[start] = pr;
         return pr;
     }
@@ -67,14 +62,7 @@ class GrammarElem {
     {
         if (memo.length == 0) return;
 
-        // deref ...
-        foreach (me; memo) {
-            if (me !is null)
-                me.gc.blessDown();
-        }
-
         // and free
-        free(memo.ptr);
         memo = null;
 
         subclear();
@@ -84,58 +72,42 @@ class GrammarElem {
     void subclear() {}
 
     /** Parse this grammar element over the given input (non-memoized) */
-    ParseResultArr* gparse(char[] inp, uint start, char[] file, uint line, uint col)
+    ParseResultArr gparse(char[] inp, uint start, char[] file, uint line, uint col)
     { return null; }
 
     /** The name of this element */
     char[] name() { return _name; }
 
     /** The command associated with this production (if applicable) */
-    void* delegate(ParseResult*, void*[]) command;
+    void* delegate(ParseResult, void*[]) command;
 
     private:
 
     char[] _name;
 
     /** Memoization store */
-    ParseResultArr*[] memo;
+    ParseResultArr[] memo;
 }
 
 /** The result of parsing */
-struct ParseResult {
-    PlofGCable gc;
-
-    static ParseResult* allocate(ParseResult* copy)
+class ParseResult {
+    this(ParseResult copy)
     {
-        ParseResult* ret = PlofGCable.allocate!(ParseResult)();
-        ret.gc.foreachRef = &ret.foreachRef;
-        ret.prod = copy.prod;
-        ret.choice = copy.choice;
-        ret.subResults = ParseResultArr.allocate(copy.subResults);
-        ret.subResults.gc.refUp();
-        ret.file = copy.file;
-        ret.sline = copy.sline;
-        ret.eline = copy.eline;
-        ret.scol = copy.scol;
-        ret.ecol = copy.ecol;
-        return ret;
+        this.prod = copy.prod;
+        this.choice = copy.choice;
+        this.subResults = new ParseResultArr(copy.subResults);
+        this.file = copy.file;
+        this.sline = copy.sline;
+        this.eline = copy.eline;
+        this.scol = copy.scol;
+        this.ecol = copy.ecol;
     }
 
-    static ParseResult* allocate(GrammarElem sprod)
+    this(GrammarElem sprod)
     {
-        ParseResult* ret = PlofGCable.allocate!(ParseResult)();
-        ret.gc.foreachRef = &ret.foreachRef;
-        ret.prod = sprod;
-        ret.choice = 0;
-        ret.subResults = ParseResultArr.allocate();
-        ret.subResults.gc.refUp();
-        return ret;
-    }
-
-    /** Foreach ref over sub results */
-    void foreachRef(void delegate(PlofGCable*) callback)
-    {
-        callback(cast(PlofGCable*) subResults);
+        this.prod = sprod;
+        this.choice = 0;
+        this.subResults = new ParseResultArr();
     }
 
     /** Run the commands associated with this result */
@@ -163,7 +135,7 @@ struct ParseResult {
     int choice;
 
     /** Any sub-results */
-    ParseResultArr* subResults;
+    ParseResultArr subResults;
 
     /** The file being parsed */
     char[] file;
@@ -182,64 +154,29 @@ struct ParseResult {
 }
 
 /** An array of parse results */
-struct ParseResultArr {
-    PlofGCable gc;
-
+class ParseResultArr {
     /// Allocate empty
-    static ParseResultArr* allocate()
-    {
-        ParseResultArr* ret = PlofGCable.allocate!(ParseResultArr)();
-        ret.gc.foreachRef = &ret.foreachRef;
-        ret.gc.destructor = &ret.destructor;
-        return ret;
-    }
+    this() {}
 
     /// Allocate with a provided array
-    static ParseResultArr* allocate(ParseResultArr* copy)
+    this(ParseResultArr copy)
     {
-        ParseResultArr* ret = PlofGCable.allocate!(ParseResultArr)();
-        ret.gc.foreachRef = &ret.foreachRef;
-        ret.gc.destructor = &ret.destructor;
-        ret.arr = (cast(ParseResult**) malloc(copy.arr.length * (ParseResult*).sizeof))
-            [0..copy.arr.length];
-        ret.arr[] = copy.arr[];
-
-        // then ref them up
-        foreach (e; ret.arr) {
-            e.gc.refUp();
-        }
-
-        return ret;
-    }
-
-    void foreachRef(void delegate(PlofGCable*) callback)
-    {
-        foreach (e; arr) {
-            callback(cast(PlofGCable*) e);
-        }
-    }
-
-    void destructor()
-    {
-        free(arr.ptr);
+        this.arr = new ParseResult[copy.arr.length];
+        this.arr[] = copy.arr[];
     }
 
     /// Append to this array
-    void append(ParseResult* e)
+    void append(ParseResult e)
     {
         // extend the array
-        arr = (cast(ParseResult**) realloc(arr.ptr, (arr.length + 1) * (ParseResult*).sizeof))
-            [0..(arr.length + 1)];
+        arr.length = arr.length + 1;
 
         // then add the element
         arr[$-1] = e;
-
-        // and ref it
-        e.gc.refUp();
     }
 
     /// The array itself
-    ParseResult*[] arr;
+    ParseResult[] arr;
 }
 
 /** A production (a nonterminal in usual nomenclature) */
@@ -268,7 +205,7 @@ class Production : GrammarElem {
     }
 
     /** Parse this production, non-memoized */
-    ParseResultArr* gparse(char[] inp, uint start, char[] file, uint line, uint col)
+    ParseResultArr gparse(char[] inp, uint start, char[] file, uint line, uint col)
     {
         //Stdout("Parsing ")(name)(" over ")(inp[start..$].length).newline;
         // First, collect any left recursions
@@ -287,8 +224,7 @@ class Production : GrammarElem {
         }
 
         // Initialize the output
-        ParseResultArr* prFinal = ParseResultArr.allocate();
-        prFinal.gc.blessUp();
+        ParseResultArr prFinal = new ParseResultArr();
 
         // Bail out if we have no choices
         if (sub.length == 0) return prFinal;
@@ -298,10 +234,9 @@ class Production : GrammarElem {
             if (sge.length > 0 && sge[0] is this) continue;
 
             // initialize our potential result
-            ParseResultArr* prs = ParseResultArr.allocate();
-            prs.gc.blessUp();
+            ParseResultArr prs = new ParseResultArr();
 
-            ParseResult* basepr = ParseResult.allocate(this);
+            ParseResult basepr = new ParseResult(this);
             basepr.choice = ch;
             basepr.consumed = null;
             basepr.remaining = inp[start..$];
@@ -314,16 +249,15 @@ class Production : GrammarElem {
 
             // consume each part
             foreach (elem; sge) {
-                ParseResultArr* sprs = ParseResultArr.allocate();
-                sprs.gc.blessUp();
+                ParseResultArr sprs = new ParseResultArr();
 
                 foreach (pr; prs.arr) {
-                    ParseResultArr* eprs = elem.parse(inp, start + pr.consumed.length,
+                    ParseResultArr eprs = elem.parse(inp, start + pr.consumed.length,
                                                       pr.file, pr.eline, pr.ecol);
 
                     foreach (epr; eprs.arr) {
                         // worked, so consume this
-                        ParseResult* spr = ParseResult.allocate(pr);
+                        ParseResult spr = new ParseResult(pr);
                         spr.subResults.append(epr);
                         spr.consumed = inp[0..(pr.consumed.length + epr.consumed.length)];
                         spr.remaining = epr.remaining;
@@ -331,11 +265,8 @@ class Production : GrammarElem {
                         spr.ecol = epr.ecol;
                         sprs.append(spr);
                     }
-
-                    eprs.gc.blessDown();
                 }
 
-                prs.gc.blessDown();
                 prs = sprs;
             }
 
@@ -343,18 +274,17 @@ class Production : GrammarElem {
             foreach (pr; prs.arr) {
                 prFinal.append(pr);
             }
-            prs.gc.blessDown();
         }
         //Stdout(name)(": ")(sub.length).newline;
         if (prFinal.arr.length == 0) return prFinal;
 
         // now check for left recursion
         for (int pri = 0; pri < prFinal.arr.length; pri++) {
-            ParseResult* pr = prFinal.arr[pri];
+            ParseResult pr = prFinal.arr[pri];
             
             foreach (ch, lr; lRecursions) {
                 if (lr is null) continue;
-                ParseResultArr* sprs = lr.parse(inp, start + pr.consumed.length,
+                ParseResultArr sprs = lr.parse(inp, start + pr.consumed.length,
                                                 pr.file, pr.eline, pr.ecol);
 
                 foreach (spr; sprs.arr) {
@@ -364,7 +294,7 @@ class Production : GrammarElem {
                     }
 
                     // A recursion, wrap it up
-                    ParseResult* npr = ParseResult.allocate(this);
+                    ParseResult npr = new ParseResult(this);
                     npr.choice = ch;
                     npr.subResults.append(pr);
                     foreach (sspr; spr.subResults.arr) {
@@ -379,8 +309,6 @@ class Production : GrammarElem {
                     npr.ecol = spr.ecol;
                     prFinal.append(npr);
                 }
-
-                sprs.gc.blessDown();
             }
         }
 
@@ -417,10 +345,9 @@ class RegexTerminal : GrammarElem {
     }
 
     /** Parse this regex */
-    ParseResultArr* gparse(char[] inp, uint start, char[] file, uint line, uint col)
+    ParseResultArr gparse(char[] inp, uint start, char[] file, uint line, uint col)
     {
-        ParseResultArr* ret = ParseResultArr.allocate();
-        ret.gc.blessUp();
+        ParseResultArr ret = new ParseResultArr();
 
         int ovector[32];
 
@@ -444,7 +371,7 @@ class RegexTerminal : GrammarElem {
             len = ovector[1];
         }
         //Stdout(" with ")(len).newline;
-        ParseResult* pr = ParseResult.allocate(this);
+        ParseResult pr = new ParseResult(this);
         pr.consumed = inp[start..start+len];
         pr.remaining = inp[start+len..$];
 

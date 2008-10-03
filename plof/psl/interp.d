@@ -40,7 +40,6 @@ import plof.prp.iprp;
 
 import plof.psl.bignum;
 import plof.psl.file;
-import plof.psl.gc;
 import plof.psl.psl;
 import plof.psl.pslobject;
 import plof.psl.replace;
@@ -50,61 +49,35 @@ import plof.searchpath.searchpath;
 
 import libffi.libffi;
 
-/// The stack, allocated as a PlofGCable for easy mark/sweeping
-struct PSLStack {
-    PlofGCable gc;
-
-    static PSLStack* allocate()
-    {
-        PSLStack* ret = PlofGCable.allocate!(PSLStack)();
-        ret.gc.foreachRef = &ret.foreachRef;
-        return ret;
-    }
-
-    /// Foreach over elements in the stack, mainly useful as master mark
-    void foreachRef(void delegate(PlofGCable*) callback)
-    {
-        foreach (i; stack) {
-            callback(cast(PlofGCable*) i);
-        }
-    }
-
+/// The stack
+class PSLStack {
     /// Truncate the stack to the given length
     void truncate(uint len)
     {
         if (len < stack.length) {
-            foreach (i; stack[len..$]) {
-                i.gc.refDown();
-            }
             stack.length = len;
         }
     }
 
     // The stack itself
-    PSLObject*[] stack;
+    PSLObject[] stack;
 }
 
 /// Interpret the given code, with the given grammar parser for parser commands
 void interpret(ubyte[] psl, bool immediate = false, IPlofRuntimeParser prp = null)
 {
     // Create a stack,
-    PSLStack* stack = PSLStack.allocate();
-    stack.gc.blessUp();
+    PSLStack stack = new PSLStack();
 
     // and a master context,
-    PSLObject* context = PSLObject.allocate(pslNull);
-    context.gc.blessUp();
+    PSLObject context = new PSLObject(pslNull);
 
     // and run it
     interpret(psl, stack, context, immediate, prp);
-
-    // then get rid of the context and stack
-    context.gc.blessDown();
-    stack.gc.blessDown();
 }
 
 /// Interpret the given code in the given context
-PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
+PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
                      bool immediate = false, IPlofRuntimeParser prp = null)
 {
     // for debugging purposes, the filename, line and column
@@ -112,81 +85,62 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
     int dline = -1, dcol = -1;
 
     // some convenience functions
-    void push(PSLObject* x) {
+    void push(PSLObject x) {
         stack.stack ~= x;
-        x.gc.refUp();
     }
     void pop() {
         if (stack.stack.length > 0) {
-            stack.stack[$-1].gc.refDown();
             stack.stack.length = stack.stack.length - 1;
         }
     }
-    PSLObject* popBless() {
-        PSLObject* r;
+    PSLObject popBless() {
+        PSLObject r;
         if (stack.stack.length > 0) {
             r = stack.stack[$-1];
             stack.stack.length = stack.stack.length - 1;
-            r.gc.blessUp();
-            r.gc.refDown();
         } else {
             r = pslNull;
-            r.gc.blessUp();
         }
         return r;
     }
-    void use1(void delegate(PSLObject*) f) {
-        PSLObject* a = popBless();
+    void use1(void delegate(PSLObject) f) {
+        PSLObject a = popBless();
         f(a);
-        a.gc.blessDown();
     }
-    void use2(void delegate(PSLObject*, PSLObject*) f) {
-        PSLObject* b = popBless();
-        PSLObject* a = popBless();
+    void use2(void delegate(PSLObject, PSLObject) f) {
+        PSLObject b = popBless();
+        PSLObject a = popBless();
         f(a, b);
-        a.gc.blessDown();
-        b.gc.blessDown();
     }
-    void use3(void delegate(PSLObject*, PSLObject*, PSLObject*) f) {
-        PSLObject* c = popBless();
-        PSLObject* b = popBless();
-        PSLObject* a = popBless();
+    void use3(void delegate(PSLObject, PSLObject, PSLObject) f) {
+        PSLObject c = popBless();
+        PSLObject b = popBless();
+        PSLObject a = popBless();
         f(a, b, c);
-        a.gc.blessDown();
-        b.gc.blessDown();
-        c.gc.blessDown();
     }
-    void use4(void delegate(PSLObject*, PSLObject*, PSLObject*, PSLObject*) f) {
-        PSLObject* d = popBless();
-        PSLObject* c = popBless();
-        PSLObject* b = popBless();
-        PSLObject* a = popBless();
+    void use4(void delegate(PSLObject, PSLObject, PSLObject, PSLObject) f) {
+        PSLObject d = popBless();
+        PSLObject c = popBless();
+        PSLObject b = popBless();
+        PSLObject a = popBless();
         f(a, b, c, d);
-        a.gc.blessDown();
-        b.gc.blessDown();
-        c.gc.blessDown();
-        d.gc.blessDown();
     }
-    PSLObject* call(PSLObject* called, PSLObject* incontext, ubyte[] npsl) {
+    PSLObject call(PSLObject called, PSLObject incontext, ubyte[] npsl) {
         // Create a stack,
-        PSLStack* nstack = PSLStack.allocate();
-        nstack.gc.blessUp();
+        PSLStack nstack = new PSLStack();
 
         // transfer the argument
-        PSLObject* arg = popBless();
+        PSLObject arg = popBless();
         nstack.stack ~= arg;
-        arg.gc.refUp();
-        arg.gc.blessDown();
 
         // and a master context,
-        PSLObject* ncontext = PSLObject.allocate(incontext);
-        ncontext.gc.blessUp();
+        PSLObject ncontext = new PSLObject(incontext);
 
         // set +procedure
-        ncontext.members.add("+procedure", cast(PlofGCable*) called);
+        ncontext.members.add("+procedure", cast(void*) called);
 
         // and run it
-        PSLObject* thrown = interpret(npsl, nstack, ncontext, false, prp);
+        PSLObject thrown = interpret(npsl, nstack, ncontext, false, prp);
 
         // get the argument back
         if (nstack.stack.length) {
@@ -195,10 +149,6 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
 	    push(pslNull);
 	}
 
-        // then get rid of the context and stack
-        ncontext.gc.blessDown();
-        nstack.gc.blessDown();
-
         return thrown;
     }
 
@@ -206,7 +156,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
 
     // integer operation over 2 args
     void intop(ptrdiff_t delegate(ptrdiff_t, ptrdiff_t) op) {
-        use2((PSLObject* a, PSLObject* b) {
+        use2((PSLObject a, PSLObject b) {
             // get the left and right values
             ptrdiff_t left, right, ret;
             if (!a.isArray && a.raw !is null &&
@@ -226,11 +176,11 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
             ret = op(left, right);
 
             // put that in raw data
-            PSLRawData* rd = PSLRawData.allocate(
+            PSLRawData rd = new PSLRawData(
                 (cast(ubyte*) &ret)[0..ptrdiff_t.sizeof]);
 
             // and in an object
-            PSLObject* no = PSLObject.allocate(context);
+            PSLObject no = new PSLObject(context);
             no.raw = rd;
 
             // then push it
@@ -239,10 +189,10 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
     }
 
     // integer comparison operation over 2 args
-    PSLObject* intcmp(bool delegate(ptrdiff_t, ptrdiff_t) op) {
-        PSLObject* thrown;
+    PSLObject intcmp(bool delegate(ptrdiff_t, ptrdiff_t) op) {
+        PSLObject thrown;
 
-        use4((PSLObject* a, PSLObject* b, PSLObject* procy, PSLObject* procn) {
+        use4((PSLObject a, PSLObject b, PSLObject procy, PSLObject procn) {
             // get the left and right values
             ptrdiff_t left, right;
             bool res;
@@ -283,7 +233,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
 
     // float operation over 2 args
     void floatop(real delegate(real, real) op) {
-        use2((PSLObject* a, PSLObject* b) {
+        use2((PSLObject a, PSLObject b) {
             // get the left and right values
             real left, right, ret;
             if (!a.isArray && a.raw !is null &&
@@ -303,11 +253,11 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
             ret = op(left, right);
 
             // put that in raw data
-            PSLRawData* rd = PSLRawData.allocate(
+            PSLRawData rd = new PSLRawData(
                 (cast(ubyte*) &ret)[0..real.sizeof]);
 
             // and in an object
-            PSLObject* no = PSLObject.allocate(context);
+            PSLObject no = new PSLObject(context);
             no.raw = rd;
 
             // then push it
@@ -316,10 +266,10 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
     }
 
     // float comparison operation over 2 args
-    PSLObject* floatcmp(bool delegate(real, real) op) {
-        PSLObject* thrown;
+    PSLObject floatcmp(bool delegate(real, real) op) {
+        PSLObject thrown;
 
-        use4((PSLObject* a, PSLObject* b, PSLObject* procy, PSLObject* procn) {
+        use4((PSLObject a, PSLObject b, PSLObject procy, PSLObject procn) {
             // get the left and right values
             real left, right;
             bool res;
@@ -418,46 +368,46 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
     
                 case psl_new:
                 {
-                    PSLObject* no = PSLObject.allocate(context);
+                    PSLObject no = new PSLObject(context);
                     push(no);
                     break;
                 }
     
                 case psl_combine:
-                    use2((PSLObject* a, PSLObject* b) {
-                        PSLObject* no = PSLObject.allocate(b.parent);
+                    use2((PSLObject a, PSLObject b) {
+                        PSLObject no = new PSLObject(b.parent);
     
                         // add elements of a, b
-                        a.members.foreachVal((char[] name, PlofGCable* val) {
+                        a.members.foreachVal((char[] name, void* val) {
                             no.members.add(name, val);
                         });
-                        b.members.foreachVal((char[] name, PlofGCable* val) {
+                        b.members.foreachVal((char[] name, void* val) {
                             no.members.add(name, val);
                         });
     
                         // combine the raw or array data
                         if (a.isArray && b.isArray) {
-                            no.arr = PSLArray.allocate(a.arr.arr, b.arr.arr);
+                            no.arr = new PSLArray(a.arr.arr, b.arr.arr);
     
                         } else {
                             // at least not BOTH arrays, check if one is empty
                             if (a.isArray && b.raw is null) {
-                                no.arr = PSLArray.allocate(a.arr.arr);
+                                no.arr = new PSLArray(a.arr.arr);
     
                             } else if (b.isArray && a.raw is null) {
-                                no.arr = PSLArray.allocate(b.arr.arr);
+                                no.arr = new PSLArray(b.arr.arr);
     
                             } else if (a.raw !is null) {
                                 if (b.raw !is null) {
-                                    no.raw = PSLRawData.allocate(a.raw.data, b.raw.data);
+                                    no.raw = new PSLRawData(a.raw.data, b.raw.data);
     
                                 } else {
-                                    no.raw = PSLRawData.allocate(a.raw.data);
+                                    no.raw = new PSLRawData(a.raw.data);
     
                                 }
     
                             } else if (b.raw !is null) {
-                                no.raw = PSLRawData.allocate(b.raw.data);
+                                no.raw = new PSLRawData(b.raw.data);
     
                             }
                         }
@@ -468,13 +418,13 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
     
                 case psl_member:
-                    use2((PSLObject* a, PSLObject* b) {
+                    use2((PSLObject a, PSLObject b) {
                         if (b.isArray || b.raw is null) {
                             // bad choice
                             push(pslNull);
     
                         } else {
-                            PSLObject* o = cast(PSLObject*)
+                            PSLObject o = cast(PSLObject)
                                 a.members.get(cast(char[]) b.raw.data);
                             if (o is null) {
                                 push(pslNull);
@@ -486,11 +436,11 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
     
                 case psl_memberset:
-                    use3((PSLObject* a, PSLObject* b, PSLObject* c) {
+                    use3((PSLObject a, PSLObject b, PSLObject c) {
                         if (!b.isArray && b.raw !is null) {
                             a.members.add(
                                 cast(char[]) b.raw.data,
-                                cast(PlofGCable*) c);
+                                cast(void*) c);
                         } else {
                             throw new InterpreterFailure("memberset's second parameter must be raw data.");
                         }
@@ -498,21 +448,21 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
     
                 case psl_parent:
-                    use1((PSLObject* a) {
+                    use1((PSLObject a) {
                         push(a.parent);
                     });
                     break;
 
                 case psl_parentset:
-                    use2((PSLObject* a, PSLObject* b) {
+                    use2((PSLObject a, PSLObject b) {
                         a.parent = b;
                     });
                     break;
     
                 case psl_call:
                 {
-                    PSLObject* thrown;
-                    use1((PSLObject* a) {
+                    PSLObject thrown;
+                    use1((PSLObject a) {
                         if (!a.isArray && a.raw !is null) {
                             thrown = call(a, a.parent, a.raw.data);
                         } else {
@@ -533,7 +483,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                 case psl_throw:
                 {
                     // get the object to throw,
-                    PSLObject* tothrow = popBless();
+                    PSLObject tothrow = popBless();
                     
                     // and throw it
                     return tothrow;
@@ -541,9 +491,9 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
     
                 case psl_catch:
                 {
-                    PSLObject* thrown;
+                    PSLObject thrown;
     
-                    use2((PSLObject* a, PSLObject* b) {
+                    use2((PSLObject a, PSLObject b) {
                         ubyte[] proca, procb;
                         if (!a.isArray && a.raw !is null) {
                             proca = a.raw.data;
@@ -562,9 +512,6 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                             // it threw, so call b
                             push(thrown);
     
-                            // unbless the reference
-                            thrown.gc.blessDown();
-    
                             // then continue
                             thrown = call(b, b.parent, procb);
                         }
@@ -580,9 +527,9 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
     
                 case psl_cmp:
                 {
-                    PSLObject* thrown;
+                    PSLObject thrown;
                     
-                    use4((PSLObject* a, PSLObject* b, PSLObject* procy, PSLObject* procn) {
+                    use4((PSLObject a, PSLObject b, PSLObject procy, PSLObject procn) {
                         if (a is b) {
                             if (!procy.isArray && procy.raw !is null) {
                                 thrown = call(procy, procy.parent, procy.raw.data);
@@ -606,7 +553,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                 }
     
                 case psl_concat:
-                    use2((PSLObject* a, PSLObject* b) {
+                    use2((PSLObject a, PSLObject b) {
                         // get the left and right data
                         ubyte[] left, right;
                         if (!a.isArray && a.raw !is null) {
@@ -621,10 +568,10 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                         }
                         
                         // then use that to create raw data
-                        PSLRawData* rd = PSLRawData.allocate(left, right);
+                        PSLRawData rd = new PSLRawData(left, right);
                         
                         // and put that in a new object
-                        PSLObject* no = PSLObject.allocate(context);
+                        PSLObject no = new PSLObject(context);
                         no.raw = rd;
     
                         // then push the new object
@@ -633,7 +580,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
                     
                 case psl_wrap:
-                    use2((PSLObject* a, PSLObject* b) {
+                    use2((PSLObject a, PSLObject b) {
                         // extract the raw data
                         ubyte[] data, outdata;
                         ubyte op;
@@ -659,10 +606,10 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                         outdata[bnlen+1..$] = data[];
     
                         // then put it all in raw data
-                        PSLRawData* rd = PSLRawData.allocate(outdata);
+                        PSLRawData rd = new PSLRawData(outdata);
     
                         // and put that in an object
-                        PSLObject* no = PSLObject.allocate(context);
+                        PSLObject no = new PSLObject(context);
                         no.raw = rd;
     
                         // and push it
@@ -671,7 +618,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
 
                 case psl_resolve:
-                    use2((PSLObject* a, PSLObject* b) {
+                    use2((PSLObject a, PSLObject b) {
                         if (!b.isArray && b.raw !is null) {
                             // get the name ...
                             char[] name = cast(char[]) b.raw.data;
@@ -696,7 +643,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                             char[][] names = (cast(char[]*) alloca((char[]).sizeof * b.arr.arr.length))
                                     [0..b.arr.arr.length];
                             for (int i = 0; i < b.arr.arr.length; i++) {
-                                PSLObject* subo = b.arr.arr[i];
+                                PSLObject subo = b.arr.arr[i];
                                 if (!subo.isArray && subo.raw !is null) {
                                     names[i] = cast(char[]) subo.raw.data;
                                 } else {
@@ -732,17 +679,17 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
 
                 case psl_replace:
-                    use3((PSLObject* a, PSLObject* b, PSLObject* c) {
+                    use3((PSLObject a, PSLObject b, PSLObject c) {
                         if (!a.isArray && a.raw !is null &&
                             !b.isArray && b.raw !is null &&
                             !c.isArray && c.raw !is null) {
                             ubyte[] newdat = pslfreplace(a.raw.data, b.raw.data, c.raw.data);
 
                             // make the raw data object
-                            PSLRawData* rd = PSLRawData.allocate(newdat);
+                            PSLRawData rd = new PSLRawData(newdat);
 
                             // make the output object
-                            PSLObject* no = PSLObject.allocate(a.parent);
+                            PSLObject no = new PSLObject(a.parent);
                             no.raw = rd;
 
                             // then push it
@@ -756,7 +703,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
     
                 case psl_array:
-                    use1((PSLObject* olen) {
+                    use1((PSLObject olen) {
                         // get the real length out of the object
                         uint len;
                         if (!olen.isArray && olen.raw !is null &&
@@ -767,10 +714,10 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                         }
     
                         // then make an array with that many elements
-                        PSLArray* arr = PSLArray.allocate(stack.stack[$-len..$]);
+                        PSLArray arr = new PSLArray(stack.stack[$-len..$]);
     
                         // and put it in an object
-                        PSLObject* no = PSLObject.allocate(context);
+                        PSLObject no = new PSLObject(context);
                         no.arr = arr;
     
                         // remove them from the stack
@@ -784,9 +731,9 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
     
                 case psl_aconcat:
-                    use2((PSLObject* a, PSLObject* b) {
+                    use2((PSLObject a, PSLObject b) {
                         // get the left and right arrays
-                        PSLObject*[] left, right;
+                        PSLObject[] left, right;
                         if (a.isArray) {
                             left = a.arr.arr;
                         } else {
@@ -799,10 +746,10 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                         }
     
                         // make a new array
-                        PSLArray* arr = PSLArray.allocate(left, right);
+                        PSLArray arr = new PSLArray(left, right);
     
                         // and an object to put it in
-                        PSLObject* no = PSLObject.allocate(context);
+                        PSLObject no = new PSLObject(context);
                         no.arr = arr;
     
                         // then push that object
@@ -811,9 +758,9 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
     
                 case psl_length:
-                    use1((PSLObject* a) {
+                    use1((PSLObject a) {
                         // get the array itself
-                        PSLObject*[] arr;
+                        PSLObject[] arr;
                         if (a.isArray) {
                             arr = a.arr.arr;
                         } else {
@@ -822,11 +769,11 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
     
                         // make a new raw data object with its length
                         ptrdiff_t len = cast(ptrdiff_t) arr.length;
-                        PSLRawData* rd = PSLRawData.allocate(
+                        PSLRawData rd = new PSLRawData(
                             (cast(ubyte*) &len)[0..ptrdiff_t.sizeof]);
     
                         // and put it in an object
-                        PSLObject* no = PSLObject.allocate(context);
+                        PSLObject no = new PSLObject(context);
                         no.raw = rd;
     
                         // and push it
@@ -835,7 +782,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
     
                 case psl_lengthset:
-                    use2((PSLObject* a, PSLObject* b) {
+                    use2((PSLObject a, PSLObject b) {
                         // if the left object isn't an array, this makes no sense
                         if (!a.isArray || b.isArray || b.raw is null ||
                             b.raw.data.length != ptrdiff_t.sizeof) {
@@ -851,9 +798,9 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
     
                 case psl_index:
-                    use2((PSLObject* a, PSLObject* b) {
+                    use2((PSLObject a, PSLObject b) {
                         // get the array,
-                        PSLObject*[] arr;
+                        PSLObject[] arr;
                         if (a.isArray) {
                             arr = a.arr.arr;
                         } else {
@@ -879,7 +826,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
     
                 case psl_indexset:
-                    use3((PSLObject* a, PSLObject* b, PSLObject* c) {
+                    use3((PSLObject a, PSLObject b, PSLObject c) {
                         // if this isn't an array, bail out
                         if (!a.isArray)
                             throw new InterpreterFailure("indexset expects an array operand.");
@@ -899,27 +846,25 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                         }
     
                         // finally, set the index
-                        PSLObject* oldai = a.arr.arr[i];
+                        PSLObject oldai = a.arr.arr[i];
                         a.arr.arr[i] = c;
-                        c.gc.refUp();
-                        oldai.gc.refDown();
                     });
                     break;
     
                 case psl_members:
-                    use1((PSLObject* a) {
-                        PSLObject*[] members;
+                    use1((PSLObject a) {
+                        PSLObject[] members;
     
                         // go through all the members ...
-                        a.members.foreachVal((char[] name, PlofGCable* ignore) {
-                            PSLObject* no = PSLObject.allocate(context);
-                            no.raw = PSLRawData.allocate(cast(ubyte[]) name);
+                        a.members.foreachVal((char[] name, void* ignore) {
+                            PSLObject no = new PSLObject(context);
+                            no.raw = new PSLRawData(cast(ubyte[]) name);
                             members ~= no;
                         });
     
                         // then make the resultant object
-                        PSLObject* no = PSLObject.allocate(context);
-                        no.arr = PSLArray.allocate(members);
+                        PSLObject no = new PSLObject(context);
+                        no.arr = new PSLArray(members);
                        
                         // and push it 
                         push(no);
@@ -927,7 +872,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
     
                 case psl_integer:
-                    use1((PSLObject* a) {
+                    use1((PSLObject a) {
                         ptrdiff_t val = 0;
     
                         // if a is not raw data, just keep it as 0
@@ -978,11 +923,11 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                         }
     
                         // now put it in a raw data object
-                        PSLRawData* rd = PSLRawData.allocate(
+                        PSLRawData rd = new PSLRawData(
                             (cast(ubyte*) &val)[0..ptrdiff_t.sizeof]);
     
                         // and in a PSL object
-                        PSLObject* no = PSLObject.allocate(context);
+                        PSLObject no = new PSLObject(context);
                         no.raw = rd;
     
                         // then push it
@@ -995,11 +940,11 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     ptrdiff_t wid = ptrdiff_t.sizeof;
     
                     // put it in raw data
-                    PSLRawData* rd = PSLRawData.allocate(
+                    PSLRawData rd = new PSLRawData(
                         (cast(ubyte*) &wid)[0..ptrdiff_t.sizeof]);
     
                     // and an object
-                    PSLObject* no = PSLObject.allocate(context);
+                    PSLObject no = new PSLObject(context);
                     no.raw = rd;
     
                     // then push it
@@ -1044,7 +989,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                 case psl_gt:
                 case psl_gte: // integer comparisons
                 {
-                    PSLObject* thrown =
+                    PSLObject thrown =
                         intcmp((ptrdiff_t left, ptrdiff_t right) {
                             bool res;
     
@@ -1133,17 +1078,17 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
     
                 case psl_byte:
-                    use1((PSLObject* a) {
+                    use1((PSLObject a) {
                         if (!a.isArray && a.raw !is null &&
                             a.raw.data.length == ptrdiff_t.sizeof) {
                             // OK, everything is right, so get a single byte
                             ubyte sb = *(cast(ptrdiff_t*) a.raw.data.ptr) % 256;
     
                             // then put that in raw data
-                            PSLRawData* rd = PSLRawData.allocate((&sb)[0..1]);
+                            PSLRawData rd = new PSLRawData((&sb)[0..1]);
     
                             // and put that in an object
-                            PSLObject* no = PSLObject.allocate(context);
+                            PSLObject no = new PSLObject(context);
                             no.raw = rd;
     
                             // and push it
@@ -1157,17 +1102,17 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
     
                 case psl_float:
-                    use1((PSLObject* a) {
+                    use1((PSLObject a) {
                         if (!a.isArray && a.raw !is null &&
                             a.raw.data.length == ptrdiff_t.sizeof) {
                             // convert it to a real
                             real res = *(cast(ptrdiff_t*) a.raw.data.ptr);
     
                             // put it in raw data
-                            PSLRawData* rd = PSLRawData.allocate((cast(ubyte*) &res)[0..real.sizeof]);
+                            PSLRawData rd = new PSLRawData((cast(ubyte*) &res)[0..real.sizeof]);
     
                             // put it in an object
-                            PSLObject* no = PSLObject.allocate(context);
+                            PSLObject no = new PSLObject(context);
                             no.raw = rd;
     
                             // and push it
@@ -1181,7 +1126,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
     
                 case psl_fint:
-                    use1((PSLObject* a) {
+                    use1((PSLObject a) {
                         if (!a.isArray && a.raw !is null &&
                             a.raw.data.length == real.sizeof) {
                             // convert it to a ptrdiff_t
@@ -1189,11 +1134,11 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                                 *(cast(real*) a.raw.data.ptr);
     
                             // put it in raw data
-                            PSLRawData* rd = PSLRawData.allocate(
+                            PSLRawData rd = new PSLRawData(
                                 (cast(ubyte*) &res)[0..ptrdiff_t.sizeof]);
     
                             // put it in an object
-                            PSLObject* no = PSLObject.allocate(context);
+                            PSLObject no = new PSLObject(context);
                             no.raw = rd;
     
                             // and push it
@@ -1242,7 +1187,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                 case psl_fgt:
                 case psl_fgte: // float comparisons
                 {
-                    PSLObject* thrown =
+                    PSLObject thrown =
                         floatcmp((real left, real right) {
                             bool res;
     
@@ -1285,16 +1230,16 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                 case psl_version:
                 {
                     // make the object ...
-                    PSLObject* no = PSLObject.allocate(context);
+                    PSLObject no = new PSLObject(context);
                     push(no);
 
                     // and start making the content ...
-                    PSLObject*[] cont;
+                    PSLObject[] cont;
 
                     // fill it out
                     void addVersion(char[] nm) {
-                        PSLRawData* rawd = PSLRawData.allocate(cast(ubyte[]) nm);
-                        PSLObject* vo = PSLObject.allocate(context);
+                        PSLRawData rawd = new PSLRawData(cast(ubyte[]) nm);
+                        PSLObject vo = new PSLObject(context);
                         vo.raw = rawd;
                         cont ~= vo;
                     }
@@ -1348,7 +1293,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     }
 
                     // then put it in place
-                    no.arr = PSLArray.allocate(cont);
+                    no.arr = new PSLArray(cont);
 
                     break;
                 }
@@ -1357,7 +1302,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                  * C INTERFACE     *
                  * * * * * * * * * */
                 case psl_dlopen:
-                    use1((PSLObject* a) {
+                    use1((PSLObject a) {
                         if (!a.isArray && a.raw !is null) {
                             // try to open this file
                             void *handle = dlopen(((cast(char[]) a.raw.data)~'\0').ptr,
@@ -1367,9 +1312,9 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                                 // whoops! Push null
                                 push(pslNull);
                             } else {
-                                PSLRawData* rd = PSLRawData.allocate(
+                                PSLRawData rd = new PSLRawData(
                                     (cast(ubyte*) &handle)[0..(void*).sizeof]);
-                                PSLObject* no = PSLObject.allocate(context);
+                                PSLObject no = new PSLObject(context);
                                 no.raw = rd;
                                 push(no);
                             }
@@ -1382,7 +1327,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
 
                 case psl_dlclose:
-                    use1((PSLObject* a) {
+                    use1((PSLObject a) {
                         if (!a.isArray && a.raw !is null &&
                             a.raw.data.length == ptrdiff_t.sizeof) {
                             dlclose(*(cast(void**) a.raw.data.ptr));
@@ -1395,7 +1340,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
 
                 case psl_dlsym:
-                    use2((PSLObject* a, PSLObject* b) {
+                    use2((PSLObject a, PSLObject b) {
                         if (!b.isArray && b.raw !is null) {
                             void* handle = null; // RTLD_DEFAULT is usually null
 
@@ -1415,9 +1360,9 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                                 push(pslNull);
 
                             } else {
-                                PSLRawData* rd = PSLRawData.allocate(
+                                PSLRawData rd = new PSLRawData(
                                     (cast(ubyte*) &sym)[0..(void*).sizeof]);
-                                PSLObject* no = PSLObject.allocate(context);
+                                PSLObject no = new PSLObject(context);
                                 no.raw = rd;
                                 push(no);
 
@@ -1432,7 +1377,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
 
                 case psl_cmalloc:
-                    use1((PSLObject* a) {
+                    use1((PSLObject a) {
                         if (!a.isArray && a.raw !is null &&
                             a.raw.data.length == ptrdiff_t.sizeof) {
                             void* re = malloc(*(cast(ptrdiff_t*) a.raw.data.ptr));
@@ -1441,9 +1386,9 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                                 push(pslNull);
 
                             } else {
-                                PSLRawData* rd = PSLRawData.allocate(
+                                PSLRawData rd = new PSLRawData(
                                     (cast(ubyte*) &re)[0..(void*).sizeof]);
-                                PSLObject* no = PSLObject.allocate(context);
+                                PSLObject no = new PSLObject(context);
                                 no.raw = rd;
                                 push(no);
 
@@ -1457,7 +1402,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
 
                 case psl_cfree:
-                    use1((PSLObject* a) {
+                    use1((PSLObject a) {
                         if (!a.isArray && a.raw !is null &&
                             a.raw.data.length == ptrdiff_t.sizeof) {
                             free(*(cast(void**) a.raw.data.ptr));
@@ -1470,7 +1415,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
 
                 case psl_cget:
-                    use2((PSLObject* a, PSLObject* b) {
+                    use2((PSLObject a, PSLObject b) {
                         if (!a.isArray && a.raw !is null &&
                             a.raw.data.length == ptrdiff_t.sizeof &&
                             !b.isArray && b.raw !is null &&
@@ -1482,9 +1427,9 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                             ptrdiff_t sz = *(cast(ptrdiff_t*) b.raw.data.ptr);
 
                             // then turn the data at that location into a raw data object
-                            PSLRawData* rd = PSLRawData.allocate(
+                            PSLRawData rd = new PSLRawData(
                                 ptr[0..sz]);
-                            PSLObject* no = PSLObject.allocate(context);
+                            PSLObject no = new PSLObject(context);
                             no.raw = rd;
                             push(no);
 
@@ -1496,7 +1441,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
 
                 case psl_cset:
-                    use2((PSLObject* a, PSLObject* b) {
+                    use2((PSLObject a, PSLObject b) {
                         if (!a.isArray && a.raw !is null &&
                             a.raw.data.length == ptrdiff_t.sizeof &&
                             !b.isArray && b.raw !is null) {
@@ -1515,7 +1460,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
 
                 case psl_ctype:
-                    use1((PSLObject* a) {
+                    use1((PSLObject a) {
                         if (!a.isArray && a.raw !is null &&
                             a.raw.data.length == ptrdiff_t.sizeof) {
                             // get the number representing the type
@@ -1637,9 +1582,9 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                             }
 
                             // finally, put it in raw data
-                            PSLRawData* rd = PSLRawData.allocate(
+                            PSLRawData rd = new PSLRawData(
                                     (cast(ubyte*) &type)[0..(void*).sizeof]);
-                            PSLObject* no = PSLObject.allocate(context);
+                            PSLObject no = new PSLObject(context);
                             no.raw = rd;
                             push(no);
 
@@ -1651,12 +1596,12 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
 
                 /+ case psl_cstruct: // cstruct
-                    use1((PSLObject* a) {
+                    use1((PSLObject a) {
                         if (a.isArray) {
                             //  +/
 
                 case psl_csizeof:
-                    use1((PSLObject* a) {
+                    use1((PSLObject a) {
                         if (!a.isArray && a.raw !is null &&
                             a.raw.data.length == ptrdiff_t.sizeof) {
                             // get the size out of it
@@ -1664,9 +1609,9 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                             ptrdiff_t sz = type.size;
 
                             // and put it in raw data
-                            PSLRawData* rd = PSLRawData.allocate(
+                            PSLRawData rd = new PSLRawData(
                                 (cast(ubyte*) &sz)[0..ptrdiff_t.sizeof]);
-                            PSLObject* no = PSLObject.allocate(context);
+                            PSLObject no = new PSLObject(context);
                             no.raw = rd;
                             push(no);
 
@@ -1678,7 +1623,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
 
                 case psl_prepcif:
-                    use3((PSLObject* a, PSLObject* b, PSLObject* c) {
+                    use3((PSLObject a, PSLObject b, PSLObject c) {
                         if (!a.isArray && a.raw !is null &&
                             a.raw.data.length == ptrdiff_t.sizeof &&
                             b.isArray &&
@@ -1712,9 +1657,9 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                                 push(pslNull);
 
                             } else {
-                                PSLRawData* rd = PSLRawData.allocate(
+                                PSLRawData rd = new PSLRawData(
                                     (cast(ubyte*) &cif)[0..(ffi_cif*).sizeof]);
-                                PSLObject* no = PSLObject.allocate(context);
+                                PSLObject no = new PSLObject(context);
                                 no.raw = rd;
                                 push(no);
 
@@ -1729,7 +1674,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
 
                 case psl_ccall:
-                    use3((PSLObject* a, PSLObject* b, PSLObject* c) {
+                    use3((PSLObject a, PSLObject b, PSLObject c) {
                         if (!a.isArray && a.raw !is null &&
                             a.raw.data.length == ptrdiff_t.sizeof &&
                             !b.isArray && a.raw !is null &&
@@ -1756,9 +1701,9 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                             ffi_call(cif, fn, cast(void*) ret, args.ptr);
 
                             // then put the return value in a raw data object
-                            PSLRawData* rd = PSLRawData.allocate(
+                            PSLRawData rd = new PSLRawData(
                                 ret[0..cif.rtype.size]);
-                            PSLObject* no = PSLObject.allocate(context);
+                            PSLObject no = new PSLObject(context);
                             no.raw = rd;
                             push(no);
 
@@ -1770,7 +1715,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
 
                 case psl_dsrcfile:
-                    use1((PSLObject* a) {
+                    use1((PSLObject a) {
                         if (!a.isArray && a.raw !is null) {
                             if (dfile.length == 0) {
                                 dfile = cast(char[]) a.raw.data.dup;
@@ -1782,7 +1727,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
 
                 case psl_dsrcline:
-                    use1((PSLObject* a) {
+                    use1((PSLObject a) {
                         if (!a.isArray && a.raw !is null &&
                             a.raw.data.length == ptrdiff_t.sizeof) {
                             if (dline == -1)
@@ -1794,7 +1739,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
     
                 case psl_dsrccol:
-                    use1((PSLObject* a) {
+                    use1((PSLObject a) {
                         if (!a.isArray && a.raw !is null &&
                             a.raw.data.length == ptrdiff_t.sizeof) {
                             if (dcol == -1)
@@ -1806,7 +1751,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
 
                 case psl_print: // FAKE
-                    use1((PSLObject* a) {
+                    use1((PSLObject a) {
                         if (!a.isArray && a.raw !is null) {
                             if (a.raw.data.length > 500) {
                                 Stdout("Long string (procedure?)").newline;
@@ -1832,7 +1777,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
 
                 case psl_include:
-                    use1((PSLObject* a) {
+                    use1((PSLObject a) {
                         if (!a.isArray && a.raw !is null) {
                             // get the file name
                             char[][] flist;
@@ -1848,8 +1793,8 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                                     ubyte[] fcont = cast(ubyte[]) (new File(flist[0])).read();
 
                                     // push the content
-                                    PSLObject* no = PSLObject.allocate(context);
-                                    no.raw = PSLRawData.allocate(fcont);
+                                    PSLObject no = new PSLObject(context);
+                                    no.raw = new PSLRawData(fcont);
                                     push(no);
 
                                 } catch (Exception) {
@@ -1872,7 +1817,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
     
                 case psl_parse:
-                    use3((PSLObject* a, PSLObject* b, PSLObject* c) {
+                    use3((PSLObject a, PSLObject b, PSLObject c) {
                         if (!a.isArray && a.raw !is null &&
                             !b.isArray && b.raw !is null &&
                             !c.isArray && c.raw !is null) {
@@ -1903,8 +1848,8 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                             }
 
                             // otherwise, return it
-                            PSLObject* no = PSLObject.allocate(context);
-                            no.raw = PSLRawData.allocate(psl);
+                            PSLObject no = new PSLObject(context);
+                            no.raw = new PSLRawData(psl);
                             push(no);
 
                         } else {
@@ -1916,7 +1861,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
     
                 case psl_gadd:
-                    use3((PSLObject* a, PSLObject* b, PSLObject* c) {
+                    use3((PSLObject a, PSLObject b, PSLObject c) {
                         if (!a.isArray && a.raw !is null &&
                             b.isArray &&
                             !c.isArray && c.raw !is null) {
@@ -1937,7 +1882,7 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     break;
     
                 case psl_grem:
-                    use1((PSLObject* a) {
+                    use1((PSLObject a) {
                         if (!a.isArray && a.raw !is null && prp !is null) {
                             prp.grem(a.raw.data.dup);
                         }
@@ -1957,8 +1902,8 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                 case psl_code:
                 case psl_raw:
                 {
-                    PSLRawData* rd = PSLRawData.allocate(sub);
-                    PSLObject* no = PSLObject.allocate(context);
+                    PSLRawData rd = new PSLRawData(sub);
+                    PSLObject no = new PSLObject(context);
                     no.raw = rd;
                     push(no);
                     break;
@@ -1968,9 +1913,6 @@ PSLObject* interpret(ubyte[] psl, PSLStack* stack, PSLObject* context,
                     Stderr("Unrecognized operation ").format("{:X}", cmd).newline;
                     assert(0);
             }
-    
-            // Perhaps run the GC
-            PlofGCable.maybeGC();
         }
 
     } catch (InterpreterFailure fail) {
