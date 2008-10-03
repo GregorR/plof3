@@ -393,19 +393,6 @@ pslbnf {
     plof_group = "\(" plof_semicolon "\)" => {
         push0 1 integer index
     }
-    plof_group = plof_group "\(" plof_args "\)" => {
-        // get the args
-        push0 2 integer index
-
-        // and the function
-        push1 0 integer index concat
-
-        // and call it
-        {pul_eval call} concat
-
-        // wrap it up
-        cwrap {pul_funcwrap} concat
-    }
     plof_group = plof_group "\." plof_identifier => {
         push0 0 integer index
         {pul_eval} concat
@@ -430,14 +417,15 @@ pslbnf {
     plof_var = plof_var_next => { push0 0 integer index }
     plof_var => plof_literal;
 
+    // none of these literals are actually literals (hm), but they're at the same precedence
     plof_literal = "psl" "\{" pslOps "\}" => {
         push0 2 integer index
         cwrap {pul_funcwrap} concat
     }
-    plof_literal = /\$/ digits token white => {
+    plof_literal = /\$/ number token white => {
         null push1 1 integer index call
         integer
-        {$0} wrap
+        "ü" wrap
     }
     plof_literal = plof_literal_next => { push0 0 integer index }
     plof_literal => plof_ident;
@@ -451,7 +439,7 @@ pslbnf {
             "opMember"
 
             // look in the current function context
-            pul_fcontext push2 push2 2 integer array resolve
+            this push2 push2 2 integer array resolve
             4 integer array
 
             // now check whether we used opMember or the name
@@ -476,7 +464,7 @@ pslbnf {
     }
 
     plof_identifier = plof_notkeyword /[A-Za-z_][A-Za-z0-9_]*/ token white => {
-        push0 0 integer index
+        push0 1 integer index
     }
 
     plof_notkeyword =
@@ -499,7 +487,7 @@ psl {
 
 // now plofbnf
 pslbnf {
-    top = plofbnf => { push0 0 integer index }
+    top = white plofbnf => { push0 1 integer index }
 
     plofbnf = "plofbnf" /\{/ white plofbnf_productions /\}/ white /;/ white => {
         push0 3 integer index
@@ -581,23 +569,6 @@ psl {
     pul_fcontext "opArray" {
         new push0 "__pul_val" push3 memberset
     } memberset
-};
-pslbnf {
-    plof_group = plof_group "\[" plof_semicolon "\]" => {
-        // get the group ...
-        push0 0 integer index
-        {pul_eval "__pul_val" member} concat
-
-        // and the index
-        push1 2 integer index concat
-        {
-            pul_eval "__pul_val" member
-
-            index
-        } concat
-
-        cwrap {pul_funcwrap} memberset
-    }
 };
 
 
@@ -689,7 +660,7 @@ pslbnf {
         // combine them
         push0 0 integer index
         {pul_eval} concat
-        push1 2 integer index
+        push1 2 integer index concat
         {
             pul_eval push1 push1 combine
 
@@ -719,13 +690,12 @@ pslbnf {
     }
     plof_obj_defs => plof_obj_def;
 
-    plof_obj_def = plof_identifier "=" plof_obj_def_next ";" => {
+    plof_obj_def = plof_identifier "=" plof_bind_next ";" => {
         {push0}
         push1 0 integer index concat
         push1 2 integer index concat
         {pul_eval push0 push4 parentset memberset} concat
     }
-    plof_obj_def => plof_bind_next;
 };
 
 psl {
@@ -745,7 +715,7 @@ psl {
         pop
 
         // their type is based on the parent types (if set)
-        this "old1" member "__pul_type" member pul_eval null
+        this "old1" member "__pul_type" member pul_eval
         {
             // none on the left, how 'bout the right
             this "old2" resolve member "__pul_type" member pul_eval null
@@ -759,7 +729,7 @@ psl {
                 // right but not left
                 this "new" resolve "__pul_type"
                     push1 1 integer array
-                    this "old2" resolve "__pul_type" member pul_eval
+                    this "old2" resolve member "__pul_type" member pul_eval
                     aconcat
                 memberset
             } cmp
@@ -771,7 +741,7 @@ psl {
                 // left but not right
                 this "new" resolve "__pul_type"
                     push1 1 integer array
-                    this "old1" resolve "__pul_type" member pul_eval
+                    this "old1" resolve member "__pul_type" member pul_eval
                     aconcat
                 memberset
             }
@@ -779,9 +749,9 @@ psl {
                 // both set
                 this "new" resolve "__pul_type"
                     push1 1 integer array
-                    this "old2" resolve "__pul_type" member pul_eval
+                    this "old2" resolve member "__pul_type" member pul_eval
                     aconcat
-                    this "old1" resolve "__pul_type" member pul_eval
+                    this "old1" resolve member "__pul_type" member pul_eval
                     aconcat
                 memberset
             } cmp
@@ -844,6 +814,7 @@ psl {
             } lte
 
             // now step
+            push0
             2 integer
                 push1 2 integer index
                     1 integer
@@ -859,5 +830,7 @@ psl {
                 throw
             } {} cmp
         } catch
+
+        pop 0 integer index
     } memberset
 };

@@ -1,5 +1,5 @@
 /*
- * Object's basic members
+ * Basic members of Object and Function
  *
  *  Copyright (c) 2008  Gregor Richards
  *  
@@ -27,9 +27,8 @@ var Function = Object : [];
 
 // trivial plof function calls
 plofbnf {
-
-    plof_group = plof_group_next "\(" plof_args "\)" => plof {
-        psl { 0 array $0 pul_eval call }
+    plof_group = plof_group "\(" plof_args "\)" => plof {
+        psl { $2 pul_eval $0 pul_eval call }
     }
 
 
@@ -52,28 +51,19 @@ plofbnf {
     }
 };
 
-// trivial plof function definitions
-plofbnf {
-    plof_group = "\{" plof_semicolon "\}" => plof {
-        opFunction(psl { {$1} })
-    }
-};
-
 // FIXME: Should use proper combination
 var opFunction = Function:psl { {
     // get the procedure
     this "proc" push2 0 integer index pul_eval memberset
 
     // combine it with Function
-    plof { Function:proc } pul_eval 
+    plof { Function:proc } pul_eval
 } };
 
 
 // opMember is a function ...
-Object.opMember = { psl {
+Object.opMember = Function:psl { {
     // args: [name, next context]
-    pul_eval
-
     this "name" push2 0 integer index pul_eval memberset
     this "next" push2 1 integer index pul_eval memberset
 
@@ -122,7 +112,12 @@ Object.opMember = { psl {
             } lte
 
             // add and loop
-            1 integer push1 1 integer index 1 integer add indexset
+            push0
+                1 integer
+                    push1 1 integer index
+                    1 integer
+                    add
+            indexset
             loop
         }
         {
@@ -171,22 +166,26 @@ Object.opMember = { psl {
         member
     } cmp
 } };
-Object.opMember.parent = Object;
+psl { this "Object" resolve member push0 "opMember" member push1 parentset pop };
 
 
 // more advanced function syntax
 plofbnf {
-    plof_group = "\(" plof_params "\)" "\{" plof_semicolon "\}" => {
+    plof_group = "\(" plof_params "\)" "\{" plof_funcbody "\}" => {
         // make this a function context
-        {this "__pul_fc" this memberset 0 integer index}
+        {this "__pul_fc" this memberset 0 integer}
 
         // set up the args
         push1 1 integer index concat
         {
             pop
 
-            // then name them "args"
-            this "args" push2 memberset pop
+            // then opArray them and name them "args"
+            this "args"
+                push2
+                    this "opArray" resolve member
+                call
+            memberset pop
         } concat
         
         // then run the function itself
@@ -194,6 +193,9 @@ plofbnf {
 
         // wrap it up with opFunction
         cwrap {1 integer array this "opFunction" resolve member call} concat
+
+        // then wrap the whole thing up
+        cwrap {pul_funcwrap} concat
     }
 
     
@@ -226,5 +228,18 @@ plofbnf {
             // and increment
             1 integer add
         } concat
+    }
+
+
+    plof_funcbody = white => { {} }
+    plof_funcbody = plof_funcbody_next => plof { $0 }
+    plof_funcbody => plof_funcbody_prime;
+
+    plof_funcbody_prime = plof_semicolon => plof { $0 }
+};
+
+plofbnf {
+    plof_group = "\{" plof_funcbody "\}" => plof {
+        () { $1 }
     }
 };

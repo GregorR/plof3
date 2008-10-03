@@ -1,4 +1,7 @@
-var a := Object : [ a := psl { 3 integer }; ];
+var a = Object : [ a = psl { 3 integer }; ];
 psl {
     this "a" resolve member "a" member print null
 };
+
+True.ifTrue(psl { "GOOD" print });
+False.ifTrue(psl { "BAD" print });

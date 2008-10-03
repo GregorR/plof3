@@ -1,5 +1,6 @@
 PSLASM=./pslasm
 PLOFC=./plofc
+PLOF_FLAGS=--debug
 
 # base.psl contains the base grammar
 BASE_PSL_SOURCE=core/base/base.apsl
@@ -8,7 +9,8 @@ BASE_PSL_SOURCE=core/base/base.apsl
 PUL_PSL_SOURCE=base.psl core/pul/pul.plof
 
 # std.psl is the PUL standard library
-STD_PSL_SOURCE=core/pul/object.plof
+STD_PSL_SOURCE=core/pul/object.plof \
+               core/pul/boolean.plof
 #STD_PSL_SOURCE=core/pul/object.plof \
 #	       core/pul/std.plof \
 #	       core/pul/boolean.plof \
@@ -29,27 +31,27 @@ base.psl: $(BASE_PSL_SOURCE) pslasm
 
 
 pul.psl: $(PUL_PSL_SOURCE) dplof
-	$(PLOFC) $(PUL_PSL_SOURCE) -o pul.psl
+	$(PLOFC) $(PLOF_FLAGS) $(PUL_PSL_SOURCE) -o pul.psl
 
 puldebug.psl: $(PUL_PSL_SOURCE) dplof
-	$(PLOFC) --debug $(PUL_PSL_SOURCE) -o puldebug.psl
+	$(PLOFC) --debug $(PLOF_FLAGS) $(PUL_PSL_SOURCE) -o puldebug.psl
 
 
 plof_include/std.psl: pul.psl $(STD_PSL_SOURCE) dplof
-	$(PLOFC) pul.psl $(STD_PSL_SOURCE) -o plof_include/std.psl
+	$(PLOFC) $(PLOF_FLAGS) pul.psl $(STD_PSL_SOURCE) -o plof_include/std.psl
 
 plof_include/debug/std.psl: pul.psl $(STD_PSL_SOURCE) dplof
-	$(PLOFC) --debug pul.psl $(STD_PSL_SOURCE) -o plof_include/debug/std.psl
+	$(PLOFC) --debug $(PLOF_FLAGS) pul.psl $(STD_PSL_SOURCE) -o plof_include/debug/std.psl
 
 plof_include/debug/stddebug.psl: puldebug.psl $(STD_PSL_SOURCE) dplof
-	$(PLOFC) --debug puldebug.psl $(STD_PSL_SOURCE) -o plof_include/debug/stddebug.psl
+	$(PLOFC) --debug $(PLOF_FLAGS) puldebug.psl $(STD_PSL_SOURCE) -o plof_include/debug/stddebug.psl
 
 
 plof_include/cnfi.psl: $(CNFI_PSL_SOURCE) plof_include/std.psl dplof
-	$(PLOFC) $(CNFI_PSL_SOURCE) -o plof_include/cnfi.psl
+	$(PLOFC) $(PLOF_FLAGS) $(CNFI_PSL_SOURCE) -o plof_include/cnfi.psl
 
 plof_include/debug/cnfi.psl: $(CNFI_PSL_SOURCE) plof_include/debug/std.psl dplof
-	$(PLOFC) --debug $(CNFI_PSL_SOURCE) -o plof_include/debug/cnfi.psl
+	$(PLOFC) --debug $(PLOF_FLAGS) $(CNFI_PSL_SOURCE) -o plof_include/debug/cnfi.psl
 
 
 clean:
