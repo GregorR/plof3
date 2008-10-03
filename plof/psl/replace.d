@@ -57,6 +57,7 @@ ubyte[] pslfreplace(ubyte[] rin, ubyte[] marker, ubyte[] to)
             sub == marker) {
             // if it's the marker, replace it
             rout ~= to;
+            continue;
 
         } else if (cmd == psl_immediate ||
                    cmd == psl_code) {

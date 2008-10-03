@@ -1753,7 +1753,7 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
                 case psl_print: // FAKE
                     use1((PSLObject a) {
                         if (!a.isArray && a.raw !is null) {
-                            if (a.raw.data.length > 500) {
+                            if (a.raw.data.length > 80) {
                                 Stdout("Long string (procedure?)").newline;
                             } else {
                                 Stdout(cast(char[]) a.raw.data).newline;
