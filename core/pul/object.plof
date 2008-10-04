@@ -208,6 +208,23 @@ plofbnf {
         // then run the function itself
         push3 4 integer index concat
 
+        // wrap it up for deep returns
+        cwrap
+        {
+            {
+                // is this our deep return?
+                push0 "__pul_ret_fc" member pul_fcontext
+                {
+                    // yes, return it
+                    "__pul_ret_val" member
+                }
+                {
+                    // no, throw it along
+                    throw
+                } cmp
+            } catch
+        } concat
+
         // wrap it up in the lt case
         cwrap concat { lt } concat
 
@@ -222,6 +239,7 @@ plofbnf {
     plof_params = white => {
         {0 integer {} 2 integer array}
     }
+
 
     plof_params = plof_params "," plof_params_next => {
         null push1 0 integer index call
@@ -262,6 +280,18 @@ plofbnf {
     plof_funcbody => plof_funcbody_prime;
 
     plof_funcbody_prime = plof_semicolon => plof { $0 }
+
+
+    // deep returns
+    plof_group = "return" "\(" plof_semicolon "\)" => plof {
+        psl {
+            new
+                push0 "__pul_ret_fc" pul_fcontext memberset
+                push0 "__pul_ret_val" $2 memberset
+            throw
+        }
+    }
+
 };
 
 plofbnf {
