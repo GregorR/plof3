@@ -218,7 +218,7 @@ plofbnf {
     // type annotations to come later
     plof_param = plof_identifier => {
         // this.name ...
-        {this}
+        {pul_fcontext}
         push1 0 integer index concat
 
         // = the val

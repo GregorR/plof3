@@ -108,6 +108,8 @@ class PlofRuntimeParser : IPlofRuntimeParser {
         // Get rid of the current grammar
         _grammar = null;
 
+        //Stdout.newline().newline()("COMMIT").newline;
+
         // Then go production by production ...
         foreach (productionName, production; _ugrammar) {
             Production tproduction;
@@ -124,12 +126,16 @@ class PlofRuntimeParser : IPlofRuntimeParser {
 
             // Target by target ...
             foreach (tnum, target; production) {
+                //Stdout(cast(char[]) productionName)(" =");
+
                 GrammarElem[] ttarget;
                 ttarget.length = target.length; // preallocate
                 ttarget.length = 0;
 
                 // Element by element ...
                 foreach (elem; target[0..$-1]) {
+                    //Stdout(" ")(cast(char[]) elem);
+
                     // Regex or not
                     if (elem[0] == '/') {
                         // Regex, so make a regex element
@@ -152,6 +158,8 @@ class PlofRuntimeParser : IPlofRuntimeParser {
                         ttarget ~= subprod;
                     }
                 }
+
+                //Stdout.newline;
 
                 // Add the choice
                 tproduction.addChoice(ttarget);

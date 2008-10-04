@@ -679,11 +679,19 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
                     break;
 
                 case psl_replace:
-                    use3((PSLObject a, PSLObject b, PSLObject c) {
+                    use2((PSLObject a, PSLObject b) {
                         if (!a.isArray && a.raw !is null &&
-                            !b.isArray && b.raw !is null &&
-                            !c.isArray && c.raw !is null) {
-                            ubyte[] newdat = pslfreplace(a.raw.data, b.raw.data, c.raw.data);
+                            b.isArray) {
+                            // get the array into the correct format
+                            ubyte[][] to;
+                            foreach (ai, ael; b.arr.arr) {
+                                if (!ael.isArray && ael.raw !is null) {
+                                    to.length = ai+1;
+                                    to[ai] = ael.raw.data.dup;
+                                }
+                            }
+
+                            ubyte[] newdat = pslfreplace(a.raw.data, to);
 
                             // make the raw data object
                             PSLRawData rd = new PSLRawData(newdat);
@@ -696,7 +704,7 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
                             push(no);
 
                         } else {
-                            throw new InterpreterFailure("replace expects three raw data operands.");
+                            throw new InterpreterFailure("replace expects a raw data operand and an array operand.");
 
                         }
                     });
@@ -1753,7 +1761,7 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
                 case psl_print: // FAKE
                     use1((PSLObject a) {
                         if (!a.isArray && a.raw !is null) {
-                            if (a.raw.data.length > 80) {
+                            if (a.raw.data.length > 8000) {
                                 Stdout("Long string (procedure?)").newline;
                             } else {
                                 Stdout(cast(char[]) a.raw.data).newline;
@@ -1896,6 +1904,9 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
                     break;
     
                 case psl_marker:
+                    Stderr("ERROR: Visible marker in user code.").newline;
+                    break;
+
                 case psl_immediate:
                     break;
     

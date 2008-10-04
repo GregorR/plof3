@@ -25,11 +25,13 @@
 
 module plof.psl.replace;
 
+import tango.io.Stdout;
+
 import plof.psl.bignum;
 import plof.psl.psl;
 
 /// PSL replace
-ubyte[] pslfreplace(ubyte[] rin, ubyte[] marker, ubyte[] to)
+ubyte[] pslfreplace(ubyte[] rin, ubyte[][] to)
 {
     // reserve output space
     ubyte[] rout;
@@ -54,15 +56,25 @@ ubyte[] pslfreplace(ubyte[] rin, ubyte[] marker, ubyte[] to)
         }
 
         if (cmd == psl_marker &&
-            sub == marker) {
-            // if it's the marker, replace it
-            rout ~= to;
+            sub.length == ptrdiff_t.sizeof) {
+            // which marker ...
+            int markn = *(cast(ptrdiff_t*) sub.ptr);
+
+            // if it's valid, use it
+            if (markn >= 0 && markn < to.length) {
+                rout ~= to[markn];
+
+            } else {
+                Stdout("WARNING: Replaced marker ")(markn)(" with nothing.").newline().flush();
+
+            }
+
             continue;
 
         } else if (cmd == psl_immediate ||
                    cmd == psl_code) {
             // replace it in code
-            sub = pslfreplace(sub, marker, to);
+            sub = pslfreplace(sub, to);
 
         }
 
