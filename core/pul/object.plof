@@ -112,6 +112,8 @@ Object.opMember = Function:psl { {
                     push0 "__pul_opmember_found" push3 memberset
                     throw
                 } cmp
+
+                pop
             } lte
 
             // add and loop
