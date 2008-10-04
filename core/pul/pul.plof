@@ -384,8 +384,8 @@ pslbnf {
     plof_assign => plof_bind;
 
     plof_bind = "let" plof_bind_next "=" plof_bind => {
-        push0 0 integer index
-        push1 2 integer index concat
+        push0 1 integer index
+        push1 3 integer index concat
         {pul_set} concat
         cwrap {pul_funcwrap} concat
     }
