@@ -22,3 +22,15 @@ var curryish = (a, b, c) {
 };
 
 curryish psl{"FOO"} psl{"BAR"} psl{"BAF"};
+
+
+var a = True;
+var b = True;
+var c = True;
+var d = False;
+while (a) (
+    psl { "HMN" print };
+    a = b;
+    b = c;
+    c = d;
+);
