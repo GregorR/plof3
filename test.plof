@@ -5,3 +5,5 @@ psl {
 
 True.ifTrue(psl { "GOOD" print });
 False.ifTrue(psl { "BAD" print });
+
+if(True)(psl { "GOOD" print });

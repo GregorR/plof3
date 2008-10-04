@@ -10,7 +10,8 @@ PUL_PSL_SOURCE=base.psl core/pul/pul.plof
 
 # std.psl is the PUL standard library
 STD_PSL_SOURCE=core/pul/object.plof \
-               core/pul/boolean.plof
+               core/pul/boolean.plof \
+	       core/pul/conditionals.plof
 #STD_PSL_SOURCE=core/pul/object.plof \
 #	       core/pul/std.plof \
 #	       core/pul/boolean.plof \
