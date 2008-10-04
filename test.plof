@@ -1,13 +1,14 @@
 var a = Object : [ a = psl { 3 integer }; ];
+var b = a : [];
 psl {
-    this "a" resolve member "a" member print null
+    plof{b.a} pul_eval print
 };
 
-True.ifTrue(psl { "GOOD" print });
+True.ifTrue(psl { "GOOD " print });
 False.ifTrue(psl { "BAD" print });
 
 if (True) (
-    psl { "GOOD" print }
+    psl { "GOOD " print }
 ) else (
     psl { "BAD" print }
 );
