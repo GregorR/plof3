@@ -248,19 +248,29 @@ psl {
             this "arg" resolve member
             push0 0 integer index
 
-            // check for opMember
-            "opMember" member null
+            // check if we have it directly
+            push1 1 integer index member null
             {
-                // no opMember, just get the member
+                // OK, maybe opMember?
+                push0 0 integer index
+                "opMember" member null
+                {
+                    // neither: Fail
+                    null
+                }
+                {
+                    // use opMember
+                    push0 1 integer index null 2 integer array
+                    push1 0 integer index "opMember" member
+                    global "__pul_eval" member call
+                    call
+                } cmp
+            }
+            {
+                // have it directly, easy
                 push0 0 integer index
                 push1 1 integer index
                 member
-            }
-            {
-                push0 1 integer index null 2 integer array
-                push1 0 integer index "opMember" member
-                global "__pul_eval" member call
-                call
             } cmp
         } memberset
 
@@ -382,9 +392,6 @@ pslbnf {
     plof_bind = plof_bind_next => { push0 0 integer index }
     plof_bind => plof_group;
 
-    plof_group = "\(" plof_semicolon "\)" => {
-        push0 1 integer index
-    }
     plof_group = plof_group "\." plof_identifier => {
         push0 0 integer index
         {pul_eval} concat
@@ -398,7 +405,13 @@ pslbnf {
         cwrap {pul_funcwrap} concat
     }
     plof_group = plof_group_next => { push0 0 integer index }
-    plof_group => plof_var;
+    plof_group => plof_parens;
+
+    plof_parens = "\(" plof_semicolon "\)" => {
+        push0 1 integer index
+    }
+    plof_parens = plof_parens_next => { push0 0 integer index }
+    plof_parens => plof_var;
 
     plof_var = "var" plof_identifier => {
         {pul_fcontext}
@@ -447,7 +460,7 @@ pslbnf {
                 // no opMember
                 push0 2 integer index
                 push1 0 integer index
-                member
+                pul_varwrap
             } cmp
         } concat
 

@@ -27,21 +27,21 @@ var Function = Object : [];
 
 // trivial plof function calls
 plofbnf {
+    plof_group = plof_group plof_group_next => plof {
+        psl { $1 1 integer array $0 pul_eval call }
+    }
+
     plof_group = plof_group "\(" plof_args "\)" => plof {
         psl { $2 pul_eval $0 pul_eval call }
     }
 
 
-    plof_args = white => plof {
-        psl { 0 integer array }
-    }
-
     plof_args = plof_args "," plof_args_next => plof {
         psl { $0 pul_eval $2 pul_eval aconcat }
     }
 
-    plof_args = plof_args_next => plof {
-        $0
+    plof_args = plof_args_next "," plof_args_next => plof {
+        psl { $0 pul_eval $2 pul_eval aconcat }
     }
 
     plof_args => plof_arg;
@@ -103,6 +103,9 @@ Object.opMember = Function:psl { {
                     // and assign it into us
                     this "this" resolve member this "name" resolve member push2 memberset
 
+                    // now make it a reference
+                    this "this" resolve member this "name" resolve member pul_varwrap
+
                     // then throw it
                     new
                     push0 "__pul_opmember_search" new memberset
@@ -163,7 +166,7 @@ Object.opMember = Function:psl { {
         // we have it, simple enough
         this "this" resolve member
         this "name" resolve member
-        member
+        pul_varwrap
     } cmp
 } };
 psl { this "Object" resolve member push0 "opMember" member push1 parentset pop };

@@ -27,10 +27,14 @@ var selff = (x) { selff };
 var if = (cond) {
     var bcond = cond && True;
     (then) {
+        var ret = (x) { x };
         bcond
-            .ifTrue((then; selff))
-            .ifFalse((x) { x });
-            
+            .ifTrue(
+                then; ret = selff;
+            ).ifFalse(
+                ret = (x) { x };
+            );
+        ret
     }
 };
 
