@@ -11,3 +11,13 @@ if (True) (
 ) else (
     psl { "BAD" print }
 );
+
+var curryish = (a, b, c) {
+    psl {
+        plof{a} pul_eval print
+        plof{b} pul_eval print
+        plof{c} pul_eval print
+    };
+};
+
+curryish psl{"FOO"} psl{"BAR"} psl{"BAF"};

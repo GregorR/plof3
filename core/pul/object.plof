@@ -175,24 +175,41 @@ psl { this "Object" resolve member push0 "opMember" member push1 parentset pop }
 // more advanced function syntax
 plofbnf {
     plof_group = "\(" plof_params "\)" "\{" plof_funcbody "\}" => {
+        // get the params for future reference
+        null push1 1 integer index call
+
         // make this a function context
-        {this "__pul_fc" this memberset 0 integer}
+        {
+            this "__pul_fc" this memberset
+            this "__pul_proc" this "+procedure" member memberset
+            this "__pul_args" push2 memberset
+
+            // curry if necessary
+            push0 length } push1 0 integer index swrap concat {
+            {
+                // currying is necessary
+                {
+                    this "__pul_args" resolve member
+                    push1 aconcat
+                    this "__pul_proc" resolve member call
+                } 1 integer array this "opFunction" resolve member call
+            }
+        } concat
+
+        // everything from here on is in the not-currying case
 
         // set up the args
-        push1 1 integer index concat
+        {pul_fcontext 0 integer}
+        push2 1 integer index concat
         {
-            pop
-
-            // then opArray them and name them "args"
-            this "args"
-                push2
-                    this "opArray" resolve member
-                call
-            memberset pop
+            pop pop pop
         } concat
         
         // then run the function itself
-        push1 4 integer index concat
+        push3 4 integer index concat
+
+        // wrap it up in the lt case
+        cwrap concat { lt } concat
 
         // wrap it up with opFunction
         cwrap {1 integer array this "opFunction" resolve member call} concat
@@ -203,16 +220,20 @@ plofbnf {
 
     
     plof_params = white => {
-        {}
+        {0 integer {} 2 integer array}
     }
 
     plof_params = plof_params "," plof_params_next => {
-        push0 0 integer index
-        push1 2 integer index concat
+        null push1 0 integer index call
+            push0 0 integer index 1 integer add swrap
+            push1 1 integer index push3 2 integer index concat cwrap concat
+            {2 integer array} concat
     }
 
     plof_params = plof_params_next => {
-        push0 0 integer index
+        {1 integer}
+        push1 0 integer index cwrap concat
+        {2 integer array} concat
     }
 
     plof_params => plof_param;
@@ -221,12 +242,14 @@ plofbnf {
     // type annotations to come later
     plof_param = plof_identifier => {
         // this.name ...
-        {pul_fcontext}
+        {push1}
         push1 0 integer index concat
+
+        // inner stack: args fcontext index fcontext name
 
         // = the val
         {
-            push3 push3 index memberset
+            push4 push3 index memberset
         
             // and increment
             1 integer add
