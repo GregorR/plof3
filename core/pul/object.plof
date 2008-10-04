@@ -46,7 +46,7 @@ plofbnf {
 
     plof_args => plof_arg;
 
-    plof_arg = plof_comma_next => plof {
+    plof_arg = plof_semicolon_next => plof {
         psl { $0 1 integer array }
     }
 };

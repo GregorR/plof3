@@ -345,7 +345,7 @@ pslbnf {
     plof_statement = plof_statement_next ";" => {
         push0 0 integer index {pul_eval pop} concat
     }
-    plof_statement => plof_comma;
+    plof_statement => plof_assign;
 
     // allow Plof in PSL
     pslOp = "plof" "\{" plof_semicolon "\}" => {
@@ -362,15 +362,7 @@ pslbnf {
         cwrap {pul_funcwrap} concat
     }
     plof_semicolon = plof_semicolon_next => { push0 0 integer index }
-    plof_semicolon => plof_comma;
-
-    plof_comma = plof_comma "," plof_comma_next => {
-        push0 0 integer index {pul_eval pop} concat
-        push1 2 integer index concat
-        cwrap {pul_funcwrap} concat
-    }
-    plof_comma = plof_comma_next => { push0 0 integer index }
-    plof_comma => plof_assign;
+    plof_semicolon => plof_assign;
 
     plof_assign = plof_assign_next "=" plof_assign => {
         push0 0 integer index
