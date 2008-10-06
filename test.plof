@@ -54,3 +54,13 @@ var Foo = Object : [
 ];
 var foo = new Foo(psl { 3 integer });
 psl { plof{foo.n} pul_eval print };
+
+
+// Try/catch
+psl { "Try" print };
+var x = Object;
+try (
+    throw (psl { 3 integer })
+) catchall (ref x) (
+    psl { plof{x} pul_eval print }
+);

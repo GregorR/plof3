@@ -351,7 +351,7 @@ plofbnf {
     plof_literal = "ref" plof_ident => plof {
         new Reference (
             { $1 },
-            (x) { $1 = x }
-        );
+            (__pul_ref_x) { $1 = __pul_ref_x }
+        )
     }
 };
