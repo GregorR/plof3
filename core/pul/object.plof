@@ -210,6 +210,9 @@ plofbnf {
         // then run the function itself
         push3 4 integer index concat
 
+        // and make sure it's evaluated
+        {pul_eval} concat
+
         // wrap it up for deep returns
         cwrap
         {
