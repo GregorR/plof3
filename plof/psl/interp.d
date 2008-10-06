@@ -509,6 +509,9 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
                         thrown = call(a, a.parent, proca);
     
                         if (thrown !is null) {
+                            // pop whatever it returned
+                            pop();
+
                             // it threw, so call b
                             push(thrown);
     
