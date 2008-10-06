@@ -288,11 +288,11 @@ plofbnf {
 
 
     // deep returns
-    plof_group = "return" "\(" plof_semicolon "\)" => plof {
+    plof_group = "return" plof_group_next => plof {
         psl {
             new
                 push0 "__pul_ret_fc" pul_fcontext memberset
-                push0 "__pul_ret_val" $2 memberset
+                push0 "__pul_ret_val" $1 memberset
             throw
         }
     }
