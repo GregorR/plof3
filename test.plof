@@ -1,18 +1,28 @@
-var a = Object : [ a = psl { 3 integer }; ];
+psl { "Integer value 3 is always good." print };
+
+// Prototypes test
+var a = Object : [];
 var b = a : [];
+a.a = psl { 3 integer };
 psl {
     plof{b.a} pul_eval print
 };
 
+
+// Simple true/false test
 True.ifTrue(psl { "GOOD " print });
 False.ifTrue(psl { "BAD" print });
 
+
+// If "statements"
 if (True) (
     psl { "GOOD " print }
 ) else (
     psl { "BAD" print }
 );
 
+
+// Currying
 var curryish = (a, b, c) {
     psl {
         plof{a} pul_eval print
@@ -20,17 +30,27 @@ var curryish = (a, b, c) {
         plof{c} pul_eval print
     };
 };
+curryish psl{"This should come first."} psl{"Then this."} psl{"Then this should come third and last."};
 
-curryish psl{"FOO"} psl{"BAR"} psl{"BAF"};
 
-
+// While "statement"
 var a = True;
 var b = True;
 var c = True;
 var d = False;
 while (a) (
-    psl { "HMN" print };
+    psl { "This should be printed three times." print };
     a = b;
     b = c;
     c = d;
 );
+
+
+// Constructors
+var Foo = Object : [
+    this (n) {
+        this.n = n;
+    };
+];
+var foo = new Foo(psl { 3 integer });
+psl { plof{foo.n} pul_eval print };

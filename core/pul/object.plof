@@ -304,3 +304,49 @@ plofbnf {
         () { $1 }
     }
 };
+
+
+/// Constructors are a somewhat special case of functions
+plofbnf {
+    plof_obj_def = "this" plof_bind_next ";" => {
+        {
+            push0 "init"
+            { this "super" }
+            plof{this.init} pul_eval cwrap concat
+            { memberset } concat
+        }
+        push1 1 integer index concat
+        {
+            pul_eval concat
+            {plof{this}} concat
+            1 integer array this "opFunction" resolve member call
+            memberset
+        } concat
+    }
+};
+
+/// Standard function initialization
+var new = (type) {
+    (type:[]).init
+};
+Object.init = {this};
+Object.init.parent = Object;
+
+
+/// EXCEPTIONS (Incomplete)
+
+// Technically anything can be thrown, but the user should only throw Exceptions
+var Exception = Object:[];
+
+// System exceptions
+var AbstractFunctionException = Exception:[];
+var TypeMismatchException = Exception : [
+    init = (obj, type) {
+        this.obj = obj;
+        this.type = type;
+        return this;
+    };
+
+    obj = Object;
+    type = Object;
+];
