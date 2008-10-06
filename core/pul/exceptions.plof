@@ -1,5 +1,5 @@
 /*
- * Conditionals.
+ * Basic support for exceptions.
  *
  *  Copyright (c) 2008  Gregor Richards
  *  
@@ -22,37 +22,60 @@
  *  IN THE SOFTWARE.
  */
 
-var if = (cond) {
-    var bcond = cond && True;
-    (then) {
-        var ret = id;
-        bcond
-            .ifTrue(
-                then; ret = selff;
-            ).ifFalse(
-                ret = id;
-            );
-        ret
-    }
-};
-
-var else = (then) {
-    then
-};
-
-var while = (cond, act) {
+// throw is just a function ...
+var throw = (x) {
     psl {
-        // check the condition
-        this "cc" plof{cond} pul_forceEval memberset
-
-        plof{
-            (cc&&True).ifFalse(return(True););
-        } pul_eval
-
-        // perform the action
-        plof{act} pul_forceEval
-
-        // and repeat
-        loop
+        plof{x} pul_eval throw
     }
 };
+
+// as is try/catch
+var try = (x) {
+    psl {
+        {
+            plof{x} pul_eval pop
+            null
+        }
+        {} catch
+
+        // store the exception
+        this "exception" push2 memberset
+
+        // if the result is null, we didn't throw
+        push0 null
+        {
+            // so just return selff
+            plof{selff}
+        }
+        {
+            // whoops, must catch
+            plof{
+                (x) {
+                    x exception
+                }
+            }
+        } cmp
+    }
+};
+
+var catchall = (ex, r, f) {
+    r.write ex;
+    f
+};
+
+
+// Technically anything can be thrown, but the user should only throw Exceptions
+var Exception = Object:[];
+
+// System exceptions
+var AbstractFunctionException = Exception:[];
+var TypeMismatchException = Exception : [
+    init = (obj, type) {
+        this.obj = obj;
+        this.type = type;
+        return this;
+    };
+
+    obj = Object;
+    type = Object;
+];

@@ -95,6 +95,7 @@ Object.opMember = Function:psl { {
                     push0 this "name" resolve member member 
 
                     // then duplicate it
+                    1 integer array
                     this "opDuplicate" resolve member call
 
                     // reparent it
@@ -306,6 +307,11 @@ plofbnf {
 };
 
 
+/// Some useful functions
+var selff = (x) { selff };
+var id = (x) { x };
+
+
 /// Constructors are a somewhat special case of functions
 plofbnf {
     plof_obj_def = "this" plof_bind_next ";" => {
@@ -325,7 +331,7 @@ plofbnf {
     }
 };
 
-/// Standard function initialization
+/// Standard object initialization
 var new = (type) {
     (type:[]).init
 };
@@ -333,20 +339,19 @@ Object.init = {this};
 Object.init.parent = Object;
 
 
-/// EXCEPTIONS (Incomplete)
-
-// Technically anything can be thrown, but the user should only throw Exceptions
-var Exception = Object:[];
-
-// System exceptions
-var AbstractFunctionException = Exception:[];
-var TypeMismatchException = Exception : [
-    init = (obj, type) {
-        this.obj = obj;
-        this.type = type;
-        return this;
+/// References
+var Reference = Object : [
+    this (readx, writex) {
+        this.read = readx;
+        this.write = writex;
     };
-
-    obj = Object;
-    type = Object;
 ];
+
+plofbnf {
+    plof_literal = "ref" plof_ident => plof {
+        new Reference (
+            { $1 },
+            (x) { $1 = x }
+        );
+    }
+};

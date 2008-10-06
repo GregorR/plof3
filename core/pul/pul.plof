@@ -639,7 +639,7 @@ pslbnf {
         {
             pul_eval
             1 integer array
-            push1 this "opDuplicate" resolve member call
+            push0 this "opDuplicate" resolve member call
             push0
         } concat
 
