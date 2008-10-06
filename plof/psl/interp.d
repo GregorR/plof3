@@ -145,9 +145,9 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
         // get the argument back
         if (nstack.stack.length) {
             push(nstack.stack[$-1]);
-	} else {
-	    push(pslNull);
-	}
+        } else {
+            push(pslNull);
+        }
 
         return thrown;
     }
