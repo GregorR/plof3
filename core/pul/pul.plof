@@ -711,19 +711,19 @@ psl {
         pop
 
         // their type is based on the parent types (if set)
-        this "old1" member "__pul_type" member pul_eval
+        this "old1" member "__pul_type" member pul_eval null
         {
             // none on the left, how 'bout the right
             this "old2" resolve member "__pul_type" member pul_eval null
             {
                 // none on either side, just use itself
-                this "new" resolve "__pul_type"
+                this "new" resolve member "__pul_type"
                     push1 1 integer array
                 memberset
             }
             {
                 // right but not left
-                this "new" resolve "__pul_type"
+                this "new" resolve member "__pul_type"
                     push1 1 integer array
                     this "old2" resolve member "__pul_type" member pul_eval
                     aconcat
@@ -735,7 +735,7 @@ psl {
             this "old2" resolve member "__pul_type" member pul_eval null
             {
                 // left but not right
-                this "new" resolve "__pul_type"
+                this "new" resolve member "__pul_type"
                     push1 1 integer array
                     this "old1" resolve member "__pul_type" member pul_eval
                     aconcat
@@ -743,7 +743,7 @@ psl {
             }
             {
                 // both set
-                this "new" resolve "__pul_type"
+                this "new" resolve member "__pul_type"
                     push1 1 integer array
                     this "old2" resolve member "__pul_type" member pul_eval
                     aconcat
@@ -827,6 +827,6 @@ psl {
             } {} cmp
         } catch
 
-        pop 0 integer index
+        pop 2 integer index
     } memberset
 };
