@@ -541,17 +541,15 @@ pslbnf {
 psl {
     // basic opInteger, filled in later
     pul_fcontext "opInteger" {
-        new push0 "__pul_val" push3 memberset
+        new push0 "__pul_val" push3 0 integer index memberset
     } memberset
 };
 pslbnf {
-    plof_literal = digits token white => {
+    plof_literal = number token white => {
         push0 0 integer index
         {
-            // make it a host integer
-            integer
-
             // call opInteger to wrap it up
+            1 integer array
             this "opInteger" resolve member call
         } concat
 
@@ -563,7 +561,7 @@ pslbnf {
 psl {
     // basic opArray, to be filled in later
     pul_fcontext "opArray" {
-        new push0 "__pul_val" push3 memberset
+        new push0 "__pul_val" push3 0 integer index memberset
     } memberset
 };
 
@@ -587,6 +585,8 @@ psl {
     // opDuplicate to duplicate objects
     pul_fcontext "opDuplicate"
     {
+        0 integer index
+
         // make the new object
         new combine
 
@@ -638,7 +638,8 @@ pslbnf {
         push0 0 integer index
         {
             pul_eval
-            push0 this "opDuplicate" resolve member call
+            1 integer array
+            push1 this "opDuplicate" resolve member call
             push0
         } concat
 
