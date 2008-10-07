@@ -12,7 +12,8 @@ PUL_PSL_SOURCE=base.psl core/pul/pul.plof
 STD_PSL_SOURCE=core/pul/object.plof \
                core/pul/exceptions.plof \
                core/pul/boolean.plof \
-               core/pul/conditionals.plof
+               core/pul/conditionals.plof \
+               core/pul/dynamicTypes.plof
 #STD_PSL_SOURCE=core/pul/object.plof \
 #	       core/pul/std.plof \
 #	       core/pul/boolean.plof \

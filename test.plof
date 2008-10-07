@@ -64,3 +64,45 @@ try (
 ) catchall (ref x) (
     psl { plof{x} pul_eval print }
 );
+
+
+// Object types
+psl { "Types" print };
+psl {
+    plof{Foo} pul_eval print
+    plof{Foo.opIs.parent} pul_eval print
+};
+if (Foo is Foo) (
+    psl { "GOOD " print };
+) else (
+    psl { "BAD" print };
+);
+if (Foo is Object) (
+    psl { "GOOD " print };
+) else (
+    psl { "BAD" print };
+);
+if (Object is Foo) (
+    psl { "BAD" print };
+) else (
+    psl { "GOOD " print };
+);
+
+
+// Typed functions
+psl { "Typed functions" print };
+var foo = (x as Foo) {
+    x
+};
+try (
+    foo(Foo);
+    psl { "GOOD " print };
+) catchall (ref x) (
+    psl { "BAD" print };
+);
+try (
+    foo(Object);
+    psl { "BAD" print };
+) catchall (ref x) (
+    psl { "GOOD " print };
+);
