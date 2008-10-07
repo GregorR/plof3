@@ -79,3 +79,8 @@ var TypeMismatchException = Exception : [
     obj = Object;
     type = Object;
 ];
+
+// Simple pseudofunction to throw abstract
+var Abstract = {
+    throw (new AbstractFunctionException);
+};
