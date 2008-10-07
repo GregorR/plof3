@@ -38,10 +38,10 @@ plofbnf {
 };
 
 // Object is true for logic unless it's False
-Object.opOr = (x) { True };
-Object.opOr.parent = Object;
-Object.opAnd = (x) { x };
-Object.opAnd.parent = Object;
+Object := [
+    opOr = (x) { true };
+    opAnd = (x) { x };
+];
 
 // True and False are both Bools
 var Bool = Object : [
