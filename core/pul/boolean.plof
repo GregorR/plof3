@@ -35,12 +35,19 @@ plofbnf {
         $0.opAnd($2)
     }
     plof_and = plof_and_next => plof { $0 }
+    plof_and => plof_not;
+
+    plof_not = "\!" plof_not => plof {
+        $1.opNot()
+    }
+    plof_not = plof_not_next => plof { $0 }
 };
 
 // Object is true for logic unless it's False
 Object := [
-    opOr = (x) { true };
+    opOr = (x) { True };
     opAnd = (x) { x };
+    opNot = { False };
 ];
 
 // True and False are both Bools
@@ -58,4 +65,5 @@ var False = Bool : [
 
     opOr = (x) { x };
     opAnd = (x) { False };
+    opNot = { True };
 ];
