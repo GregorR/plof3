@@ -375,18 +375,18 @@ pslbnf {
     plof_semicolon => plof_assign;
 
     plof_assign = plof_assign_next "=" plof_assign => {
-        push0 0 integer index
-        push1 2 integer index concat
-        {pul_eval pul_set} concat
+        push0 2 integer index
+        push1 0 integer index concat
+        {push1 pul_eval pul_set} concat
         cwrap {pul_funcwrap} concat
     }
     plof_assign = plof_assign_next => { push0 0 integer index }
     plof_assign => plof_bind;
 
     plof_bind = "let" plof_bind_next "=" plof_bind => {
-        push0 1 integer index
-        push1 3 integer index concat
-        {pul_set} concat
+        push0 3 integer index
+        push1 1 integer index concat
+        {push1 pul_set} concat
         cwrap {pul_funcwrap} concat
     }
     plof_bind = plof_bind_next => { push0 0 integer index }
