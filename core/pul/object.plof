@@ -336,6 +336,7 @@ plofbnf {
             pul_eval concat
             {plof{this}} concat
             1 integer array this "opFunction" resolve member call
+            push0 push3 parentset
             memberset
         } concat
     }

@@ -102,3 +102,9 @@ try (
 ) catchall (ref x) (
     psl { "GOOD " print };
 );
+
+
+// Numbers
+psl { "Numbers" print };
+x = 27 - 6 * 4;
+psl { plof{x} pul_eval "__pul_val" member print };

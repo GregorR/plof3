@@ -203,7 +203,7 @@ var NativeInteger = Number : [
                 plof{x.__pul_val} pul_eval
                 add
             }
-        );
+        )
     };
 
     opSub = (x as NativeInteger) {
@@ -213,7 +213,7 @@ var NativeInteger = Number : [
                 plof{x.__pul_val} pul_eval
                 sub
             }
-        );
+        )
     };
 
     opMul = (x as NativeInteger) {
@@ -223,7 +223,7 @@ var NativeInteger = Number : [
                 plof{x.__pul_val} pul_eval
                 mul
             }
-        );
+        )
     };
 
     opDiv = (x as NativeInteger) {
@@ -233,7 +233,7 @@ var NativeInteger = Number : [
                 plof{x.__pul_val} pul_eval
                 div
             }
-        );
+        )
     };
 
     opMod = (x as NativeInteger) {
@@ -243,11 +243,11 @@ var NativeInteger = Number : [
                 plof{x.__pul_val} pul_eval
                 mod
             }
-        );
+        )
     };
 ];
 
-// opNumber should return a native number
-opNumber = (x) {
-    new NativeNumber(x)
+// opInteger should return a native number
+opInteger = (x) {
+    new NativeInteger(x)
 };
