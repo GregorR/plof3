@@ -68,10 +68,6 @@ try (
 
 // Object types
 psl { "Types" print };
-psl {
-    plof{Foo} pul_eval print
-    plof{Foo.opIs.parent} pul_eval print
-};
 if (Foo is Foo) (
     psl { "GOOD " print };
 ) else (
