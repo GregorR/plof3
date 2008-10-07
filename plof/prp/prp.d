@@ -231,7 +231,12 @@ class ParserPSL {
         interpret(code[res.choice], stack, context, false, prp);
 
         // get the top element off the stack
-        no = stack.stack[$-1];
+        if (stack.stack.length < 1) {
+            Stderr("Parser error: Production ")(res.prod.name)(" returned nothing.").newline;
+            no = pslNull;
+        } else {
+            no = stack.stack[$-1];
+        }
 
         if (enableDebug &&
             !no.isArray && no.raw !is null &&
