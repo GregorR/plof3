@@ -585,7 +585,7 @@ psl {
     // opDuplicate to duplicate objects
     pul_fcontext "opDuplicate"
     {
-        0 integer index
+        push0 0 integer index
 
         // make the new object
         new combine
@@ -623,6 +623,75 @@ psl {
                 new combine push0 push4 parentset
             memberset
         } cmp
+
+        // and reparent everything
+        push0 push2 0 integer index 2 integer array
+        this "opReparent" resolve member call pop
+    } memberset
+
+    // opReparent reparents members of $0 from $1
+    pul_fcontext "opReparent"
+    {
+        push0 0 integer index
+        push1 1 integer index
+        push1 members
+        0 integer
+        4 integer array
+        {
+            // args: [object, old, members, index]
+
+            // have we finished?
+            push0 2 integer index length
+            push1 3 integer index
+            {
+                // yes, we're done
+                new
+                    push0 "__pul_opreparent_done" new memberset
+                throw
+            }
+            {
+                // no, check this one
+                push0 0 integer index
+                    push1 2 integer index
+                        push2 3 integer index
+                    index
+                member
+
+                // if the parent is the old one, we'll reparent
+                parent push1 1 integer index
+                {
+                    push0 0 integer index
+                        push1 2 integer index
+                            push2 3 integer index
+                        index
+
+                        // now we have the object and the name, so reparent it
+                        push1 push1 member
+                        1 integer array
+                        this "opDuplicate" resolve member call pul_eval
+                        push0 push3 parentset
+                    memberset
+                }
+                {} cmp
+            } lte
+
+            // now step
+            push0
+            3 integer
+                push1 3 integer index
+                    1 integer
+                add
+            indexset
+            loop
+        }
+        {
+            // was this our throw?
+            push0 "__pul_opreparent_done" member null
+            {
+                // nope
+                throw
+            } {} cmp
+        } catch
     } memberset
 
     // opCombine is defined below as it depends on duplication
@@ -768,78 +837,14 @@ psl {
 
         // reparent all members
         this "new" member
-        push0 members
-        0 integer
-        3 integer array
-        {
-            // args: [object, members, index]
+        this "old1" member
+        2 integer array
+        this "opReparent" resolve member call pop
+        this "new" member
+        this "old2" member
+        2 integer array
+        this "opReparent" resolve member call pop
 
-            // have we finished?
-            push0 1 integer index length
-            push1 2 integer index
-            {
-                // yes, we're done
-                new
-                    push0 "__pul_opcombine_done" new memberset
-                throw
-            }
-            {
-                // no, check this one
-                push0 0 integer index
-                    push1 1 integer index
-                        push2 2 integer index
-                    index
-                member
-
-                // if the parent is one of the old ones, we'll set reparent
-                this "reparent" null memberset
-
-                push0 parent this "old1" resolve member
-                {
-                    this "reparent" new memberset
-                } {} cmp
-
-                push0 parent this "old2" resolve member
-                {
-                    this "reparent" new memberset
-                } {} cmp
-
-                // now, reparent it if applicable
-                pop
-                this "reparent" member null
-                {}
-                {
-                    push0 0 integer index
-                        push1 1 integer index
-                            push2 2 integer index
-                        index
-
-                        // now we have the object and the name, so reparent it
-                        this "torep" push3 push3 member memberset
-
-                        plof { torep:[] } pul_eval push0 push3 parentset
-                    memberset
-                } cmp
-            } lte
-
-            // now step
-            push0
-            2 integer
-                push1 2 integer index
-                    1 integer
-                add
-            indexset
-            loop
-        }
-        {
-            // was this our throw?
-            push0 "__pul_opcombine_done" member null
-            {
-                // nope
-                throw
-            } {} cmp
-        } catch
-
-        pop 2 integer index
+        2 integer index
     } memberset
 };

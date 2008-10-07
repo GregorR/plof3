@@ -313,6 +313,10 @@ plofbnf {
 };
 
 
+/// The Plof version of psl{null}
+var Null = Object:[];
+
+
 /// Some useful functions
 var selff = (x) { selff };
 var id = (x) { x };
