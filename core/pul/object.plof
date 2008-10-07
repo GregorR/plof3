@@ -335,8 +335,7 @@ plofbnf {
 var new = (type) {
     (type:[]).init
 };
-Object.init = {this};
-Object.init.parent = Object;
+Object := [init = {this};];
 
 
 /// References

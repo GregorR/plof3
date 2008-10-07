@@ -633,6 +633,18 @@ psl {
 pslbnf {
     plof_bind => plof_combine;
 
+    plof_assign = plof_assign ":=" "\[" plof_obj_defs "\]" => {
+        // get the left
+        push0 0 integer index
+        {pul_eval} concat
+
+        // then run the extender
+        push1 3 integer index concat
+
+        // wrap it up
+        cwrap {pul_funcwrap} concat
+    }
+
     plof_combine = plof_combine ":" "\[" plof_obj_defs "\]" => {
         // call opDuplicate
         push0 0 integer index
