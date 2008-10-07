@@ -36,15 +36,21 @@ plofbnf {
     }
 
 
-    plof_args = plof_args "," plof_args_next => plof {
+    plof_args = white => plof {
+        psl { 0 integer array }
+    }
+
+    plof_args = plof_args_prime => plof { $0 }
+
+    plof_args_prime = plof_args_prime "," plof_args_prime_next => plof {
         psl { $0 pul_eval $2 pul_eval aconcat }
     }
 
-    plof_args = plof_args_next "," plof_args_next => plof {
+    plof_args = plof_args_prime_next "," plof_args_prime_next => plof {
         psl { $0 pul_eval $2 pul_eval aconcat }
     }
 
-    plof_args => plof_arg;
+    plof_args_prime => plof_arg;
 
     plof_arg = plof_semicolon_next => plof {
         psl { $0 1 integer array }
