@@ -3,9 +3,9 @@ psl { "Integer value 3 is always good." print };
 // Prototypes test
 var a = Object : [];
 var b = a : [];
-a.a = psl { 3 integer };
+a.a = 3;
 psl {
-    plof{b.a} pul_eval print
+    plof{b.a} pul_eval "__pul_val" member print
 };
 
 
@@ -52,8 +52,8 @@ var Foo = Object : [
         this.n = n;
     };
 ];
-var foo = new Foo(psl { 3 integer });
-psl { plof{foo.n} pul_eval print };
+var foo = new Foo(3);
+psl { plof{foo.n} pul_eval "__pul_val" member print };
 
 
 // Try/catch

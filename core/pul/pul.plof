@@ -549,6 +549,7 @@ pslbnf {
         push0 0 integer index
         {
             // call opInteger to wrap it up
+            integer
             1 integer array
             this "opInteger" resolve member call
         } concat
