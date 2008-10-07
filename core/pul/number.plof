@@ -1,0 +1,253 @@
+/*
+ * Numbers (specifically, Integers).
+ *
+ *  Copyright (c) 2008  Gregor Richards
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to
+ *  deal in the Software without restriction, including without limitation the
+ *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *  sell copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *  IN THE SOFTWARE.
+ */
+
+// basic math
+plofbnf {
+    plof_and => plof_equals;
+
+    plof_equals = plof_equals "==" plof_equals_next => plof {
+        $0.opEquals($2)
+    }
+    plof_equals = plof_equals "!=" plof_equals_next => plof {
+        $0.opNEquals($2)
+    }
+    plof_equals = plof_equals_next => plof { $0 }
+    plof_equals => plof_cmp;
+
+    plof_cmp = plof_cmp "<" plof_cmp_next => plof {
+        $0.opLess($2)
+    }
+    plof_cmp = plof_cmp "<=" plof_cmp_next => plof {
+        $0.opLessEqual($2)
+    }
+    plof_cmp = plof_cmp ">" plof_cmp_next => plof {
+        $0.opGreater($2)
+    }
+    plof_cmp = plof_cmp ">=" plof_cmp_next => plof {
+        $0.opGreaterEqual($2)
+    }
+    plof_cmp = plof_cmp_next => plof { $0 }
+    plof_cmp => plof_add;
+
+    plof_add = plof_add "\+" plof_add_next => plof {
+        $0.opAdd($2)
+    }
+    plof_add = plof_add "-" plof_add_next => plof {
+        $0.opSub($2)
+    }
+    plof_add = plof_add_next => plof { $0 }
+    plof_add => plof_mul;
+
+    plof_mul = plof_mul "\*" plof_mul_next => plof {
+        $0.opMul($2)
+    }
+    plof_mul = plof_mul /\// white plof_mul_next => plof {
+        $0.opDiv($3)
+    }
+    plof_mul = plof_mul "%" plof_mul_next => plof {
+        $0.opMod($2)
+    }
+    plof_mul = plof_mul_next => plof { $0 }
+};
+
+// operators on Object
+Object := [
+    // Use object equality by default
+    opEquals = (x) {
+        psl {
+            plof{this} pul_eval
+            plof{x} pul_eval
+            {
+                plof{True}
+            }
+            {
+                plof{False}
+            } cmp
+        }
+    };
+
+    // Just do a not-equals for nequals
+    opNEquals = (x) {
+        !(this == x)
+    };
+
+    // All the comparisons use opCmp by default
+    opCmp = Abstract;
+    opLess = (x) {
+        this.opCmp(x) < 0
+    };
+    opLessEqual = (x) {
+        this.opCmp(x) <= 0
+    };
+    opGreater = (x) {
+        this.opCmp(x) > 0
+    };
+    opGreaterEqual = (x) {
+        this.opCmp(x) >= 0
+    };
+
+    // Everything else is abstract
+    opAdd = Abstract;
+    opSub = Abstract;
+    opMul = Abstract;
+    opDiv = Abstract;
+    opMod = Abstract;
+];
+
+
+// Need a divide-by-zero exception f    or numbers
+var DivisionByZeroException = Exception:[];
+
+// Numbers
+var Number = Object:[];
+
+// Native integers are integers as provided by the host, with all the limitations thereof
+var NativeInteger = Number : [
+    this (val) {
+        this.__pul_val = val;
+    };
+
+    opEquals = (x as NativeInteger) {
+        psl {
+            plof{this.__pul_val} pul_eval
+            plof{x.__pul_val} pul_eval
+            {
+                plof{True}
+            }
+            {
+                plof{False}
+            } eq
+        }
+    };
+
+
+    // these comparisons can't use opCmp, since opCmp depends on NativeIntegers
+    opLess = (x as NativeInteger) {
+        psl {
+            plof{this.__pul_val} pul_eval
+            plof{x.__pul_eval} pul_eval
+            {
+                plof{True}
+            }
+            {
+                plof{False}
+            } lt
+        }
+    };
+
+    opLessEqual = (x as NativeInteger) {
+        psl {
+            plof{this.__pul_val} pul_eval
+            plof{x.__pul_eval} pul_eval
+            {
+                plof{True}
+            }
+            {
+                plof{False}
+            } lte
+        }
+    };
+
+    opGreater = (x as NativeInteger) {
+        psl {
+            plof{this.__pul_val} pul_eval
+            plof{x.__pul_eval} pul_eval
+            {
+                plof{True}
+            }
+            {
+                plof{False}
+            } gt
+        }
+    };
+
+    opGreaterEqual = (x as NativeInteger) {
+        psl {
+            plof{this.__pul_val} pul_eval
+            plof{x.__pul_eval} pul_eval
+            {
+                plof{True}
+            }
+            {
+                plof{False}
+            } gte
+        }
+    };
+
+
+    opAdd = (x as NativeInteger) {
+        new NativeInteger(
+            psl {
+                plof{this.__pul_val} pul_eval
+                plof{x.__pul_val} pul_eval
+                add
+            }
+        );
+    };
+
+    opSub = (x as NativeInteger) {
+        new NativeInteger(
+            psl {
+                plof{this.__pul_val} pul_eval
+                plof{x.__pul_val} pul_eval
+                sub
+            }
+        );
+    };
+
+    opMul = (x as NativeInteger) {
+        new NativeInteger(
+            psl {
+                plof{this.__pul_val} pul_eval
+                plof{x.__pul_val} pul_eval
+                mul
+            }
+        );
+    };
+
+    opDiv = (x as NativeInteger) {
+        new NativeInteger(
+            psl {
+                plof{this.__pul_val} pul_eval
+                plof{x.__pul_val} pul_eval
+                div
+            }
+        );
+    };
+
+    opMod = (x as NativeInteger) {
+        new NativeInteger(
+            psl {
+                plof{this.__pul_val} pul_eval
+                plof{x.__pul_val} pul_eval
+                mod
+            }
+        );
+    };
+];
+
+// opNumber should return a native number
+opNumber = (x) {
+    new NativeNumber(x)
+};
