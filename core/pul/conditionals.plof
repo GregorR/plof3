@@ -56,3 +56,13 @@ var while = (cond, act) {
         loop
     }
 };
+
+var for = (init, cond, step, act) {
+    init;
+    while (psl { plof{cond} pul_forceEval }) (
+        psl {
+            plof{act} pul_forceEval
+            plof{step} pul_forceEval
+        }
+    );
+};
