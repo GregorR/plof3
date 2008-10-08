@@ -358,7 +358,7 @@ var Reference = Object : [
 ];
 
 plofbnf {
-    plof_literal = "ref" plof_ident => plof {
+    plof_literal = "ref" plof_var => plof {
         new Reference (
             { $1 },
             (__pul_ref_x) { $1 = __pul_ref_x }

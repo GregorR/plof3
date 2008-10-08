@@ -411,16 +411,7 @@ pslbnf {
         push0 1 integer index
     }
     plof_parens = plof_parens_next => { push0 0 integer index }
-    plof_parens => plof_var;
-
-    plof_var = "var" plof_identifier => {
-        {pul_fcontext}
-        push1 1 integer index concat
-        {push1 push1 null memberset pul_varwrap} concat
-        cwrap {pul_funcwrap} concat
-    }
-    plof_var = plof_var_next => { push0 0 integer index }
-    plof_var => plof_literal;
+    plof_parens => plof_literal;
 
     // none of these literals are actually literals (hm), but they're at the same precedence
     plof_literal = "psl" "\{" pslOps "\}" => {
@@ -433,7 +424,16 @@ pslbnf {
         "ü" wrap
     }
     plof_literal = plof_literal_next => { push0 0 integer index }
-    plof_literal => plof_ident;
+    plof_literal => plof_var;
+
+    plof_var = "var" plof_identifier => {
+        {pul_fcontext}
+        push1 1 integer index concat
+        {push1 push1 null memberset pul_varwrap} concat
+        cwrap {pul_funcwrap} concat
+    }
+    plof_var = plof_var_next => { push0 0 integer index }
+    plof_var => plof_ident;
 
     plof_ident = plof_identifier => {
         // the name we're actually looking for
