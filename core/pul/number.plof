@@ -103,7 +103,6 @@ Object := [
     };
 
     // All the comparisons use opCmp by default
-    opCmp = Abstract;
     opLess = (x) {
         this.opCmp(x) < 0
     };
@@ -117,12 +116,13 @@ Object := [
         this.opCmp(x) >= 0
     };
 
-    // Everything else is abstract
-    opAdd = Abstract;
-    opSub = Abstract;
-    opMul = Abstract;
-    opDiv = Abstract;
-    opMod = Abstract;
+    // Inc/dec just add/subtract 1 by default
+    opInc = {
+        this + 1
+    };
+    opDec = {
+        this - 1
+    };
 ];
 
 
