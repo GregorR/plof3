@@ -35,12 +35,12 @@ plofbnf {
         $0.opAnd($2)
     }
     plof_and = plof_and_next => plof { $0 }
-    plof_and => plof_not;
+    plof_and => plof_unop;
 
-    plof_not = "\!" plof_not => plof {
+    plof_unop = "\!" plof_unop => plof {
         $1.opNot()
     }
-    plof_not = plof_not_next => plof { $0 }
+    plof_unop = plof_unop_next => plof { $0 }
 };
 
 // Object is true for logic unless it's False

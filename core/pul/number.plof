@@ -69,6 +69,16 @@ plofbnf {
         $0.opMod($2)
     }
     plof_mul = plof_mul_next => plof { $0 }
+
+    plof_unop => plof_unopr;
+
+    plof_unopr = plof_unopr "\+\+" => plof {
+        $0 = $0.opInc()
+    }
+    plof_unopr = plof_unopr "--" => plof {
+        $0 = $0.opDec()
+    }
+    plof_unopr = plof_unopr_next => plof { $0 }
 };
 
 // operators on Object
