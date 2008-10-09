@@ -368,7 +368,7 @@ pslbnf {
         cwrap {pul_funcwrap} concat
     }
     plof_semicolon = plof_semicolon ";" => {
-        push0 0 integer index {pul_eval pop null} concat
+        push0 0 integer index {pul_eval pop this "Null" resolve member} concat
         cwrap {pul_funcwrap} concat
     }
     plof_semicolon = plof_semicolon_next => { push0 0 integer index }
@@ -429,7 +429,7 @@ pslbnf {
     plof_var = "var" plof_identifier => {
         {pul_fcontext}
         push1 1 integer index concat
-        {push1 push1 null memberset pul_varwrap} concat
+        {push1 push1 this "Null" resolve member memberset pul_varwrap} concat
         cwrap {pul_funcwrap} concat
     }
     plof_var = plof_var_next => { push0 0 integer index }
