@@ -1,6 +1,6 @@
 PSLASM=./pslasm
 PLOFC=./plofc
-PLOF_FLAGS=--debug
+#PLOF_FLAGS=--debug
 
 # base.psl contains the base grammar
 BASE_PSL_SOURCE=core/base/base.apsl
@@ -14,7 +14,8 @@ STD_PSL_SOURCE=core/pul/object.plof \
                core/pul/boolean.plof \
                core/pul/conditionals.plof \
                core/pul/dynamicTypes.plof \
-               core/pul/number.plof
+               core/pul/number.plof \
+               core/pul/collection.plof
 #STD_PSL_SOURCE=core/pul/object.plof \
 #	       core/pul/std.plof \
 #	       core/pul/boolean.plof \

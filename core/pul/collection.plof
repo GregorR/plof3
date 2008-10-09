@@ -1,0 +1,414 @@
+/*
+ * Collection types
+ *
+ *  Copyright (c) 2008  Gregor Richards
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to
+ *  deal in the Software without restriction, including without limitation the
+ *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *  sell copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *  IN THE SOFTWARE.
+ */
+
+// indexing in the grammar
+plofbnf {
+    plof_group = plof_group "\[" plof_semicolon "\]" => plof {
+        $0.opIndex($2)
+    }
+
+    plof_cmp => plof_concat;
+
+    plof_concat = plof_concat "~" plof_concat_next => plof {
+        $0.opConcat($2)
+    }
+    plof_concat = plof_concat_next => plof { $0 }
+
+    plof_assign = plof_assign_next "~=" plof_assign => plof {
+        $0.opAppend($2)
+    }
+};
+
+/* Note that opArray is used in the core of the language, but is redefined here
+ * in terms of the user-defined Array type. This allows arrays such as 'args'
+ * in functions to be Arrays. */
+
+var Collection = Object : [
+    NilElement = Object:[];
+
+    each = (x as Function) {
+        Abstract();
+    };
+
+    dup = Abstract;
+
+    apply = (x as Function) {
+        Abstract();
+    };
+
+    map = (x as Function) {
+        dup().apply x
+    };
+
+    size = {
+        var i = 0;
+        each((x){i++});
+        i
+    };
+
+    fold = (init, f as Function) {
+        var ret = init;
+        each((x){ret = f(ret,x)});
+        ret
+    };
+
+    sum = {
+        fold(0, (x, y) { x + y })
+    };
+
+    product = {
+        fold(0, (x, y) { x * y })
+    };
+];
+
+// collection families
+var IndexableCollection = Collection : [
+    opIndex = (x as Number) {
+        Abstract();
+    };
+];
+
+var ConcatableCollection = Collection : [
+    opConcat = (x as IndexableCollection) {
+        Abstract();
+    };
+];
+
+var AppendableCollection = Collection : [
+    opAppend = (x as IndexableCollection) {
+        Abstract();
+    };
+];
+
+// particular collections
+var Array = IndexableCollection : ConcatableCollection : [
+    this (intarr) {
+        this.__pul_val = intarr;
+    };
+
+    opCastFrom = (x as Collection) {
+        if (x is Collection) (
+            var arr = new Array(psl { 0 integer array });
+
+            // now add element-by-element
+            x.each((y) {
+                arr.__pul_val = psl {
+                    plof{arr.__pul_val} pul_eval
+                    plof{y} pul_eval 1 integer array
+                    aconcat
+                };
+            });
+
+            return arr;
+        ) else (
+            return Null;
+        );
+    };
+
+    opIndex = (x as NativeInteger) {
+        return(psl {
+            // this needs to be wrapped up specially
+            new
+
+            push0 "__pul_e"
+            {
+                plof{this.__pul_val} pul_eval
+                plof{x.__pul_val} pul_eval
+                index
+            } memberset
+
+            push0 "__pul_s"
+            {
+                plof{this.__pul_val} pul_eval
+                plof{x.__pul_val} pul_eval
+                push2
+                indexset
+            } memberset
+        });
+    };
+
+    opConcat = (x as Array) {
+        new Array(psl {
+            // just concat the two arrays
+            plof{this.__pul_val} pul_eval
+            plof{x.__pul_val} pul_eval
+            aconcat
+        })
+    };
+
+    each = (x as Function) {
+        for (var i = 0) (i < size()) (i++) (
+            x(this[i])
+        );
+        this
+    };
+
+    dup = {
+        new Array(
+            psl {
+                plof{this.__pul_val} pul_eval
+                0 integer array aconcat
+            }
+        )
+    };
+
+    apply = (x as Function) {
+        for (var i = 0) (i < size()) (i++) (
+            this[i] = x(this[i])
+        );
+        this
+    };
+
+    size = {
+        opInteger(psl {
+            plof{this.__pul_val} pul_eval length
+        })
+    };
+];
+
+var ListNode = Object : [
+    type = Object;
+
+    val = Null;
+    next = Null;
+
+    set = (x as type) {
+        val = x;
+    };
+
+    get = {
+        val
+    };
+];
+
+var MList = IndexableCollection : ConcatableCollection : AppendableCollection : [
+    head = Null;
+    tail = Null;
+    cSize = 0;
+
+    opIndex = (x as Number) {
+        if (Null == head) (
+            head = new ListNode();
+        );
+
+        // find the right one
+        var cur = head;
+        for (x) (x > 0) (x--) (
+            if (Null == cur.next) (
+                cur.next = new ListNode();
+                tail = cur.next;
+            );
+
+            cur = cur.next;
+        );
+
+        // done (must return instead of just evaling since returns can be byref)
+        return(cur.val);
+    };
+
+    opConcat = (x as IndexableCollection) {
+        var newlist = new MList();
+
+        each((y) {
+            newlist.snoc(y)
+        });
+        x.each((y) {
+            newlist.snoc(y)
+        });
+
+        newlist
+    };
+
+    opAppend = (x as IndexableCollection) {
+        x.each((y) {
+            snoc(y)
+        });
+        this
+    };
+
+    each = (x as Function) {
+        for (var cur = head) (Null != cur) (cur = cur.next) (
+            x(cur.val)
+        );
+        this
+    };
+
+    cons = (x) {
+        var add = new ListNode();
+        add.val = x;
+        
+        if (Null == head) (
+            tail = add;
+        ) else (
+            add.next = head;
+        );
+        head = add;
+
+        cSize++;
+    };
+
+    snoc = (x) {
+        var add = new ListNode();
+        add.val = x;
+
+        if (Null == tail) (
+            head = add;
+        ) else (
+            tail.next = add;
+        );
+        tail = add;
+
+        cSize++;
+    };
+
+    dup = {
+        var res = new MList();
+
+        // just snoc
+        each((x) {
+            res.snoc(x)
+        });
+
+        res
+    };
+
+    apply = (x as Function) {
+        for (var cur = head) (Null != cur) (cur = cur.next) (
+            cur.val = x(cur.val)
+        );
+        this
+    };
+
+    size = {
+        cSize
+    };
+];
+
+
+// The fundamental collection type, ListArray
+var ListArray = IndexableCollection : ConcatableCollection : AppendableCollection : [
+    mlist = Null;
+
+    this {
+        mlist = new MList();
+    };
+
+    opIndex = (x as Number) {
+        var ret;
+        var retx;
+
+        // find the right list
+        mlist.each((y) {
+            var sz = y.size();
+            if (x >= 0 && sz > x) (
+                ret = y;
+                retx = x;
+            );
+            x = x - sz;
+        });
+
+        // perhaps fail
+        if (Null == ret) (
+            // FIXME: better error
+            return Null;
+        );
+
+        // then return the right element
+        return (ret[retx]);
+    };
+
+    opConcat = (x as IndexableCollection) {
+        // start by duplicating myself
+        var ret = dup();
+
+        // then just append the other one
+        ret ~= x.dup();
+
+        ret
+    };
+
+    opAppend = (x as Array) {
+        mlist.snoc(x.dup());
+        this
+    };
+
+    each = (x as Function) {
+        mlist.each((y) {
+            y.each(x)
+        });
+        this
+    };
+
+    dup = {
+        var res = new ListArray();
+        res ~= this as Array;
+        res
+    };
+
+    apply = (x as Function) {
+        mlist.apply((y) {
+            y.apply(x)
+        });
+        this
+    };
+
+    size = {
+        var sz = 0;
+        mlist.each((x) {
+            sz = sz + x.size()
+        });
+        sz
+    };
+];
+
+// the grammar for ListArrays
+plofbnf {
+    plof_literal = "\[\[" plof_arr_elems "\]\]" => plof {
+        new ListArray() ~= new Array($1)
+    }
+
+    plof_arr_elems = white => plof {
+        psl {
+            0 integer array
+        }
+    }
+    plof_arr_elems = plof_arr_elems_next => plof { $0 }
+    plof_arr_elems => plof_arr_elems_prime;
+
+    plof_arr_elems_prime = plof_arr_elems_prime "," plof_arr_elems_prime_next => plof {
+        psl {
+            $0 pul_eval
+            $2 1 integer array
+            aconcat
+        }
+    }
+    plof_arr_elems_prime = plof_arr_elems_prime_next => plof {
+        psl {
+            $0 1 integer array
+        }
+    }
+    plof_arr_elems_prime => plof_arr_elem;
+
+    plof_arr_elem = plof_semicolon_next => plof { $0 }
+};

@@ -558,14 +558,6 @@ pslbnf {
     }
 };
 
-// Arrays
-psl {
-    // basic opArray, to be filled in later
-    pul_fcontext "opArray" {
-        new push0 "__pul_val" push3 0 integer index memberset
-    } memberset
-};
-
 
 // The most important object in the game, Object
 psl {

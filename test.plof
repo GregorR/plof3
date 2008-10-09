@@ -108,3 +108,27 @@ try (
 psl { "Numbers" print };
 x = 27 - 6 * 4;
 psl { plof{x} pul_eval "__pul_val" member print };
+
+
+// Arrays
+psl { "Arrays" print };
+x = new Array(psl {
+    plof{4} 1 integer array
+});
+x[0] = 3;
+psl { plof{x[0]} pul_eval "__pul_val" member print };
+
+
+// Lists
+psl { "Lists" print };
+x = new MList(Object);
+x[1] = 3;
+psl { plof{x[1]} pul_eval "__pul_val" member print };
+
+
+// ListArrays
+psl { "ListArrays" print };
+x = [[ 0, 1, 2, 3, 4, 5 ]];
+psl { plof{x[3]} pul_eval "__pul_val" member print };
+x ~= [[ 4, 3, 2, 1, 0 ]];
+psl { plof{x[7]} pul_eval "__pul_val" member print };
