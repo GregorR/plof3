@@ -156,7 +156,7 @@ var NativeInteger = Number : [
     opLess = (x as NativeInteger) {
         psl {
             plof{this.__pul_val} pul_eval
-            plof{x.__pul_eval} pul_eval
+            plof{x.__pul_val} pul_eval
             {
                 plof{True}
             }
@@ -169,7 +169,7 @@ var NativeInteger = Number : [
     opLessEqual = (x as NativeInteger) {
         psl {
             plof{this.__pul_val} pul_eval
-            plof{x.__pul_eval} pul_eval
+            plof{x.__pul_val} pul_eval
             {
                 plof{True}
             }
@@ -182,7 +182,7 @@ var NativeInteger = Number : [
     opGreater = (x as NativeInteger) {
         psl {
             plof{this.__pul_val} pul_eval
-            plof{x.__pul_eval} pul_eval
+            plof{x.__pul_val} pul_eval
             {
                 plof{True}
             }
@@ -195,7 +195,7 @@ var NativeInteger = Number : [
     opGreaterEqual = (x as NativeInteger) {
         psl {
             plof{this.__pul_val} pul_eval
-            plof{x.__pul_eval} pul_eval
+            plof{x.__pul_val} pul_eval
             {
                 plof{True}
             }

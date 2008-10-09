@@ -703,7 +703,7 @@ psl {
 pslbnf {
     plof_bind => plof_combine;
 
-    plof_assign = plof_assign ":=" "\[" plof_obj_defs "\]" => {
+    plof_assign = plof_assign_next ":=" "\[" plof_obj_defs "\]" => {
         // get the left
         push0 0 integer index
         {pul_eval} concat
