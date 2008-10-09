@@ -23,17 +23,9 @@
  */
 
 var if = (cond) {
-    var bcond = cond && True;
-    (then) {
-        var ret = id;
-        bcond
-            .ifTrue(
-                then; ret = selff;
-            ).ifFalse(
-                ret = id;
-            );
-        ret
-    }
+    (cond&&True)
+        .ifTrue( return ((then) { then; selff }); )
+        .ifFalse(return ((then) { id }); )
 };
 
 var else = (then) {
