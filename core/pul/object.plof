@@ -22,9 +22,6 @@
  *  IN THE SOFTWARE.
  */
 
-// the Function type will be filled in later, but for the moment we can just stub it
-var Function = Object : [];
-
 // trivial plof function calls
 plofbnf {
     plof_group = plof_group plof_group_next => plof {
@@ -57,18 +54,9 @@ plofbnf {
     }
 };
 
-// FIXME: Should use proper combination
-var opFunction = Function:psl { {
-    // get the procedure
-    this "proc" push2 0 integer index pul_eval memberset
 
-    // combine it with Function
-    plof { Function:proc } pul_eval
-} };
-
-
-// opMember is a function ...
-Object.opMember = Function:psl { {
+// opMember is not a capital-F Function, as that would be a recursive definition (opMember.opMember.opMember...)
+Object.opMember = psl { {
     // args: [name, next context]
     this "name" push2 0 integer index pul_eval memberset
     this "next" push2 1 integer index pul_eval memberset
@@ -179,6 +167,21 @@ Object.opMember = Function:psl { {
     } cmp
 } };
 psl { this "Object" resolve member push0 "opMember" member push1 parentset pop };
+
+
+// the Function type
+var Function = Object : [];
+
+
+// FIXME: Should use proper combination
+var opFunction = Function:psl { {
+    // get the procedure
+    this "proc" push2 0 integer index pul_eval memberset
+
+    // combine it with Function
+    plof { Function:proc } pul_eval
+} };
+
 
 
 // more advanced function syntax

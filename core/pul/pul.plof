@@ -721,7 +721,7 @@ pslbnf {
         {
             pul_eval
             1 integer array
-            push0 this "opDuplicate" resolve member call
+            this "opDuplicate" resolve member call
             push0
         } concat
 
