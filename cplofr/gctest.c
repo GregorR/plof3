@@ -1,83 +1,59 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <gc/gc.h>
+
 #include "gc.h"
 
-PGC_STRUCT(tree, 2) {
-    tree *left, *right;
-    int val;
+PGC_STRUCT(node, 2) {
+    node *left, *right;
 };
 
 #ifdef REAL_GC
 #define MGC_NEW PGC_NEW
-#define MGC_FREE(arg)
 #else
-#define MGC_NEW(into, type) (*into = (type *) malloc(sizeof(type)))
-#define MGC_FREE(arg) free(arg)
+#define MGC_NEW(into, type) (*(into) = (type *) GC_malloc(sizeof(type)))
 #endif
 
-/* tree functions */
-void tree_insert(tree **into, int val)
+node *random_node(node *from, int c)
 {
-    if (*into == NULL) {
-        tree *ntr = MGC_NEW(into, tree);
-        ntr->val = val;
+    if (c == 0) return from;
 
+    if (rand() % 2 == 0) {
+        return random_node(from->left, c-1);
     } else {
-        tree *rel = *into;
-        if (val > rel->val) {
-            tree_insert(&(rel->right), val);
-
-        } else if (val < rel->val) {
-            tree_insert(&(rel->left), val);
-
-        }
-
+        return random_node(from->right, c-1);
     }
 }
-
-void tree_remove(tree **into, int val)
-{
-    if (*into != NULL) {
-        /* if this is val, remove it */
-        if ((*into)->val == val) {
-            MGC_FREE(*into);
-            *into = NULL;
-        }
-    }
-}
-
-void tree_print(tree *t, int s)
-{
-    if (t == NULL) return;
-
-    int i;
-    for (i = 0; i < s; i++) {
-        printf("| ");
-    }
-    printf("+%d\n", t->val);
-    tree_print(t->left, s+1);
-    tree_print(t->right, s+1);
-}
-
 
 int main()
 {
     int i;
-    tree **root = (tree **) pgcNewRoot(sizeof(void*), 1);
+    pgcInit();
+    node **root = (node **) pgcNewRoot(sizeof(void*), 1);
 
-    for (i = 0; i < 100000000; i++) {
-        /* add something ... */
-        int x = rand() % 100;
-        tree_insert(root, x);
+    /* must have a node to start with */
+    MGC_NEW(root, node);
+    (*root)->left = *root;
+    (*root)->right = *root;
 
-        /* remove something */
-        if (i % 10 == 0) {
-            x = (rand() % 10) * 10;
-            tree_remove(root, x);
+    for (i = 0; i < 10000000; i++) {
+        node *rn, *nn;
+
+        /* find a random node */
+        rn = random_node(*root, 10);
+
+        /* associate it with a new node */
+        if (rand() % 2 == 0) {
+            nn = MGC_NEW(&(rn->left), node);
+        } else {
+            nn = MGC_NEW(&(rn->right), node);
         }
 
-        /* tree_print(*root, 0); */
+        /* then connect its left and right to random nodes */
+        nn->left = nn->right = nn;
+        nn->left = random_node(*root, 10);
+        nn->right = random_node(*root, 10);
     }
 
     return 0;

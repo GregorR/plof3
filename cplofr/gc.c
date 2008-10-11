@@ -19,7 +19,11 @@
  *     2nd cell = first free cell in words
  * GC'd object:
  *     1st cell = size or forwarding pointer
- *         if size, least significant bit is 1, 2nd two bits are generation, rest is the size in words
+ *         if size:
+ *             least significant bit is 1
+ *             next two bits are generation
+ *             next bit is the current mark
+ *             rest is the size in words
  *         otherwise, least significant bit is 0, all is forwarding pointer
  *     2nd cell is # of GC links (which must be at the head)
  *     3rd cell and on is the payload
@@ -47,6 +51,9 @@ void pgcInit()
 
 /* list of roots */
 void **roots = NULL;
+
+/* the current mark */
+int pgcMark = 0;
 
 
 void pgcCollect();
@@ -76,7 +83,8 @@ void *pgcNewIn(void **into, size_t sz, int gclinks, int in)
 
         /* still need to set the size, generation, etc */
         ret[0] = (void *) (
-            (sz << (GC_GENERATION_BITS + 1)) |
+            (sz << (GC_GENERATION_BITS + 2)) |
+            (pgcMark << (GC_GENERATION_BITS + 1)) |
             (0xFFFFFFFF >> (31-GC_GENERATION_BITS)));
         ret[1] = (void *) gclinks;
         ret += 2;
@@ -112,7 +120,11 @@ void *pgcNewIn(void **into, size_t sz, int gclinks, int in)
     memset(ret, 0, (sz + 2) * sizeof(void*));
 
     /* put the size in the first slot, gclinks in second */
-    ret[0] = (void *) ((sz<<(GC_GENERATION_BITS+1)) | (in<<1) | 1);
+    ret[0] = (void *) (
+            (sz<<(GC_GENERATION_BITS+2)) |
+            (pgcMark<<(GC_GENERATION_BITS+1)) |
+            (in<<1) |
+            1);
     ret[1] = (void *) gclinks;
     ret += 2;
 
@@ -164,7 +176,8 @@ void *pgcNewRoot(size_t sz, int gclinks)
 
     /* now the size */
     ret[2] = (void *) (
-        ((sz/sizeof(void*)+1)<<(GC_GENERATION_BITS+1)) |
+        ((sz/sizeof(void*)+1)<<(GC_GENERATION_BITS+2)) |
+        (pgcMark<<(GC_GENERATION_BITS+1)) |
         (0xFFFFFFFF >> (31-GC_GENERATION_BITS)));
 
     return (void *) (ret + 4);
@@ -202,6 +215,8 @@ void pgcCollect()
     printf("GC run %d\r", runc);
 
     for (i = 0; i < GC_GENERATIONS; i++) {
+        pgcMark = !pgcMark;
+
         /* trace the roots */
         void **root = roots;
         int retry = 0;
@@ -230,7 +245,7 @@ int pgcTrace(void **at, int count, int in)
     int i;
     for (i = 0; i < count; i++) {
         void **link = (void **) at[i];
-        int isreal = 1;
+        int follow = 0;
 
         /* if it's a null link, ignore it */
         if (link == NULL) continue;
@@ -240,7 +255,6 @@ int pgcTrace(void **at, int count, int in)
 
         /* get the real data */
         while (!((size_t) link[0] & 1)) {
-            isreal = 0;
             /* follow this forward */
             link = ((void **) link[0]) - 2;
         }
@@ -248,7 +262,7 @@ int pgcTrace(void **at, int count, int in)
         /* now we may need to forward this */
         int gen = ((size_t) link[0] >> 1) & (0xFFFFFFFF >> (32-GC_GENERATION_BITS));
         if (gen <= in) {
-            isreal = 1;
+            follow = 1;
 
             /* needs to be forwarded to [in]+1 */
             void *ret = pgcCopy(&(at[i]), link, in+1);
@@ -261,10 +275,18 @@ int pgcTrace(void **at, int count, int in)
             /* then redirect ourself */
             link = ((void **) ret) - 2;
 
+        } else {
+            /* should we follow this? (is the mark wrong?) */
+            int mark = (int) ((size_t) link[0] >> (GC_GENERATION_BITS + 1)) & 1;
+            if (mark != pgcMark) {
+                follow = 1;
+                ((size_t*) link)[0] ^= 1 << (GC_GENERATION_BITS + 1);
+            }
+
         }
 
         /* now recursively trace */
-        if (isreal) {
+        if (follow) {
             if (!pgcTrace(link + 2, (int) link[1], in))
                 return 0;
         }
@@ -278,7 +300,7 @@ int pgcTrace(void **at, int count, int in)
 void *pgcCopy(void **into, void **gco, int to)
 {
     /* get the size and gclinks from gco */
-    size_t sz = ((size_t) gco[0] >> (GC_GENERATION_BITS+1));
+    size_t sz = ((size_t) gco[0] >> (GC_GENERATION_BITS+2));
     int gclinks = (int) gco[1];
 
     /* allocate */
