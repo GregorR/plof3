@@ -4,6 +4,13 @@
 
 #include "gc.h"
 
+#define GC_GENERATION_BITS 2
+
+/* GC_GENERATIONS can not be >(2^(GC_GENERATION_BITS)-1) */
+#define GC_GENERATIONS 3
+
+#define GC_DEF_SIZE 655360
+
 /*
  * Layouts:
  *
@@ -42,8 +49,8 @@ void pgcInit()
 void **roots = NULL;
 
 
-void pgcCollect(int in);
-void pgcTrace(void **at, int count, int in);
+void pgcCollect();
+int pgcTrace(void **at, int count, int in);
 void *pgcCopy(void **into, void **gco, int to);
 
 
@@ -65,14 +72,18 @@ void *pgcNewIn(void **into, size_t sz, int gclinks, int in)
             perror("GC_malloc");
             exit(1);
         }
+        memset(ret, 0, (sz+2)*sizeof(void*));
 
         /* still need to set the size, generation, etc */
         ret[0] = (void *) (
             (sz << (GC_GENERATION_BITS + 1)) |
             (0xFFFFFFFF >> (31-GC_GENERATION_BITS)));
         ret[1] = (void *) gclinks;
+        ret += 2;
 
-        return (void *) (ret + 2);
+        *into = (void *) ret;
+
+        return (void *) ret;
     }
 
     void **space;
@@ -91,9 +102,8 @@ void *pgcNewIn(void **into, size_t sz, int gclinks, int in)
     space = gcSpaces[in];
 
     /* figure out if we have the space */
-    while (space + (int) space[1] + sz + 2 > space + (int) space[0]) {
-        /* no room, perform a collection */
-        pgcCollect(in);
+    if ((int) space[1] + sz + 2 > (int) space[0]) {
+        return NULL;
     }
 
     /* give this the next space */
@@ -111,10 +121,20 @@ void *pgcNewIn(void **into, size_t sz, int gclinks, int in)
     return (void *) ret;
 }
 
-/* request a buffer, by default in space 0 */
-void *pgcNew(void **into, size_t sz, int gclinks)
+/* request a buffer but don't collect */
+void *pgcNewNoCollect(void **into, size_t sz, int gclinks)
 {
     return pgcNewIn(into, sz, gclinks, 0);
+}
+
+/* request a buffer, by default in space 0, collecting if necessary */
+void *pgcNew(void **into, size_t sz, int gclinks)
+{
+    void *ret;
+    while ((ret = pgcNewIn(into, sz, gclinks, 0)) == NULL) {
+        pgcCollect();
+    }
+    return ret;
 }
 
 
@@ -172,32 +192,45 @@ void pgcFreeRoot(void *root)
     free(rroot);
 }
 
-/* perform a collection in the level given */
-void pgcCollect(int in)
+/* perform a full collection */
+void pgcCollect()
 {
-    int i;
+    static int runc = 0;
+    int i, j;
 
-    /* go through the roots */
-    void **root = roots;
-    for (; root; root = (void **) root[0]) {
+    runc++;
+    printf("GC run %d\r", runc);
 
-        /* trace these links */
-        pgcTrace(root + 4, (int) root[4], in);
+    for (i = 0; i < GC_GENERATIONS; i++) {
+        /* trace the roots */
+        void **root = roots;
+        int retry = 0;
+        for (; root; root = (void **) root[0]) {
+
+            /* trace these links */
+            if (!pgcTrace(root + 4, (int) root[3], i)) {
+                retry = 1;
+                break;
+            }
+        }
+        if (!retry)
+            break;
     }
 
     /* now properly blank out all these spaces */
-    for (i = 0; i <= in; i++) {
-        gcSpaces[i][1] = (void *) 2;
+    for (j = 0; j <= i; j++) {
+        gcSpaces[j][1] = (void *) 2;
     }
 }
 
-/* trace a given set of links at the given level */
-void pgcTrace(void **at, int count, int in)
+/* trace a given set of links at the given level, returning 0 if a higher-generation GC is needed */
+int pgcTrace(void **at, int count, int in)
 {
     /* go through each link ... */
     int i;
     for (i = 0; i < count; i++) {
         void **link = (void **) at[i];
+        int isreal = 1;
 
         /* if it's a null link, ignore it */
         if (link == NULL) continue;
@@ -207,6 +240,7 @@ void pgcTrace(void **at, int count, int in)
 
         /* get the real data */
         while (!((size_t) link[0] & 1)) {
+            isreal = 0;
             /* follow this forward */
             link = ((void **) link[0]) - 2;
         }
@@ -214,15 +248,30 @@ void pgcTrace(void **at, int count, int in)
         /* now we may need to forward this */
         int gen = ((size_t) link[0] >> 1) & (0xFFFFFFFF >> (32-GC_GENERATION_BITS));
         if (gen <= in) {
+            isreal = 1;
+
             /* needs to be forwarded to [in]+1 */
-            link[0] = pgcCopy(&(at[i]), link, in+1);
+            void *ret = pgcCopy(&(at[i]), link, in+1);
+            if (ret == NULL) {
+                // abort, we need a higher-generation GC
+                return 0;
+            }
+            link[0] = ret;
 
             /* then redirect ourself */
-            link = ((void **) link[0]) - 2;
+            link = ((void **) ret) - 2;
 
         }
 
+        /* now recursively trace */
+        if (isreal) {
+            if (!pgcTrace(link + 2, (int) link[1], in))
+                return 0;
+        }
+
     }
+
+    return 1;
 }
 
 /* copy a GC'd object from one generation into another */
@@ -236,7 +285,8 @@ void *pgcCopy(void **into, void **gco, int to)
     void *target = pgcNewIn(into, sz*sizeof(void*), gclinks, to);
 
     /* copy */
-    memcpy(target, gco + 2, sz*sizeof(void*));
+    if (target != NULL)
+        memcpy(target, gco + 2, sz*sizeof(void*));
 
     return target;
 }

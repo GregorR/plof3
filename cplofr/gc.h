@@ -9,25 +9,16 @@
 
 #include <gc/gc.h>
 
-#define GC_GENERATION_BITS 2
-
-/* GC_GENERATIONS can not be >(2^(GC_GENERATION_BITS)-1) */
-#define GC_GENERATIONS 3
-
-#define GC_DEF_SIZE 1024*1024
-
-#define GC_STRUCT(name, gclinks, rest) \
+#define PGC_STRUCT(name, gclinks) \
 const int name ## _gclinks = gclinks; \
 typedef struct _ ## name name; \
-struct _ ## name { \
-    rest; \
-};
-
+struct _ ## name
 
 /* Basic necessary GC functions */
+void pgcInit();
 void *pgcNew(void **into, size_t sz, int gclinks);
 void *pgcNewRoot(size_t sz, int gclinks);
 void pgcFreeRoot(void *root);
-#define PGC_NEW(type) pgcNew(sizeof(type), type ## _gclinks)
+#define PGC_NEW(into, type) (type *) pgcNew((void **) into, sizeof(type), type ## _gclinks)
 
 #endif
