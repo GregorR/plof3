@@ -9,7 +9,7 @@
 /* GC_GENERATIONS can not be >(2^(GC_GENERATION_BITS)-1) */
 #define GC_GENERATIONS 3
 
-#define GC_DEF_SIZE 655360
+#define GC_DEF_SIZE (65536 * sizeof(void*))
 
 /*
  * Layouts:
@@ -62,8 +62,11 @@ void *pgcCopy(void **into, void **gco, int to);
 
 
 /* request a buffer in a space */
-void *pgcNewIn(void **into, size_t sz, int gclinks, int in)
+void *pgcNewIn(void **into, size_t sz, size_t gclinks, int in)
 {
+    void **space;
+    void **ret;
+
     /* make sure sz is on a void* boundary */
     if (sz % sizeof(void*) != 0) {
         sz += sizeof(void*);
@@ -94,9 +97,6 @@ void *pgcNewIn(void **into, size_t sz, int gclinks, int in)
         return (void *) ret;
     }
 
-    void **space;
-    void **ret;
-
     if (gcSpaces[in] == NULL) {
         /* allocate the space */
         gcSpaces[in] = malloc(GC_DEF_SIZE);
@@ -110,13 +110,13 @@ void *pgcNewIn(void **into, size_t sz, int gclinks, int in)
     space = gcSpaces[in];
 
     /* figure out if we have the space */
-    if ((int) space[1] + sz + 2 > (int) space[0]) {
+    if ((size_t) space[1] + sz + 2 > (size_t) space[0]) {
         return NULL;
     }
 
     /* give this the next space */
-    ret = space + (int) space[1];
-    space[1] += (int) sz + 2;
+    ret = space + (size_t) space[1];
+    space[1] += (size_t) sz + 2;
     memset(ret, 0, (sz + 2) * sizeof(void*));
 
     /* put the size in the first slot, gclinks in second */
@@ -134,13 +134,13 @@ void *pgcNewIn(void **into, size_t sz, int gclinks, int in)
 }
 
 /* request a buffer but don't collect */
-void *pgcNewNoCollect(void **into, size_t sz, int gclinks)
+void *pgcNewNoCollect(void **into, size_t sz, size_t gclinks)
 {
     return pgcNewIn(into, sz, gclinks, 0);
 }
 
 /* request a buffer, by default in space 0, collecting if necessary */
-void *pgcNew(void **into, size_t sz, int gclinks)
+void *pgcNew(void **into, size_t sz, size_t gclinks)
 {
     void *ret;
     while ((ret = pgcNewIn(into, sz, gclinks, 0)) == NULL) {
@@ -151,7 +151,7 @@ void *pgcNew(void **into, size_t sz, int gclinks)
 
 
 /* get a new root (a malloc on a list) */
-void *pgcNewRoot(size_t sz, int gclinks)
+void *pgcNewRoot(size_t sz, size_t gclinks)
 {
     void **ret = (void **) malloc(sz + (4*sizeof(void*)));
     if (ret == NULL) {
@@ -208,22 +208,19 @@ void pgcFreeRoot(void *root)
 /* perform a full collection */
 void pgcCollect()
 {
-    static int runc = 0;
     int i, j;
 
-    runc++;
-    printf("GC run %d\r", runc);
-
     for (i = 0; i < GC_GENERATIONS; i++) {
+        void **root = roots;
+        int retry = 0;
+
         pgcMark = !pgcMark;
 
         /* trace the roots */
-        void **root = roots;
-        int retry = 0;
         for (; root; root = (void **) root[0]) {
 
             /* trace these links */
-            if (!pgcTrace(root + 4, (int) root[3], i)) {
+            if (!pgcTrace(root + 4, (size_t) root[3], i)) {
                 retry = 1;
                 break;
             }
@@ -246,6 +243,7 @@ int pgcTrace(void **at, int count, int in)
     for (i = 0; i < count; i++) {
         void **link = (void **) at[i];
         int follow = 0;
+        int gen;
 
         /* if it's a null link, ignore it */
         if (link == NULL) continue;
@@ -260,7 +258,7 @@ int pgcTrace(void **at, int count, int in)
         }
 
         /* now we may need to forward this */
-        int gen = ((size_t) link[0] >> 1) & (0xFFFFFFFF >> (32-GC_GENERATION_BITS));
+        gen = ((size_t) link[0] >> 1) & (0xFFFFFFFF >> (32-GC_GENERATION_BITS));
         if (gen <= in) {
             follow = 1;
 
@@ -287,7 +285,7 @@ int pgcTrace(void **at, int count, int in)
 
         /* now recursively trace */
         if (follow) {
-            if (!pgcTrace(link + 2, (int) link[1], in))
+            if (!pgcTrace(link + 2, (size_t) link[1], in))
                 return 0;
         }
 
@@ -301,7 +299,7 @@ void *pgcCopy(void **into, void **gco, int to)
 {
     /* get the size and gclinks from gco */
     size_t sz = ((size_t) gco[0] >> (GC_GENERATION_BITS+2));
-    int gclinks = (int) gco[1];
+    size_t gclinks = (size_t) gco[1];
 
     /* allocate */
     void *target = pgcNewIn(into, sz*sizeof(void*), gclinks, to);

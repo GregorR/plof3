@@ -16,8 +16,8 @@ struct _ ## name
 
 /* Basic necessary GC functions */
 void pgcInit();
-void *pgcNew(void **into, size_t sz, int gclinks);
-void *pgcNewRoot(size_t sz, int gclinks);
+void *pgcNew(void **into, size_t sz, size_t gclinks);
+void *pgcNewRoot(size_t sz, size_t gclinks);
 void pgcFreeRoot(void *root);
 #define PGC_NEW(into, type) (type *) pgcNew((void **) into, sizeof(type), type ## _gclinks)
 
