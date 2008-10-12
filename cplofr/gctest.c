@@ -30,30 +30,31 @@ int main()
 {
     int i;
     pgcInit();
-    node **root = (node **) pgcNewRoot(sizeof(void*), 1);
+    node **root = (node **) pgcNewRoot(3*sizeof(node*), 3);
 
     /* must have a node to start with */
     MGC_NEW(root, node);
-    (*root)->left = *root;
-    (*root)->right = *root;
+    root[0]->left = *root;
+    root[0]->right = *root;
 
     for (i = 0; i < 10000000; i++) {
-        node *rn, *nn;
-
         /* find a random node */
-        rn = random_node(*root, 10);
+        root[1] = random_node(*root, 10);
 
         /* associate it with a new node */
+        printf("A %p\n", root[1]);
+        MGC_NEW(root+2, node);
+        printf("B %p\n", root[1]);
         if (rand() % 2 == 0) {
-            nn = MGC_NEW(&(rn->left), node);
+            root[1]->left = root[2];
         } else {
-            nn = MGC_NEW(&(rn->right), node);
+            root[1]->right = root[2];
         }
 
         /* then connect its left and right to random nodes */
-        nn->left = nn->right = nn;
-        nn->left = random_node(*root, 10);
-        nn->right = random_node(*root, 10);
+        root[2]->left = root[2]->right = root[2];
+        root[2]->left = random_node(*root, 10);
+        root[2]->right = random_node(*root, 10);
     }
 
     return 0;

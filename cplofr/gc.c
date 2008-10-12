@@ -4,10 +4,10 @@
 
 #include "gc.h"
 
-#define GC_GENERATION_BITS 2
+#define GC_GENERATION_BITS 3
 
 /* GC_GENERATIONS can not be >(2^(GC_GENERATION_BITS)-1) */
-#define GC_GENERATIONS 3
+#define GC_GENERATIONS 7
 
 #define GC_DEF_SIZE (65536 * sizeof(void*))
 
@@ -45,7 +45,14 @@ void pgcInit()
 {
     int i;
     for (i = 0; i < GC_GENERATIONS; i++) {
-        gcSpaces[i] = NULL;
+        gcSpaces[i] = (void **) malloc(GC_DEF_SIZE);
+        if (gcSpaces[i] == NULL) {
+            perror("malloc");
+            exit(1);
+        }
+
+        gcSpaces[i][0] = (void *) (GC_DEF_SIZE/sizeof(void*));
+        gcSpaces[i][1] = (void *) 2;
     }
 }
 
@@ -97,16 +104,6 @@ void *pgcNewIn(void **into, size_t sz, size_t gclinks, int in)
         return (void *) ret;
     }
 
-    if (gcSpaces[in] == NULL) {
-        /* allocate the space */
-        gcSpaces[in] = malloc(GC_DEF_SIZE);
-        if (gcSpaces[in] == NULL) {
-            perror("malloc");
-            exit(1);
-        }
-        gcSpaces[in][0] = (void *) (GC_DEF_SIZE/sizeof(void*));
-        gcSpaces[in][1] = (void *) 2;
-    }
     space = gcSpaces[in];
 
     /* figure out if we have the space */
@@ -209,10 +206,19 @@ void pgcFreeRoot(void *root)
 void pgcCollect()
 {
     int i, j;
+    size_t oldsz;
 
+    /* run the collection */
     for (i = 0; i < GC_GENERATIONS; i++) {
         void **root = roots;
         int retry = 0;
+
+        /* get the old size of our output */
+        if (i < GC_GENERATIONS - 1) {
+            oldsz = (size_t) gcSpaces[i+1][1];
+        } else {
+            oldsz = 0;
+        }
 
         pgcMark = !pgcMark;
 
@@ -229,7 +235,22 @@ void pgcCollect()
             break;
     }
 
-    /* now properly blank out all these spaces */
+    /* perhaps expand */
+    if (oldsz &&
+        (size_t) gcSpaces[i+1][1] > oldsz + ((size_t) gcSpaces[i+1][0] >> 1)) {
+        /* took up more than half of the highest-used generation, expand them all */
+        for (j = 0; j <= i; j++) {
+            size_t newsz = (size_t) gcSpaces[j][0] << 1;
+            gcSpaces[j] = (void **) realloc(gcSpaces[j], newsz * sizeof(void*));
+            if (gcSpaces[j] == NULL) {
+                perror("realloc");
+                exit(1);
+            }
+            gcSpaces[j][0] = (void *) newsz;
+        }
+    }
+
+    /* now properly blank out the spaces */
     for (j = 0; j <= i; j++) {
         gcSpaces[j][1] = (void *) 2;
     }
@@ -270,6 +291,7 @@ int pgcTrace(void **at, int count, int in)
             }
             link[0] = ret;
 
+
             /* then redirect ourself */
             link = ((void **) ret) - 2;
 
@@ -282,6 +304,9 @@ int pgcTrace(void **at, int count, int in)
             }
 
         }
+
+        /* fix up the source */
+        at[i] = link + 2;
 
         /* now recursively trace */
         if (follow) {
