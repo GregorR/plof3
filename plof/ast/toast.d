@@ -134,6 +134,13 @@ PASTProc pslToAST(ubyte[] psl)
                         orderStack();
                     }
 
+                    // don't duplicate anything (that is, don't recreate new objects or such)
+                    if (cast(PASTTempGet) stack[$-cmd-1] is null) {
+                        uint stemp = curTemp++;
+                        res ~= new PASTTempSet(stemp, stack[$-cmd-1]);
+                        stack[$-cmd-1] = new PASTTempGet(stemp);
+                    }
+
                     // then push the right one
                     stack ~= stack[$-cmd-1];
                 }
