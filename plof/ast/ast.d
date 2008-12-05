@@ -23,7 +23,7 @@
  *  IN THE SOFTWARE.
  */
 
-module plof.psl.ast;
+module plof.ast.ast;
 
 import tango.text.Util;
 import tango.text.convert.Integer;

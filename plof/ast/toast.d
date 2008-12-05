@@ -24,14 +24,15 @@
  *  IN THE SOFTWARE.
  */
 
-module plof.psl.toast;
+module plof.ast.toast;
 
 import tango.text.convert.Integer;
 alias tango.text.convert.Integer.toString intToString;
 
-import plof.psl.ast;
 import plof.psl.bignum;
 import plof.psl.psl;
+
+import plof.ast.ast;
 
 /// Convert a PSL proc to an array of AST statements (a PASTProc)
 PASTProc pslToAST(ubyte[] psl)

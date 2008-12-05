@@ -38,12 +38,15 @@ import tango.stdc.stdlib;
 
 import plof.prp.prp;
 
-import plof.psl.ast;
 import plof.psl.bignum;
 import plof.psl.file;
 import plof.psl.interp;
 import plof.psl.pslobject;
-import plof.psl.toast;
+
+import plof.ast.ast;
+import plof.ast.toast;
+
+import plof.ap.interp;
 
 import plof.searchpath.searchpath;
 
@@ -53,7 +56,7 @@ int main(char[][] args)
     char[][] plofFiles;
     char[] outFile;
     ubyte[] outPSL;
-    bool interactive, defaultPSL, outputXML = false;
+    bool interactive, defaultPSL, outputXML, interpAST;
 
     /// Figure out the base search path
     char[] exePath = Environment.exePath(args[0]).toString();
@@ -103,6 +106,9 @@ int main(char[][] args)
         } else if (args[argi] == "--xml") {
             outputXML = true;
 
+        } else if (args[argi] == "--ast") {
+            interpAST = true;
+
         } else {
             Stderr("Unrecognized argument ")(args[argi]).newline;
             return 1;
@@ -142,8 +148,10 @@ int main(char[][] args)
         psl = pslProgramData(psl);
 
         // Run the immediates
-        interpret(psl, stack, context, true, prp);
-        stack.truncate(0);
+        if (!interpAST) {
+            interpret(psl, stack, context, true, prp);
+            stack.truncate(0);
+        }
 
         // Then run or compile the rest
         if (outFile.length || outputXML) {
@@ -152,8 +160,13 @@ int main(char[][] args)
                 outPSL ~= psl;
             }
         } else {
-            interpret(psl, stack, context);
-            stack.truncate(0);
+            if (!interpAST) {
+                interpret(psl, stack, context);
+                stack.truncate(0);
+            } else {
+                PASTNode ast = pslToAST(psl);
+                astVisit(ast);
+            }
         }
     }
 
@@ -175,8 +188,13 @@ int main(char[][] args)
         if (outFile.length || outputXML) {
             outPSL ~= psl;
         } else {
-            interpret(psl, stack, context);
-            stack.truncate(0);
+            if (!interpAST) {
+                interpret(psl, stack, context);
+                stack.truncate(0);
+            } else {
+                PASTNode ast = pslToAST(psl);
+                astVisit(ast);
+            }
         }
     }
 
