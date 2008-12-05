@@ -543,7 +543,12 @@ class PASTRaw : PASTNode {
         
         // Just output each element as an int
         foreach (datum; _data) {
-            ret ~= intToString(datum) ~ " ";
+            if (datum >= 32 && datum <= 126 &&
+                datum != '&' && datum != ';' && datum != '"') {
+                ret ~= cast(char) datum;
+            } else {
+                ret ~= "&#" ~ intToString(datum) ~ ";";
+            }
         }
 
         ret ~= "\"/>";
