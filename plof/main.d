@@ -38,10 +38,12 @@ import tango.stdc.stdlib;
 
 import plof.prp.prp;
 
+import plof.psl.ast;
 import plof.psl.bignum;
 import plof.psl.file;
 import plof.psl.interp;
 import plof.psl.pslobject;
+import plof.psl.toast;
 
 import plof.searchpath.searchpath;
 
@@ -51,7 +53,7 @@ int main(char[][] args)
     char[][] plofFiles;
     char[] outFile;
     ubyte[] outPSL;
-    bool interactive, defaultPSL;
+    bool interactive, defaultPSL, outputXML = false;
 
     /// Figure out the base search path
     char[] exePath = Environment.exePath(args[0]).toString();
@@ -98,6 +100,9 @@ int main(char[][] args)
         } else if (args[argi] == "--debug") {
             plof.prp.prp.enableDebug = true;
 
+        } else if (args[argi] == "--xml") {
+            outputXML = true;
+
         } else {
             Stderr("Unrecognized argument ")(args[argi]).newline;
             return 1;
@@ -141,7 +146,7 @@ int main(char[][] args)
         stack.truncate(0);
 
         // Then run or compile the rest
-        if (outFile.length) {
+        if (outFile.length || outputXML) {
             if (!defaultPSL) {
                 // only output it if it was requested (is not a default include)
                 outPSL ~= psl;
@@ -167,7 +172,7 @@ int main(char[][] args)
         psl = [cast(ubyte) 0xFF] ~ bnbuf ~ cast(ubyte[]) plofFile ~ [cast(ubyte) 0xE0] ~ psl; */
         
         // Run or compile it
-        if (outFile.length) {
+        if (outFile.length || outputXML) {
             outPSL ~= psl;
         } else {
             interpret(psl, stack, context);
@@ -219,6 +224,12 @@ int main(char[][] args)
     if (outFile.length) {
         // Make the PSL file
         (new File(outFile)).write(makePSLFile(outPSL));
+
+    // or XML
+    } else if (outputXML) {
+        PASTNode ast = pslToAST(outPSL);
+        Stdout(ast.toXML()).newline;
+
     }
 
     return 0;

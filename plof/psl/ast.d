@@ -25,6 +25,11 @@
 
 module plof.psl.ast;
 
+import tango.text.convert.Integer;
+alias tango.text.convert.Integer.toString intToString;
+
+import tango.io.Stdout;
+
 class PASTNode {
     /// If a node uses the heap with anything more complicated than 'new', it can't be reordered
     bool usesHeap() {
@@ -37,11 +42,18 @@ class PASTNode {
         // most don't
         return false;
     }
+
+    /// Convert to an XML-like AST tree
+    char[] toXML() { return "<" ~ this.classinfo.name ~ " BAD=\"YES\"/>"; }
 }
 
 
 /// Nullary nodes
-class PASTNullary : PASTNode {}
+class PASTNullary : PASTNode {
+    char[] toXML() {
+        return "<" ~ this.classinfo.name ~ "/>";
+    }
+}
 
 /// Get the arguments to this procedure
 class PASTArguments : PASTNullary {}
@@ -75,6 +87,10 @@ class PASTUnary : PASTNode {
     bool hasEffects() { return _a1.hasEffects(); }
 
     PASTNode a1() { return _a1; }
+
+    char[] toXML() {
+        return "<" ~ this.classinfo.name ~ ">" ~ _a1.toXML() ~ "</" ~ this.classinfo.name ~ ">";
+    }
 
     private PASTNode _a1;
 }
@@ -132,6 +148,10 @@ class PASTBinary : PASTUnary {
     bool hasEffects() { return super.hasEffects() || _a2.hasEffects(); }
 
     PASTNode a2() { return _a2; }
+
+    char[] toXML() {
+        return "<" ~ this.classinfo.name ~ ">" ~ _a1.toXML() ~ _a2.toXML() ~ "</" ~ this.classinfo.name ~ ">";
+    }
 
     private PASTNode _a2;
 }
@@ -243,6 +263,11 @@ class PASTTrinary : PASTBinary {
 
     PASTNode a3() { return _a3; }
 
+    char[] toXML() {
+        return "<" ~ this.classinfo.name ~ ">" ~ _a1.toXML() ~ _a2.toXML() ~
+            _a3.toXML() ~ "</" ~ this.classinfo.name ~ ">";
+    }
+
     private PASTNode _a3;
 }
 
@@ -274,6 +299,11 @@ class PASTQuaternary : PASTTrinary {
     bool hasEffects() { return super.hasEffects() || _a4.hasEffects(); }
 
     PASTNode a4() { return _a4; }
+
+    char[] toXML() {
+        return "<" ~ this.classinfo.name ~ ">" ~ _a1.toXML() ~ _a2.toXML() ~
+            _a3.toXML() ~ _a4.toXML() ~ "</" ~ this.classinfo.name ~ ">";
+    }
 
     private PASTNode _a4;
 }
@@ -312,6 +342,27 @@ class PASTProc : PASTNode {
 
     PASTNode[] stmts() { return _stmts; }
 
+    char[] toXML() {
+        char[] ret = "<PASTProc temps=\"" ~ intToString(_temps) ~ "\"";
+
+        // only output debug info if we have it
+        if (_dfile.length) {
+            ret ~= " file=\"" ~ _dfile ~ "\" line=\"" ~ intToString(_dline) ~
+                "\" col=\"" ~ intToString(_dcol) ~ "\"";
+        }
+
+        ret ~= ">";
+
+        // now go through each of the elements
+        foreach (stmt; stmts) {
+            ret ~= stmt.toXML();
+        }
+
+        ret ~= "</PASTProc>";
+
+        return ret;
+    }
+
     private {
         /// The statements in this proc
         PASTNode[] _stmts;
@@ -335,6 +386,10 @@ class PASTTempSet : PASTNode {
 
     bool hasEffects() { return true; }
 
+    char[] toXML() {
+        return "<PASTTempSet temp=\"" ~ intToString(_tnum) ~ "\">" ~ _to.toXML() ~ "</PASTTempSet>";
+    }
+
     private {
         /// Temporary number and value
         uint _tnum;
@@ -346,6 +401,10 @@ class PASTTempSet : PASTNode {
 class PASTTempGet : PASTNode {
     this(uint tnum) {
         _tnum = tnum;
+    }
+
+    char[] toXML() {
+        return "<PASTTempGet temp=\"" ~ intToString(_tnum) ~ "\"/>";
     }
 
     /// Temporary number
@@ -364,6 +423,12 @@ class PASTResolve : PASTNode {
     bool usesHeap() { return true; }
     bool hasEffects() { return _obj.hasEffects() || _name.hasEffects(); }
 
+    char[] toXML() {
+        return "<PASTResolve t1=\"" ~ intToString(_t1) ~ "\" t2=\"" ~
+            intToString(_t2) ~ "\">" ~ _obj.toXML() ~ _name.toXML() ~
+            "</PASTResolve>";
+    }
+
     private {
         /// The object and name to resolve
         PASTNode _obj, _name;
@@ -381,19 +446,32 @@ class PASTLoop : PASTNode {
 
     // usesHeap and hasEffects are complicated because all sub-statements must be checked
     bool usesHeap() {
-        foreach (stmt; stmts) {
+        foreach (stmt; _stmts) {
             if (stmt.usesHeap()) return true;
         }
         return false;
     }
     bool hasEffects() {
-        foreach (stmt; stmts) {
+        foreach (stmt; _stmts) {
             if (stmt.hasEffects()) return true;
         }
         return false;
     }
 
     PASTNode[] stmts() { return _stmts; }
+
+    char[] toXML() {
+        char[] ret = "<PASTLoop>";
+
+        // now go through each of the elements
+        foreach (stmt; _stmts) {
+            ret ~= stmt.toXML();
+        }
+
+        ret ~= "</PASTLoop>";
+
+        return ret;
+    }
 
     private PASTNode[] _stmts;
 }
@@ -406,19 +484,32 @@ class PASTArray : PASTNode {
 
     // usesHeap and hasEffects are complicated because all sub-elements must be checked
     bool usesHeap() {
-        foreach (elem; elems) {
+        foreach (elem; _elems) {
             if (elem.usesHeap()) return true;
         }
         return false;
     }
     bool hasEffects() {
-        foreach (elem; elems) {
+        foreach (elem; _elems) {
             if (elem.hasEffects()) return true;
         }
         return false;
     }
 
     PASTNode[] elems() { return _elems; }
+
+    char[] toXML() {
+        char[] ret = "<PASTArray>";
+
+        // now go through each of the elements
+        foreach (elem; _elems) {
+            ret ~= elem.toXML();
+        }
+
+        ret ~= "</PASTArray>";
+
+        return ret;
+    }
 
     private PASTNode[] _elems;
 }
@@ -431,6 +522,10 @@ class PASTNativeInteger : PASTNode {
 
     int value() { return _value; }
 
+    char[] toXML() {
+        return "<PASTNativeInteger value=\"" ~ intToString(_value) ~ "\"/>";
+    }
+
     private int _value;
 }
 
@@ -441,6 +536,19 @@ class PASTRaw : PASTNode {
     }
 
     ubyte[] data() { return _data; }
+
+    char[] toXML() {
+        char[] ret = "<PASTRaw data=\"";
+        
+        // Just output each element as an int
+        foreach (datum; _data) {
+            ret ~= intToString(datum) ~ " ";
+        }
+
+        ret ~= "\"/>";
+
+        return ret;
+    }
 
     private ubyte[] _data;
 }
