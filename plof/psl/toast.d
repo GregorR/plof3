@@ -26,6 +26,9 @@
 
 module plof.psl.toast;
 
+import tango.text.convert.Integer;
+alias tango.text.convert.Integer.toString intToString;
+
 import plof.psl.ast;
 import plof.psl.bignum;
 import plof.psl.psl;
@@ -188,6 +191,14 @@ PASTProc pslToAST(ubyte[] psl)
                 });
                 break;
 
+            case psl_parentset:
+                // doesn't push anything, so order the stack
+                orderStack();
+                use2((PASTNode a, PASTNode b) {
+                    res ~= new PASTParentSet(a, b);
+                });
+                break;
+
             case psl_call:
                 use2((PASTNode args, PASTNode func) {
                     stack ~= new PASTCall(func, args);
@@ -274,7 +285,7 @@ PASTProc pslToAST(ubyte[] psl)
                         }
 
                         // then make the top of it into a PASTArray
-                        PASTArray parr = new PASTArray(stack[$-size .. $]);
+                        PASTArray parr = new PASTArray(stack[$-size .. $].dup);
                         stack.length = stack.length - size;
                         stack ~= parr;
                     }
@@ -588,7 +599,7 @@ PASTProc pslToAST(ubyte[] psl)
 
             case psl_immediate:
                 // Just do it now as a call
-                stack ~= new PASTCall(new PASTNull(), pslToAST(sub));
+                //stack ~= new PASTCall(new PASTNull(), pslToAST(sub));
                 break;
 
             case psl_code:
@@ -602,7 +613,7 @@ PASTProc pslToAST(ubyte[] psl)
                 break;
 
             default:
-                throw new PASTFailure("Unrecognized operation.");
+                throw new PASTFailure("Unrecognized operation " ~ intToString(cmd) ~ ".");
         }
     }
 

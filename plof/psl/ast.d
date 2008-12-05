@@ -169,6 +169,11 @@ class PASTWrap : PASTBinary {
     this(PASTNode a1, PASTNode a2) { super(a1, a2); }
 }
 
+/// Set the parent of an object
+class PASTParentSet : PASTBinary {
+    this(PASTNode a1, PASTNode a2) { super(a1, a2); }
+}
+
 /// Array concatenation
 class PASTArrayConcat : PASTBinary {
     this(PASTNode a1, PASTNode a2) { super(a1, a2); }
