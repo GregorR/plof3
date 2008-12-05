@@ -25,20 +25,21 @@
 
 module plof.psl.ast;
 
+import tango.text.Util;
 import tango.text.convert.Integer;
 alias tango.text.convert.Integer.toString intToString;
 
 import tango.io.Stdout;
 
 // necessary helper function to get a short classname
-char[] classShortName(char[] classn)
+private char[] classShortName(char[] classn)
 {
-    for (int i = classn.length - 1; i >= 0; i--) {
-        if (classn[i] == '.') {
-            return classn[i+1..$];
-        }
+    uint i = locatePattern(classn, "PAST");
+    if (i == classn.length) {
+        return classn;
+    } else {
+        return classn[i+4 .. $];
     }
-    return classn;
 }
 
 class PASTNode {
@@ -359,7 +360,7 @@ class PASTProc : PASTNode {
     PASTNode[] stmts() { return _stmts; }
 
     char[] toXML() {
-        char[] ret = "<PASTProc temps=\"" ~ intToString(_temps) ~ "\"";
+        char[] ret = "<Proc temps=\"" ~ intToString(_temps) ~ "\"";
 
         // only output debug info if we have it
         if (_dfile.length) {
@@ -374,7 +375,7 @@ class PASTProc : PASTNode {
             ret ~= stmt.toXML();
         }
 
-        ret ~= "</PASTProc>";
+        ret ~= "</Proc>";
 
         return ret;
     }
@@ -403,7 +404,7 @@ class PASTTempSet : PASTNode {
     bool hasEffects() { return true; }
 
     char[] toXML() {
-        return "<PASTTempSet temp=\"" ~ intToString(_tnum) ~ "\">" ~ _to.toXML() ~ "</PASTTempSet>";
+        return "<TempSet temp=\"" ~ intToString(_tnum) ~ "\">" ~ _to.toXML() ~ "</TempSet>";
     }
 
     private {
@@ -420,7 +421,7 @@ class PASTTempGet : PASTNode {
     }
 
     char[] toXML() {
-        return "<PASTTempGet temp=\"" ~ intToString(_tnum) ~ "\"/>";
+        return "<TempGet temp=\"" ~ intToString(_tnum) ~ "\"/>";
     }
 
     /// Temporary number
@@ -440,9 +441,9 @@ class PASTResolve : PASTNode {
     bool hasEffects() { return _obj.hasEffects() || _name.hasEffects(); }
 
     char[] toXML() {
-        return "<PASTResolve t1=\"" ~ intToString(_t1) ~ "\" t2=\"" ~
+        return "<Resolve t1=\"" ~ intToString(_t1) ~ "\" t2=\"" ~
             intToString(_t2) ~ "\">" ~ _obj.toXML() ~ _name.toXML() ~
-            "</PASTResolve>";
+            "</Resolve>";
     }
 
     private {
@@ -477,14 +478,14 @@ class PASTLoop : PASTNode {
     PASTNode[] stmts() { return _stmts; }
 
     char[] toXML() {
-        char[] ret = "<PASTLoop>";
+        char[] ret = "<Loop>";
 
         // now go through each of the elements
         foreach (stmt; _stmts) {
             ret ~= stmt.toXML();
         }
 
-        ret ~= "</PASTLoop>";
+        ret ~= "</Loop>";
 
         return ret;
     }
@@ -504,14 +505,14 @@ class PASTArray : PASTNode {
     PASTNode[] elems() { return _elems; }
 
     char[] toXML() {
-        char[] ret = "<PASTArray>";
+        char[] ret = "<Array>";
 
         // now go through each of the elements
         foreach (elem; _elems) {
             ret ~= elem.toXML();
         }
 
-        ret ~= "</PASTArray>";
+        ret ~= "</Array>";
 
         return ret;
     }
@@ -528,7 +529,7 @@ class PASTNativeInteger : PASTNode {
     int value() { return _value; }
 
     char[] toXML() {
-        return "<PASTNativeInteger value=\"" ~ intToString(_value) ~ "\"/>";
+        return "<NativeInteger value=\"" ~ intToString(_value) ~ "\"/>";
     }
 
     private int _value;
@@ -543,7 +544,7 @@ class PASTRaw : PASTNode {
     ubyte[] data() { return _data; }
 
     char[] toXML() {
-        char[] ret = "<PASTRaw data=\"";
+        char[] ret = "<Raw data=\"";
         
         // Just output each element as an int
         foreach (datum; _data) {
