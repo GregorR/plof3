@@ -579,13 +579,16 @@ PASTProc pslToAST(ubyte[] psl)
                 break;
 
             case psl_print:
+                // doesn't return anything
+                orderStack();
                 use1((PASTNode a) {
-                    stack ~= new PASTPrint(a);
+                    res ~= new PASTPrint(a);
                 });
                 break;
 
             case psl_debug:
                 // nothing
+                break;
 
             case psl_include:
                 throw new PASTFailure("Runtime include not supported.");
