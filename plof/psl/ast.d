@@ -498,19 +498,8 @@ class PASTArray : PASTNode {
         _elems = elems;
     }
 
-    // usesHeap and hasEffects are complicated because all sub-elements must be checked
-    bool usesHeap() {
-        foreach (elem; _elems) {
-            if (elem.usesHeap()) return true;
-        }
-        return false;
-    }
-    bool hasEffects() {
-        foreach (elem; _elems) {
-            if (elem.hasEffects()) return true;
-        }
-        return false;
-    }
+    bool usesHeap() { return true; }
+    bool hasEffects() { return true; }
 
     PASTNode[] elems() { return _elems; }
 
