@@ -190,6 +190,9 @@ plofbnf {
         // get the params for future reference
         null push1 1 integer index call
 
+        // keep track of the length
+        push0 0 integer index
+
         // make this a function context
         {
             this "__pul_fc" this memberset
@@ -197,7 +200,15 @@ plofbnf {
             this "__pul_args" push2 memberset
 
             // curry if necessary
-            push0 length } push1 0 integer index swrap concat {
+            push0 length }
+            
+            // make the length an int
+            push1 24 integer sr byte
+            push2 16 integer sr byte concat
+            push2 8 integer sr byte concat
+            push2 byte concat swrap concat
+            
+            { integer
             {
                 // currying is necessary
                 {
@@ -212,13 +223,13 @@ plofbnf {
 
         // set up the args
         {pul_fcontext 0 integer}
-        push2 1 integer index concat
+        push3 1 integer index concat
         {
             pop pop pop
         } concat
         
         // then run the function itself
-        push3 4 integer index concat
+        push4 4 integer index concat
 
         // and make sure it's evaluated
         {pul_eval} concat
