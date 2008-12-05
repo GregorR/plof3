@@ -30,6 +30,17 @@ alias tango.text.convert.Integer.toString intToString;
 
 import tango.io.Stdout;
 
+// necessary helper function to get a short classname
+char[] classShortName(char[] classn)
+{
+    for (int i = classn.length - 1; i >= 0; i--) {
+        if (classn[i] == '.') {
+            return classn[i+1..$];
+        }
+    }
+    return classn;
+}
+
 class PASTNode {
     /// If a node uses the heap with anything more complicated than 'new', it can't be reordered
     bool usesHeap() {
@@ -44,14 +55,14 @@ class PASTNode {
     }
 
     /// Convert to an XML-like AST tree
-    char[] toXML() { return "<" ~ this.classinfo.name ~ " BAD=\"YES\"/>"; }
+    char[] toXML() { return "<" ~ classShortName(this.classinfo.name) ~ " BAD=\"YES\"/>"; }
 }
 
 
 /// Nullary nodes
 class PASTNullary : PASTNode {
     char[] toXML() {
-        return "<" ~ this.classinfo.name ~ "/>";
+        return "<" ~ classShortName(this.classinfo.name) ~ "/>";
     }
 }
 
@@ -89,7 +100,8 @@ class PASTUnary : PASTNode {
     PASTNode a1() { return _a1; }
 
     char[] toXML() {
-        return "<" ~ this.classinfo.name ~ ">" ~ _a1.toXML() ~ "</" ~ this.classinfo.name ~ ">";
+        return "<" ~ classShortName(this.classinfo.name) ~ ">" ~ _a1.toXML() ~
+            "</" ~ classShortName(this.classinfo.name) ~ ">";
     }
 
     private PASTNode _a1;
@@ -151,7 +163,8 @@ class PASTBinary : PASTUnary {
     PASTNode a2() { return _a2; }
 
     char[] toXML() {
-        return "<" ~ this.classinfo.name ~ ">" ~ _a1.toXML() ~ _a2.toXML() ~ "</" ~ this.classinfo.name ~ ">";
+        return "<" ~ classShortName(this.classinfo.name) ~ ">" ~ _a1.toXML() ~
+            _a2.toXML() ~ "</" ~ classShortName(this.classinfo.name) ~ ">";
     }
 
     private PASTNode _a2;
@@ -265,8 +278,9 @@ class PASTTrinary : PASTBinary {
     PASTNode a3() { return _a3; }
 
     char[] toXML() {
-        return "<" ~ this.classinfo.name ~ ">" ~ _a1.toXML() ~ _a2.toXML() ~
-            _a3.toXML() ~ "</" ~ this.classinfo.name ~ ">";
+        return "<" ~ classShortName(this.classinfo.name) ~ ">" ~ _a1.toXML() ~
+            _a2.toXML() ~ _a3.toXML() ~ "</" ~
+            classShortName(this.classinfo.name) ~ ">";
     }
 
     private PASTNode _a3;
@@ -302,8 +316,9 @@ class PASTQuaternary : PASTTrinary {
     PASTNode a4() { return _a4; }
 
     char[] toXML() {
-        return "<" ~ this.classinfo.name ~ ">" ~ _a1.toXML() ~ _a2.toXML() ~
-            _a3.toXML() ~ _a4.toXML() ~ "</" ~ this.classinfo.name ~ ">";
+        return "<" ~ classShortName(this.classinfo.name) ~ ">" ~ _a1.toXML() ~
+            _a2.toXML() ~ _a3.toXML() ~ _a4.toXML() ~ "</" ~
+            classShortName(this.classinfo.name) ~ ">";
     }
 
     private PASTNode _a4;
