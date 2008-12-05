@@ -134,6 +134,7 @@ class PASTByte : PASTUnary {
 /// Debugging print
 class PASTPrint : PASTUnary {
     this(PASTNode a1) { super(a1); }
+    bool hasEffects() { return true; }
 }
 
 
