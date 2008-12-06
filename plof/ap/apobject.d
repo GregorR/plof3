@@ -45,6 +45,7 @@ class APObject {
     /// Allocate a PSLObject with no parent (should only be used once, for the null object)
     this() {
         _parent = new APAccessor();
+        _memberLength = new SerialAccessor!(Action, Action)();
         _memberLock = new ReadWriteMutex();
         _arrayLength = new SerialAccessor!(Action, uint)();
         _arrayLock = new ReadWriteMutex();
@@ -64,7 +65,7 @@ class APObject {
     /// ditto
 
 
-    /// Internal functino to get a member accessor
+    /// Internal function to get a member accessor
     private APAccessor getMemberAccessor(ubyte[] name) {
         APAccessor ret;
         APAccessor* pret;
@@ -98,10 +99,31 @@ class APObject {
         APAccessor acc = getMemberAccessor(name);
         return acc.read(act);
     }
+    /// Get the list of all members
+    ubyte[][] getMembers(Action act) {
+        // first make sure we'll get cancelled if the length changes
+        _memberLength.read(act);
+
+        // now just go through the array
+        ubyte[][] names;
+        _memberLock.reader.lock();
+        foreach (name, member; _members)  {
+            if (member.read(act) !is null) {
+                names ~= name;
+            }
+        }
+        _memberLock.reader.unlock();
+
+        return names;
+    }
     /// Set a member
     void setMember(Action act, ubyte[] name, APObject to) {
         APAccessor acc = getMemberAccessor(name);
-        acc.write(act, to);
+        APObject oldval = acc.write(act, to);
+        if (oldval is null) {
+            // we changed the number of members
+            _memberLength.write(act, act);
+        }
     }
 
 
@@ -212,7 +234,11 @@ class APObject {
 
     private {
         APAccessor _parent;
+
+        // member data
         APAccessor[ubyte[]] _members;
+        // we need to know when the /number/ of members has changed, so keep track of it
+        SerialAccessor!(Action, Action) _memberLength;
         ReadWriteMutex _memberLock;
 
         // array data
