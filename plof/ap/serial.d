@@ -27,6 +27,8 @@ module plof.ap.serial;
 
 import tango.core.Array;
 
+import tango.io.Stdout;
+
 /// Serialization ID
 class SID {
     this(uint val, SID next) {
@@ -39,6 +41,14 @@ class SID {
             _depth = next._depth + 1;
         }
     }
+
+    /*void debugOut() {
+        Stdout(_val);
+        if (_next !is null) {
+            Stdout(":");
+            _next.debugOut();
+        }
+    }*/
 
     /// Can compare to other SIDs, but that's all
     int opCmp(SID r) {
@@ -55,17 +65,14 @@ class SID {
             pref = -1;
         }
 
-        // find the first nonmatching
-        while (l !is null && l._val == r._val) {
-            // cut it off if they're clearly equal
-            if (l is r) return pref;
-
+        // find the first last nonmatching
+        while (l !is null && l._next !is r._next) {
             l = l._next;
             r = r._next;
         }
 
         // if they were equal from here
-        if (l is null) {
+        if (l is r) {
             // then it's the preferred side
             return pref;
 
