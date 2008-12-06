@@ -108,7 +108,7 @@ class SerialAccessor(Action, Obj) {
                 Writer lastw = writeList[wloc-1];
 
                 // look for the first reader that would need to be cancelled
-                size_t rloc = lbound(lastw.readList, r);
+                size_t rloc = lbound(lastw.readList, act);
                 if (rloc < lastw.readList.length) {
                     cancel = lastw.readList[rloc..$].dup;
                     lastw.readList.length = rloc;
@@ -120,7 +120,9 @@ class SerialAccessor(Action, Obj) {
             for (int i = writeList.length - 1; i > wloc; i--) {
                 writeList[i] = writeList[i-1];
             }
-            writeList[i] = w;
+            writeList[wloc] = w;
+
+            return cancel;
         }
     }
 
@@ -140,16 +142,16 @@ class SerialAccessor(Action, Obj) {
 
             } else {
                 // add ourself to the readlist
-                Writer* w = &(writeList[wloc]);
+                Writer* lastw = &(writeList[wloc]);
 
-                size_t rloc = lbound(w.readList, act);
+                size_t rloc = lbound(lastw.readList, act);
 
                 // insert the reader (efficiently)
-                readList.length = readList.length + 1;
-                for (int i = readList.length - 1; i > rloc; i--) {
-                    readList[i] = readList[i-1];
+                lastw.readList.length = lastw.readList.length + 1;
+                for (int i = lastw.readList.length - 1; i > rloc; i--) {
+                    lastw.readList[i] = lastw.readList[i-1];
                 }
-                readList[i] = act;
+                lastw.readList[rloc] = act;
 
                 return w.value;
 
