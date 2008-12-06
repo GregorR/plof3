@@ -53,7 +53,9 @@ class APInterpVisitor : PASTVisitor {
         return _act.ctx;
     }
 
-    Object visit(PASTGlobal node) { throw new APUnimplementedException("PASTGlobal"); }
+    Object visit(PASTGlobal node) {
+        return _act.gctx.global;
+    }
 
     Object visit(PASTNew node) { throw new APUnimplementedException("PASTNew"); }
 
