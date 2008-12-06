@@ -137,25 +137,32 @@ class SerialAccessor(Action, Obj) {
             ptrdiff_t wloc = (cast(ptrdiff_t) ubound(writeList, w)) - 1;
 
             if (wloc == -1) {
-                // There is no writer!
-                return null;
+                // There is no writer! Need to invent one
+                w.act = act.gctx.initAction;
 
-            } else {
-                // add ourself to the readlist
-                Writer* lastw = &(writeList[wloc]);
-
-                size_t rloc = ubound(lastw.readList, act);
-
-                // insert the reader (efficiently)
-                lastw.readList.length = lastw.readList.length + 1;
-                for (int i = lastw.readList.length - 1; i > rloc; i--) {
-                    lastw.readList[i] = lastw.readList[i-1];
+                // insert the writer (efficiently)
+                writeList.length = writeList.length + 1;
+                for (int i = writeList.length - 1; i > 0; i--) {
+                    writeList[i] = writeList[i-1];
                 }
-                lastw.readList[rloc] = act;
+                writeList[0] = w;
 
-                return lastw.value;
-
+                wloc = 0;
             }
+
+            // add ourself to the readlist
+            Writer* lastw = &(writeList[wloc]);
+
+            size_t rloc = ubound(lastw.readList, act);
+
+            // insert the reader (efficiently)
+            lastw.readList.length = lastw.readList.length + 1;
+            for (int i = lastw.readList.length - 1; i > rloc; i--) {
+                lastw.readList[i] = lastw.readList[i-1];
+            }
+            lastw.readList[rloc] = act;
+
+            return lastw.value;
         }
     }
 
