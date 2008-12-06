@@ -248,7 +248,7 @@ int main(char[][] args)
         APGlobalContext gctx = new APGlobalContext();
 
         // get the AST
-        PASTNode ast = pslToAST(outPSL);
+        PASTNode ast = new PASTCall(pslToAST(outPSL), new PASTNull());
 
         // and run it
         ast.accept(new APInterpVisitor(gctx, gctx.initAction));
