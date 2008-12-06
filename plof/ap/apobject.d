@@ -35,16 +35,21 @@ class APObject {
     /// Allocate a PSLObject with the given parent by the given action
     this(Action act, APObject parent)
     {
-        _parent = new APAccessor();
+        this();
         _parent.write(act, parent);
     }
 
+    /// Allocate a PSLObject with no parent (should only be used once, for the null object)
+    this() {
+        _parent = new APAccessor();
+    }
+
     /// Parent of this object
-    APObject parent(Action act) {
+    APObject getParent(Action act) {
         return _parent.read(act);
     }
     /// ditto
-    Action[] parent(Action act, APObject sparent)
+    Action[] setParent(Action act, APObject sparent)
     {
         return _parent.write(act, sparent);
     }
@@ -75,11 +80,11 @@ class APObject {
     } */
     
     /// Raw data
-    ubyte[] raw(Action act) {
+    ubyte[] getRaw(Action act) {
         return _raw.read(act);
     }
     /// ditto
-    Action[] raw(Action act, ubyte[] sraw)
+    Action[] setRaw(Action act, ubyte[] sraw)
     {
         return _raw.write(act, sraw);
     }
