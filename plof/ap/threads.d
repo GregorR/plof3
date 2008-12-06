@@ -215,9 +215,16 @@ class APThreadPool {
             // no clue!
             hardwareThreadCount = 4;
 
-        } else {
+        } else version (linux) {
             // get the number from sysconf
             hardwareThreadCount = sysconf(_SC_NPROCESSORS_ONLN);
+
+        } else version (darwin) {
+            // sysconf, but Tango doesn't have the #define :(
+            hardwareThreadCount = sysconf(58);
+
+        } else {
+            hardwareThreadCount = 4;
 
         }
 
