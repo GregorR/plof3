@@ -56,8 +56,8 @@ class APObject {
         return _parent.read(act);
     }
     /// ditto
-    Action[] setParent(Action act, APObject sparent) {
-        return _parent.write(act, sparent);
+    void setParent(Action act, APObject sparent) {
+        _parent.write(act, sparent);
     }
     /// ditto
 
@@ -97,9 +97,9 @@ class APObject {
         return acc.read(act);
     }
     /// Set a member
-    Action[] setMember(Action act, ubyte[] name, APObject to) {
+    void setMember(Action act, ubyte[] name, APObject to) {
         APAccessor acc = getMemberAccessor(name);
-        return acc.write(act, to);
+        acc.write(act, to);
     }
 
     /* FIXME: arrays
@@ -127,8 +127,8 @@ class APObject {
         return _raw.read(act);
     }
     /// ditto
-    Action[] setRaw(Action act, ubyte[] sraw) {
-        return _raw.write(act, sraw);
+    void setRaw(Action act, ubyte[] sraw) {
+        _raw.write(act, sraw);
     }
 
     /// Function data
@@ -136,8 +136,8 @@ class APObject {
         return _ast.read(act);
     }
     /// ditto
-    Action[] setAST(Action act, PASTNode ast) {
-        return _ast.write(act, ast);
+    void setAST(Action act, PASTNode ast) {
+        _ast.write(act, ast);
     }
 
     private {
@@ -165,10 +165,16 @@ class Action {
         _temps = temps;
     }
 
+    /// Cancel this action
+    void cancel() {
+        // to be implemented
+    }
+
     // compare by the SID
     int opCmp(Action r) { return _sid.opCmp(r._sid); }
     bool opEquals(Action r) { return _sid.opEquals(r._sid); }
 
+    // accessors
     SID sid() { return _sid; }
     APGlobalContext gctx() { return _gctx; }
     PASTNode ast() { return _ast; }
