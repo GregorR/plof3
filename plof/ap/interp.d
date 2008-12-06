@@ -133,7 +133,11 @@ class APInterpVisitor : PASTVisitor {
         ubyte[] raw = toprint.getRaw(_act);
 
         // and print it
-        Stdout(cast(char[]) raw).newline;
+        if (raw.length == 0) {
+            Stdout(cast(void*) toprint).newline;
+        } else {
+            Stdout(cast(char[]) raw).newline;
+        }
 
         return _act.gctx.nul;
     }
