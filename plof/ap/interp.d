@@ -142,7 +142,53 @@ class APInterpVisitor : PASTVisitor {
         return _act.gctx.nul;
     }
 
-    Object visit(PASTCombine node) { throw new APUnimplementedException("PASTCombine"); }
+    Object visit(PASTCombine node) {
+        // a1:a2
+        APObject l = cast(APObject) node.a1.accept(this);
+        APObject r = cast(APObject) node.a2.accept(this);
+        APObject ret = new APObject(_act, r.getParent(_act));
+
+        // get all the members of both
+        ubyte[][] lmembers = l.getMembers(_act);
+        ubyte[][] rmembers = r.getMembers(_act);
+
+        // and combine them
+        foreach (lmember; lmembers) {
+            ret.setMember(_act, lmember, l.getMember(_act, lmember));
+        }
+        foreach (rmember; rmembers) {
+            ret.setMember(_act, rmember, r.getMember(_act, rmember));
+        }
+
+        // now combine any other data
+        ubyte[] lraw = l.getRaw(_act);
+        ubyte[] rraw = r.getRaw(_act);
+        if (lraw.length != 0 || rraw.length != 0) {
+            // one of them had raw data, so make this a raw
+            ret.setRaw(_act, lraw ~ rraw);
+
+        } else {
+            // neither had raw, check for array
+            uint llen = l.getArrayLength(_act);
+            uint rlen = r.getArrayLength(_act);
+            if (llen != 0 || rlen != 0) {
+                // had array data, so make an array
+                ret.setArrayLength(_act, llen + rlen);
+
+                // copy in the elements
+                for (uint i = 0; i < llen; i++) {
+                    ret.setArrayElement(_act, i, l.getArrayElement(_act, i));
+                }
+                for (uint i = 0; i < rlen; i++) {
+                    ret.setArrayElement(_act, llen+i, r.getArrayElement(_act, i));
+                }
+
+            }
+
+        }
+
+        return ret;
+    }
 
     Object visit(PASTMember node) {
         // a1.a2
