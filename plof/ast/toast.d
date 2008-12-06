@@ -34,8 +34,8 @@ import plof.psl.psl;
 
 import plof.ast.ast;
 
-/// Convert a PSL proc to an array of AST statements (a PASTProc)
-PASTProc pslToAST(ubyte[] psl)
+/// Convert a PSL proc to an AST call to an anonymous procedure
+PASTNode pslToAST(ubyte[] psl)
 {
     // keep the current AST nodes on a stack
     PASTNode[] stack;
@@ -632,7 +632,7 @@ PASTProc pslToAST(ubyte[] psl)
     orderStack();
 
     // and turn it into a proc
-    return new PASTProc(res, curTemp, dsrcfile, dsrcline, dsrccol);
+    return new PASTCall(new PASTProc(res, curTemp, dsrcfile, dsrcline, dsrccol), new PASTNull());
 }
 
 /// Translation failure
