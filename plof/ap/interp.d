@@ -62,7 +62,9 @@ class APInterpVisitor : PASTVisitor {
 
     Object visit(PASTArguments node) { throw new APUnimplementedException("PASTArguments"); }
 
-    Object visit(PASTNull node) { throw new APUnimplementedException("PASTNull"); }
+    Object visit(PASTNull node) {
+        return _gctx.nul;
+    }
 
     Object visit(PASTThis node) { throw new APUnimplementedException("PASTThis"); }
 
@@ -88,7 +90,18 @@ class APInterpVisitor : PASTVisitor {
 
     Object visit(PASTByte node) { throw new APUnimplementedException("PASTByte"); }
 
-    Object visit(PASTPrint node) { throw new APUnimplementedException("PASTPrint"); }
+    Object visit(PASTPrint node) {
+        // FIXME: this should not print immediately
+        APObject toprint = cast(APObject) node.a1.accept(this);
+
+        // get the data
+        ubyte[] raw = toprint.getRaw(_act);
+
+        // and print it
+        Stdout(cast(char[]) raw).newline;
+
+        return _gctx.nul;
+    }
 
     Object visit(PASTCombine node) { throw new APUnimplementedException("PASTCombine"); }
 
@@ -101,6 +114,9 @@ class APInterpVisitor : PASTVisitor {
 
         // make sure it's really a function
         PASTNode fast = f.getAST(_act);
+        if (fast is null) {
+            throw new APInterpFailure("Called uninitialized thing.");
+        }
         PASTProc fproc = cast(PASTProc) fast;
         if (fproc is null) {
             throw new APInterpFailure("Called a non-procedure.");
@@ -190,9 +206,18 @@ class APInterpVisitor : PASTVisitor {
 
     Object visit(PASTIntCmp node) { throw new APUnimplementedException("PASTIntCmp"); }
 
-    Object visit(PASTProc node) { throw new APUnimplementedException("PASTProc"); }
+    Object visit(PASTProc node) {
+        // just wrap it in an object
+        APObject ret = new APObject(_act, _act.ctx.read(_act));
+        ret.setAST(_act, node);
+        return ret;
+    }
 
-    Object visit(PASTTempSet node) { throw new APUnimplementedException("PASTTempSet"); }
+    Object visit(PASTTempSet node) {
+        APObject to = cast(APObject) node.to.accept(this);
+        _act.temps[node.tnum].write(_act, to);
+        return _gctx.nul;
+    }
 
     Object visit(PASTTempGet node) { throw new APUnimplementedException("PASTTempGet"); }
 
@@ -204,7 +229,11 @@ class APInterpVisitor : PASTVisitor {
 
     Object visit(PASTNativeInteger node) { throw new APUnimplementedException("PASTNativeInteger"); }
 
-    Object visit(PASTRaw node) { throw new APUnimplementedException("PASTRaw"); }
+    Object visit(PASTRaw node) {
+        APObject ret = new APObject(_act, _act.ctx.read(_act));
+        ret.setRaw(_act, node.data.dup);
+        return ret;
+    }
 }
 
 class APUnimplementedException : Exception {
