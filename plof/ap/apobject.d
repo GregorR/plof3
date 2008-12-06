@@ -183,6 +183,24 @@ class APObject {
         _raw.write(act, sraw);
     }
 
+
+    /// Integer data
+    ptrdiff_t getInteger(Action act) {
+        ubyte[] raw = _raw.read(act);
+
+        // if it's the wrong length, garbage
+        if (raw.length != ptrdiff_t.sizeof) {
+            return 0;
+        } else {
+            return *(cast(ptrdiff_t*) raw.ptr);
+        }
+    }
+    /// ditto
+    void setInteger(Action act, ptrdiff_t sval) {
+        setRaw(act, (cast(ubyte*) &sval)[0..ptrdiff_t.sizeof].dup);
+    }
+
+
     /// Function data
     PASTNode getAST(Action act) {
         return _ast.read(act);
