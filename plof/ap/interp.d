@@ -192,7 +192,13 @@ class APInterpVisitor : PASTVisitor {
 
     Object visit(PASTArrayLengthSet node) { throw new APUnimplementedException("PASTArrayLengthSet"); }
 
-    Object visit(PASTArrayIndex node) { throw new APUnimplementedException("PASTArrayIndex"); }
+    Object visit(PASTArrayIndex node) {
+        // a1[a2]
+        APObject obj = cast(APObject) node.a1.accept(this);
+        APObject index = cast(APObject) node.a2.accept(this);
+
+        return obj.getArrayElement(_act, index.getInteger(_act));
+    }
 
     Object visit(PASTMul node) { throw new APUnimplementedException("PASTMul"); }
 
@@ -357,7 +363,15 @@ class APInterpVisitor : PASTVisitor {
         return ret;
     }
 
-    Object visit(PASTNativeInteger node) { throw new APUnimplementedException("PASTNativeInteger"); }
+    Object visit(PASTNativeInteger node) {
+        APObject ret = new APObject(_act, _act.ctx);
+
+        // some weird casting will get the data right
+        ptrdiff_t val = node.value;
+        ret.setRaw(_act, (cast(ubyte*) &val)[0..ptrdiff_t.sizeof].dup);
+
+        return ret;
+    }
 
     Object visit(PASTRaw node) {
         APObject ret = new APObject(_act, _act.ctx);
