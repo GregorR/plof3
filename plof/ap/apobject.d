@@ -25,6 +25,8 @@
 
 module plof.ap.apobject;
 
+import tango.core.sync.ReadWriteMutex;
+
 import plof.ap.serial;
 
 import plof.ast.ast;
@@ -35,8 +37,7 @@ alias SerialAccessor!(Action, APObject) APAccessor;
 /// Automatic parallelization object
 class APObject {
     /// Allocate a PSLObject with the given parent by the given action
-    this(Action act, APObject parent)
-    {
+    this(Action act, APObject parent) {
         this();
         _parent.write(act, parent);
     }
@@ -44,24 +45,62 @@ class APObject {
     /// Allocate a PSLObject with no parent (should only be used once, for the null object)
     this() {
         _parent = new APAccessor();
+        _memberLock = new ReadWriteMutex();
         _raw = new SerialAccessor!(Action, ubyte[])();
         _ast = new SerialAccessor!(Action, PASTNode)();
     }
+
 
     /// Parent of this object
     APObject getParent(Action act) {
         return _parent.read(act);
     }
     /// ditto
-    Action[] setParent(Action act, APObject sparent)
-    {
+    Action[] setParent(Action act, APObject sparent) {
         return _parent.write(act, sparent);
     }
     /// ditto
-    private APAccessor _parent;
 
-    /// Members
-    APAccessor[char[]] members;
+
+    /// Internal functino to get a member accessor
+    private APAccessor getMemberAccessor(ubyte[] name) {
+        APAccessor ret;
+        APAccessor* pret;
+
+        // First hope it's there with a read lock
+        _memberLock.reader.lock();
+        pret = name in _members;
+        if (pret !is null) ret = *pret;
+        _memberLock.reader.unlock();
+
+        // If it wasn't, need to create it
+        if (pret is null) {
+            _memberLock.writer.lock();
+
+            // but somebody may have created it in the interim
+            pret = name in _members;
+            if (pret is null) {
+                _members[name] = ret = new APAccessor();
+            } else {
+                ret = *pret;
+            }
+
+            _memberLock.writer.unlock();
+        }
+
+        return ret;
+    }
+
+    /// Get a member
+    APObject getMember(Action act, ubyte[] name) {
+        APAccessor acc = getMemberAccessor(name);
+        return acc.read(act);
+    }
+    /// Set a member
+    Action[] setMember(Action act, ubyte[] name, APObject to) {
+        APAccessor acc = getMemberAccessor(name);
+        return acc.write(act, to);
+    }
 
     /* FIXME: arrays
     /// Array data
@@ -88,8 +127,7 @@ class APObject {
         return _raw.read(act);
     }
     /// ditto
-    Action[] setRaw(Action act, ubyte[] sraw)
-    {
+    Action[] setRaw(Action act, ubyte[] sraw) {
         return _raw.write(act, sraw);
     }
 
@@ -108,6 +146,9 @@ class APObject {
             PSLRawData _raw;
             PSLArray _arr;
         }*/
+        APAccessor _parent;
+        APAccessor[ubyte[]] _members;
+        ReadWriteMutex _memberLock;
         SerialAccessor!(Action, ubyte[]) _raw;
         SerialAccessor!(Action, PASTNode) _ast;
     }
