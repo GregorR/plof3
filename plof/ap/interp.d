@@ -35,8 +35,8 @@ import plof.ast.ast;
 /// Global execution context of Plof
 class APGlobalContext {
     this() {
-        initAction = new Action(new SID(0, null), null, new APAccessor(), new APAccessor(), []);
         nul = new APObject();
+        initAction = new Action(new SID(0, null), null, nul, nul, []);
         nul.setParent(initAction, nul);
         global = new APObject(initAction, nul);
     }
@@ -130,12 +130,7 @@ class APInterpVisitor : PASTVisitor {
         } */
 
         // make the context for this call
-        APAccessor nctx = new APAccessor();
-        nctx.write(_act, new APObject(_act, a.getParent(_act)));
-
-        // and the args
-        APAccessor acca = new APAccessor();
-        acca.write(_act, a);
+        APObject nctx = new APObject(_act, f.getParent(_act));
 
         // and temps
         APAccessor[] temps;
@@ -150,7 +145,7 @@ class APInterpVisitor : PASTVisitor {
         foreach (i, ast; fproc.stmts) {
             r = cast(APObject) ast.accept(
                 new APInterpVisitor(
-                    _gctx, new Action(new SID(i, _act.sid), ast, nctx, acca, temps)
+                    _gctx, new Action(new SID(i, _act.sid), ast, nctx, a, temps)
                 )
             );
         }
@@ -208,7 +203,7 @@ class APInterpVisitor : PASTVisitor {
 
     Object visit(PASTProc node) {
         // just wrap it in an object
-        APObject ret = new APObject(_act, _act.ctx.read(_act));
+        APObject ret = new APObject(_act, _act.ctx);
         ret.setAST(_act, node);
         return ret;
     }
@@ -230,7 +225,7 @@ class APInterpVisitor : PASTVisitor {
     Object visit(PASTNativeInteger node) { throw new APUnimplementedException("PASTNativeInteger"); }
 
     Object visit(PASTRaw node) {
-        APObject ret = new APObject(_act, _act.ctx.read(_act));
+        APObject ret = new APObject(_act, _act.ctx);
         ret.setRaw(_act, node.data.dup);
         return ret;
     }

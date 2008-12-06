@@ -115,11 +115,11 @@ class APObject {
 
 /// AP actions are really just a serialization ID associated with an AST node to execute
 class Action {
-    this(SID sid, PASTNode ast, APAccessor ctx, APAccessor args, APAccessor[] temps) {
+    this(SID sid, PASTNode ast, APObject ctx, APObject arg, APAccessor[] temps) {
         _sid = sid;
         _ast = ast;
         _ctx = ctx;
-        _args = args;
+        _arg = arg;
         _temps = temps;
     }
 
@@ -129,14 +129,14 @@ class Action {
 
     SID sid() { return _sid; }
     PASTNode ast() { return _ast; }
-    APAccessor ctx() { return _ctx; }
-    APAccessor args() { return _args; }
+    APObject ctx() { return _ctx; }
+    APObject arg() { return _arg; }
     APAccessor[] temps() { return _temps; }
 
     private {
         SID _sid;
         PASTNode _ast;
-        APAccessor _ctx, _args;
+        APObject _ctx, _arg;
         APAccessor[] _temps;
     }
 }
