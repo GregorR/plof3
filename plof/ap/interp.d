@@ -73,16 +73,15 @@ class APInterpVisitor : PASTVisitor {
 
         // FIXME: not actually parallel :)
         // and run them
-        APObject r;
         foreach (i, ast; fproc.stmts) {
-            r = cast(APObject) ast.accept(
+            ast.accept(
                 new APInterpVisitor(
                     new Action(new SID(i, _act.sid), _act.gctx, ast, nctx, arg, temps)
                 )
             );
         }
 
-        return r;
+        return nctx;
     }
 
 
@@ -113,8 +112,6 @@ class APInterpVisitor : PASTVisitor {
 
     Object visit(PASTParent node) { throw new APUnimplementedException("PASTParent"); }
 
-    Object visit(PASTReturn node) { throw new APUnimplementedException("PASTReturn"); }
-
     Object visit(PASTThrow node) { throw new APUnimplementedException("PASTThrow"); }
 
     Object visit(PASTArrayLength node) { throw new APUnimplementedException("PASTArrayLength"); }
@@ -140,6 +137,16 @@ class APInterpVisitor : PASTVisitor {
         }
 
         return _act.gctx.nul;
+    }
+
+    Object visit(PASTReturnGet node) {
+        // get the return from a context
+        APObject ctx = cast(APObject) node.a1.accept(this);
+
+        APObject ret = ctx.getMember(_act, cast(ubyte[]) "\x1breturn");
+        if (ret is null)
+            ret = _act.gctx.nul;
+        return ret;
     }
 
     Object visit(PASTCombine node) {
@@ -271,6 +278,16 @@ class APInterpVisitor : PASTVisitor {
     Object visit(PASTBitwiseXOr node) { throw new APUnimplementedException("PASTBitwiseXOr"); }
 
     Object visit(PASTBitwiseNXOr node) { throw new APUnimplementedException("PASTBitwiseNXOr"); }
+
+    Object visit(PASTReturnSet node) {
+        // set the return of this context
+        APObject ctx = cast(APObject) node.a1.accept(this);
+        APObject val = cast(APObject) node.a2.accept(this);
+
+        ctx.setMember(_act, cast(ubyte[]) "\x1breturn", val);
+
+        return _act.gctx.nul;
+    }
 
     Object visit(PASTMemberSet node) {
         // set a1.a2 = a3

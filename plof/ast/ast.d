@@ -131,12 +131,6 @@ class PASTParent : PASTUnary {
     mixin Accept;
 }
 
-/// Return from a function
-class PASTReturn : PASTUnary {
-    this(PASTNode a1) { super(a1); }
-    mixin Accept;
-}
-
 /// Throw an exception
 class PASTThrow : PASTUnary {
     this(PASTNode a1) { super(a1); }
@@ -171,6 +165,13 @@ class PASTByte : PASTUnary {
 class PASTPrint : PASTUnary {
     this(PASTNode a1) { super(a1); }
     bool hasEffects() { return true; }
+    mixin Accept;
+}
+
+/// The return from a function context
+class PASTReturnGet : PASTUnary {
+    this(PASTNode a1) { super(a1); }
+    bool usesHeap() { return true; }
     mixin Accept;
 }
 
@@ -309,6 +310,13 @@ class PASTBitwiseXOr : PASTBinary {
 }
 class PASTBitwiseNXOr : PASTBinary {
     this(PASTNode a1, PASTNode a2) { super(a1, a2); }
+    mixin Accept;
+}
+
+/// Set the return of this function
+class PASTReturnSet : PASTBinary {
+    this(PASTNode a1, PASTNode a2) { super(a1, a2); }
+    bool hasEffects() { return true; }
     mixin Accept;
 }
 
@@ -680,13 +688,13 @@ interface PASTVisitor {
     Object visit(PASTIntWidth);
     Object visit(PASTVersion);
     Object visit(PASTParent);
-    Object visit(PASTReturn);
     Object visit(PASTThrow);
     Object visit(PASTArrayLength);
     Object visit(PASTMembers);
     Object visit(PASTInteger);
     Object visit(PASTByte);
     Object visit(PASTPrint);
+    Object visit(PASTReturnGet);
     Object visit(PASTCombine);
     Object visit(PASTMember);
     Object visit(PASTCall);
@@ -710,6 +718,7 @@ interface PASTVisitor {
     Object visit(PASTBitwiseNOr);
     Object visit(PASTBitwiseXOr);
     Object visit(PASTBitwiseNXOr);
+    Object visit(PASTReturnSet);
     Object visit(PASTMemberSet);
     Object visit(PASTArrayIndexSet);
     Object visit(PASTCmp);

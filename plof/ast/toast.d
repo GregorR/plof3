@@ -220,14 +220,13 @@ PASTProc pslToAST(ubyte[] psl)
                     orderStack();
                     uint stemp = curTemp++;
                     res ~= new PASTTempSet(stemp, new PASTCall(func, args));
-                    stack ~= new PASTTempGet(stemp);
+                    stack ~= new PASTReturnGet(new PASTTempGet(stemp));
                 });
                 break;
 
             case psl_return:
-                use1((PASTNode ret) {
-                    stack ~= new PASTReturn(ret);
-                });
+                // just make sure nothing else happens
+                i = psl.length;
                 break;
 
             case psl_throw:
@@ -250,7 +249,7 @@ PASTProc pslToAST(ubyte[] psl)
                     orderStack();
                     uint stemp = curTemp++;
                     res ~= new PASTTempSet(stemp, new PASTCmp(arg, a, b, procy, procn));
-                    stack ~= new PASTTempGet(stemp);
+                    stack ~= new PASTReturnGet(new PASTTempGet(stemp));
                 });
                 break;
 
@@ -465,7 +464,7 @@ PASTProc pslToAST(ubyte[] psl)
                     orderStack();
                     uint stemp = curTemp++;
                     res ~= new PASTTempSet(stemp, new PASTIntCmp(arg, a, b, c, d, cmd));
-                    stack ~= new PASTTempGet(stemp);
+                    stack ~= new PASTReturnGet(new PASTTempGet(stemp));
                 });
                 break;
 
@@ -647,6 +646,10 @@ PASTProc pslToAST(ubyte[] psl)
 
     // now make sure anything in the stack gets done
     res ~= stack;
+
+    // the last thing done should be a ReturnSet
+    if (res.length > 0)
+        res[$-1] = new PASTReturnSet(new PASTThis(), res[$-1]);
 
     // and turn it into a proc
     return new PASTProc(res, curTemp, dsrcfile, dsrcline, dsrccol);
