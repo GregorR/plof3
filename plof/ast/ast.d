@@ -45,7 +45,9 @@ private char[] classShortName(char[] classn)
 /// Standard visitor stuff
 private char[] acceptors;
 template Accept() {
-    Object accept(PASTVisitor v) { return v.visit(this); }
+    Object accept(PASTVisitor v) {
+        return v.visit(this);
+    }
 }
 
 
