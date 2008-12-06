@@ -622,11 +622,11 @@ class PASTArray : PASTNode {
 
 /// Native integer
 class PASTNativeInteger : PASTNode {
-    this(int value) {
+    this(ptrdiff_t value) {
         _value = value;
     }
 
-    int value() { return _value; }
+    ptrdiff_t value() { return _value; }
 
     char[] toXML() {
         return "<NativeInteger value=\"" ~ intToString(_value) ~ "\"/>";
@@ -634,7 +634,7 @@ class PASTNativeInteger : PASTNode {
 
     mixin Accept;
 
-    private int _value;
+    private ptrdiff_t _value;
 }
 
 /// Raw data
