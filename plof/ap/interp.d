@@ -27,43 +27,26 @@ module plof.ap.interp;
 
 import tango.io.Stdout;
 
-import plof.ap.apobject;
+public import plof.ap.apobject;
 import plof.ap.serial;
 
 import plof.ast.ast;
 
-/// Global execution context of Plof
-class APGlobalContext {
-    this() {
-        nul = new APObject();
-        initAction = new Action(new SID(0, null), null, nul, nul, []);
-        nul.setParent(initAction, nul);
-        global = new APObject(initAction, nul);
-    }
-
-    Action initAction;
-    APObject nul, global;
-}
-
 /// The interpreter visitor
 class APInterpVisitor : PASTVisitor {
     /// Will be visiting within a context, so need the context object
-    this(APGlobalContext gctx, Action act) {
-        _gctx = gctx;
+    this(Action act) {
         _act = act;
     }
 
-    private {
-        APGlobalContext _gctx;
-        Action _act;
-    }
+    private Action _act;
 
 
 
     Object visit(PASTArguments node) { throw new APUnimplementedException("PASTArguments"); }
 
     Object visit(PASTNull node) {
-        return _gctx.nul;
+        return _act.gctx.nul;
     }
 
     Object visit(PASTThis node) {
@@ -102,7 +85,7 @@ class APInterpVisitor : PASTVisitor {
         // and print it
         Stdout(cast(char[]) raw).newline;
 
-        return _gctx.nul;
+        return _act.gctx.nul;
     }
 
     Object visit(PASTCombine node) { throw new APUnimplementedException("PASTCombine"); }
@@ -121,7 +104,7 @@ class APInterpVisitor : PASTVisitor {
         // and get it
         APObject m = obj.getMember(_act, raw);
         if (m is null) {
-            return _gctx.nul;
+            return _act.gctx.nul;
         } else {
             return m;
         }
@@ -165,7 +148,7 @@ class APInterpVisitor : PASTVisitor {
         foreach (i, ast; fproc.stmts) {
             r = cast(APObject) ast.accept(
                 new APInterpVisitor(
-                    _gctx, new Action(new SID(i, _act.sid), ast, nctx, a, temps)
+                    new Action(new SID(i, _act.sid), _act.gctx, ast, nctx, a, temps)
                 )
             );
         }
@@ -228,7 +211,7 @@ class APInterpVisitor : PASTVisitor {
         // then set it
         trg.setMember(_act, raw, val);
 
-        return _gctx.nul;
+        return _act.gctx.nul;
     }
 
     Object visit(PASTArrayIndexSet node) { throw new APUnimplementedException("PASTArrayIndexSet"); }
@@ -247,7 +230,7 @@ class APInterpVisitor : PASTVisitor {
     Object visit(PASTTempSet node) {
         APObject to = cast(APObject) node.to.accept(this);
         _act.temps[node.tnum].write(_act, to);
-        return _gctx.nul;
+        return _act.gctx.nul;
     }
 
     Object visit(PASTTempGet node) { throw new APUnimplementedException("PASTTempGet"); }

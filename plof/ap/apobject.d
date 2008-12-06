@@ -156,8 +156,9 @@ class APObject {
 
 /// AP actions are really just a serialization ID associated with an AST node to execute
 class Action {
-    this(SID sid, PASTNode ast, APObject ctx, APObject arg, APAccessor[] temps) {
+    this(SID sid, APGlobalContext gctx, PASTNode ast, APObject ctx, APObject arg, APAccessor[] temps) {
         _sid = sid;
+        _gctx = gctx;
         _ast = ast;
         _ctx = ctx;
         _arg = arg;
@@ -169,6 +170,7 @@ class Action {
     bool opEquals(Action r) { return _sid.opEquals(r._sid); }
 
     SID sid() { return _sid; }
+    APGlobalContext gctx() { return _gctx; }
     PASTNode ast() { return _ast; }
     APObject ctx() { return _ctx; }
     APObject arg() { return _arg; }
@@ -176,8 +178,22 @@ class Action {
 
     private {
         SID _sid;
+        APGlobalContext _gctx;
         PASTNode _ast;
         APObject _ctx, _arg;
         APAccessor[] _temps;
     }
+}
+
+/// Global execution context of Plof
+class APGlobalContext {
+    this() {
+        nul = new APObject();
+        initAction = new Action(new SID(0, null), this, null, nul, nul, []);
+        nul.setParent(initAction, nul);
+        global = new APObject(initAction, nul);
+    }
+
+    Action initAction;
+    APObject nul, global;
 }

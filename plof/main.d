@@ -251,7 +251,7 @@ int main(char[][] args)
         PASTNode ast = new PASTCall(pslToAST(outPSL), new PASTNull());
 
         // and run it
-        ast.accept(new APInterpVisitor(gctx, gctx.initAction));
+        ast.accept(new APInterpVisitor(gctx.initAction));
 
     }
 
