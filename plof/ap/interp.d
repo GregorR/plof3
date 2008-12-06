@@ -71,15 +71,12 @@ class APInterpVisitor : PASTVisitor {
             temps[i] = new APAccessor();
         }
 
-        // FIXME: not actually parallel :)
         // and run them
+        Action[] toEnqueue;
         foreach (i, ast; fproc.stmts) {
-            ast.accept(
-                new APInterpVisitor(
-                    new Action(new SID(i, _act.sid), _act.gctx, ast, nctx, arg, temps)
-                )
-            );
+            toEnqueue ~= new Action(new SID(i, _act.sid), _act.gctx, ast, nctx, arg, temps);
         }
+        _act.gctx.tp.enqueue(toEnqueue);
 
         return nctx;
     }
@@ -129,11 +126,13 @@ class APInterpVisitor : PASTVisitor {
         // get the data
         ubyte[] raw = toprint.getRaw(_act);
 
-        // and print it
-        if (raw.length == 0) {
-            Stdout(cast(void*) toprint).newline;
-        } else {
-            Stdout(cast(char[]) raw).newline;
+        synchronized (Stdout) {
+            // and print it
+            if (raw.length == 0) {
+                Stdout(cast(void*) toprint).newline;
+            } else {
+                Stdout(cast(char[]) raw).newline;
+            }
         }
 
         return _act.gctx.nul;

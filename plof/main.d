@@ -47,6 +47,7 @@ import plof.ast.ast;
 import plof.ast.toast;
 
 import plof.ap.interp;
+import plof.ap.threads;
 
 import plof.searchpath.searchpath;
 
@@ -244,14 +245,21 @@ int main(char[][] args)
 
     // or do the AP interpretation
     } else if (interpAP) {
+        // make a thread pool
+        APThreadPool tp = APThreadPool.create(1);
+
         // make a global context
-        APGlobalContext gctx = new APGlobalContext();
+        APGlobalContext gctx = new APGlobalContext(tp);
 
         // get the AST
         PASTNode ast = new PASTCall(pslToAST(outPSL), new PASTNull());
 
+        // put it in an action
+        gctx.initAction.ast = ast;
+
         // and run it
-        ast.accept(new APInterpVisitor(gctx.initAction));
+        tp.enqueue([gctx.initAction]);
+        tp.start();
 
     }
 

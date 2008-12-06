@@ -29,6 +29,9 @@ import tango.core.sync.ReadWriteMutex;
 
 import plof.ap.serial;
 
+// FIXME: recursive dependency
+import plof.ap.threads;
+
 import plof.ast.ast;
 
 /// Serial accessor for objects
@@ -251,6 +254,15 @@ class APObject {
     }
 }
 
+/// AP action states
+enum ActionState {
+    None,
+    Running,
+    Canceled,
+    Queued,
+    Done
+}
+
 /// AP actions are really just a serialization ID associated with an AST node to execute
 class Action {
     this(SID sid, APGlobalContext gctx, PASTNode ast, APObject ctx, APObject arg, APAccessor[] temps) {
@@ -264,7 +276,15 @@ class Action {
 
     /// Cancel this action
     void cancel() {
-        // to be implemented
+        // re-enqueue this action (FIXME: should keep track of whether it's already running)
+        synchronized (this) {
+            // update running -> canceled, done -> queued
+            if (state == ActionState.Running || state == ActionState.Canceled) {
+                state = ActionState.Canceled;
+            } else if (state == ActionState.Done) {
+                gctx.tp.enqueue([this]);
+            }
+        }
     }
 
     // compare by the SID
@@ -275,9 +295,12 @@ class Action {
     SID sid() { return _sid; }
     APGlobalContext gctx() { return _gctx; }
     PASTNode ast() { return _ast; }
+    void ast(PASTNode set) { _ast = set; }
     APObject ctx() { return _ctx; }
     APObject arg() { return _arg; }
     APAccessor[] temps() { return _temps; }
+
+    ActionState state;
 
     private {
         SID _sid;
@@ -290,13 +313,15 @@ class Action {
 
 /// Global execution context of Plof
 class APGlobalContext {
-    this() {
+    this(APThreadPool tp) {
+        this.tp = tp;
         nul = new APObject();
         initAction = new Action(new SID(0, null), this, null, nul, nul, []);
         nul.setParent(initAction, nul);
         global = new APObject(initAction, nul);
     }
 
+    APThreadPool tp;
     Action initAction;
     APObject nul, global;
 }
