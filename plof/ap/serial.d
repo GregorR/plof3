@@ -100,9 +100,11 @@ class SID {
 
 /// Serial-semantics-guaranteeing read or write of a single value, returning list of actions that need to be canceled
 class SerialAccessor(Action, Obj) {
-    /// Write a value
-    void write(Action act, Obj val) {
+    /// Write a value, returning the old value
+    Obj write(Action act, Obj val) {
         synchronized (this) {
+            Obj last;
+
             // set up our own writer
             Writer w;
             w.act = act;
@@ -114,6 +116,7 @@ class SerialAccessor(Action, Obj) {
             if (wloc > 0) {
                 // we may be cancelling something, check the last writer
                 Writer lastw = writeList[wloc-1];
+                last = lastw.value;
 
                 // look for the first reader that would need to be cancelled
                 size_t rloc = ubound(lastw.readList, act);
@@ -131,6 +134,8 @@ class SerialAccessor(Action, Obj) {
                 writeList[i] = writeList[i-1];
             }
             writeList[wloc] = w;
+
+            return last;
         }
     }
 
