@@ -42,6 +42,50 @@ class APInterpVisitor : PASTVisitor {
     private Action _act;
 
 
+    /// Generic function for calling a function with an argument
+    APObject call(APObject func, APObject arg) {
+        // make sure it's really a function
+        PASTNode fast = func.getAST(_act);
+        if (fast is null) {
+            throw new APInterpFailure("Called uninitialized thing.");
+        }
+        PASTProc fproc = cast(PASTProc) fast;
+        if (fproc is null) {
+            throw new APInterpFailure("Called a non-procedure.");
+        }
+
+        /* now make sub-actions for all the steps in the procedure
+        Action[] steps;
+        steps.length = fproc.stmts.length;
+        foreach (i, ast; fproc.stmts) {
+            steps ~= new Action(new SID(i, _act.sid), ast);
+        } */
+
+        // make the context for this call
+        APObject nctx = new APObject(_act, func.getParent(_act));
+
+        // and temps
+        APAccessor[] temps;
+        temps.length = fproc.temps;
+        foreach (i, _; temps) {
+            temps[i] = new APAccessor();
+        }
+
+        // FIXME: not actually parallel :)
+        // and run them
+        APObject r;
+        foreach (i, ast; fproc.stmts) {
+            r = cast(APObject) ast.accept(
+                new APInterpVisitor(
+                    new Action(new SID(i, _act.sid), _act.gctx, ast, nctx, arg, temps)
+                )
+            );
+        }
+
+        return r;
+    }
+
+
 
     Object visit(PASTArguments node) {
         return _act.arg;
@@ -121,45 +165,7 @@ class APInterpVisitor : PASTVisitor {
         APObject f = cast(APObject) node.a1.accept(this);
         APObject a = cast(APObject) node.a2.accept(this);
 
-        // make sure it's really a function
-        PASTNode fast = f.getAST(_act);
-        if (fast is null) {
-            throw new APInterpFailure("Called uninitialized thing.");
-        }
-        PASTProc fproc = cast(PASTProc) fast;
-        if (fproc is null) {
-            throw new APInterpFailure("Called a non-procedure.");
-        }
-
-        /* now make sub-actions for all the steps in the procedure
-        Action[] steps;
-        steps.length = fproc.stmts.length;
-        foreach (i, ast; fproc.stmts) {
-            steps ~= new Action(new SID(i, _act.sid), ast);
-        } */
-
-        // make the context for this call
-        APObject nctx = new APObject(_act, f.getParent(_act));
-
-        // and temps
-        APAccessor[] temps;
-        temps.length = fproc.temps;
-        foreach (i, _; temps) {
-            temps[i] = new APAccessor();
-        }
-
-        // FIXME: not actually parallel :)
-        // and run them
-        APObject r;
-        foreach (i, ast; fproc.stmts) {
-            r = cast(APObject) ast.accept(
-                new APInterpVisitor(
-                    new Action(new SID(i, _act.sid), _act.gctx, ast, nctx, a, temps)
-                )
-            );
-        }
-
-        return r;
+        return call(f, a);
     }
 
     Object visit(PASTCatch node) { throw new APUnimplementedException("PASTCatch"); }
@@ -230,7 +236,24 @@ class APInterpVisitor : PASTVisitor {
 
     Object visit(PASTArrayIndexSet node) { throw new APUnimplementedException("PASTArrayIndexSet"); }
 
-    Object visit(PASTCmp node) { throw new APUnimplementedException("PASTCmp"); }
+    Object visit(PASTCmp node) {
+        // if (a2 is a3) a4(a1) else a5(a1)
+        APObject arg = cast(APObject) node.a1.accept(this);
+        APObject l = cast(APObject) node.a2.accept(this);
+        APObject r = cast(APObject) node.a3.accept(this);
+        APObject ift = cast(APObject) node.a4.accept(this);
+        APObject iff = cast(APObject) node.a5.accept(this);
+        APObject toc;
+
+        if (l is r) {
+            toc = ift;
+        } else {
+            toc = iff;
+        }
+
+        // call the appropriate one
+        return call(toc, arg);
+    }
 
     Object visit(PASTIntCmp node) { throw new APUnimplementedException("PASTIntCmp"); }
 
@@ -306,6 +329,8 @@ class APInterpVisitor : PASTVisitor {
                 }
 
             }
+
+            obj = obj.getParent(_act);
         }
 
         // didn't find it
