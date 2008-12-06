@@ -66,7 +66,9 @@ class APInterpVisitor : PASTVisitor {
         return _gctx.nul;
     }
 
-    Object visit(PASTThis node) { throw new APUnimplementedException("PASTThis"); }
+    Object visit(PASTThis node) {
+        return _act.ctx;
+    }
 
     Object visit(PASTGlobal node) { throw new APUnimplementedException("PASTGlobal"); }
 
@@ -105,7 +107,26 @@ class APInterpVisitor : PASTVisitor {
 
     Object visit(PASTCombine node) { throw new APUnimplementedException("PASTCombine"); }
 
-    Object visit(PASTMember node) { throw new APUnimplementedException("PASTMember"); }
+    Object visit(PASTMember node) {
+        // a1.a2
+        APObject obj = cast(APObject) node.a1.accept(this);
+        APObject name = cast(APObject) node.a2.accept(this);
+
+        // make sure it has a name
+        ubyte[] raw = name.getRaw(_act);
+        if (raw.length == 0) {
+            throw new APInterpFailure("Tried to read the null member.");
+        }
+
+        // and get it
+        APObject m = obj.getMember(_act, raw);
+        Stdout(cast(void*) obj)(".")(cast(char[]) raw)("=")(cast(void*) m).newline;
+        if (m is null) {
+            return _gctx.nul;
+        } else {
+            return m;
+        }
+    }
 
     Object visit(PASTCall node) {
         // a1 = function, a2 = argument
@@ -193,7 +214,25 @@ class APInterpVisitor : PASTVisitor {
 
     Object visit(PASTBitwiseNXOr node) { throw new APUnimplementedException("PASTBitwiseNXOr"); }
 
-    Object visit(PASTMemberSet node) { throw new APUnimplementedException("PASTMemberSet"); }
+    Object visit(PASTMemberSet node) {
+        // set a1.a2 = a3
+        APObject trg = cast(APObject) node.a1.accept(this);
+        APObject name = cast(APObject) node.a2.accept(this);
+        APObject val = cast(APObject) node.a3.accept(this);
+
+        // make sure name actually has a name
+        ubyte[] raw = name.getRaw(_act);
+        if (raw.length == 0) {
+            throw new APInterpFailure("Trying to set the null member.");
+        }
+
+        Stdout("Setting ")(cast(void*) trg)(".")(cast(char[]) raw)(" to ")(cast(void*) val).newline;
+
+        // then set it
+        trg.setMember(_act, raw, val);
+
+        return _gctx.nul;
+    }
 
     Object visit(PASTArrayIndexSet node) { throw new APUnimplementedException("PASTArrayIndexSet"); }
 
