@@ -48,11 +48,11 @@ class SID {
         // make the depth the same
         while (l._depth > r._depth) {
             l = l._next;
-            pref = -1;
+            pref = 1;
         }
         while (r._depth > l._depth) {
             r = r._next;
-            pref = 1;
+            pref = -1;
         }
 
         // find the first nonmatching
@@ -68,7 +68,7 @@ class SID {
 
         } else {
             // otherwise it's whichever side is greater
-            if (l._val > r._val) {
+            if (l._val < r._val) {
                 return -1;
             } else {
                 return 1;
