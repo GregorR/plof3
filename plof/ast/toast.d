@@ -86,6 +86,14 @@ PASTProc pslToAST(ubyte[] psl)
         PASTNode a = pop();
         f(a, b, c, d);
     }
+    void use5(void delegate(PASTNode, PASTNode, PASTNode, PASTNode, PASTNode) f) {
+        PASTNode e = pop();
+        PASTNode d = pop();
+        PASTNode c = pop();
+        PASTNode b = pop();
+        PASTNode a = pop();
+        f(a, b, c, d, e);
+    }
 
 
     // this function guarantees that the stack's actions happen in the correct order
@@ -235,8 +243,8 @@ PASTProc pslToAST(ubyte[] psl)
                 break;
 
             case psl_cmp:
-                use4((PASTNode a, PASTNode b, PASTNode procy, PASTNode procn) {
-                    stack ~= new PASTCmp(a, b, procy, procn);
+                use5((PASTNode arg, PASTNode a, PASTNode b, PASTNode procy, PASTNode procn) {
+                    stack ~= new PASTCmp(arg, a, b, procy, procn);
                 });
                 break;
 
@@ -447,8 +455,8 @@ PASTProc pslToAST(ubyte[] psl)
             case psl_ne:
             case psl_gt:
             case psl_gte: // integer comparisons
-                use4((PASTNode a, PASTNode b, PASTNode c, PASTNode d) {
-                    stack ~= new PASTIntCmp(a, b, c, d, cmd);
+                use5((PASTNode arg, PASTNode a, PASTNode b, PASTNode c, PASTNode d) {
+                    stack ~= new PASTIntCmp(arg, a, b, c, d, cmd);
                 });
                 break;
 
@@ -629,7 +637,7 @@ PASTProc pslToAST(ubyte[] psl)
     }
 
     // now make sure anything in the stack gets done
-    orderStack();
+    res ~= stack;
 
     // and turn it into a proc
     return new PASTProc(res, curTemp, dsrcfile, dsrcline, dsrccol);
