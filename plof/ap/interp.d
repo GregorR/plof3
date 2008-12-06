@@ -120,7 +120,6 @@ class APInterpVisitor : PASTVisitor {
 
         // and get it
         APObject m = obj.getMember(_act, raw);
-        Stdout(cast(void*) obj)(".")(cast(char[]) raw)("=")(cast(void*) m).newline;
         if (m is null) {
             return _gctx.nul;
         } else {
@@ -225,8 +224,6 @@ class APInterpVisitor : PASTVisitor {
         if (raw.length == 0) {
             throw new APInterpFailure("Trying to set the null member.");
         }
-
-        Stdout("Setting ")(cast(void*) trg)(".")(cast(char[]) raw)(" to ")(cast(void*) val).newline;
 
         // then set it
         trg.setMember(_act, raw, val);
