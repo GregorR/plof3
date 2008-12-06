@@ -57,6 +57,9 @@ class SID {
 
         // find the first nonmatching
         while (l !is null && l._val == r._val) {
+            // cut it off if they're clearly equal
+            if (l is r) return pref;
+
             l = l._next;
             r = r._next;
         }
