@@ -217,7 +217,10 @@ PASTProc pslToAST(ubyte[] psl)
 
             case psl_call:
                 use2((PASTNode args, PASTNode func) {
-                    stack ~= new PASTCall(func, args);
+                    orderStack();
+                    uint stemp = curTemp++;
+                    res ~= new PASTTempSet(stemp, new PASTCall(func, args));
+                    stack ~= new PASTTempGet(stemp);
                 });
                 break;
 
@@ -244,7 +247,10 @@ PASTProc pslToAST(ubyte[] psl)
 
             case psl_cmp:
                 use5((PASTNode arg, PASTNode a, PASTNode b, PASTNode procy, PASTNode procn) {
-                    stack ~= new PASTCmp(arg, a, b, procy, procn);
+                    orderStack();
+                    uint stemp = curTemp++;
+                    res ~= new PASTTempSet(stemp, new PASTCmp(arg, a, b, procy, procn));
+                    stack ~= new PASTTempGet(stemp);
                 });
                 break;
 
@@ -456,7 +462,10 @@ PASTProc pslToAST(ubyte[] psl)
             case psl_gt:
             case psl_gte: // integer comparisons
                 use5((PASTNode arg, PASTNode a, PASTNode b, PASTNode c, PASTNode d) {
-                    stack ~= new PASTIntCmp(arg, a, b, c, d, cmd);
+                    orderStack();
+                    uint stemp = curTemp++;
+                    res ~= new PASTTempSet(stemp, new PASTIntCmp(arg, a, b, c, d, cmd));
+                    stack ~= new PASTTempGet(stemp);
                 });
                 break;
 
