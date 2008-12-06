@@ -101,14 +101,14 @@ class SerialAccessor(Action, Obj) {
             w.value = val;
 
             // find the appropriate place
-            size_t wloc = lbound(writeList, w);
+            size_t wloc = ubound(writeList, w);
 
             if (wloc > 0) {
                 // we may be cancelling something, check the last writer
                 Writer lastw = writeList[wloc-1];
 
                 // look for the first reader that would need to be cancelled
-                size_t rloc = lbound(lastw.readList, act);
+                size_t rloc = ubound(lastw.readList, act);
                 if (rloc < lastw.readList.length) {
                     cancel = lastw.readList[rloc..$].dup;
                     lastw.readList.length = rloc;
@@ -134,7 +134,7 @@ class SerialAccessor(Action, Obj) {
             w.act = act;
 
             // find the appropriate writer
-            ptrdiff_t wloc = (cast(ptrdiff_t) lbound(writeList, w)) - 1;
+            ptrdiff_t wloc = (cast(ptrdiff_t) ubound(writeList, w)) - 1;
 
             if (wloc == -1) {
                 // There is no writer!
@@ -144,7 +144,7 @@ class SerialAccessor(Action, Obj) {
                 // add ourself to the readlist
                 Writer* lastw = &(writeList[wloc]);
 
-                size_t rloc = lbound(lastw.readList, act);
+                size_t rloc = ubound(lastw.readList, act);
 
                 // insert the reader (efficiently)
                 lastw.readList.length = lastw.readList.length + 1;
@@ -153,7 +153,7 @@ class SerialAccessor(Action, Obj) {
                 }
                 lastw.readList[rloc] = act;
 
-                return w.value;
+                return lastw.value;
 
             }
         }

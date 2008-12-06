@@ -458,6 +458,9 @@ class PASTTempSet : PASTNode {
 
     bool hasEffects() { return true; }
 
+    uint tnum() { return _tnum; }
+    PASTNode to() { return _to; }
+
     char[] toXML() {
         return "<TempSet temp=\"" ~ intToString(_tnum) ~ "\">" ~ _to.toXML() ~ "</TempSet>";
     }
