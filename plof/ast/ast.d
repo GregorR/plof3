@@ -502,6 +502,12 @@ class PASTResolve : PASTNode {
     bool usesHeap() { return true; }
     bool hasEffects() { return _obj.hasEffects() || _name.hasEffects(); }
 
+    // accessors
+    PASTNode obj() { return _obj; }
+    PASTNode name() { return _name; }
+    uint t1() { return _t1; }
+    uint t2() { return _t2; }
+
     char[] toXML() {
         return "<Resolve t1=\"" ~ intToString(_t1) ~ "\" t2=\"" ~
             intToString(_t2) ~ "\">" ~ _obj.toXML() ~ _name.toXML() ~

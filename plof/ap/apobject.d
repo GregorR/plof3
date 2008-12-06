@@ -136,6 +136,11 @@ class APObject {
         _arrayLength.write(act, len);
     }
 
+    /// If the array length has been set, this is an array
+    bool isArray(Action act) {
+        return getArrayLength(act) > 0;
+    }
+
     /// Get an element of array data
     APObject getArrayElement(Action act, uint elem) {
         uint len = getArrayLength(act);

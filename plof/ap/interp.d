@@ -237,7 +237,63 @@ class APInterpVisitor : PASTVisitor {
 
     Object visit(PASTTempGet node) { throw new APUnimplementedException("PASTTempGet"); }
 
-    Object visit(PASTResolve node) { throw new APUnimplementedException("PASTResolve"); }
+    Object visit(PASTResolve node) {
+        // resolve a1.[a2]
+        APObject obj = cast(APObject) node.obj.accept(this);
+        APObject onames = cast(APObject) node.name.accept(this);
+        ubyte[][] names;
+        APObject[] nameobjs;
+        
+        // get out the names
+        if (onames.isArray(_act)) {
+            // OK, get them from the elements
+            for (uint i = 0; i < onames.getArrayLength(_act); i++) {
+                APObject robj = onames.getArrayElement(_act, i);
+                ubyte[] raw;
+                if (robj !is null) raw = robj.getRaw(_act);
+                if (raw.length != 0) {
+                    names ~= raw;
+                    nameobjs ~= robj;
+                }
+            }
+
+        } else {
+            // just get the one
+            ubyte[] raw = onames.getRaw(_act);
+            if (raw.length != 0) {
+                names ~= raw;
+                nameobjs ~= onames;
+            }
+
+        }
+
+        // make sure there are at least a few elements
+        if (names.length == 0) {
+            // well this is just screwy!
+            _act.temps[node.t1].write(_act, _act.gctx.nul);
+            _act.temps[node.t2].write(_act, _act.gctx.nul);
+            return _act.gctx.nul;
+        }
+
+        // OK, find an object
+        while (obj !is null && obj !is _act.gctx.nul) {
+            foreach (namei, name; names) {
+                APObject ret = obj.getMember(_act, name);
+                if (ret !is null && ret !is _act.gctx.nul) {
+                    // found it!
+                    _act.temps[node.t1].write(_act, obj);
+                    _act.temps[node.t2].write(_act, nameobjs[namei]);
+                    return _act.gctx.nul;
+                }
+
+            }
+        }
+
+        // didn't find it
+        _act.temps[node.t1].write(_act, _act.gctx.nul);
+        _act.temps[node.t2].write(_act, _act.gctx.nul);
+        return _act.gctx.nul;
+    }
 
     Object visit(PASTLoop node) { throw new APUnimplementedException("PASTLoop"); }
 
