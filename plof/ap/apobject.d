@@ -46,6 +46,8 @@ class APObject {
     this() {
         _parent = new APAccessor();
         _memberLock = new ReadWriteMutex();
+        _arrayLength = new SerialAccessor!(Action, uint)();
+        _arrayLock = new ReadWriteMutex();
         _raw = new SerialAccessor!(Action, ubyte[])();
         _ast = new SerialAccessor!(Action, PASTNode)();
     }
@@ -102,25 +104,70 @@ class APObject {
         acc.write(act, to);
     }
 
-    /* FIXME: arrays
-    /// Array data
-    bool isArray() { return _isArray; }
-    /// ditto
-    PSLArray arr() { return _arr; }
-    /// ditto
-    void arr(PSLArray sarr)
-    {
-        if (_isArray) {
-            // replace old array
-            _arr = sarr;
 
-        } else {
-            // replace raw data with array data
-            _isArray = true;
-            _arr = sarr;
+    /// Get the length of array data
+    uint getArrayLength(Action act) {
+        return _arrayLength.read(act);
+    }
+    /// Set the length of array data
+    void setArrayLength(Action act, uint len) {
+        // make sure it's actually long enough
+        _arrayLock.reader.lock();
+        uint origlen = _array.length;
+        _arrayLock.reader.unlock();
 
+        if (origlen < len) {
+            _arrayLock.writer.lock();
+
+            origlen = _array.length;
+            if (origlen < len) {
+                _array.length = len;
+
+                // now initialize the rest
+                for (uint i = origlen; i < len; i++) {
+                    _array[i] = new APAccessor();
+                }
+            }
+
+            _arrayLock.writer.unlock();
         }
-    } */
+
+        // then set the length
+        _arrayLength.write(act, len);
+    }
+
+    /// Get an element of array data
+    APObject getArrayElement(Action act, uint elem) {
+        uint len = getArrayLength(act);
+
+        // make sure we had this element at the time
+        if (elem >= len) {
+            return null;
+        }
+
+        // get the value
+        _arrayLock.reader.lock();
+        APObject ret = _array[elem].read(act);
+        _arrayLock.reader.unlock();
+        return ret;
+    }
+    /// Set an element of array data
+    void setArrayElement(Action act, uint elem, APObject val) {
+        uint len = getArrayLength(act);
+
+        // if it's too short, bail out (FIXME)
+        if (elem >= len) {
+            return;
+        }
+
+        // set the value
+        /* note that although this is a writer on the ELEMENT of the array,
+         * it's a reader on the array OBJECT */
+        _arrayLock.reader.lock();
+        _array[elem].write(act, val);
+        _arrayLock.reader.unlock();
+    }
+
     
     /// Raw data
     ubyte[] getRaw(Action act) {
@@ -141,14 +188,15 @@ class APObject {
     }
 
     private {
-        /*bool _isArray;
-        union {
-            PSLRawData _raw;
-            PSLArray _arr;
-        }*/
         APAccessor _parent;
         APAccessor[ubyte[]] _members;
         ReadWriteMutex _memberLock;
+
+        // array data
+        SerialAccessor!(Action, uint) _arrayLength;
+        APAccessor[] _array;
+        ReadWriteMutex _arrayLock;
+
         SerialAccessor!(Action, ubyte[]) _raw;
         SerialAccessor!(Action, PASTNode) _ast;
     }
