@@ -42,7 +42,18 @@ private char[] classShortName(char[] classn)
     }
 }
 
+/// Standard visitor stuff
+private char[] acceptors;
+template Accept() {
+    Object accept(PASTVisitor v) { return v.visit(this); }
+}
+
+
+/// The base for all AST nodes
 class PASTNode {
+    // can't actually create PASTNodes
+    private this() {}
+
     /// If a node uses the heap with anything more complicated than 'new', it can't be reordered
     bool usesHeap() {
         // most don't
@@ -57,6 +68,9 @@ class PASTNode {
 
     /// Convert to an XML-like AST tree
     char[] toXML() { return "<" ~ classShortName(this.classinfo.name) ~ " BAD=\"YES\"/>"; }
+
+    /// Only those with mixin Accept can be created
+    abstract Object accept(PASTVisitor v);
 }
 
 
@@ -68,25 +82,25 @@ class PASTNullary : PASTNode {
 }
 
 /// Get the arguments to this procedure
-class PASTArguments : PASTNullary {}
+class PASTArguments : PASTNullary { mixin Accept; }
 
 /// Push null
-class PASTNull : PASTNullary {}
+class PASTNull : PASTNullary { mixin Accept; }
 
 /// 'this' of this function
-class PASTThis : PASTNullary {}
+class PASTThis : PASTNullary { mixin Accept; }
 
 /// Global pointer
-class PASTGlobal : PASTNullary {}
+class PASTGlobal : PASTNullary { mixin Accept; }
 
 /// A new object
-class PASTNew : PASTNullary {}
+class PASTNew : PASTNullary { mixin Accept; }
 
 /// Width of native integers
-class PASTIntWidth : PASTNullary {}
+class PASTIntWidth : PASTNullary { mixin Accept; }
 
 /// Version constants
-class PASTVersion : PASTNullary {}
+class PASTVersion : PASTNullary { mixin Accept; }
 
 
 /// Unary nodes
@@ -112,42 +126,50 @@ class PASTUnary : PASTNode {
 class PASTParent : PASTUnary {
     this(PASTNode a1) { super(a1); }
     bool usesHeap() { return true; }
+    mixin Accept;
 }
 
 /// Return from a function
 class PASTReturn : PASTUnary {
     this(PASTNode a1) { super(a1); }
+    mixin Accept;
 }
 
 /// Throw an exception
 class PASTThrow : PASTUnary {
     this(PASTNode a1) { super(a1); }
+    mixin Accept;
 }
 
 /// Length of an array
 class PASTArrayLength : PASTUnary {
     this(PASTNode a1) { super(a1); }
+    mixin Accept;
 }
 
 /// Members of an object
 class PASTMembers : PASTUnary {
     this(PASTNode a1) { super(a1); }
+    mixin Accept;
 }
 
 /// Non-native integer
 class PASTInteger : PASTUnary {
     this(PASTNode a1) { super(a1); }
+    mixin Accept;
 }
 
 /// Integer-to-byte
 class PASTByte : PASTUnary {
     this(PASTNode a1) { super(a1); }
+    mixin Accept;
 }
 
 /// Debugging print
 class PASTPrint : PASTUnary {
     this(PASTNode a1) { super(a1); }
     bool hasEffects() { return true; }
+    mixin Accept;
 }
 
 
@@ -174,95 +196,118 @@ class PASTBinary : PASTUnary {
 /// Combine two objects
 class PASTCombine : PASTBinary {
     this(PASTNode a1, PASTNode a2) { super(a1, a2); }
+    mixin Accept;
 }
 
 /// Get a member of an object
 class PASTMember : PASTBinary {
     this(PASTNode a1, PASTNode a2) { super(a1, a2); }
     bool usesHeap() { return true; }
+    mixin Accept;
 }
 
 /// Call a function
 class PASTCall : PASTBinary {
     this(PASTNode a1, PASTNode a2) { super(a1, a2); }
     bool hasEffects() { return true; }
+    mixin Accept;
 }
 
 /// Catch exceptions
 class PASTCatch : PASTBinary {
     this(PASTNode a1, PASTNode a2) { super(a1, a2); }
     bool hasEffects() { return true; }
+    mixin Accept;
 }
 
 /// Concatenation
 class PASTConcat : PASTBinary {
     this(PASTNode a1, PASTNode a2) { super(a1, a2); }
+    mixin Accept;
 }
 
 /// Wrap
 class PASTWrap : PASTBinary {
     this(PASTNode a1, PASTNode a2) { super(a1, a2); }
+    mixin Accept;
 }
 
 /// Set the parent of an object
 class PASTParentSet : PASTBinary {
     this(PASTNode a1, PASTNode a2) { super(a1, a2); }
+    mixin Accept;
 }
 
 /// Array concatenation
 class PASTArrayConcat : PASTBinary {
     this(PASTNode a1, PASTNode a2) { super(a1, a2); }
+    mixin Accept;
 }
 
 /// Set the length of an array
 class PASTArrayLengthSet : PASTBinary {
     this(PASTNode a1, PASTNode a2) { super(a1, a2); }
+    mixin Accept;
 }
 
 /// Get an element from an array
 class PASTArrayIndex : PASTBinary {
     this(PASTNode a1, PASTNode a2) { super(a1, a2); }
+    mixin Accept;
 }
 
 /// Math nodes
 class PASTMul : PASTBinary {
     this(PASTNode a1, PASTNode a2) { super(a1, a2); }
+    mixin Accept;
 }
 class PASTDiv : PASTBinary {
     this(PASTNode a1, PASTNode a2) { super(a1, a2); }
+    mixin Accept;
 }
 class PASTMod : PASTBinary {
     this(PASTNode a1, PASTNode a2) { super(a1, a2); }
+    mixin Accept;
 }
 class PASTAdd : PASTBinary {
     this(PASTNode a1, PASTNode a2) { super(a1, a2); }
+    mixin Accept;
 }
 class PASTSub : PASTBinary {
     this(PASTNode a1, PASTNode a2) { super(a1, a2); }
+    mixin Accept;
 }
 class PASTSL : PASTBinary {
     this(PASTNode a1, PASTNode a2) { super(a1, a2); }
+    mixin Accept;
 }
 class PASTSR : PASTBinary {
     this(PASTNode a1, PASTNode a2) { super(a1, a2); }
+    mixin Accept;
 }
 class PASTBitwiseAnd : PASTBinary {
     this(PASTNode a1, PASTNode a2) { super(a1, a2); }
+    mixin Accept;
 }
 class PASTBitwiseNAnd : PASTBinary {
     this(PASTNode a1, PASTNode a2) { super(a1, a2); }
+    mixin Accept;
 }
 class PASTBitwiseOr : PASTBinary {
     this(PASTNode a1, PASTNode a2) { super(a1, a2); }
+    mixin Accept;
 }
 class PASTBitwiseNOr : PASTBinary {
     this(PASTNode a1, PASTNode a2) { super(a1, a2); }
+    mixin Accept;
 }
 class PASTBitwiseXOr : PASTBinary {
     this(PASTNode a1, PASTNode a2) { super(a1, a2); }
+    mixin Accept;
 }
 class PASTBitwiseNXOr : PASTBinary {
     this(PASTNode a1, PASTNode a2) { super(a1, a2); }
+    mixin Accept;
 }
 
 
@@ -293,6 +338,8 @@ class PASTMemberSet : PASTTrinary {
 
     bool usesHeap() { return true; }
     bool hasEffects() { return true; }
+
+    mixin Accept;
 }
 
 /// Set an index of an array
@@ -301,6 +348,8 @@ class PASTArrayIndexSet : PASTTrinary {
 
     bool usesHeap() { return true; }
     bool hasEffects() { return true; }
+
+    mixin Accept;
 }
 
 
@@ -331,6 +380,7 @@ class PASTCmp : PASTQuaternary {
         super(a1, a2, a3, a4);
     }
     bool hasEffects() { return true; }
+    mixin Accept;
 }
 
 /// Integer comparisons
@@ -342,6 +392,8 @@ class PASTIntCmp : PASTQuaternary {
     bool hasEffects() { return true; }
 
     ubyte cmd() { return _cmd; }
+
+    mixin Accept;
 
     private ubyte _cmd;
 }
@@ -380,6 +432,8 @@ class PASTProc : PASTNode {
         return ret;
     }
 
+    mixin Accept;
+
     private {
         /// The statements in this proc
         PASTNode[] _stmts;
@@ -407,6 +461,8 @@ class PASTTempSet : PASTNode {
         return "<TempSet temp=\"" ~ intToString(_tnum) ~ "\">" ~ _to.toXML() ~ "</TempSet>";
     }
 
+    mixin Accept;
+
     private {
         /// Temporary number and value
         uint _tnum;
@@ -423,6 +479,8 @@ class PASTTempGet : PASTNode {
     char[] toXML() {
         return "<TempGet temp=\"" ~ intToString(_tnum) ~ "\"/>";
     }
+
+    mixin Accept;
 
     /// Temporary number
     private uint _tnum;
@@ -445,6 +503,8 @@ class PASTResolve : PASTNode {
             intToString(_t2) ~ "\">" ~ _obj.toXML() ~ _name.toXML() ~
             "</Resolve>";
     }
+
+    mixin Accept;
 
     private {
         /// The object and name to resolve
@@ -490,6 +550,8 @@ class PASTLoop : PASTNode {
         return ret;
     }
 
+    mixin Accept;
+
     private PASTNode[] _stmts;
 }
 
@@ -517,6 +579,8 @@ class PASTArray : PASTNode {
         return ret;
     }
 
+    mixin Accept;
+
     private PASTNode[] _elems;
 }
 
@@ -531,6 +595,8 @@ class PASTNativeInteger : PASTNode {
     char[] toXML() {
         return "<NativeInteger value=\"" ~ intToString(_value) ~ "\"/>";
     }
+
+    mixin Accept;
 
     private int _value;
 }
@@ -561,5 +627,63 @@ class PASTRaw : PASTNode {
         return ret;
     }
 
+    mixin Accept;
+
     private ubyte[] _data;
+}
+
+
+
+/// Visitor for PASTNodes
+interface PASTVisitor {
+    Object visit(PASTArguments);
+    Object visit(PASTNull);
+    Object visit(PASTThis);
+    Object visit(PASTGlobal);
+    Object visit(PASTNew);
+    Object visit(PASTIntWidth);
+    Object visit(PASTVersion);
+    Object visit(PASTParent);
+    Object visit(PASTReturn);
+    Object visit(PASTThrow);
+    Object visit(PASTArrayLength);
+    Object visit(PASTMembers);
+    Object visit(PASTInteger);
+    Object visit(PASTByte);
+    Object visit(PASTPrint);
+    Object visit(PASTCombine);
+    Object visit(PASTMember);
+    Object visit(PASTCall);
+    Object visit(PASTCatch);
+    Object visit(PASTConcat);
+    Object visit(PASTWrap);
+    Object visit(PASTParentSet);
+    Object visit(PASTArrayConcat);
+    Object visit(PASTArrayLengthSet);
+    Object visit(PASTArrayIndex);
+    Object visit(PASTMul);
+    Object visit(PASTDiv);
+    Object visit(PASTMod);
+    Object visit(PASTAdd);
+    Object visit(PASTSub);
+    Object visit(PASTSL);
+    Object visit(PASTSR);
+    Object visit(PASTBitwiseAnd);
+    Object visit(PASTBitwiseNAnd);
+    Object visit(PASTBitwiseOr);
+    Object visit(PASTBitwiseNOr);
+    Object visit(PASTBitwiseXOr);
+    Object visit(PASTBitwiseNXOr);
+    Object visit(PASTMemberSet);
+    Object visit(PASTArrayIndexSet);
+    Object visit(PASTCmp);
+    Object visit(PASTIntCmp);
+    Object visit(PASTProc);
+    Object visit(PASTTempSet);
+    Object visit(PASTTempGet);
+    Object visit(PASTResolve);
+    Object visit(PASTLoop);
+    Object visit(PASTArray);
+    Object visit(PASTNativeInteger);
+    Object visit(PASTRaw);
 }
