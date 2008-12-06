@@ -56,7 +56,7 @@ int main(char[][] args)
     char[][] plofFiles;
     char[] outFile;
     ubyte[] outPSL;
-    bool interactive, defaultPSL, outputXML, interpAST;
+    bool interactive, defaultPSL, outputXML, interpAP;
 
     /// Figure out the base search path
     char[] exePath = Environment.exePath(args[0]).toString();
@@ -106,8 +106,8 @@ int main(char[][] args)
         } else if (args[argi] == "--xml") {
             outputXML = true;
 
-        } else if (args[argi] == "--ast") {
-            interpAST = true;
+        } else if (args[argi] == "--ap") {
+            interpAP = true;
 
         } else {
             Stderr("Unrecognized argument ")(args[argi]).newline;
@@ -148,25 +148,24 @@ int main(char[][] args)
         psl = pslProgramData(psl);
 
         // Run the immediates
-        if (!interpAST) {
-            interpret(psl, stack, context, true, prp);
-            stack.truncate(0);
-        }
+        interpret(psl, stack, context, true, prp);
+        stack.truncate(0);
 
         // Then run or compile the rest
-        if (outFile.length || outputXML) {
+        if (interpAP) {
+            // collect it
+            outPSL ~= psl;
+
+        } else if (outFile.length || outputXML) {
             if (!defaultPSL) {
                 // only output it if it was requested (is not a default include)
                 outPSL ~= psl;
             }
+
         } else {
-            if (!interpAST) {
-                interpret(psl, stack, context);
-                stack.truncate(0);
-            } else {
-                PASTNode ast = pslToAST(psl);
-                astVisit(ast);
-            }
+            interpret(psl, stack, context);
+            stack.truncate(0);
+
         }
     }
 
@@ -185,16 +184,11 @@ int main(char[][] args)
         psl = [cast(ubyte) 0xFF] ~ bnbuf ~ cast(ubyte[]) plofFile ~ [cast(ubyte) 0xE0] ~ psl; */
         
         // Run or compile it
-        if (outFile.length || outputXML) {
+        if (outFile.length || outputXML || interpAP) {
             outPSL ~= psl;
         } else {
-            if (!interpAST) {
-                interpret(psl, stack, context);
-                stack.truncate(0);
-            } else {
-                PASTNode ast = pslToAST(psl);
-                astVisit(ast);
-            }
+            interpret(psl, stack, context);
+            stack.truncate(0);
         }
     }
 
@@ -247,6 +241,17 @@ int main(char[][] args)
     } else if (outputXML) {
         PASTNode ast = pslToAST(outPSL);
         Stdout(ast.toXML()).newline;
+
+    // or do the AP interpretation
+    } else if (interpAP) {
+        // make a global context
+        APGlobalContext gctx = new APGlobalContext();
+
+        // get the AST
+        PASTNode ast = pslToAST(outPSL);
+
+        // and run it
+        ast.accept(new APInterpVisitor(gctx, gctx.initAction, gctx.global));
 
     }
 
