@@ -480,6 +480,8 @@ class PASTTempGet : PASTNode {
         _tnum = tnum;
     }
 
+    uint tnum() { return _tnum; }
+
     char[] toXML() {
         return "<TempGet temp=\"" ~ intToString(_tnum) ~ "\"/>";
     }

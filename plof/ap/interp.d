@@ -43,7 +43,9 @@ class APInterpVisitor : PASTVisitor {
 
 
 
-    Object visit(PASTArguments node) { throw new APUnimplementedException("PASTArguments"); }
+    Object visit(PASTArguments node) {
+        return _act.arg;
+    }
 
     Object visit(PASTNull node) {
         return _act.gctx.nul;
@@ -57,7 +59,9 @@ class APInterpVisitor : PASTVisitor {
         return _act.gctx.global;
     }
 
-    Object visit(PASTNew node) { throw new APUnimplementedException("PASTNew"); }
+    Object visit(PASTNew node) {
+        return new APObject(_act, _act.ctx);
+    }
 
     Object visit(PASTIntWidth node) { throw new APUnimplementedException("PASTIntWidth"); }
 
@@ -164,7 +168,15 @@ class APInterpVisitor : PASTVisitor {
 
     Object visit(PASTWrap node) { throw new APUnimplementedException("PASTWrap"); }
 
-    Object visit(PASTParentSet node) { throw new APUnimplementedException("PASTParentSet"); }
+    Object visit(PASTParentSet node) {
+        // a1.parent = a2
+        APObject trg = cast(APObject) node.a1.accept(this);
+        APObject obj = cast(APObject) node.a2.accept(this);
+
+        trg.setParent(_act, obj);
+
+        return _act.gctx.nul;
+    }
 
     Object visit(PASTArrayConcat node) { throw new APUnimplementedException("PASTArrayConcat"); }
 
@@ -235,7 +247,14 @@ class APInterpVisitor : PASTVisitor {
         return _act.gctx.nul;
     }
 
-    Object visit(PASTTempGet node) { throw new APUnimplementedException("PASTTempGet"); }
+    Object visit(PASTTempGet node) {
+        APObject ret = _act.temps[node.tnum].read(_act);
+        if (ret is null) {
+            return _act.gctx.nul;
+        } else {
+            return ret;
+        }
+    }
 
     Object visit(PASTResolve node) {
         // resolve a1.[a2]
@@ -297,7 +316,17 @@ class APInterpVisitor : PASTVisitor {
 
     Object visit(PASTLoop node) { throw new APUnimplementedException("PASTLoop"); }
 
-    Object visit(PASTArray node) { throw new APUnimplementedException("PASTArray"); }
+    Object visit(PASTArray node) {
+        APObject ret = new APObject(_act, _act.ctx);
+
+        // create the elements
+        ret.setArrayLength(_act, node.elems.length);
+        foreach (i, elem; node.elems) {
+            ret.setArrayElement(_act, i, cast(APObject) elem.accept(this));
+        }
+
+        return ret;
+    }
 
     Object visit(PASTNativeInteger node) { throw new APUnimplementedException("PASTNativeInteger"); }
 
