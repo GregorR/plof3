@@ -28,6 +28,8 @@ module plof.ap.apobject;
 import plof.ap.action;
 import plof.ap.serial;
 
+import plof.ast.ast;
+
 /// Serial accessor for objects
 alias SerialAccessor!(Action, APObject) APAccessor;
 
@@ -89,6 +91,15 @@ class APObject {
         return _raw.write(act, sraw);
     }
 
+    /// Function data
+    PASTNode getAST(Action act) {
+        return _ast.read(act);
+    }
+    /// ditto
+    Action[] setAST(Action act, PASTNode ast) {
+        return _ast.write(act, ast);
+    }
+
     private {
         /*bool _isArray;
         union {
@@ -96,5 +107,6 @@ class APObject {
             PSLArray _arr;
         }*/
         SerialAccessor!(Action, ubyte[]) _raw;
+        SerialAccessor!(Action, PASTNode) _ast;
     }
 }
