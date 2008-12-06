@@ -374,19 +374,41 @@ class PASTQuaternary : PASTTrinary {
     private PASTNode _a4;
 }
 
-/// Compare objects
-class PASTCmp : PASTQuaternary {
-    this(PASTNode a1, PASTNode a2, PASTNode a3, PASTNode a4) {
+
+/// Quinary nodes
+class PASTQuinary : PASTQuaternary {
+    this(PASTNode a1, PASTNode a2, PASTNode a3, PASTNode a4, PASTNode a5) {
         super(a1, a2, a3, a4);
+        _a5 = a5;
+    }
+
+    bool usesHeap() { return super.usesHeap() || _a5.usesHeap(); }
+    bool hasEffects() { return super.hasEffects() || _a5.hasEffects(); }
+
+    PASTNode a5() { return _a5; }
+
+    char[] toXML() {
+        return "<" ~ classShortName(this.classinfo.name) ~ ">" ~ _a1.toXML() ~
+            _a2.toXML() ~ _a3.toXML() ~ _a4.toXML() ~ _a5.toXML() ~ "</" ~
+            classShortName(this.classinfo.name) ~ ">";
+    }
+
+    private PASTNode _a5;
+}
+
+/// Compare objects
+class PASTCmp : PASTQuinary {
+    this(PASTNode a1, PASTNode a2, PASTNode a3, PASTNode a4, PASTNode a5) {
+        super(a1, a2, a3, a4, a5);
     }
     bool hasEffects() { return true; }
     mixin Accept;
 }
 
 /// Integer comparisons
-class PASTIntCmp : PASTQuaternary {
-    this(PASTNode a1, PASTNode a2, PASTNode a3, PASTNode a4, ubyte cmd) {
-        super(a1, a2, a3, a4);
+class PASTIntCmp : PASTQuinary {
+    this(PASTNode a1, PASTNode a2, PASTNode a3, PASTNode a4, PASTNode a5, ubyte cmd) {
+        super(a1, a2, a3, a4, a5);
         _cmd = cmd;
     }
     bool hasEffects() { return true; }
