@@ -44,6 +44,8 @@ class APObject {
     /// Allocate a PSLObject with no parent (should only be used once, for the null object)
     this() {
         _parent = new APAccessor();
+        _raw = new SerialAccessor!(Action, ubyte[])();
+        _ast = new SerialAccessor!(Action, PASTNode)();
     }
 
     /// Parent of this object
