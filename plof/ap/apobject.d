@@ -25,7 +25,6 @@
 
 module plof.ap.apobject;
 
-import plof.ap.action;
 import plof.ap.serial;
 
 import plof.ast.ast;
@@ -33,6 +32,7 @@ import plof.ast.ast;
 /// Serial accessor for objects
 alias SerialAccessor!(Action, APObject) APAccessor;
 
+/// Automatic parallelization object
 class APObject {
     /// Allocate a PSLObject with the given parent by the given action
     this(Action act, APObject parent)
@@ -108,5 +108,33 @@ class APObject {
         }*/
         SerialAccessor!(Action, ubyte[]) _raw;
         SerialAccessor!(Action, PASTNode) _ast;
+    }
+}
+
+/// AP actions are really just a serialization ID associated with an AST node to execute
+class Action {
+    this(SID sid, PASTNode ast, APAccessor ctx, APAccessor args, APAccessor[] temps) {
+        _sid = sid;
+        _ast = ast;
+        _ctx = ctx;
+        _args = args;
+        _temps = temps;
+    }
+
+    // compare by the SID
+    int opCmp(Action r) { return _sid.opCmp(r._sid); }
+    bool opEquals(Action r) { return _sid.opEquals(r._sid); }
+
+    SID sid() { return _sid; }
+    PASTNode ast() { return _ast; }
+    APAccessor ctx() { return _ctx; }
+    APAccessor args() { return _args; }
+    APAccessor[] temps() { return _temps; }
+
+    private {
+        SID _sid;
+        PASTNode _ast;
+        APAccessor _ctx, _args;
+        APAccessor[] _temps;
     }
 }

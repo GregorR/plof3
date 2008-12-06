@@ -27,7 +27,6 @@ module plof.ap.interp;
 
 import tango.io.Stdout;
 
-import plof.ap.action;
 import plof.ap.apobject;
 import plof.ap.serial;
 
@@ -36,7 +35,7 @@ import plof.ast.ast;
 /// Global execution context of Plof
 class APGlobalContext {
     this() {
-        initAction = new Action(new SID(0, null), null);
+        initAction = new Action(new SID(0, null), null, new APAccessor(), new APAccessor(), []);
         nul = new APObject();
         nul.setParent(initAction, nul);
         global = new APObject(initAction, nul);
@@ -49,16 +48,14 @@ class APGlobalContext {
 /// The interpreter visitor
 class APInterpVisitor : PASTVisitor {
     /// Will be visiting within a context, so need the context object
-    this(APGlobalContext gctx, Action act, APObject context) {
+    this(APGlobalContext gctx, Action act) {
         _gctx = gctx;
         _act = act;
-        _ctx = context;
     }
 
     private {
         APGlobalContext _gctx;
         Action _act;
-        APObject _ctx;
     }
 
 
@@ -97,7 +94,53 @@ class APInterpVisitor : PASTVisitor {
 
     Object visit(PASTMember node) { throw new APUnimplementedException("PASTMember"); }
 
-    Object visit(PASTCall node) { throw new APUnimplementedException("PASTCall"); }
+    Object visit(PASTCall node) {
+        // a1 = function, a2 = argument
+        APObject f = cast(APObject) node.a1.accept(this);
+        APObject a = cast(APObject) node.a2.accept(this);
+
+        // make sure it's really a function
+        PASTNode fast = f.getAST(_act);
+        PASTProc fproc = cast(PASTProc) fast;
+        if (fproc is null) {
+            throw new APInterpFailure("Called a non-procedure.");
+        }
+
+        /* now make sub-actions for all the steps in the procedure
+        Action[] steps;
+        steps.length = fproc.stmts.length;
+        foreach (i, ast; fproc.stmts) {
+            steps ~= new Action(new SID(i, _act.sid), ast);
+        } */
+
+        // make the context for this call
+        APAccessor nctx = new APAccessor();
+        nctx.write(_act, new APObject(_act, a.getParent(_act)));
+
+        // and the args
+        APAccessor acca = new APAccessor();
+        acca.write(_act, a);
+
+        // and temps
+        APAccessor[] temps;
+        temps.length = fproc.temps;
+        foreach (i, _; temps) {
+            temps[i] = new APAccessor();
+        }
+
+        // FIXME: not actually parallel :)
+        // and run them
+        APObject r;
+        foreach (i, ast; fproc.stmts) {
+            r = cast(APObject) ast.accept(
+                new APInterpVisitor(
+                    _gctx, new Action(new SID(i, _act.sid), ast, nctx, acca, temps)
+                )
+            );
+        }
+
+        return r;
+    }
 
     Object visit(PASTCatch node) { throw new APUnimplementedException("PASTCatch"); }
 
@@ -165,5 +208,9 @@ class APInterpVisitor : PASTVisitor {
 }
 
 class APUnimplementedException : Exception {
+    this(char[] msg) { super(msg); }
+}
+
+class APInterpFailure : Exception {
     this(char[] msg) { super(msg); }
 }

@@ -410,6 +410,7 @@ class PASTProc : PASTNode {
     }
 
     PASTNode[] stmts() { return _stmts; }
+    uint temps() { return _temps; }
 
     char[] toXML() {
         char[] ret = "<Proc temps=\"" ~ intToString(_temps) ~ "\"";
