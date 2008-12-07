@@ -36,6 +36,8 @@ import tango.sys.Environment;
 
 import tango.text.convert.Integer;
 
+import tango.time.StopWatch;
+
 import tango.stdc.stdlib;
 
 import plof.prp.prp;
@@ -264,9 +266,13 @@ int main(char[][] args)
         gctx.initAction.ast = ast;
 
         // and run it
+        StopWatch sw;
+        sw.start();
         tp.enqueue([gctx.initAction]);
         tp.start();
         tp.join();
+        real t = sw.stop();
+        Stderr("Ran in ")(t).newline;
 
     }
 
