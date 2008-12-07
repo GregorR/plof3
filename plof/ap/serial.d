@@ -128,6 +128,9 @@ class SerialAccessor(Action, Obj) {
             w.act = act;
             w.value = val;
 
+            // now set up all the writer's read lists
+            w.initReadLists(act);
+
             // find the appropriate place
             size_t wloc = ubound(writeList, w);
 
@@ -145,9 +148,14 @@ class SerialAccessor(Action, Obj) {
                         // figure out the first to be canceled
                         size_t rloc = ubound(readList, act);
                         if (rloc < readList.length) {
-                            // cancel them
-                            foreach (cact; readList[rloc..$])
-                                toCancel ~= cact;
+                            // if the data hasn't changed, just move them. Otherwise cancel them
+                            if (lastw.value is val) {
+                                w.readList[i] = readList[rloc..$].dup;
+                            } else {
+                                // cancel them
+                                foreach (cact; readList[rloc..$])
+                                    toCancel ~= cact;
+                            }
                             readList.length = rloc;
                             lastw.readList[i] = readList;
                         }
@@ -156,8 +164,6 @@ class SerialAccessor(Action, Obj) {
                 }
             }
 
-            // now set up all the writer's read lists
-            w.initReadLists(act);
 
             // insert the writer (somewhat efficiently)
             writeList.length = writeList.length + 1;
