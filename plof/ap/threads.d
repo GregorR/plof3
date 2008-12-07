@@ -64,12 +64,12 @@ class APThread : Thread {
             if (_action is null) {
                 _parent.foreachThread(this, (APThread other) {
                     if (other._queueLock.tryLock()) {
-                        if (other._queue.length > 0) {
+                        if (other._queue.length > 1) {
                             // try to steal half of his work
                             if (_queueLock.tryLock()) {
                                 // OK, both queues are locked, so steal
                                 uint tosteal = other._queue.length / 2;
-                                _queue ~= other._queue[tosteal..$].dup;
+                                _queue ~= other._queue[tosteal..$];
                                 other._queue.length = tosteal;
                                 _action = _queue[$-1];
                                 _queue.length = _queue.length - 1;
@@ -88,10 +88,7 @@ class APThread : Thread {
                     }
 
                     // if we found something, we're done
-                    if (_action !is null)
-                        return true;
-                    else
-                        return false;
+                    return (_action !is null);
                 });
             }
 
