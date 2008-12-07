@@ -32,6 +32,8 @@ import plof.ap.serial;
 
 import plof.ast.ast;
 
+import plof.psl.psl;
+
 /// The interpreter visitor
 class APInterpVisitor : PASTVisitor {
     /// Will be visiting within a context, so need the context object
@@ -104,17 +106,44 @@ class APInterpVisitor : PASTVisitor {
         return new APObject(_act, _act.ctx);
     }
 
-    Object visit(PASTIntWidth node) { throw new APUnimplementedException("PASTIntWidth"); }
+    Object visit(PASTIntWidth node) {
+      throw new APUnimplementedException("PASTIntWidth");
+    }
 
-    Object visit(PASTVersion node) { throw new APUnimplementedException("PASTVersion"); }
+    Object visit(PASTVersion node) {
+      throw new APUnimplementedException("PASTVersion");
+    }
 
-    Object visit(PASTParent node) { throw new APUnimplementedException("PASTParent"); }
+    Object visit(PASTParent node) {
+      APObject obj = cast(APObject) node.a1.accept(this);
+      return obj.getParent(_act);
+    }
 
-    Object visit(PASTThrow node) { throw new APUnimplementedException("PASTThrow"); }
+    Object visit(PASTThrow node) {
+//       APObject obj = cast(APObject) node.a1.accept(this);
+//       return obj;
+      throw new APUnimplementedException("PASTThrow");
+    }
 
-    Object visit(PASTArrayLength node) { throw new APUnimplementedException("PASTArrayLength"); }
+    Object visit(PASTArrayLength node) {
+      APObject obj = cast(APObject) node.a1.accept(this);
+      APObject ret = new APObject(_act, _act.ctx);
+      ret.setInteger(_act, obj.getArrayLength(_act));
+      return ret;
+    }
 
-    Object visit(PASTMembers node) { throw new APUnimplementedException("PASTMembers"); }
+    Object visit(PASTMembers node) {
+      APObject obj = cast(APObject) node.a1.accept(this);
+      APObject ret = new APObject(_act, _act.ctx);
+      ubyte[][] names = obj.getMembers(_act);
+      ret.setArrayLength(_act, names.length);
+      foreach (i, name ; names) {
+	APObject e = new APObject(_act, _act.ctx);
+	e.setRaw(_act, name);
+	ret.setArrayElement(_act, i, e);
+      }
+      return ret;
+    }
 
     Object visit(PASTInteger node) { throw new APUnimplementedException("PASTInteger"); }
 
@@ -227,9 +256,24 @@ class APInterpVisitor : PASTVisitor {
 
     Object visit(PASTCatch node) { throw new APUnimplementedException("PASTCatch"); }
 
-    Object visit(PASTConcat node) { throw new APUnimplementedException("PASTConcat"); }
+    Object visit(PASTConcat node) {
+      APObject o1 = cast(APObject) node.a1.accept(this);
+      APObject o2 = cast(APObject) node.a2.accept(this);
+      APObject ret = new APObject(_act, _act.ctx);
+      ret.setRaw(_act, o1.getRaw(_act) ~ o2.getRaw(_act));
+      return ret;
+    }
 
-    Object visit(PASTWrap node) { throw new APUnimplementedException("PASTWrap"); }
+    Object visit(PASTWrap node) {
+//       APObject o1 = cast(APObject) node.a1.accept(this);
+//       APObject o2 = cast(APObject) node.a2.accept(this);
+//       APObject ret = new APObject(_act, _act.ctx);
+      
+//       // Missing stuff
+      
+//       return ret;
+      throw new APUnimplementedException("PASTWrap");
+    }
 
     Object visit(PASTParentSet node) {
         // a1.parent = a2
@@ -241,9 +285,30 @@ class APInterpVisitor : PASTVisitor {
         return _act.gctx.nul;
     }
 
-    Object visit(PASTArrayConcat node) { throw new APUnimplementedException("PASTArrayConcat"); }
+    Object visit(PASTArrayConcat node) {
+      APObject o1 = cast(APObject) node.a1.accept(this);
+      APObject o2 = cast(APObject) node.a2.accept(this);
 
-    Object visit(PASTArrayLengthSet node) { throw new APUnimplementedException("PASTArrayLengthSet"); }
+      if (!o1.isArray(_act) || !o2.isArray(_act))
+	throw new APInterpFailure("Operand of array concat not an array.");
+
+      APObject ret = new APObject(_act, _act.ctx);
+      uint n1 = o1.getArrayLength(_act);
+      uint n2 = o2.getArrayLength(_act);
+
+      for (uint i = 0; i < n1; ++i)
+	ret.setArrayElement(_act, i, o1.getArrayElement(_act, i));
+      for (uint i = 0; i < n2; ++i)
+	ret.setArrayElement(_act, i+n1, o2.getArrayElement(_act, i));
+      return ret;
+    }
+
+    Object visit(PASTArrayLengthSet node) {
+      APObject array = cast(APObject) node.a1.accept(this);
+      APObject len = cast(APObject) node.a2.accept(this);
+      array.setArrayLength(_act, cast(uint) len.getInteger(_act));
+      return _act.gctx.nul;
+    }
 
     Object visit(PASTArrayIndex node) {
         // a1[a2]
@@ -258,21 +323,77 @@ class APInterpVisitor : PASTVisitor {
         }
     }
 
-    Object visit(PASTMul node) { throw new APUnimplementedException("PASTMul"); }
+    private void getIntegers(PASTBinary node, out ptrdiff_t i1, out ptrdiff_t i2) {
+      APObject o1 = cast(APObject) node.a1.accept(this);
+      APObject o2 = cast(APObject) node.a2.accept(this);
+      i1 = o1.getInteger(_act);
+      i2 = o2.getInteger(_act);
+    }
 
-    Object visit(PASTDiv node) { throw new APUnimplementedException("PASTDiv"); }
+    Object visit(PASTMul node) {
+      ptrdiff_t i1, i2;
+      getIntegers(node, i1, i2);
+      APObject ret = new APObject(_act, _act.ctx);
+      ret.setInteger(_act, i1 * i2);
+      return ret;
+    }
 
-    Object visit(PASTMod node) { throw new APUnimplementedException("PASTMod"); }
+    Object visit(PASTDiv node) {
+      ptrdiff_t i1, i2;
+      getIntegers(node, i1, i2);
+      APObject ret = new APObject(_act, _act.ctx);
+      ret.setInteger(_act, i1 / i2);
+      return ret;
+    }
 
-    Object visit(PASTAdd node) { throw new APUnimplementedException("PASTAdd"); }
+    Object visit(PASTMod node) {
+      ptrdiff_t i1, i2;
+      getIntegers(node, i1, i2);
+      APObject ret = new APObject(_act, _act.ctx);
+      ret.setInteger(_act, i1 % i2);
+      return ret;
+    }
 
-    Object visit(PASTSub node) { throw new APUnimplementedException("PASTSub"); }
+    Object visit(PASTAdd node) {
+      ptrdiff_t i1, i2;
+      getIntegers(node, i1, i2);
+      APObject ret = new APObject(_act, _act.ctx);
+      ret.setInteger(_act, i1 + i2);
+      return ret;
+    }
 
-    Object visit(PASTSL node) { throw new APUnimplementedException("PASTSL"); }
+    Object visit(PASTSub node) {
+      ptrdiff_t i1, i2;
+      getIntegers(node, i1, i2);
+      APObject ret = new APObject(_act, _act.ctx);
+      ret.setInteger(_act, i1 - i2);
+      return ret;
+    }
 
-    Object visit(PASTSR node) { throw new APUnimplementedException("PASTSR"); }
+    Object visit(PASTSL node) {
+      ptrdiff_t i1, i2;
+      getIntegers(node, i1, i2);
+      APObject ret = new APObject(_act, _act.ctx);
+      ret.setInteger(_act, i1 << i2);
+      return ret;
+    }
 
-    Object visit(PASTBitwiseAnd node) { throw new APUnimplementedException("PASTBitwiseAnd"); }
+    Object visit(PASTSR node) {
+      ptrdiff_t i1, i2;
+      getIntegers(node, i1, i2);
+      APObject ret = new APObject(_act, _act.ctx);
+      // FIXME: sign bit...
+      ret.setInteger(_act, i1 >> i2);
+      return ret;
+    }
+
+    Object visit(PASTBitwiseAnd node) {
+      ptrdiff_t i1, i2;
+      getIntegers(node, i1, i2);
+      APObject ret = new APObject(_act, _act.ctx);
+      ret.setInteger(_act, i1 & i2);
+      return ret;
+    }
 
     Object visit(PASTBitwiseNAnd node) { throw new APUnimplementedException("PASTBitwiseNAnd"); }
 
@@ -333,7 +454,37 @@ class APInterpVisitor : PASTVisitor {
         return call(toc, arg);
     }
 
-    Object visit(PASTIntCmp node) { throw new APUnimplementedException("PASTIntCmp"); }
+    Object visit(PASTIntCmp node) {
+      APObject arg = cast(APObject) node.a1.accept(this);
+      APObject int1 = cast(APObject) node.a2.accept(this);
+      APObject int2 = cast(APObject) node.a3.accept(this);
+      APObject f1 = cast(APObject) node.a4.accept(this);
+      APObject f2 = cast(APObject) node.a5.accept(this);
+
+      ptrdiff_t i1 = int1.getInteger(_act);
+      ptrdiff_t i2 = int2.getInteger(_act);
+
+      APObject fun;
+
+      // Select the right function depending on the command and
+      // the values.
+      switch(node.cmd) {
+      case psl_lt:
+	fun = (i1 < i2) ? f1 : f2; break;
+      case psl_lte:
+	fun = (i1 <= i2) ? f1 : f2; break;
+      case psl_gt:
+	fun = (i1 > i2) ? f1 : f2; break;
+      case psl_gte:
+	fun = (i1 >= i2) ? f1 : f2; break;
+      case psl_eq:
+	fun = (i1 == i2) ? f1 : f2; break;
+      case psl_ne:
+	fun = (i1 != i2) ? f1 : f2; break;
+      }
+
+      return call(fun, arg);
+    }
 
     Object visit(PASTProc node) {
         // just wrap it in an object
