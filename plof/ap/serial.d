@@ -98,8 +98,9 @@ recurse:
         return opCmp(r) == 0;
     }
 
-    // accessor
+    // accessors
     uint val() { return _val; }
+    SID next() { return _next; }
 
     private {
         uint _val;

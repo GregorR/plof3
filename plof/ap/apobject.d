@@ -284,8 +284,27 @@ class Action {
     Action createChild(PASTNode ast, APObject ctx, APObject arg, APAccessor[] temps) {
         synchronized (this) {
             Action child = new Action(new SID(_children.length, _csid), _gctx, ast, ctx, arg, temps);
+            child._parent = this;
             _children ~= child;
             return child;
+        }
+    }
+
+    /// Create a sibling action (another child of the same parent)
+    Action createSibling(PASTNode ast, APObject arg) {
+        synchronized (this) {
+            if (_parent is null) {
+                throw new ActionCreationException("Cannot create sibling.");
+            } else {
+                synchronized (_parent) {
+                    // make sure we're still a current child
+                    if (_parent._csid !is _sid.next) {
+                        return null;
+                    } else {
+                        return _parent.createChild(ast, _ctx, arg, _temps);
+                    }
+                }
+            }
         }
     }
 
@@ -382,6 +401,7 @@ class Action {
     ActionState state;
 
     private {
+        Action _parent;
         SID _sid;
         APGlobalContext _gctx;
         PASTNode _ast;
@@ -397,6 +417,10 @@ class Action {
         // things to be undone if this is destroyed
         void delegate(Action)[] _undos;
     }
+}
+
+class ActionCreationException : Exception {
+    this(char[] msg) { super(msg); }
 }
 
 /// Global execution context of Plof
