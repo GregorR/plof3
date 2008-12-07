@@ -294,12 +294,8 @@ class Action {
         Action[] oldChildren;
 
         // re-enqueue this action (FIXME: should keep track of whether it's already running)
-        synchronized (Stderr) Stderr("Cancel lock").newline;
         synchronized (this) {
-            synchronized (Stderr) Stderr("Cancel lock acquired").newline;
-            version (ThreadDebug) {
-                synchronized (Stderr) Stderr("Action ")(ast.toXML())(" canceled.").newline;
-            }
+            debugOut("canceled.");
 
             // get the children ready for destruction (FIXME: probably needs better synchronization)
             oldChildren = _children;
@@ -308,12 +304,12 @@ class Action {
             // update running -> canceled, done -> queued
             if (state == ActionState.Running || state == ActionState.Canceled) {
                 state = ActionState.Canceled;
-                version (ThreadDebug) synchronized (Stderr) Stderr("Action ")(ast.toXML())(" marked for re-enqueueing.").newline;
+                debugOut("marked for re-enqueueing.");
 
             } else if (state == ActionState.Done) {
-                version (ThreadDebug) synchronized (Stderr) Stderr("Action ")(ast.toXML())(" re-enqueueing.").newline;
+                debugOut("re-enqueueing.");
                 gctx.tp.enqueue([this]);
-                version (ThreadDebug) synchronized (Stderr) Stderr("Action ")(ast.toXML())(" re-enqueued.").newline;
+                debugOut("re-enqueued.");
 
             } else {
                 version (ThreadDebug) synchronized (Stderr) Stderr("Action ")(ast.toXML())(" in state ")(state).newline;
@@ -322,37 +318,52 @@ class Action {
         }
 
         // destroy the children
-        foreach (child; _children) {
+        foreach (child; oldChildren) {
             child.destroy();
         }
     }
 
     /// Destroy this action (cancel without the requeue, with undos)
     void destroy() {
-        synchronized (Stderr) Stderr("Destroy lock").newline;
+        Action[] oldChildren;
+        void delegate(Action)[] oldUndos;
+
         synchronized (this) {
-            synchronized (Stderr) Stderr("Destroy lock acquired").newline;
-            version (ThreadDebug) {
-                synchronized (Stderr) Stderr("Action ")(ast.toXML())(" destroyed.").newline;
-            }
+            debugOut("destroyed.");
 
             state = ActionState.Destroyed;
+
+            oldChildren = _children;
+            _children = null;
+            oldUndos = _undos;
+            _undos = null;
         }
 
         // then run all the undo actions
-        foreach (f; _undos) {
+        foreach (f; oldUndos) {
             f(this);
         }
 
         // and destroy any children
-        foreach (child; _children) {
+        foreach (child; oldChildren) {
             child.destroy();
         }
     }
 
     /// Add something which must be undone if this action is destroyed
     void addUndo(void delegate(Action) f) {
-        _undos ~= f;
+        synchronized (this) {
+            _undos ~= f;
+        }
+    }
+
+    // Debug output
+    version (ThreadDebug) {
+        final void debugOut(char[] msg) {
+            synchronized (Stderr) Stderr("Action ")(ast.toXML())(" ")(msg).newline;
+        }
+    } else {
+        final void debugOut(char[] msg) {}
     }
 
     // compare by the SID
