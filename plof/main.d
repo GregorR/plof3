@@ -272,7 +272,7 @@ int main(char[][] args)
         tp.start();
         tp.join();
         real t = sw.stop();
-        Stderr("Ran in ")(t).newline;
+        Stderr("Ran in ").format("{:f10}", t).newline;
 
     }
 
