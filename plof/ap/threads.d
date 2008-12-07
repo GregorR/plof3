@@ -222,38 +222,35 @@ class APThreadPool {
     /// Enqueue new work (note: every piece of work must either by currently unshared or locked)
     void enqueue(Action[] work) {
         uint t;
-        synchronized (this) {
-            // choose a thread to start adding to
-            t = (toEnqueue++) % _threads.length;
+
+        // try to add it to the calling thread's queue
+        APThread caller = cast(APThread) Thread.getThis();
+        if (caller !is null) {
+            t = caller._tnum;
+
+        } else {
+            // otherwise just use a global counter
+            synchronized (this) {
+                // choose a thread to start adding to
+                t = (toEnqueue++) % _threads.length;
+            }
+
         }
 
-        // try to divide the work evenly
-        int wi = 0;
-        int wperthread = work.length / _threads.length + 1;
-
-        // now start assigning
-        for (; wi < work.length; t = (t + 1) % _threads.length) {
+        // now assign to the appropriate thread if possible
+        for (;; t = (t + 1) % _threads.length) {
             APThread at = _threads[t];
 
-            // try to give it some work
+            // try to give it the work
             if (at._queueLock.tryLock()) {
                 // enqueue in reverse order (the inner queues are really a stack)
-                int i = wi + wperthread - 1;
-                if (i >= work.length) i = work.length - 1;
-
-                for (; i >= wi; i--) {
-                    version (ThreadDebug) {
-                        synchronized (Stderr) Stderr("Work ")(work[i].ast.toXML())(" re-enqueued to ")(i).newline;
-                    }
-
+                for (int i = work.length - 1; i >= 0; i--) {
                     work[i].state = ActionState.Queued;
                     at._queue ~= work[i];
                 }
-
                 at._queueLock.unlock();
 
-                // now make sure we keep track of the work that's been queued
-                wi += wperthread;
+                break;
             }
         }
     }
