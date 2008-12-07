@@ -60,22 +60,40 @@ class APThread : Thread {
             }
             _queueLock.unlock();
 
-            /* if we had nothing to do, ask somebody else
-            _parent.foreachThread(this, (APThread other) {
-                if (other._queueLock.tryLock()) {
-                    if (other._queue.length > 0) {
-                        _action = other._queue[$-1];
-                        other._queue.length = other._queue.length - 1;
-                    }
-                    other._queueLock.unlock();
-                }
+            // if we had nothing to do, ask somebody else
+            if (_action is null) {
+                _parent.foreachThread(this, (APThread other) {
+                    if (other._queueLock.tryLock()) {
+                        if (other._queue.length > 0) {
+                            // try to steal half of his work
+                            if (_queueLock.tryLock()) {
+                                // OK, both queues are locked, so steal
+                                uint tosteal = other._queue.length / 2;
+                                _queue ~= other._queue[tosteal..$].dup;
+                                other._queue.length = tosteal;
+                                _action = _queue[$-1];
+                                _queue.length = _queue.length - 1;
 
-                // if we found something, we're done
-                if (_action !is null)
-                    return true;
-                else
-                    return false;
-            }); */
+                                _queueLock.unlock();
+
+                            } else {
+                                // just steal one
+                                _action = other._queue[$-1];
+                                other._queue.length = other._queue.length - 1;
+
+                            }
+
+                        }
+                        other._queueLock.unlock();
+                    }
+
+                    // if we found something, we're done
+                    if (_action !is null)
+                        return true;
+                    else
+                        return false;
+                });
+            }
 
             // if todo is still null, maybe everything's done
             if (_action is null) {
