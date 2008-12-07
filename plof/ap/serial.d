@@ -26,6 +26,7 @@
 module plof.ap.serial;
 
 import tango.core.Array;
+import tango.core.sync.ReadWriteMutex;
 
 import tango.io.Stdout;
 
@@ -109,13 +110,18 @@ recurse:
 
 /// Serial-semantics-guaranteeing read or write of a single value, returning list of actions that need to be canceled
 class SerialAccessor(Action, Obj) {
+    this() {
+        writeListLock = new ReadWriteMutex();
+    }
+
     /// Write a value, returning the old value
     Obj write(Action act, Obj val) {
         // Can't cancel while locked, as that could cause deadlock
         Action[] toCancel;
         Obj last;
 
-        synchronized (this) {
+        writeListLock.writer.lock();
+
             // set up our own writer
             Writer w;
             w.act = act;
@@ -129,23 +135,37 @@ class SerialAccessor(Action, Obj) {
                 Writer lastw = writeList[wloc-1];
                 last = lastw.value;
 
-                // look for the first reader that would need to be cancelled
-                size_t rloc = ubound(lastw.readList, act);
-                if (rloc < lastw.readList.length) {
-                    // cancel them
-                    foreach (cact; lastw.readList[rloc..$])
-                        toCancel ~= cact;
-                    lastw.readList.length = rloc;
+                // cancel in each read list
+                for (int i = 0; i < lastw.readList.length; i++) {
+                    lastw.readListLock[i].writer.lock();
+
+                        Action[] readList = lastw.readList[i];
+
+                        // figure out the first to be canceled
+                        size_t rloc = ubound(readList, act);
+                        if (rloc < readList.length) {
+                            // cancel them
+                            foreach (cact; readList[rloc..$])
+                                toCancel ~= cact;
+                            readList.length = rloc;
+                            lastw.readList[i] = readList;
+                        }
+
+                    lastw.readListLock[i].writer.unlock();
                 }
             }
 
-            // insert the writer (efficiently)
+            // now set up all the writer's read lists
+            w.initReadLists(act);
+
+            // insert the writer (somewhat efficiently)
             writeList.length = writeList.length + 1;
             for (int i = writeList.length - 1; i > wloc; i--) {
                 writeList[i] = writeList[i-1];
             }
             writeList[wloc] = w;
-        }
+        
+        writeListLock.writer.unlock();
 
         // add the undo action
         act.addUndo(&undo);
@@ -159,14 +179,18 @@ class SerialAccessor(Action, Obj) {
 
     /// Undo all writes from a given action
     void undo(Action act) {
-        synchronized (this) {
-            // set up our own writer
+        Action[] toCancel;
+
+        writeListLock.writer.lock();
+
+            // set up our own pseudo-writer
             Writer w;
             w.act = act;
 
             // find the first owned write
             size_t first = lbound(writeList, w);
             if (first == writeList.length) {
+                writeListLock.reader.unlock();
                 return; // nothing to undo
             }
 
@@ -176,8 +200,11 @@ class SerialAccessor(Action, Obj) {
 
             // cancel them
             for (int i = first; i < last; i++) {
-                foreach (cact; writeList[i].readList) {
-                    cact.cancel();
+                for (int j = 0; j < writeList[i].readList.length; j++) {
+                    writeList[i].readListLock[j].writer.lock();
+                    foreach (cact; writeList[i].readList[j]) {
+                        toCancel ~= cact;
+                    }
                 }
             }
             
@@ -189,13 +216,25 @@ class SerialAccessor(Action, Obj) {
                 }
                 writeList.length = writeList.length - diff;
             }
+
+        writeListLock.writer.unlock();
+
+        // now cancel them
+        foreach (cact; toCancel) {
+            cact.cancel();
         }
     }
 
     /// Read a value
     Obj read(Action act) {
-        synchronized (this) {
-            // make and equivalent writer to get the location
+        // Our reader/writer lock can change, so keep track of which needs to be unlocked
+        void delegate() tounlock = &writeListLock.reader.unlock;
+
+        Obj val;
+
+        writeListLock.reader.lock();
+
+            // make an equivalent writer to get the location
             Writer w;
             w.act = act;
 
@@ -203,43 +242,78 @@ class SerialAccessor(Action, Obj) {
             ptrdiff_t wloc = (cast(ptrdiff_t) ubound(writeList, w)) - 1;
 
             if (wloc == -1) {
-                // There is no writer! Need to invent one
-                w.act = act.gctx.initAction;
+                // There is no writer! Probably need to invent one
+                writeListLock.reader.unlock();
+                writeListLock.writer.lock();
+                tounlock = &writeListLock.writer.unlock;
 
-                // insert the writer (efficiently)
-                writeList.length = writeList.length + 1;
-                for (int i = writeList.length - 1; i > 0; i--) {
-                    writeList[i] = writeList[i-1];
+                // check again
+                wloc = (cast(ptrdiff_t) ubound(writeList, w)) - 1;
+
+                if (wloc == -1) {
+                    // OK, definitely need to invent one
+                    w.act = act.gctx.initAction;
+                    w.initReadLists(act);
+
+                    // insert the writer (efficiently)
+                    writeList.length = writeList.length + 1;
+                    for (int i = writeList.length - 1; i > 0; i--) {
+                        writeList[i] = writeList[i-1];
+                    }
+                    writeList[0] = w;
+
+                    wloc = 0;
                 }
-                writeList[0] = w;
-
-                wloc = 0;
             }
 
-            // add ourself to the readlist
+            // OK, get the appropriate writer structure
             Writer* lastw = &(writeList[wloc]);
 
-            size_t rloc = ubound(lastw.readList, act);
+            // figure out which read list we belong to
+            uint tnum = act.gctx.tp.getThis();
+            lastw.readListLock[tnum].writer.lock();
 
-            // insert the reader (efficiently)
-            lastw.readList.length = lastw.readList.length + 1;
-            for (int i = lastw.readList.length - 1; i > rloc; i--) {
-                lastw.readList[i] = lastw.readList[i-1];
-            }
-            lastw.readList[rloc] = act;
+                Action[] readList = lastw.readList[tnum];
 
-            return lastw.value;
-        }
+                size_t rloc = ubound(readList, act);
+
+                // insert the reader (efficiently)
+                readList.length = readList.length + 1;
+                for (int i = readList.length - 1; i > rloc; i--) {
+                    readList[i] = readList[i-1];
+                }
+                readList[rloc] = act;
+
+                lastw.readList[tnum] = readList;
+
+            lastw.readListLock[tnum].writer.unlock();
+
+            val = lastw.value;
+        tounlock();
+
+        return val;
     }
 
     /// A writer has a value as well as a list of readers
     private struct Writer {
         Action act;
         Obj value;
-        Action[] readList;
+
+        /// Initialize the read lists and locks (necessary for all read writers)
+        void initReadLists(Action act) {
+            uint tc = act.gctx.tp.threadCount();
+            readListLock.length = tc;
+            foreach (i, _; readListLock)
+                readListLock[i] = new ReadWriteMutex();
+            readList.length = tc;
+        }
+
+        ReadWriteMutex[] readListLock;
+        Action[][] readList;
 
         int opCmp(Writer r) { return act.opCmp(r.act); }
     }
 
+    private ReadWriteMutex writeListLock;
     private Writer[] writeList;
 }

@@ -205,6 +205,21 @@ class APThreadPool {
         }
     }
 
+    /// Get the number of the current thread
+    uint getThis() {
+        APThread caller = cast(APThread) Thread.getThis();
+        if (caller !is null) {
+            return caller._tnum;
+        } else {
+            return 0; // BS, but hopefully irrelevant
+        }
+    }
+
+    /// Get the total number of threads
+    uint threadCount() {
+        return _threads.length;
+    }
+
     /// Foreach over all the threads, starting with the given one (or null to start at 0)
     void foreachThread(APThread from, bool delegate(APThread) each) {
         uint start = 0;
