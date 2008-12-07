@@ -111,9 +111,11 @@ recurse:
 class SerialAccessor(Action, Obj) {
     /// Write a value, returning the old value
     Obj write(Action act, Obj val) {
-        synchronized (this) {
-            Obj last;
+        // Can't cancel while locked, as that could cause deadlock
+        Action[] toCancel;
+        Obj last;
 
+        synchronized (this) {
             // set up our own writer
             Writer w;
             w.act = act;
@@ -132,7 +134,7 @@ class SerialAccessor(Action, Obj) {
                 if (rloc < lastw.readList.length) {
                     // cancel them
                     foreach (cact; lastw.readList[rloc..$])
-                        cact.cancel();
+                        toCancel ~= cact;
                     lastw.readList.length = rloc;
                 }
             }
@@ -143,12 +145,16 @@ class SerialAccessor(Action, Obj) {
                 writeList[i] = writeList[i-1];
             }
             writeList[wloc] = w;
-
-            // and add the undo action
-            act.addUndo(&undo);
-
-            return last;
         }
+
+        // add the undo action
+        act.addUndo(&undo);
+
+        // Now cancel anything that needs to be
+        foreach (cact; toCancel)
+            cact.cancel();
+
+        return last;
     }
 
     /// Undo all writes from a given action
@@ -178,7 +184,7 @@ class SerialAccessor(Action, Obj) {
             // then remove the writers
             if (first != last) {
                 int diff = last - first;
-                for (int i = first; i < last; i++) {
+                for (int i = first; i < writeList.length - diff && i < last; i++) {
                     writeList[i] = writeList[i+diff];
                 }
                 writeList.length = writeList.length - diff;
