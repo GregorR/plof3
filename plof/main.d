@@ -268,8 +268,7 @@ int main(char[][] args)
         // and run it
         StopWatch sw;
         sw.start();
-        tp.enqueue([gctx.initAction]);
-        tp.start();
+        tp.start(gctx.initAction);
         tp.join();
         real t = sw.stop();
         Stderr("Ran in ").format("{:f10}", t).newline;

@@ -25,13 +25,16 @@
 
 module plof.ap.apobject;
 
+import tango.core.sync.Condition;
+import tango.core.sync.Mutex;
 import tango.core.sync.ReadWriteMutex;
 
 import tango.io.Stdout;
 
 import plof.ap.serial;
 
-// FIXME: recursive dependency
+// FIXME: recursive dependencies
+import plof.ap.interp;
 import plof.ap.threads;
 
 import plof.ast.ast;
@@ -276,6 +279,9 @@ class Action {
         _ast = ast;
         _ctx = ctx;
         _temps = temps;
+
+        doneMutex = new Mutex();
+        doneCondition = new Condition(doneMutex);
     }
 
     /// Create a child action
@@ -303,6 +309,24 @@ class Action {
                     }
                 }
             }
+        }
+    }
+
+    /// Run this action
+    void run() {
+        // we're either just running or committing
+        bool committing = false;
+        synchronized (this) {
+            if (state == ActionState.Committing) committing = true;
+        }
+
+        if (committing) {
+            /* synchronized (Stderr)
+                Stderr("Committing ")(ast.toXML()).newline; */
+
+        } else {
+            ast.accept(new APInterpVisitor(this));
+
         }
     }
 
@@ -399,12 +423,18 @@ class Action {
     void ast(PASTNode set) { _ast = set; }
     APObject ctx() { return _ctx; }
     APAccessor[] temps() { return _temps; }
+    Action[] children() { return _children; }
 
     /// Current state of the action
     ActionState state;
 
     /// Whether it's queued
     bool queued;
+
+    /// The serial commit thread has to wait on actions to become 'done'
+    Mutex doneMutex;
+    /// ditto
+    Condition doneCondition;
 
     private {
         Action _parent;

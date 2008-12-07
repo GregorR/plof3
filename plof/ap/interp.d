@@ -80,14 +80,7 @@ class APInterpVisitor : PASTVisitor {
         foreach (i, ast; fproc.stmts) {
             toEnqueue[i] = _act.createChild(ast, nctx, temps);
         }
-
-        // perhaps inline
-        if (_act.gctx.tp.shouldInline()) {
-            foreach (act; toEnqueue)
-                act.ast.accept(new APInterpVisitor(act));
-        } else {
-            _act.gctx.tp.enqueue(toEnqueue);
-        }
+        _act.gctx.tp.enqueue(toEnqueue);
 
         return nctx;
     }
@@ -324,11 +317,11 @@ class APInterpVisitor : PASTVisitor {
     Object visit(PASTCatch node) { throw new APUnimplementedException("PASTCatch"); }
 
     Object visit(PASTConcat node) {
-      APObject o1 = cast(APObject) node.a1.accept(this);
-      APObject o2 = cast(APObject) node.a2.accept(this);
-      APObject ret = new APObject(_act, _act.ctx);
-      ret.setRaw(_act, o1.getRaw(_act) ~ o2.getRaw(_act));
-      return ret;
+        APObject o1 = cast(APObject) node.a1.accept(this);
+        APObject o2 = cast(APObject) node.a2.accept(this);
+        APObject ret = new APObject(_act, _act.ctx);
+        ret.setRaw(_act, o1.getRaw(_act) ~ o2.getRaw(_act));
+        return ret;
     }
 
     Object visit(PASTWrap node) {

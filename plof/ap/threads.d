@@ -129,7 +129,6 @@ class APThread : Thread {
                     _action.queued = false;
                     switch (_action.state) {
                         case ActionState.None:
-                        case ActionState.Running:
                         case ActionState.Canceled:
                             _action.state = ActionState.Running;
                             break;
@@ -137,6 +136,11 @@ class APThread : Thread {
                         case ActionState.Destroyed:
                             // can't run this!
                             _action = null;
+                            break;
+
+                        case ActionState.Done:
+                            // commit this
+                            _action.state = ActionState.Committing;
                             break;
 
                         default:
@@ -149,7 +153,7 @@ class APThread : Thread {
 
                 // OK, do it
                 try {
-                    _action.ast.accept(new APInterpVisitor(_action));
+                    _action.run();
 
                 } catch (APInterpFailure ex) {
                     // failed to interpret, need to re-enqueue
@@ -164,12 +168,24 @@ class APThread : Thread {
                 synchronized (_action) {
                     switch (_action.state) {
                         case ActionState.Running:
+                            // notify the commit thread
+                            _action.doneMutex.lock();
                             _action.state = ActionState.Done;
+                            _action.doneCondition.notify();
+                            _action.doneMutex.unlock();
                             break;
 
                         case ActionState.Canceled:
                             // re-enqueue it
                             _parent.enqueue([_action]);
+                            break;
+
+                        case ActionState.Destroyed:
+                            // who cares
+                            break;
+
+                        case ActionState.Committing:
+                            _action.state = ActionState.Committed; // should never change again
                             break;
 
                         default:
@@ -215,12 +231,19 @@ class APThread : Thread {
 
 /// A pool of threads
 class APThreadPool {
-    /// Start the whole pool
-    void start() {
+    this() {
+        commitThread = new CommitThread(this);
+    }
+
+    /// Start the whole pool with the given action
+    void start(Action initAction) {
+        enqueue([initAction]);
+        commitThread._initAction = initAction;
         _running = true;
         foreach (thread; _threads) {
             thread.start();
         }
+        commitThread.start();
     }
 
     /// Join the whole pool
@@ -228,6 +251,7 @@ class APThreadPool {
         foreach (thread; _threads) {
             thread.join();
         }
+        // FIXME: kill the commit thread
         _running = false;
     }
 
@@ -340,20 +364,46 @@ class APThreadPool {
         return ret;
     }
 
-    /**
-     * Heuristically determine whether we should inline functions (that is,
-     * run them in place instead of enqueueing them */
-    bool shouldInline() {
-        /* since this is just a guess, we don't need to lock the queues. We're
-         * just checking their length, and don't care if our check isn't atomic */
-        foreach (thread; _threads) {
-            if (thread._queue.length == 0)
-                return false;
-        }
-        return true;
+    private {
+        APThread[] _threads;
+        bool _running = false;
+        uint toEnqueue = 0;
+        CommitThread commitThread;
+    }
+}
+
+/// The commit thread
+class CommitThread : Thread {
+    this(APThreadPool tp) {
+        _tp = tp;
+        super(&run);
     }
 
-    private APThread[] _threads;
-    private bool _running = false;
-    private uint toEnqueue = 0;
+    /// Find things to commit, and commit them
+    void run() {
+        eventuallyCommit(_initAction);
+    }
+
+    /// Commit the given action and its children
+    void eventuallyCommit(Action act) {
+        // wait for it to be done
+        act.doneMutex.lock();
+        while (act.state < ActionState.Done)
+            act.doneCondition.wait();
+        act.doneMutex.unlock();
+
+        // commit it
+        _tp.enqueue([act]);
+
+        // only the normal run can create new children, so we're safe to use them without locking
+        for (int ci = 0; ci < act.children.length; ci++) {
+            Action child = act.children[ci];
+            eventuallyCommit(child);
+        }
+    }
+
+    private {
+        APThreadPool _tp;
+        Action _initAction; // set by ThreadPool
+    }
 }
