@@ -27,9 +27,7 @@ module plof.ap.apobject;
 
 import tango.core.sync.ReadWriteMutex;
 
-version (ThreadDebug) {
-    import tango.io.Stdout;
-}
+import tango.io.Stdout;
 
 import plof.ap.serial;
 
@@ -263,9 +261,10 @@ enum ActionState {
     None,
     Running,
     Canceled,
-    Queued,
     Destroyed,
-    Done
+    Done,
+    Committing,
+    Committed
 }
 
 /// AP actions are really just a serialization ID associated with an AST node to execute
@@ -320,18 +319,23 @@ class Action {
             _csid = new SID(_csid.val + 1, _sid);
 
             // update running -> canceled, done -> queued
-            if (state == ActionState.Running || state == ActionState.Canceled) {
-                state = ActionState.Canceled;
-                debugOut("marked for re-enqueueing.");
+            switch (state) {
+                case ActionState.Running:
+                case ActionState.Canceled:
+                    state = ActionState.Canceled;
+                    debugOut("marked for re-enqueueing.");
+                    break;
 
-            } else if (state == ActionState.Done) {
-                debugOut("re-enqueueing.");
-                gctx.tp.enqueue([this]);
-                debugOut("re-enqueued.");
+                case ActionState.Done:
+                    state = ActionState.Canceled;
+                    debugOut("re-enqueueing.");
+                    gctx.tp.enqueue([this]);
+                    debugOut("re-enqueued.");
+                    break;
 
-            } else {
-                version (ThreadDebug) synchronized (Stderr) Stderr("Action ")(ast.toXML())(" in state ")(state).newline;
-
+                default:
+                    synchronized (Stderr)
+                        Stderr("Action ")(ast.toXML())(" in bad state for cancelation: ")(state).newline;
             }
         }
 
@@ -396,7 +400,11 @@ class Action {
     APObject ctx() { return _ctx; }
     APAccessor[] temps() { return _temps; }
 
+    /// Current state of the action
     ActionState state;
+
+    /// Whether it's queued
+    bool queued;
 
     private {
         Action _parent;

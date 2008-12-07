@@ -126,14 +126,26 @@ class APThread : Thread {
 
                 // mark it as running
                 synchronized (_action) {
-                    if (_action.state == ActionState.Destroyed) {
-                        // can't run this!
-                        _action = null;
-                        continue;
-                    } else {
-                        _action.state = ActionState.Running;
+                    _action.queued = false;
+                    switch (_action.state) {
+                        case ActionState.None:
+                        case ActionState.Running:
+                        case ActionState.Canceled:
+                            _action.state = ActionState.Running;
+                            break;
+
+                        case ActionState.Destroyed:
+                            // can't run this!
+                            _action = null;
+                            break;
+
+                        default:
+                            synchronized (Stderr)
+                                Stderr("Action ")(_action.ast.toXML())(" in bad state for running: ")(_action.state).newline;
                     }
                 }
+
+                if (_action is null) continue;
 
                 // OK, do it
                 try {
@@ -150,10 +162,19 @@ class APThread : Thread {
 
                 // now see if we need to re-queue it
                 synchronized (_action) {
-                    if (_action.state == ActionState.Canceled) {
-                        _parent.enqueue([_action]);
-                    } else if (_action.state == ActionState.Running) {
-                        _action.state = ActionState.Done;
+                    switch (_action.state) {
+                        case ActionState.Running:
+                            _action.state = ActionState.Done;
+                            break;
+
+                        case ActionState.Canceled:
+                            // re-enqueue it
+                            _parent.enqueue([_action]);
+                            break;
+
+                        default:
+                            synchronized (Stderr)
+                                Stderr("Action ")(_action.ast.toXML())(" in bad state for completion: ")(_action.state).newline;
                     }
                 }
 
@@ -273,7 +294,7 @@ class APThreadPool {
             if (at._queueLock.tryLock()) {
                 // enqueue in reverse order (the inner queues are really a stack)
                 for (int i = work.length - 1; i >= 0; i--) {
-                    work[i].state = ActionState.Queued;
+                    work[i].queued = true;
                     at._queue ~= work[i];
                 }
                 at._queueLock.unlock();
