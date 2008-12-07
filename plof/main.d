@@ -34,6 +34,8 @@ import tango.math.Math;
 
 import tango.sys.Environment;
 
+import tango.text.convert.Integer;
+
 import tango.stdc.stdlib;
 
 import plof.prp.prp;
@@ -58,6 +60,7 @@ int main(char[][] args)
     char[] outFile;
     ubyte[] outPSL;
     bool interactive, defaultPSL, outputXML, interpAP;
+    uint apThreadCount = 0;
 
     /// Figure out the base search path
     char[] exePath = Environment.exePath(args[0]).toString();
@@ -89,6 +92,11 @@ int main(char[][] args)
                 outFile = args[++argi];
                 continue;
 
+            } else if (args[argi] == "--ap") {
+                interpAP = true;
+                apThreadCount = toLong(args[++argi]);
+                continue;
+
             }
         }
 
@@ -107,8 +115,6 @@ int main(char[][] args)
         } else if (args[argi] == "--xml") {
             outputXML = true;
 
-        } else if (args[argi] == "--ap") {
-            interpAP = true;
 
         } else {
             Stderr("Unrecognized argument ")(args[argi]).newline;
@@ -246,7 +252,7 @@ int main(char[][] args)
     // or do the AP interpretation
     } else if (interpAP) {
         // make a thread pool
-        APThreadPool tp = APThreadPool.create(1);
+        APThreadPool tp = APThreadPool.create(apThreadCount);
 
         // make a global context
         APGlobalContext gctx = new APGlobalContext(tp);
