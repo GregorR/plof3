@@ -319,6 +319,19 @@ class APThreadPool {
         return ret;
     }
 
+    /**
+     * Heuristically determine whether we should inline functions (that is,
+     * run them in place instead of enqueueing them */
+    bool shouldInline() {
+        /* since this is just a guess, we don't need to lock the queues. We're
+         * just checking their length, and don't care if our check isn't atomic */
+        foreach (thread; _threads) {
+            if (thread._queue.length == 0)
+                return false;
+        }
+        return true;
+    }
+
     private APThread[] _threads;
     private bool _running = false;
     private uint toEnqueue = 0;

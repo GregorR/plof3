@@ -80,7 +80,14 @@ class APInterpVisitor : PASTVisitor {
         foreach (i, ast; fproc.stmts) {
             toEnqueue[i] = _act.createChild(ast, nctx, temps);
         }
-        _act.gctx.tp.enqueue(toEnqueue);
+
+        // perhaps inline
+        if (_act.gctx.tp.shouldInline()) {
+            foreach (act; toEnqueue)
+                act.ast.accept(new APInterpVisitor(act));
+        } else {
+            _act.gctx.tp.enqueue(toEnqueue);
+        }
 
         return nctx;
     }
