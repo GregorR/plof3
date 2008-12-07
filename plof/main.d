@@ -260,6 +260,7 @@ int main(char[][] args)
         // and run it
         tp.enqueue([gctx.initAction]);
         tp.start();
+        tp.join();
 
     }
 

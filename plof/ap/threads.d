@@ -62,12 +62,13 @@ class APThread : Thread {
 
             /* if we had nothing to do, ask somebody else
             _parent.foreachThread(this, (APThread other) {
-                other._queueLock.lock();
-                if (other._queue.length > 0) {
-                    _action = other._queue[$-1];
-                    other._queue.length = other._queue.length - 1;
+                if (other._queueLock.tryLock()) {
+                    if (other._queue.length > 0) {
+                        _action = other._queue[$-1];
+                        other._queue.length = other._queue.length - 1;
+                    }
+                    other._queueLock.unlock();
                 }
-                other._queueLock.unlock();
 
                 // if we found something, we're done
                 if (_action !is null)
@@ -82,15 +83,18 @@ class APThread : Thread {
 
                 // check other threads
                 _parent.foreachThread(this, (APThread other) {
-                    other._queueLock.lock();
-                    if (other._queue.length != 0 || other._action !is null) {
-                        // somebody still has work
+                    if (other._queueLock.tryLock()) {
+                        if (other._queue.length != 0 || other._action !is null) {
+                            // somebody still has work
+                            done = false;
+                        }
+                        other._queueLock.unlock();
+                    } else {
                         done = false;
                     }
-                    other._queueLock.unlock();
 
                     return (done == false);
-                });*/
+                }); */
 
                 bool done = false;
 
@@ -183,6 +187,14 @@ class APThreadPool {
         foreach (thread; _threads) {
             thread.start();
         }
+    }
+
+    /// Join the whole pool
+    void join() {
+        foreach (thread; _threads) {
+            thread.join();
+        }
+        _running = false;
     }
 
     /// Add a thread to the pool
