@@ -80,7 +80,7 @@ class APThread : Thread {
 
             // if todo is still null, maybe everything's done
             if (_action is null) {
-                bool done = true;
+                /* bool done = true;
 
                 // check other threads
                 _parent.foreachThread(this, (APThread other) {
@@ -92,7 +92,9 @@ class APThread : Thread {
                     other._queueLock.unlock();
 
                     return (done == false);
-                });
+                });*/
+
+                bool done = false;
 
                 // if we're done, stop
                 if (done) {
@@ -130,14 +132,16 @@ class APThread : Thread {
                 synchronized (_action) {
                     if (_action.state == ActionState.Canceled) {
                         _parent.enqueue([_action]);
-                    } else {
+                    } else if (_action.state == ActionState.Running) {
                         _action.state = ActionState.Done;
                     }
                 }
 
                 debugOut("done.");
 
+                _queueLock.lock();
                 _action = null;
+                _queueLock.unlock();
 
             }
         }
