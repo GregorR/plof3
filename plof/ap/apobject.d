@@ -27,6 +27,10 @@ module plof.ap.apobject;
 
 import tango.core.sync.ReadWriteMutex;
 
+version (ThreadDebug) {
+    import tango.io.Stdout;
+}
+
 import plof.ap.serial;
 
 // FIXME: recursive dependency
@@ -260,6 +264,7 @@ enum ActionState {
     Running,
     Canceled,
     Queued,
+    Destroyed,
     Done
 }
 
@@ -267,6 +272,7 @@ enum ActionState {
 class Action {
     this(SID sid, APGlobalContext gctx, PASTNode ast, APObject ctx, APObject arg, APAccessor[] temps) {
         _sid = sid;
+        _csid = new SID(0, _sid);
         _gctx = gctx;
         _ast = ast;
         _ctx = ctx;
@@ -274,17 +280,79 @@ class Action {
         _temps = temps;
     }
 
+    /// Create a child action
+    Action createChild(PASTNode ast, APObject ctx, APObject arg, APAccessor[] temps) {
+        synchronized (this) {
+            Action child = new Action(new SID(_children.length, _csid), _gctx, ast, ctx, arg, temps);
+            _children ~= child;
+            return child;
+        }
+    }
+
     /// Cancel this action
     void cancel() {
+        Action[] oldChildren;
+
         // re-enqueue this action (FIXME: should keep track of whether it's already running)
+        synchronized (Stderr) Stderr("Cancel lock").newline;
         synchronized (this) {
+            synchronized (Stderr) Stderr("Cancel lock acquired").newline;
+            version (ThreadDebug) {
+                synchronized (Stderr) Stderr("Action ")(ast.toXML())(" canceled.").newline;
+            }
+
+            // get the children ready for destruction (FIXME: probably needs better synchronization)
+            oldChildren = _children;
+            _csid = new SID(_csid.val + 1, _sid);
+
             // update running -> canceled, done -> queued
             if (state == ActionState.Running || state == ActionState.Canceled) {
                 state = ActionState.Canceled;
+                version (ThreadDebug) synchronized (Stderr) Stderr("Action ")(ast.toXML())(" marked for re-enqueueing.").newline;
+
             } else if (state == ActionState.Done) {
+                version (ThreadDebug) synchronized (Stderr) Stderr("Action ")(ast.toXML())(" re-enqueueing.").newline;
                 gctx.tp.enqueue([this]);
+                version (ThreadDebug) synchronized (Stderr) Stderr("Action ")(ast.toXML())(" re-enqueued.").newline;
+
+            } else {
+                version (ThreadDebug) synchronized (Stderr) Stderr("Action ")(ast.toXML())(" in state ")(state).newline;
+
             }
         }
+
+        // destroy the children
+        foreach (child; _children) {
+            child.destroy();
+        }
+    }
+
+    /// Destroy this action (cancel without the requeue, with undos)
+    void destroy() {
+        synchronized (Stderr) Stderr("Destroy lock").newline;
+        synchronized (this) {
+            synchronized (Stderr) Stderr("Destroy lock acquired").newline;
+            version (ThreadDebug) {
+                synchronized (Stderr) Stderr("Action ")(ast.toXML())(" destroyed.").newline;
+            }
+
+            state = ActionState.Destroyed;
+        }
+
+        // then run all the undo actions
+        foreach (f; _undos) {
+            f(this);
+        }
+
+        // and destroy any children
+        foreach (child; _children) {
+            child.destroy();
+        }
+    }
+
+    /// Add something which must be undone if this action is destroyed
+    void addUndo(void delegate(Action) f) {
+        _undos ~= f;
     }
 
     // compare by the SID
@@ -308,6 +376,15 @@ class Action {
         PASTNode _ast;
         APObject _ctx, _arg;
         APAccessor[] _temps;
+
+        Action[] _children;
+
+        /* children are created under a child sid, so that children which need
+         * to be canceled will always be before uncanceled children */
+        SID _csid;
+
+        // things to be undone if this is destroyed
+        void delegate(Action)[] _undos;
     }
 }
 

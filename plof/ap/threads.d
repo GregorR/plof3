@@ -36,6 +36,10 @@ version (Windows) {} else {
 import plof.ap.apobject;
 import plof.ap.interp;
 
+version (ThreadDebug) {
+    import tango.io.Stdout;
+}
+
 /// An individual AP thread
 class APThread : Thread {
     this(APThreadPool parent) {
@@ -91,15 +95,27 @@ class APThread : Thread {
                 });
 
                 // if we're done, stop
-                if (done) return;
+                if (done) {
+                    debugOut("quitting.");
+
+                    return;
+                }
 
                 // otherwise, yield for more work
                 yield();
 
             } else {
+                debugOut("doing " ~ _action.ast.toXML());
+
                 // mark it as running
                 synchronized (_action) {
-                    _action.state = ActionState.Running;
+                    if (_action.state == ActionState.Destroyed) {
+                        // can't run this!
+                        _action = null;
+                        continue;
+                    } else {
+                        _action.state = ActionState.Running;
+                    }
                 }
 
                 // OK, do it
@@ -119,11 +135,23 @@ class APThread : Thread {
                     }
                 }
 
+                debugOut("done.");
+
                 _action = null;
 
             }
         }
     }
+
+    /// Thread debugging is only provided with the proper version()
+    version (ThreadDebug) {
+        final void debugOut(char[] msg) {
+            synchronized (Stderr) Stderr("Thread ")(_tnum)(" ")(msg).newline;
+        }
+    } else {
+        final void debugOut(char[] msg) {}
+    }
+
 
     /// The threadpool that owns this
     private APThreadPool _parent;
@@ -190,11 +218,15 @@ class APThreadPool {
 
             // try to give it some work
             if (at._queueLock.tryLock()) {
-                // enqueue in reverse order (the inner queues are really a stack
+                // enqueue in reverse order (the inner queues are really a stack)
                 int i = wi + wperthread - 1;
                 if (i >= work.length) i = work.length - 1;
 
                 for (; i >= wi; i--) {
+                    version (ThreadDebug) {
+                        synchronized (Stderr) Stderr("Work ")(work[i].ast.toXML())(" re-enqueued to ")(i).newline;
+                    }
+
                     work[i].state = ActionState.Queued;
                     at._queue ~= work[i];
                 }

@@ -73,8 +73,9 @@ class APInterpVisitor : PASTVisitor {
 
         // and run them
         Action[] toEnqueue;
+        toEnqueue.length = fproc.stmts.length;
         foreach (i, ast; fproc.stmts) {
-            toEnqueue ~= new Action(new SID(i, _act.sid), _act.gctx, ast, nctx, arg, temps);
+            toEnqueue[i] = _act.createChild(ast, nctx, arg, temps);
         }
         _act.gctx.tp.enqueue(toEnqueue);
 

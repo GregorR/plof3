@@ -65,13 +65,14 @@ class SID {
             pref = -1;
         }
 
-        // find the first last nonmatching
+        // find the last nonmatching
         while (l !is null && l._next !is r._next) {
             l = l._next;
             r = r._next;
         }
 
         // if they were equal from here
+recurse:
         if (l is r) {
             // then it's the preferred side
             return pref;
@@ -80,8 +81,13 @@ class SID {
             // otherwise it's whichever side is greater
             if (l._val < r._val) {
                 return -1;
-            } else {
+            } else if (l._val > r._val) {
                 return 1;
+            } else {
+                // they're equal, recurse
+                l = l._next;
+                r = r._next;
+                goto recurse;
             }
         }
     }
@@ -90,6 +96,9 @@ class SID {
     bool opEquals(SID r) {
         return opCmp(r) == 0;
     }
+
+    // accessor
+    uint val() { return _val; }
 
     private {
         uint _val;
@@ -135,7 +144,45 @@ class SerialAccessor(Action, Obj) {
             }
             writeList[wloc] = w;
 
+            // and add the undo action
+            act.addUndo(&undo);
+
             return last;
+        }
+    }
+
+    /// Undo all writes from a given action
+    void undo(Action act) {
+        synchronized (this) {
+            // set up our own writer
+            Writer w;
+            w.act = act;
+
+            // find the first owned write
+            size_t first = lbound(writeList, w);
+            if (first == writeList.length) {
+                return; // nothing to undo
+            }
+
+            // find the last owned write
+            int last;
+            for (last = first; last < writeList.length && writeList[last].act == act; last++) {}
+
+            // cancel them
+            for (int i = first; i < last; i++) {
+                foreach (cact; writeList[i].readList) {
+                    cact.cancel();
+                }
+            }
+            
+            // then remove the writers
+            if (first != last) {
+                int diff = last - first;
+                for (int i = first; i < last; i++) {
+                    writeList[i] = writeList[i+diff];
+                }
+                writeList.length = writeList.length - diff;
+            }
         }
     }
 
