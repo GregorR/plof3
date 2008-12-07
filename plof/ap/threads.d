@@ -36,9 +36,7 @@ version (Windows) {} else {
 import plof.ap.apobject;
 import plof.ap.interp;
 
-version (ThreadDebug) {
-    import tango.io.Stdout;
-}
+import tango.io.Stdout;
 
 /// An individual AP thread
 class APThread : Thread {
@@ -123,9 +121,14 @@ class APThread : Thread {
                 // OK, do it
                 try {
                     _action.ast.accept(new APInterpVisitor(_action));
+
                 } catch (APInterpFailure ex) {
                     // failed to interpret, need to re-enqueue
                     _action.cancel();
+
+                } catch (APUnimplementedException ex) {
+                    // just mention it
+                    synchronized (Stderr) Stderr("Unimplemented AST node: ")(ex.msg).newline;
                 }
 
                 // now see if we need to re-queue it
