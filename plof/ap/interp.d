@@ -65,6 +65,7 @@ class APInterpVisitor : PASTVisitor {
 
         // make the context for this call
         APObject nctx = new APObject(_act, func.getParent(_act));
+        nctx.setMember(_act, cast(ubyte[]) "\x1bargument", arg);
 
         // and temps
         APAccessor[] temps;
@@ -77,7 +78,7 @@ class APInterpVisitor : PASTVisitor {
         Action[] toEnqueue;
         toEnqueue.length = fproc.stmts.length;
         foreach (i, ast; fproc.stmts) {
-            toEnqueue[i] = _act.createChild(ast, nctx, arg, temps);
+            toEnqueue[i] = _act.createChild(ast, nctx, temps);
         }
         _act.gctx.tp.enqueue(toEnqueue);
 
@@ -87,7 +88,10 @@ class APInterpVisitor : PASTVisitor {
 
 
     Object visit(PASTArguments node) {
-        return _act.arg;
+        APObject ret = _act.ctx.getMember(_act, cast(ubyte[]) "\x1bargument");
+        if (ret is null)
+            ret = _act.gctx.nul;
+        return ret;
     }
 
     Object visit(PASTNull node) {

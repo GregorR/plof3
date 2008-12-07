@@ -270,20 +270,19 @@ enum ActionState {
 
 /// AP actions are really just a serialization ID associated with an AST node to execute
 class Action {
-    this(SID sid, APGlobalContext gctx, PASTNode ast, APObject ctx, APObject arg, APAccessor[] temps) {
+    this(SID sid, APGlobalContext gctx, PASTNode ast, APObject ctx, APAccessor[] temps) {
         _sid = sid;
         _csid = new SID(0, _sid);
         _gctx = gctx;
         _ast = ast;
         _ctx = ctx;
-        _arg = arg;
         _temps = temps;
     }
 
     /// Create a child action
-    Action createChild(PASTNode ast, APObject ctx, APObject arg, APAccessor[] temps) {
+    Action createChild(PASTNode ast, APObject ctx, APAccessor[] temps) {
         synchronized (this) {
-            Action child = new Action(new SID(_children.length, _csid), _gctx, ast, ctx, arg, temps);
+            Action child = new Action(new SID(_children.length, _csid), _gctx, ast, ctx, temps);
             child._parent = this;
             _children ~= child;
             return child;
@@ -291,7 +290,7 @@ class Action {
     }
 
     /// Create a sibling action (another child of the same parent)
-    Action createSibling(PASTNode ast, APObject arg) {
+    Action createSibling(PASTNode ast, APAccessor[] temps) {
         synchronized (this) {
             if (_parent is null) {
                 throw new ActionCreationException("Cannot create sibling.");
@@ -301,7 +300,7 @@ class Action {
                     if (_parent._csid !is _sid.next) {
                         return null;
                     } else {
-                        return _parent.createChild(ast, _ctx, arg, _temps);
+                        return _parent.createChild(ast, _ctx, temps);
                     }
                 }
             }
@@ -395,7 +394,6 @@ class Action {
     PASTNode ast() { return _ast; }
     void ast(PASTNode set) { _ast = set; }
     APObject ctx() { return _ctx; }
-    APObject arg() { return _arg; }
     APAccessor[] temps() { return _temps; }
 
     ActionState state;
@@ -405,7 +403,7 @@ class Action {
         SID _sid;
         APGlobalContext _gctx;
         PASTNode _ast;
-        APObject _ctx, _arg;
+        APObject _ctx;
         APAccessor[] _temps;
 
         Action[] _children;
@@ -428,7 +426,7 @@ class APGlobalContext {
     this(APThreadPool tp) {
         this.tp = tp;
         nul = new APObject();
-        initAction = new Action(new SID(0, null), this, null, nul, nul, []);
+        initAction = new Action(new SID(0, null), this, null, nul, []);
         nul.setParent(initAction, nul);
         global = new APObject(initAction, nul);
     }
