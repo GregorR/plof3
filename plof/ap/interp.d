@@ -250,7 +250,12 @@ class APInterpVisitor : PASTVisitor {
         APObject obj = cast(APObject) node.a1.accept(this);
         APObject index = cast(APObject) node.a2.accept(this);
 
-        return obj.getArrayElement(_act, index.getInteger(_act));
+        APObject ret = obj.getArrayElement(_act, index.getInteger(_act));
+        if (ret is null) {
+            return _act.gctx.nul;
+        } else {
+            return ret;
+        }
     }
 
     Object visit(PASTMul node) { throw new APUnimplementedException("PASTMul"); }
