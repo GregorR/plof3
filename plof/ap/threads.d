@@ -97,7 +97,7 @@ class APThread : Thread {
 
             // if todo is still null, maybe everything's done
             if (_action is null) {
-                /* bool done = true;
+                bool done = true;
 
                 // check other threads
                 _parent.foreachThread(this, (APThread other) {
@@ -112,9 +112,7 @@ class APThread : Thread {
                     }
 
                     return (done == false);
-                }); */
-
-                bool done = false;
+                });
 
                 // if we're done, stop
                 if (done) {
