@@ -107,7 +107,9 @@ class APInterpVisitor : PASTVisitor {
     }
 
     Object visit(PASTIntWidth node) {
-      throw new APUnimplementedException("PASTIntWidth");
+      APObject ret = new APObject(_act, _act.ctx);
+      ret.setInteger(_act, ptrdiff_t.sizeof);
+      return ret;
     }
 
     Object visit(PASTVersion node) {
@@ -120,8 +122,6 @@ class APInterpVisitor : PASTVisitor {
     }
 
     Object visit(PASTThrow node) {
-//       APObject obj = cast(APObject) node.a1.accept(this);
-//       return obj;
       throw new APUnimplementedException("PASTThrow");
     }
 
@@ -145,9 +145,65 @@ class APInterpVisitor : PASTVisitor {
       return ret;
     }
 
-    Object visit(PASTInteger node) { throw new APUnimplementedException("PASTInteger"); }
+    Object visit(PASTInteger node) {
+      APObject obj = cast(APObject) node.a1.accept(this);
+      ubyte[] raw = obj.getRaw(_act);
+      ptrdiff_t val = 0;
+      switch (raw.length) {
+      case 1:
+	val = raw[0];
+	break;
+	
+      case 2:
+	val =
+	  (raw[0] << 8) |
+	  (raw[1]);
+	break;
+	
+      case 4:
+	val =
+	  (raw[0] << 24) |
+	  (raw[1] << 16) |
+	  (raw[2] << 8) |
+	  (raw[3]);
+	break;
+        
+      case 8:
+	static if(ptrdiff_t.sizeof >= 8) {
+	  val =
+	    (cast(ptrdiff_t) raw[0] << 56) |
+	    (cast(ptrdiff_t) raw[1] << 48) |
+	    (cast(ptrdiff_t) raw[2] << 40) |
+	    (cast(ptrdiff_t) raw[3] << 32) |
+	    (cast(ptrdiff_t) raw[4] << 24) |
+	    (cast(ptrdiff_t) raw[5] << 16) |
+	    (cast(ptrdiff_t) raw[6] << 8) |
+	    (cast(ptrdiff_t) raw[7]);
+	} else {
+	  val =
+	    (raw[4] << 24) |
+	    (raw[5] << 16) |
+	    (raw[6] << 8) |
+	    (raw[7]);
+	}
+	break;
+      default:
+	throw new APInterpFailure("Cannot create an integer from data of lengths other than 1, 2, 4, 8.");
+      }
+      APObject ret = new APObject(_act, obj.getParent(_act));
+      ret.setInteger(_act, val);
+      return ret;
+    }
 
-    Object visit(PASTByte node) { throw new APUnimplementedException("PASTByte"); }
+    Object visit(PASTByte node) {
+      APObject obj = cast(APObject) node.a1.accept(this);
+      ptrdiff_t i = obj.getInteger(_act);
+      ubyte[] b;
+      b[] = i % 256;
+      APObject ret = new APObject(_act, _act.ctx);
+      ret.setRaw(_act, b);
+      return ret;
+    }
 
     Object visit(PASTPrint node) {
         // FIXME: this should not print immediately
@@ -382,7 +438,6 @@ class APInterpVisitor : PASTVisitor {
       ptrdiff_t i1, i2;
       getIntegers(node, i1, i2);
       APObject ret = new APObject(_act, _act.ctx);
-      // FIXME: sign bit...
       ret.setInteger(_act, i1 >> i2);
       return ret;
     }
@@ -395,15 +450,45 @@ class APInterpVisitor : PASTVisitor {
       return ret;
     }
 
-    Object visit(PASTBitwiseNAnd node) { throw new APUnimplementedException("PASTBitwiseNAnd"); }
+    Object visit(PASTBitwiseNAnd node) {
+      ptrdiff_t i1, i2;
+      getIntegers(node, i1, i2);
+      APObject ret = new APObject(_act, _act.ctx);
+      ret.setInteger(_act, ~(i1 & i2));
+      return ret;
+    }
 
-    Object visit(PASTBitwiseOr node) { throw new APUnimplementedException("PASTBitwiseOr"); }
+    Object visit(PASTBitwiseOr node) {
+      ptrdiff_t i1, i2;
+      getIntegers(node, i1, i2);
+      APObject ret = new APObject(_act, _act.ctx);
+      ret.setInteger(_act, i1 | i2);
+      return ret;
+    }
 
-    Object visit(PASTBitwiseNOr node) { throw new APUnimplementedException("PASTBitwiseNOr"); }
+    Object visit(PASTBitwiseNOr node) {
+      ptrdiff_t i1, i2;
+      getIntegers(node, i1, i2);
+      APObject ret = new APObject(_act, _act.ctx);
+      ret.setInteger(_act, ~(i1 | i2));
+      return ret;
+    }
 
-    Object visit(PASTBitwiseXOr node) { throw new APUnimplementedException("PASTBitwiseXOr"); }
+    Object visit(PASTBitwiseXOr node) {
+      ptrdiff_t i1, i2;
+      getIntegers(node, i1, i2);
+      APObject ret = new APObject(_act, _act.ctx);
+      ret.setInteger(_act, i1 ^ i2);
+      return ret;
+    }
 
-    Object visit(PASTBitwiseNXOr node) { throw new APUnimplementedException("PASTBitwiseNXOr"); }
+    Object visit(PASTBitwiseNXOr node) {
+      ptrdiff_t i1, i2;
+      getIntegers(node, i1, i2);
+      APObject ret = new APObject(_act, _act.ctx);
+      ret.setInteger(_act, ~(i1 ^ i2));
+      return ret;
+    }
 
     Object visit(PASTReturnSet node) {
         // set the return of this context
@@ -433,7 +518,21 @@ class APInterpVisitor : PASTVisitor {
         return _act.gctx.nul;
     }
 
-    Object visit(PASTArrayIndexSet node) { throw new APUnimplementedException("PASTArrayIndexSet"); }
+    Object visit(PASTArrayIndexSet node) {
+      APObject arr = cast(APObject) node.a1.accept(this);
+      APObject index = cast(APObject) node.a2.accept(this);
+      APObject value = cast(APObject) node.a3.accept(this);
+
+      uint i = cast(uint) index.getInteger(_act);
+      uint arr_len = arr.getArrayLength(_act);
+      // There is a FIXME in APObject about this, but I took care
+      // of it here instead... perhaps move into
+      // APObject.setArrayElement(...)?
+      if (i >= arr_len)
+	arr.setArrayLength(_act, i+1);
+      arr.setArrayElement(_act, i, value);
+      return _act.gctx.nul;
+    }
 
     Object visit(PASTCmp node) {
         // if (a2 is a3) a4(a1) else a5(a1)
