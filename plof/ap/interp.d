@@ -671,7 +671,49 @@ class APInterpVisitor : PASTVisitor {
         return _act.gctx.nul;
     }
 
-    Object visit(PASTLoop node) { throw new APUnimplementedException("PASTLoop"); }
+    Object visit(PASTLoop node) {
+        Action[] toEnqueue;
+        Action nact;
+
+        // temporaries can't be shared across loop boundaries, so there's no reason to create conflicts in them
+        APAccessor[] ntemps;
+        ntemps.length = _act.temps.length;
+        foreach (ti, _; ntemps) {
+            ntemps[ti] = new APAccessor();
+        }
+
+        // unroll the loop across the number of threads
+        uint tc = _act.gctx.tp.threadCount();
+
+        // get each of the statements
+        PASTNode[] stmts = node.stmts;
+        foreach (stmti, stmt; stmts) {
+            if (stmti == stmts.length - 1) {
+                // this is the last statement, so we need to result as the argument of the next iteration
+                stmt = new PASTMemberSet(new PASTThis(), new PASTRaw(cast(ubyte[]) "\x1bargument"), stmt);
+            }
+
+            // now make the corresponding action
+            nact = _act.createSibling(stmt, ntemps);
+            if (nact is null) {
+                // must have been canceled
+                return _act.gctx.nul;
+            }
+            toEnqueue ~= nact;
+        }
+
+        // as well as a repeat of ourself
+        nact = _act.createSibling(node, ntemps);
+        if (nact is null) {
+            return _act.gctx.nul;
+        }
+        toEnqueue ~= nact;
+
+        // and enqueue them
+        _act.gctx.tp.enqueue(toEnqueue);
+
+        return _act.gctx.nul;
+    }
 
     Object visit(PASTArray node) {
         APObject ret = new APObject(_act, _act.ctx);
