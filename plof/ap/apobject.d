@@ -435,11 +435,7 @@ class Action {
 
   APObject findExcptHandler() {
     if (catches()) {
-      APObject e;
-      synchronized(this) {
-	e = _excptHandler;
-      }
-      return e;
+      return _excptHandler;
     } else if (_parent is null) {
       Stderr("Error: Uncaught exception").newline;
       exit(42);
@@ -462,22 +458,13 @@ class Action {
     Action[] children() { return _children; }
 
     bool catches() {
-      APObject e;
-      synchronized(this) {
-	e = _excptHandler;
-      }
-      return e !is null;
+      return _excptHandler !is null;
     }
     APObject getExcptHandler() {
-      APObject e;
-      synchronized(this) {
-	e = _excptHandler;
-      }
+      return _excptHandler;
     }
     void setExcptHandler(APObject excptHandler) {
-      synchronized(this) {
-	_excptHandler = excptHandler;
-      }
+      _excptHandler = excptHandler;
     }
 
     /// Current state of the action
