@@ -94,7 +94,7 @@ class APThread : Thread {
 
             // if todo is still null, maybe everything's done
             if (_action is null) {
-                bool done = true;
+                /*bool done = true;
 
                 // check other threads
                 _parent.foreachThread(this, (APThread other) {
@@ -109,7 +109,8 @@ class APThread : Thread {
                     }
 
                     return (done == false);
-                });
+                });*/
+                bool done = !_parent.commitThread.running;
 
                 // if we're done, stop
                 if (done) {
@@ -240,6 +241,7 @@ class APThreadPool {
         enqueue([initAction]);
         commitThread._initAction = initAction;
         _running = true;
+        commitThread.running = true;
         foreach (thread; _threads) {
             thread.start();
         }
@@ -393,6 +395,7 @@ class CommitThread : Thread {
     /// Find things to commit, and commit them
     void run() {
         eventuallyCommit(_initAction);
+        running = false;
     }
 
     /// Commit the given action and its children
@@ -416,5 +419,6 @@ class CommitThread : Thread {
     private {
         APThreadPool _tp;
         Action _initAction; // set by ThreadPool
+        bool running = false;
     }
 }
