@@ -435,11 +435,9 @@ class CommitThread : Thread {
         _tp.enqueue([act], true);
 
         // only the normal run can create new children, so we're safe to use them without locking
-        Action[] children = act.children;
-        for (int ci = 0; ci < children.length; ci++) {
+        for (int ci = 0; ci < act.children.length; ci++) {
             Action child = act.children[ci];
             eventuallyCommit(child);
-            children = act.children;
         }
     }
 
