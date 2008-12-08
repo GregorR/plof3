@@ -288,31 +288,94 @@ class Action {
     }
 
     /// Create a child action
-    Action createChild(PASTNode ast, APObject ctx, APAccessor[] temps) {
-        synchronized (this) {
-            Action child = new Action(new SID(_children.length, _csid), _gctx, ast, ctx, temps);
-            child._parent = this;
-            _children ~= child;
-            return child;
-        }
+    Action createChild(PASTNode ast, APObject ctx, APAccessor[] temps, Action siblingof = null) {
+        Action child;
+
+        // only create children if we're in the right state
+        stateMutex.lock();
+            bool notdone = true;
+            while (notdone) {
+                switch (state) {
+                    case ActionState.None:
+                    case ActionState.Canceled:
+                    case ActionState.Committing:
+                        // these will eventually go
+                        stateCondition.wait();
+                        break;
+
+                    case ActionState.Running:
+                    case ActionState.Done:
+                    case ActionState.Committed: // possible with loops
+                        // these are OK
+                        notdone = false;
+                        break;
+
+                    case ActionState.Destroyed:
+                        // definitely can't make children
+                        stateMutex.unlock();
+                        return null;
+
+                    default:
+                        synchronized (Stderr)
+                            Stderr("Action ")(ast.toXML())(" in bad state for spawning: ")(state).newline;
+                }
+            }
+
+            synchronized (this) {
+                // make sure the siblingof is sensible
+                if (siblingof !is null && siblingof.sid.next !is _csid) {
+                    // from a dead child
+                    child = null;
+                } else {
+                    child = new Action(new SID(_children.length, _csid), _gctx, ast, ctx, temps);
+                    child._parent = this;
+                    _children ~= child;
+                }
+            }
+        stateMutex.unlock();
+
+        return child;
     }
 
     /// Create a sibling action (another child of the same parent)
     Action createSibling(PASTNode ast, APAccessor[] temps) {
-        synchronized (this) {
-            if (_parent is null) {
-                throw new ActionCreationException("Cannot create sibling.");
-            } else {
-                synchronized (_parent) {
-                    // make sure we're still a current child
-                    if (_parent._csid !is _sid.next) {
+        Action sibling;
+
+        // only create siblings if we're in the right state
+        stateMutex.lock();
+            bool notdone = true;
+            while (notdone) {
+                switch (state) {
+                    case ActionState.None:
+                    case ActionState.Canceled:
+                        // these will eventually go
+                        stateCondition.wait();
+                        break;
+
+                    case ActionState.Running:
+                    case ActionState.Done:
+                        // these are OK
+                        notdone = false;
+                        break;
+
+                    case ActionState.Destroyed:
+                        // definitely can't make children
+                        stateMutex.unlock();
                         return null;
-                    } else {
-                        return _parent.createChild(ast, _ctx, temps);
-                    }
                 }
             }
-        }
+
+            synchronized (this) {
+                if (_parent is null) {
+                    stateMutex.unlock();
+                    throw new ActionCreationException("Cannot create sibling.");
+                } else {
+                    sibling = _parent.createChild(ast, _ctx, temps, this);
+                }
+            }
+        stateMutex.unlock();
+
+        return sibling;
     }
 
     /// Run this action
@@ -398,7 +461,7 @@ class Action {
             case ActionState.Canceled:
                 state = ActionState.None;
             case ActionState.Destroyed:
-                stateCondition.notify();
+                stateCondition.notifyAll();
                 break;
 
             default:
@@ -435,7 +498,7 @@ class Action {
                 case ActionState.Canceled:
                     notdone = false;
                     state = ActionState.Destroyed;
-                    stateCondition.notify();
+                    stateCondition.notifyAll();
                     break;
 
                 default:

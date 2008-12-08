@@ -183,7 +183,7 @@ class APThread : Thread {
                     switch (_action.state) {
                         case ActionState.Running:
                             _action.state = ActionState.Done;
-                            _action.stateCondition.notify();
+                            _action.stateCondition.notifyAll();
                             break;
 
                         case ActionState.Committing:
@@ -414,9 +414,7 @@ class CommitThread : Thread {
                 case ActionState.None:
                 case ActionState.Running:
                 case ActionState.Canceled:
-                    synchronized (Stderr) Stderr("A").flush;
                     act.stateCondition.wait();
-                    synchronized (Stderr) Stderr("B").flush;
                     break;
 
                 case ActionState.Done:
@@ -440,18 +438,28 @@ class CommitThread : Thread {
         switch (act.state) {
             case ActionState.Committing:
                 act.state = ActionState.Committed;
+                act.stateCondition.notifyAll();
                 break;
         }
         act.stateMutex.unlock();
 
-        // only the normal run can create new children, so we're safe to use them without locking
-        Action[] children;
+        // commit children
+        int i = 0;
+childloop:
+        Action child;
+
         synchronized (act) {
-            children = act.children.dup;
+            Action[] children = act.children;
+            if (i >= children.length) {
+                // no more children to look at
+                return;
+            }
+            child = children[i];
+            i++;
         }
-        foreach (child; children) {
-            eventuallyCommit(child);
-        }
+
+        eventuallyCommit(child);
+        goto childloop;
     }
 
     private {

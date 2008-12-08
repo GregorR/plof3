@@ -76,9 +76,9 @@ class APInterpVisitor : PASTVisitor {
 
         // and put them in a queue
         Action[] toEnqueue;
-        toEnqueue.length = fproc.stmts.length;
         foreach (i, ast; fproc.stmts) {
-            toEnqueue[i] = _act.createChild(ast, nctx, temps);
+            Action child = _act.createChild(ast, nctx, temps);
+            if (child !is null) toEnqueue ~= child;
         }
 
         return runsub(toEnqueue, nctx, temps);
@@ -100,7 +100,7 @@ class APInterpVisitor : PASTVisitor {
                     switch (act.state) {
                         case ActionState.Running:
                             act.state = ActionState.Done;
-                            act.stateCondition.notify();
+                            act.stateCondition.notifyAll();
                             break;
 
                         default:
@@ -183,9 +183,9 @@ class APInterpVisitor : PASTVisitor {
       
       // and put them in a queue
       Action[] toEnqueue;
-      toEnqueue.length = fproc.stmts.length;
       foreach (i, ast; fproc.stmts) {
-	toEnqueue[i] = _act.createChild(ast, nctx, temps);
+	Action child = _act.createChild(ast, nctx, temps);
+        if (child !is null) toEnqueue ~= child;
       }
       
       return runsub(toEnqueue, nctx, temps);
