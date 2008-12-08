@@ -39,6 +39,8 @@ import plof.ap.threads;
 
 import plof.ast.ast;
 
+import std.c.stdlib;
+
 /// Serial accessor for objects
 alias SerialAccessor!(Action, APObject) APAccessor;
 
@@ -295,17 +297,6 @@ class Action {
         }
     }
 
-//     /// Create a child action that can catch exceptions
-//     Action createChild(PASTNode ast, APObject ctx, APAccessor[] temps, APObject excptHandler) {
-//         synchronized (this) {
-//             Action child = new Action(new SID(_children.length, _csid), _gctx, ast, ctx, temps);
-//             child._parent = this;
-// 	    child._excptHandler = excptHandler;
-//             _children ~= child;
-//             return child;
-//         }
-//     }
-
     /// Create a sibling action (another child of the same parent)
     Action createSibling(PASTNode ast, APAccessor[] temps) {
         synchronized (this) {
@@ -444,12 +435,15 @@ class Action {
 
   APObject findExcptHandler() {
     if (catches()) {
-      Stdout("Found exception handler").newline;
-      return _excptHandler;
+      APObject e;
+      synchronized(this) {
+	e = _excptHandler;
+      }
+      return e;
     } else if (_parent is null) {
-      throw new ActionCreationException("Uncaught exception");
+      Stderr("Error: Uncaught exception").newline;
+      exit(42);
     } else {
-      Stdout("Looking for exception handler in parent").newline;
       return _parent.findExcptHandler();
     }
   }
@@ -467,8 +461,19 @@ class Action {
     APAccessor[] temps() { return _temps; }
     Action[] children() { return _children; }
 
-    bool catches() { return _excptHandler !is null; }
-    APObject getExcptHandler() { return _excptHandler; }
+    bool catches() {
+      APObject e;
+      synchronized(this) {
+	e = _excptHandler;
+      }
+      return e !is null;
+    }
+    APObject getExcptHandler() {
+      APObject e;
+      synchronized(this) {
+	e = _excptHandler;
+      }
+    }
     void setExcptHandler(APObject excptHandler) {
       synchronized(this) {
 	_excptHandler = excptHandler;

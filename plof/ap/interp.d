@@ -209,17 +209,12 @@ class APInterpVisitor : PASTVisitor {
       if (fproc is null) {
 	throw new APInterpFailure("Called a non-procedure.");
       }
-      Stdout("+++++++++++++ Catch +++++++++++++").newline;
-
-//       _act.setExcptHandler(excptHandler);
-
       return call_try(func, excptHandler);
     }
 
     Object visit(PASTThrow node) {
       APObject excpt = cast(APObject) node.a1.accept(this);
       APObject handler = _act.findExcptHandler();
-      Stdout("+++++++++++++ Throw +++++++++++++").newline;
       return call(handler, excpt);
     }
 
