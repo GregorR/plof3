@@ -425,7 +425,7 @@ class CommitThread : Thread {
 
                 default:
                     // all other states and this is a dead node!
-                    _act.doneMutex.unlock();
+                    act.doneMutex.unlock();
                     return;
             }
         }
