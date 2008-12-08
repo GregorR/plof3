@@ -143,7 +143,10 @@ class APThread : Thread {
                             _action.stateCondition.wait();
                             break;
 
+                        case ActionState.Running:
                         case ActionState.Destroyed:
+                        case ActionState.Committing:
+                        case ActionState.Committed:
                             // can't run this!
                             _action.stateMutex.unlock();
                             _action = null;
@@ -183,11 +186,12 @@ class APThread : Thread {
                     switch (_action.state) {
                         case ActionState.Running:
                             _action.state = ActionState.Done;
-                            _action.stateCondition.notifyAll();
+                            _action.stateCondition.notify();
                             break;
 
                         case ActionState.Committing:
                             _action.state = ActionState.Committed; // should never change again
+                            _action.stateCondition.notify();
                             break;
 
                         default:
@@ -375,12 +379,13 @@ class APThreadPool {
     /// Heuristically determine whether we should inline functions
     bool shouldInline() {
         /* we don't need to lock the queues since we're just guessing here. The
-         * only change this makes is what thread runs an action, not the result */
+         * only change this makes is what thread runs an action, not the result * /
         foreach (thread; _threads) {
             if (thread._queue.length == 0)
                 return false;
         }
-        return true;
+        return true; */
+        return false;
     }
 
     private {
@@ -412,8 +417,11 @@ class CommitThread : Thread {
         while (notdone) {
             switch (act.state) {
                 case ActionState.None:
-                case ActionState.Running:
                 case ActionState.Canceled:
+                    synchronized (act) {
+                        _tp.enqueue([act], true);
+                    }
+                case ActionState.Running:
                     act.stateCondition.wait();
                     break;
 
@@ -438,7 +446,7 @@ class CommitThread : Thread {
         switch (act.state) {
             case ActionState.Committing:
                 act.state = ActionState.Committed;
-                act.stateCondition.notifyAll();
+                act.stateCondition.notify();
                 break;
         }
         act.stateMutex.unlock();

@@ -323,7 +323,8 @@ class Action {
 
             synchronized (this) {
                 // make sure the siblingof is sensible
-                if (siblingof !is null && siblingof.sid.next !is _csid) {
+                if (siblingof !is null &&
+                    (siblingof.sid.next !is _csid || siblingof.sid.val >= _children.length)) {
                     // from a dead child
                     child = null;
                 } else {
@@ -498,7 +499,7 @@ class Action {
                 case ActionState.Canceled:
                     notdone = false;
                     state = ActionState.Destroyed;
-                    stateCondition.notifyAll();
+                    stateCondition.notify();
                     break;
 
                 default:

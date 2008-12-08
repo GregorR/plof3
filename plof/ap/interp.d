@@ -100,7 +100,7 @@ class APInterpVisitor : PASTVisitor {
                     switch (act.state) {
                         case ActionState.Running:
                             act.state = ActionState.Done;
-                            act.stateCondition.notifyAll();
+                            act.stateCondition.notify();
                             break;
 
                         default:
