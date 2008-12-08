@@ -174,8 +174,9 @@ class SerialAccessor(Action, Obj) {
         
         writeListLock.writer.unlock();
 
-        // add the undo action
+        // add the actions
         act.addUndo(&undo);
+        act.addCommit(&commit);
 
         // Now cancel anything that needs to be
         foreach (cact; toCancel)
@@ -197,7 +198,7 @@ class SerialAccessor(Action, Obj) {
             // find the first owned write
             size_t first = lbound(writeList, w);
             if (first == writeList.length) {
-                writeListLock.reader.unlock();
+                writeListLock.writer.unlock();
                 return; // nothing to undo
             }
 
@@ -212,6 +213,7 @@ class SerialAccessor(Action, Obj) {
                     foreach (cact; writeList[i].readList[j]) {
                         toCancel ~= cact;
                     }
+                    writeList[i].readListLock[j].writer.unlock();
                 }
             }
             
@@ -230,6 +232,30 @@ class SerialAccessor(Action, Obj) {
         foreach (cact; toCancel) {
             cact.cancel();
         }
+    }
+
+    /// Commit a write, removing any previous writes
+    void commit(Action act) {
+        writeListLock.writer.lock();
+
+            // set up a pseudo-writer
+            Writer w;
+            w.act = act;
+
+            // find the last committable write
+            ptrdiff_t last = ubound(writeList, w) - 1;
+            if (last < 1) {
+                writeListLock.writer.unlock();
+                return; // nothing to remove
+            }
+
+            // and remove the earlier ones
+            for (int i = 0; i < writeList.length - last; i++) {
+                writeList[i] = writeList[i+last];
+            }
+            writeList.length = writeList.length - last;
+
+        writeListLock.writer.unlock();
     }
 
     /// Read a value

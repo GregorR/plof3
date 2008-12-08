@@ -321,8 +321,10 @@ class Action {
         }
 
         if (committing) {
-            /* synchronized (Stderr)
-                Stderr("Committing ")(ast.toXML()).newline; */
+            // run all the commit actions
+            foreach (commit; _commits) {
+                commit(this);
+            }
 
         } else {
             ast.accept(new APInterpVisitor(this));
@@ -333,14 +335,18 @@ class Action {
     /// Cancel this action
     void cancel() {
         Action[] oldChildren;
+        void delegate(Action)[] oldUndos;
 
         // re-enqueue this action (FIXME: should keep track of whether it's already running)
         synchronized (this) {
             debugOut("canceled.");
 
-            // get the children ready for destruction (FIXME: probably needs better synchronization)
+            // get the children ready for destruction
             oldChildren = _children;
+            _children = null;
             _csid = new SID(_csid.val + 1, _sid);
+            oldUndos = _undos;
+            _undos = null;
 
             // update running -> canceled, done -> queued
             switch (state) {
@@ -366,6 +372,11 @@ class Action {
         // destroy the children
         foreach (child; oldChildren) {
             child.destroy();
+        }
+
+        // undo
+        foreach (f; oldUndos) {
+            f(this);
         }
     }
 
@@ -400,6 +411,13 @@ class Action {
     void addUndo(void delegate(Action) f) {
         synchronized (this) {
             _undos ~= f;
+        }
+    }
+
+    /// Add something which must be done when this action is committed
+    void addCommit(void delegate(Action) f) {
+        synchronized (this) {
+            _commits ~= f;
         }
     }
 
@@ -452,6 +470,9 @@ class Action {
 
         // things to be undone if this is destroyed
         void delegate(Action)[] _undos;
+
+        // things to do if this is committed
+        void delegate(Action)[] _commits;
     }
 }
 
