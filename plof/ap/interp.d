@@ -257,14 +257,9 @@ class APInterpVisitor : PASTVisitor {
         // get the data
         ubyte[] raw = toprint.getRaw(_act);
 
-        synchronized (Stdout) {
-            // and print it
-            if (raw.length == 0) {
-                Stdout(cast(void*) toprint).newline;
-            } else {
-                Stdout(cast(char[]) raw).newline;
-            }
-        }
+        // and make the printing a commit action
+        PASTPrintCommit ppc = new PASTPrintCommit(toprint, raw);
+        _act.addCommit(&ppc.commit);
 
         return _act.gctx.nul;
     }
@@ -789,4 +784,27 @@ class APUnimplementedException : Exception {
 
 class APInterpFailure : Exception {
     this(char[] msg) { super(msg); }
+}
+
+/// Committer for PASTPrint
+class PASTPrintCommit {
+    this(APObject obj, ubyte[] data) {
+        _obj = obj;
+        _data = data.dup;
+    }
+
+    void commit(Action act) {
+        synchronized (Stdout) {
+            if (_data.length == 0) {
+                Stdout(cast(void*) _obj).newline;
+            } else {
+                Stdout(cast(char[]) _data).newline;
+            }
+        }
+    }
+
+    private {
+        APObject _obj;
+        ubyte[] _data;
+    }
 }
