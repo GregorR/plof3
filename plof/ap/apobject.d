@@ -433,16 +433,17 @@ class Action {
         final void debugOut(char[] msg) {}
     }
 
-  APObject findExcptHandler() {
-    if (catches()) {
-      return _excptHandler;
-    } else if (_parent is null) {
-      Stderr("Error: Uncaught exception").newline;
-      exit(42);
-    } else {
-      return _parent.findExcptHandler();
+    /// Find the exception handler corresponding to this action
+    APObject findExcptHandler() {
+        if (catches()) {
+            return _excptHandler;
+        } else if (_parent is null) {
+            Stderr("Error: Uncaught exception").newline;
+            exit(42);
+        } else {
+            return _parent.findExcptHandler();
+        }
     }
-  }
   
     // compare by the SID
     int opCmp(Action r) { return _sid.opCmp(r._sid); }
