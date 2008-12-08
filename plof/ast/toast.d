@@ -286,6 +286,7 @@ PASTProc pslToAST(ubyte[] psl)
                 // basically, need to wrap everything else
                 orderStack();
                 res ~= stack;
+                stack = null;
                 res = [new PASTLoop(res)];
 
                 // and we can't do any more
