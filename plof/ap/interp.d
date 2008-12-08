@@ -166,8 +166,61 @@ class APInterpVisitor : PASTVisitor {
       return obj.getParent(_act);
     }
 
+    APObject call_try(APObject func, APObject excptHandler) {
+      // make sure it's really a function
+      PASTNode fast = func.getAST(_act);
+      if (fast is null) {
+	throw new APInterpFailure("Called uninitialized thing.");
+      }
+      PASTProc fproc = cast(PASTProc) fast;
+      if (fproc is null) {
+	throw new APInterpFailure("Called a non-procedure.");
+      }
+      _act.setExcptHandler(excptHandler);
+      
+      // make the context for this call
+      APObject nctx = new APObject(_act, func.getParent(_act));
+      
+      // and temps
+      APAccessor[] temps;
+      temps.length = fproc.temps;
+      foreach (i, _; temps) {
+	temps[i] = new APAccessor();
+      }
+      
+      // and put them in a queue
+      Action[] toEnqueue;
+      toEnqueue.length = fproc.stmts.length;
+      foreach (i, ast; fproc.stmts) {
+	toEnqueue[i] = _act.createChild(ast, nctx, temps);
+      }
+      
+      return runsub(toEnqueue, nctx, temps);
+    }
+
+    Object visit(PASTCatch node) {
+      APObject func = cast(APObject) node.a1.accept(this);
+      APObject excptHandler = cast(APObject) node.a2.accept(this);
+      PASTNode fast = func.getAST(_act);
+      if (fast is null) {
+	throw new APInterpFailure("Called uninitialized thing.");
+      }
+      PASTProc fproc = cast(PASTProc) fast;
+      if (fproc is null) {
+	throw new APInterpFailure("Called a non-procedure.");
+      }
+      Stdout("+++++++++++++ Catch +++++++++++++").newline;
+
+//       _act.setExcptHandler(excptHandler);
+
+      return call_try(func, excptHandler);
+    }
+
     Object visit(PASTThrow node) {
-      throw new APUnimplementedException("PASTThrow");
+      APObject excpt = cast(APObject) node.a1.accept(this);
+      APObject handler = _act.findExcptHandler();
+      Stdout("+++++++++++++ Throw +++++++++++++").newline;
+      return call(handler, excpt);
     }
 
     Object visit(PASTArrayLength node) {
@@ -349,8 +402,6 @@ class APInterpVisitor : PASTVisitor {
 
         return call(f, a);
     }
-
-    Object visit(PASTCatch node) { throw new APUnimplementedException("PASTCatch"); }
 
     Object visit(PASTConcat node) {
         APObject o1 = cast(APObject) node.a1.accept(this);

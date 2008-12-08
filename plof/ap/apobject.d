@@ -279,6 +279,7 @@ class Action {
         _ast = ast;
         _ctx = ctx;
         _temps = temps;
+	_excptHandler = null;
 
         doneMutex = new Mutex();
         doneCondition = new Condition(doneMutex);
@@ -293,6 +294,17 @@ class Action {
             return child;
         }
     }
+
+//     /// Create a child action that can catch exceptions
+//     Action createChild(PASTNode ast, APObject ctx, APAccessor[] temps, APObject excptHandler) {
+//         synchronized (this) {
+//             Action child = new Action(new SID(_children.length, _csid), _gctx, ast, ctx, temps);
+//             child._parent = this;
+// 	    child._excptHandler = excptHandler;
+//             _children ~= child;
+//             return child;
+//         }
+//     }
 
     /// Create a sibling action (another child of the same parent)
     Action createSibling(PASTNode ast, APAccessor[] temps) {
@@ -430,6 +442,18 @@ class Action {
         final void debugOut(char[] msg) {}
     }
 
+  APObject findExcptHandler() {
+    if (catches()) {
+      Stdout("Found exception handler").newline;
+      return _excptHandler;
+    } else if (_parent is null) {
+      throw new ActionCreationException("Uncaught exception");
+    } else {
+      Stdout("Looking for exception handler in parent").newline;
+      return _parent.findExcptHandler();
+    }
+  }
+  
     // compare by the SID
     int opCmp(Action r) { return _sid.opCmp(r._sid); }
     bool opEquals(Action r) { return _sid.opEquals(r._sid); }
@@ -442,6 +466,14 @@ class Action {
     APObject ctx() { return _ctx; }
     APAccessor[] temps() { return _temps; }
     Action[] children() { return _children; }
+
+    bool catches() { return _excptHandler !is null; }
+    APObject getExcptHandler() { return _excptHandler; }
+    void setExcptHandler(APObject excptHandler) {
+      synchronized(this) {
+	_excptHandler = excptHandler;
+      }
+    }
 
     /// Current state of the action
     ActionState state;
@@ -461,6 +493,10 @@ class Action {
         PASTNode _ast;
         APObject _ctx;
         APAccessor[] _temps;
+
+	// If this attribute is non null then this action can
+	// catch exceptions, and when it does it runs this code.
+	APObject _excptHandler;
 
         Action[] _children;
 
