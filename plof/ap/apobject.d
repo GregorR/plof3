@@ -283,8 +283,8 @@ class Action {
         _temps = temps;
 	_excptHandler = null;
 
-        doneMutex = new Mutex();
-        doneCondition = new Condition(doneMutex);
+        stateMutex = new Mutex();
+        stateCondition = new Condition(stateMutex);
     }
 
     /// Create a child action
@@ -319,9 +319,9 @@ class Action {
     void run() {
         // we're either just running or committing
         bool committing = false;
-        synchronized (this) {
+        stateMutex.lock();
             if (state == ActionState.Committing) committing = true;
-        }
+        stateMutex.unlock();
 
         if (committing) {
             // run all the commit actions
@@ -335,28 +335,31 @@ class Action {
         }
     }
 
-    /// Make sure this action gets canceled
-    void notifyCancel() {
-        bool cancelnow = false;
+    /// Cancel this action
+    void cancel() {
+        Action[] oldChildren;
+        void delegate(Action)[] oldUndos;
 
-        synchronized (this) {
-            debugOut("canceled.");
+        debugOut("canceled.");
 
-            // update state
+        // wait for it to be done
+        stateMutex.lock();
+        bool notdone = true;
+        while (notdone) {
             switch (state) {
                 case ActionState.Running:
-                    // can't cancel until it's done, so mark it
-                    state = ActionState.Canceled;
+                    stateCondition.wait();
                     break;
 
+                case ActionState.None:
                 case ActionState.Canceled:
                 case ActionState.Destroyed:
-                    // somebody else will take care of it
-                    break;
+                    // somebody else handled it
+                    stateMutex.unlock();
+                    return;
 
                 case ActionState.Done:
-                    // cancel it now
-                    cancelnow = true;
+                    notdone = false;
                     state = ActionState.Canceled;
                     break;
 
@@ -365,14 +368,7 @@ class Action {
                         Stderr("Action ")(ast.toXML())(" in bad state for cancelation: ")(state).newline;
             }
         }
-
-        if (cancelnow) cancel();
-    }
-
-    /// Cancel this action
-    void cancel() {
-        Action[] oldChildren;
-        void delegate(Action)[] oldUndos;
+        stateMutex.unlock();
 
         // re-enqueue this action
         synchronized (this) {
@@ -388,47 +384,58 @@ class Action {
 
         // destroy the children
         foreach (child; oldChildren) {
-            child.notifyDestroy();
+            child.destroy();
         }
 
         // undo
         foreach (f; oldUndos) {
             f(this);
         }
+
+        // then tell other threads that it's ready to be run
+        stateMutex.lock();
+        switch (state) {
+            case ActionState.Canceled:
+                state = ActionState.None;
+            case ActionState.Destroyed:
+                stateCondition.notify();
+                break;
+
+            default:
+                synchronized (Stderr)
+                    Stderr("Action ")(ast.toXML())(" in bad state for post-cancelation: ")(state).newline;
+        }
+        stateMutex.unlock();
+
     }
 
-    /// Make sure this action gets destroyed
-    void notifyDestroy() {
-        bool destroynow = false;
+    /// Destroy this action
+    void destroy() {
+        Action[] oldChildren;
+        void delegate(Action)[] oldUndos;
 
-        synchronized (this) {
-            debugOut("destroyed.");
+        debugOut("destroyed.");
 
-            // update state
+        // wait for it to be done
+        stateMutex.lock();
+        bool notdone = true;
+        while (notdone) {
             switch (state) {
-                case ActionState.None:
-                    // good, it hasn't run anything yet
-
                 case ActionState.Running:
-                    // can't cancel until it's done, so mark it
-
-                    state = ActionState.Destroyed;
-                    break;
-
-                case ActionState.Canceled:
-                    // not good enough!
-                    destroynow = true;
-                    state = ActionState.Destroyed;
+                    stateCondition.wait();
                     break;
 
                 case ActionState.Destroyed:
-                    // somebody else will take care of it
-                    break;
+                    // somebody else handled it
+                    stateMutex.unlock();
+                    return;
 
+                case ActionState.None:
                 case ActionState.Done:
-                    // destroy it now
-                    destroynow = true;
+                case ActionState.Canceled:
+                    notdone = false;
                     state = ActionState.Destroyed;
+                    stateCondition.notify();
                     break;
 
                 default:
@@ -436,35 +443,25 @@ class Action {
                         Stderr("Action ")(ast.toXML())(" in bad state for destruction: ")(state).newline;
             }
         }
-
-        if (destroynow) destroy();
-    }
-
-    /// Destroy this action (cancel without the requeue, with undos)
-    void destroy() {
-        Action[] oldChildren;
-        void delegate(Action)[] oldUndos;
+        stateMutex.unlock();
 
         synchronized (this) {
-            doneMutex.lock();
-            state = ActionState.Destroyed;
-            doneCondition.notify();
-            doneMutex.unlock();
-
+            // get the children ready for destruction
             oldChildren = _children;
             _children = null;
+            _csid = new SID(_csid.val + 1, _sid);
             oldUndos = _undos;
             _undos = null;
         }
 
-        // then run all the undo actions
-        foreach (f; oldUndos) {
-            f(this);
+        // destroy the children
+        foreach (child; oldChildren) {
+            child.destroy();
         }
 
-        // and destroy any children
-        foreach (child; oldChildren) {
-            child.notifyDestroy();
+        // undo
+        foreach (f; oldUndos) {
+            f(this);
         }
     }
 
@@ -509,11 +506,16 @@ class Action {
             // destroy the children
             Action[] oldChildren;
             synchronized (this) {
+                if (from.sid.next !is _csid) {
+                    // dead child trying to throw?
+                    return;
+                }
+
                 oldChildren = _children[from.sid.val+1 .. $].dup;
                 _children.length = from.sid.val+1;
             }
             foreach (child; oldChildren)
-                child.notifyDestroy();
+                child.destroy();
         }
 
         // and perhaps propagate
@@ -552,9 +554,9 @@ class Action {
     bool queued;
 
     /// The serial commit thread has to wait on actions to become 'done'
-    Mutex doneMutex;
+    Mutex stateMutex;
     /// ditto
-    Condition doneCondition;
+    Condition stateCondition;
 
     private {
         Action _parent;

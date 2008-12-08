@@ -129,22 +129,31 @@ class APThread : Thread {
                 debugOut("doing " ~ _action.ast.toXML());
 
                 // mark it as running
-                synchronized (_action) {
+                _action.stateMutex.lock();
+                bool notdone = true;
+                while (notdone) {
                     _action.queued = false;
                     switch (_action.state) {
                         case ActionState.None:
-                        case ActionState.Canceled:
                             _action.state = ActionState.Running;
+                            notdone = false;
+                            break;
+
+                        case ActionState.Canceled:
+                            _action.stateCondition.wait();
                             break;
 
                         case ActionState.Destroyed:
                             // can't run this!
+                            _action.stateMutex.unlock();
                             _action = null;
+                            notdone = false;
                             break;
 
                         case ActionState.Done:
                             // commit this
                             _action.state = ActionState.Committing;
+                            notdone = false;
                             break;
 
                         default:
@@ -152,6 +161,7 @@ class APThread : Thread {
                                 Stderr("Action ")(_action.ast.toXML())(" in bad state for running: ")(_action.state).newline;
                     }
                 }
+                if (_action !is null) _action.stateMutex.unlock();
 
                 if (_action is null) continue;
 
@@ -161,33 +171,19 @@ class APThread : Thread {
 
                 } catch (APInterpFailure ex) {
                     // failed to interpret, need to re-enqueue
-                    _action.notifyCancel();
+                    _action.cancel();
 
                 } catch (APUnimplementedException ex) {
                     // just mention it
                     synchronized (Stderr) Stderr("Unimplemented AST node: ")(ex.msg).newline;
                 }
 
-                // now see if we need to re-queue it or cancel it
-                synchronized (_action) {
+                // now mark it as done
+                _action.stateMutex.lock();
                     switch (_action.state) {
                         case ActionState.Running:
-                            // notify the commit thread
-                            _action.doneMutex.lock();
                             _action.state = ActionState.Done;
-                            _action.doneCondition.notify();
-                            _action.doneMutex.unlock();
-                            break;
-
-                        case ActionState.Canceled:
-                            // cancel and re-enqueue it
-                            _action.cancel();
-                            _parent.enqueue([_action]);
-                            break;
-
-                        case ActionState.Destroyed:
-                            // destroy it
-                            _action.destroy();
+                            _action.stateCondition.notify();
                             break;
 
                         case ActionState.Committing:
@@ -198,7 +194,7 @@ class APThread : Thread {
                             synchronized (Stderr)
                                 Stderr("Action ")(_action.ast.toXML())(" in bad state for completion: ")(_action.state).newline;
                     }
-                }
+                _action.stateMutex.unlock();
 
                 debugOut("done.");
 
@@ -411,34 +407,49 @@ class CommitThread : Thread {
     /// Commit the given action and its children
     void eventuallyCommit(Action act) {
         // wait for it to be done
-        act.doneMutex.lock();
+        act.stateMutex.lock();
         bool notdone = true;
         while (notdone) {
             switch (act.state) {
                 case ActionState.None:
                 case ActionState.Running:
                 case ActionState.Canceled:
-                    act.doneCondition.wait();
+                    synchronized (Stderr) Stderr("A").flush;
+                    act.stateCondition.wait();
+                    synchronized (Stderr) Stderr("B").flush;
                     break;
 
                 case ActionState.Done:
                     notdone = false;
+                    act.state = ActionState.Committing;
                     break;
 
                 default:
                     // all other states and this is a dead node!
-                    act.doneMutex.unlock();
+                    act.stateMutex.unlock();
                     return;
             }
         }
-        act.doneMutex.unlock();
+        act.stateMutex.unlock();
 
         // commit it
-        _tp.enqueue([act], true);
+        //_tp.enqueue([act], true);
+        act.run();
+
+        act.stateMutex.lock();
+        switch (act.state) {
+            case ActionState.Committing:
+                act.state = ActionState.Committed;
+                break;
+        }
+        act.stateMutex.unlock();
 
         // only the normal run can create new children, so we're safe to use them without locking
-        for (int ci = 0; ci < act.children.length; ci++) {
-            Action child = act.children[ci];
+        Action[] children;
+        synchronized (act) {
+            children = act.children.dup;
+        }
+        foreach (child; children) {
             eventuallyCommit(child);
         }
     }

@@ -89,33 +89,25 @@ class APInterpVisitor : PASTVisitor {
         // run them, potentially inline
         if (_act.gctx.tp.shouldInline()) {
             foreach (act; toEnqueue) {
+                act.stateMutex.lock();
                 act.state = ActionState.Running;
+                act.stateMutex.unlock();
+
                 act.run();
 
                 // perhaps requeue it, or signal that it's done
-                synchronized (act) {
+                act.stateMutex.lock();
                     switch (act.state) {
                         case ActionState.Running:
-                            act.doneMutex.lock();
                             act.state = ActionState.Done;
-                            act.doneCondition.notify();
-                            act.doneMutex.unlock();
-                            break;
-
-                        case ActionState.Canceled:
-                            _act.gctx.tp.enqueue([act]);
-                            break;
-
-                        case ActionState.Destroyed:
-                            // ignore
+                            act.stateCondition.notify();
                             break;
 
                         default:
                             synchronized (Stderr)
                                 Stderr("Action ")(act.ast.toXML())(" in bad state for inline completion: ")(act.state).newline;
-                            break;
                     }
-                }
+                act.stateMutex.unlock();
             }
 
         } else {

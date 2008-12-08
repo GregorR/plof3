@@ -183,7 +183,7 @@ class SerialAccessor(Action, Obj) {
 
         // Now cancel anything that needs to be
         foreach (cact; toCancel)
-            cact.notifyCancel();
+            cact.cancel();
 
         return last;
     }
@@ -250,7 +250,7 @@ class SerialAccessor(Action, Obj) {
 
         // now cancel them
         foreach (cact; toCancel) {
-            cact.notifyCancel();
+            cact.cancel();
         }
     }
 
