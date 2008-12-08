@@ -149,7 +149,7 @@ class SerialAccessor(Action, Obj) {
                         size_t rloc = ubound(readList, act);
                         if (rloc < readList.length) {
                             // if the data hasn't changed, just move them. Otherwise cancel them
-                            if (lastw.value is val) {
+                            if (last is val) {
                                 w.readList[i] = readList[rloc..$].dup;
                             } else {
                                 // cancel them
@@ -194,6 +194,7 @@ class SerialAccessor(Action, Obj) {
             // set up our own pseudo-writer
             Writer w;
             w.act = act;
+            Obj prevval, curval;
 
             // find the first owned write
             size_t first = lbound(writeList, w);
@@ -201,6 +202,12 @@ class SerialAccessor(Action, Obj) {
                 writeListLock.writer.unlock();
                 return; // nothing to undo
             }
+
+            // get the previous value
+            if (first > 0) {
+                prevval = writeList[first-1].value;
+            }
+            curval = writeList[first].value;
 
             // find the last owned write
             int last;
@@ -210,9 +217,19 @@ class SerialAccessor(Action, Obj) {
             for (int i = first; i < last; i++) {
                 for (int j = 0; j < writeList[i].readList.length; j++) {
                     writeList[i].readListLock[j].writer.lock();
-                    foreach (cact; writeList[i].readList[j]) {
-                        toCancel ~= cact;
+
+                    // cancel or copy them
+                    if (first > 0 && prevval is curval) {
+                        writeList[first-1].readListLock[j].writer.lock(); // FIXME: blech
+                        writeList[first-1].readList[j] ~= writeList[i].readList[j];
+                        writeList[first-1].readListLock[j].writer.unlock();
+
+                    } else {
+                        foreach (cact; writeList[i].readList[j]) {
+                            toCancel ~= cact;
+                        }
                     }
+
                     writeList[i].readListLock[j].writer.unlock();
                 }
             }
