@@ -161,14 +161,14 @@ class APThread : Thread {
 
                 } catch (APInterpFailure ex) {
                     // failed to interpret, need to re-enqueue
-                    _action.cancel();
+                    _action.notifyCancel();
 
                 } catch (APUnimplementedException ex) {
                     // just mention it
                     synchronized (Stderr) Stderr("Unimplemented AST node: ")(ex.msg).newline;
                 }
 
-                // now see if we need to re-queue it
+                // now see if we need to re-queue it or cancel it
                 synchronized (_action) {
                     switch (_action.state) {
                         case ActionState.Running:
@@ -180,12 +180,14 @@ class APThread : Thread {
                             break;
 
                         case ActionState.Canceled:
-                            // re-enqueue it
+                            // cancel and re-enqueue it
+                            _action.cancel();
                             _parent.enqueue([_action]);
                             break;
 
                         case ActionState.Destroyed:
-                            // who cares
+                            // destroy it
+                            _action.destroy();
                             break;
 
                         case ActionState.Committing:

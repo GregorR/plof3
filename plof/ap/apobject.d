@@ -335,39 +335,29 @@ class Action {
         }
     }
 
-    /// Cancel this action
-    void cancel() {
-        Action[] oldChildren;
-        void delegate(Action)[] oldUndos;
+    /// Make sure this action gets canceled
+    void notifyCancel() {
+        bool cancelnow = false;
 
-        // re-enqueue this action (FIXME: should keep track of whether it's already running)
         synchronized (this) {
             debugOut("canceled.");
 
-            // get the children ready for destruction
-            oldChildren = _children;
-            _children = null;
-            _csid = new SID(_csid.val + 1, _sid);
-            oldUndos = _undos;
-            _undos = null;
-
-            // update running -> canceled, done -> queued
+            // update state
             switch (state) {
                 case ActionState.Running:
-                case ActionState.Canceled:
+                    // can't cancel until it's done, so mark it
                     state = ActionState.Canceled;
-                    debugOut("marked for re-enqueueing.");
                     break;
 
+                case ActionState.Canceled:
                 case ActionState.Destroyed:
-                    // ignore
+                    // somebody else will take care of it
                     break;
 
                 case ActionState.Done:
+                    // cancel it now
+                    cancelnow = true;
                     state = ActionState.Canceled;
-                    debugOut("re-enqueueing.");
-                    gctx.tp.enqueue([this]);
-                    debugOut("re-enqueued.");
                     break;
 
                 default:
@@ -376,9 +366,29 @@ class Action {
             }
         }
 
+        if (cancelnow) cancel();
+    }
+
+    /// Cancel this action
+    void cancel() {
+        Action[] oldChildren;
+        void delegate(Action)[] oldUndos;
+
+        // re-enqueue this action
+        synchronized (this) {
+            // get the children ready for destruction
+            oldChildren = _children;
+            _children = null;
+            _csid = new SID(_csid.val + 1, _sid);
+            oldUndos = _undos;
+            _undos = null;
+
+            gctx.tp.enqueue([this]);
+        }
+
         // destroy the children
         foreach (child; oldChildren) {
-            child.destroy();
+            child.notifyDestroy();
         }
 
         // undo
@@ -387,14 +397,55 @@ class Action {
         }
     }
 
+    /// Make sure this action gets destroyed
+    void notifyDestroy() {
+        bool destroynow = false;
+
+        synchronized (this) {
+            debugOut("destroyed.");
+
+            // update state
+            switch (state) {
+                case ActionState.None:
+                    // good, it hasn't run anything yet
+
+                case ActionState.Running:
+                    // can't cancel until it's done, so mark it
+
+                    state = ActionState.Destroyed;
+                    break;
+
+                case ActionState.Canceled:
+                    // not good enough!
+                    destroynow = true;
+                    state = ActionState.Destroyed;
+                    break;
+
+                case ActionState.Destroyed:
+                    // somebody else will take care of it
+                    break;
+
+                case ActionState.Done:
+                    // destroy it now
+                    destroynow = true;
+                    state = ActionState.Destroyed;
+                    break;
+
+                default:
+                    synchronized (Stderr)
+                        Stderr("Action ")(ast.toXML())(" in bad state for destruction: ")(state).newline;
+            }
+        }
+
+        if (destroynow) destroy();
+    }
+
     /// Destroy this action (cancel without the requeue, with undos)
     void destroy() {
         Action[] oldChildren;
         void delegate(Action)[] oldUndos;
 
         synchronized (this) {
-            debugOut("destroyed.");
-
             doneMutex.lock();
             state = ActionState.Destroyed;
             doneCondition.notify();
@@ -413,7 +464,7 @@ class Action {
 
         // and destroy any children
         foreach (child; oldChildren) {
-            child.destroy();
+            child.notifyDestroy();
         }
     }
 
@@ -462,7 +513,7 @@ class Action {
                 _children.length = from.sid.val+1;
             }
             foreach (child; oldChildren)
-                child.destroy();
+                child.notifyDestroy();
         }
 
         // and perhaps propagate
