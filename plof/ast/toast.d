@@ -239,10 +239,10 @@ PASTProc pslToAST(ubyte[] psl)
                 break;
 
             case psl_catch:
-                use2((PASTNode a, PASTNode b) {
+                use3((PASTNode arg, PASTNode a, PASTNode b) {
                     orderStack();
                     uint stemp = curTemp++;
-                    res ~= new PASTTempSet(stemp, new PASTCatch(a, b));
+                    res ~= new PASTTempSet(stemp, new PASTCatch(arg, a, b));
                     stack ~= new PASTReturnGet(new PASTTempGet(stemp));
                 });
                 break;

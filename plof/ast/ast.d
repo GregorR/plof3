@@ -216,13 +216,6 @@ class PASTCall : PASTBinary {
     mixin Accept;
 }
 
-/// Catch exceptions
-class PASTCatch : PASTBinary {
-    this(PASTNode a1, PASTNode a2) { super(a1, a2); }
-    bool hasEffects() { return true; }
-    mixin Accept;
-}
-
 /// Concatenation
 class PASTConcat : PASTBinary {
     this(PASTNode a1, PASTNode a2) { super(a1, a2); }
@@ -383,6 +376,14 @@ class PASTQuaternary : PASTTrinary {
 
     private PASTNode _a4;
 }
+
+/// Catch exceptions
+class PASTCatch : PASTTrinary {
+    this(PASTNode a1, PASTNode a2, PASTNode a3) { super(a1, a2, a3); }
+    bool hasEffects() { return true; }
+    mixin Accept;
+}
+
 
 
 /// Quinary nodes

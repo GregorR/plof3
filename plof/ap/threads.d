@@ -54,7 +54,10 @@ class APThread : Thread {
         while (true) {
             // get something off of our queue
             _queueLock.lock();
-            if (_queue.length > 0) {
+            if (_prioqueue.length > 0) {
+                _action = _prioqueue[$-1];
+                _prioqueue.length = _prioqueue.length - 1;
+            } else if (_queue.length > 0) {
                 _action = _queue[$-1];
                 _queue.length = _queue.length - 1;
             }
@@ -221,6 +224,8 @@ class APThread : Thread {
     /// Queue and lock
     private Action[] _queue;
     /// ditto
+    private Action[] _prioqueue;
+    /// ditto
     private Mutex _queueLock;
 
     /// Current action being run (null if none)
@@ -295,7 +300,7 @@ class APThreadPool {
     }
 
     /// Enqueue new work (note: every piece of work must either by currently unshared or locked)
-    void enqueue(Action[] work) {
+    void enqueue(Action[] work, bool prio = false) {
         uint t;
 
         // try to add it to the calling thread's queue
@@ -321,7 +326,10 @@ class APThreadPool {
                 // enqueue in reverse order (the inner queues are really a stack)
                 for (int i = work.length - 1; i >= 0; i--) {
                     work[i].queued = true;
-                    at._queue ~= work[i];
+                    if (prio)
+                        at._prioqueue ~= work[i];
+                    else
+                        at._queue ~= work[i];
                 }
                 at._queueLock.unlock();
 
@@ -402,17 +410,36 @@ class CommitThread : Thread {
     void eventuallyCommit(Action act) {
         // wait for it to be done
         act.doneMutex.lock();
-        while (act.state < ActionState.Done)
-            act.doneCondition.wait();
+        bool notdone = true;
+        while (notdone) {
+            switch (act.state) {
+                case ActionState.None:
+                case ActionState.Running:
+                case ActionState.Canceled:
+                    act.doneCondition.wait();
+                    break;
+
+                case ActionState.Done:
+                    notdone = false;
+                    break;
+
+                default:
+                    // all other states and this is a dead node!
+                    _act.doneMutex.unlock();
+                    return;
+            }
+        }
         act.doneMutex.unlock();
 
         // commit it
-        _tp.enqueue([act]);
+        _tp.enqueue([act], true);
 
         // only the normal run can create new children, so we're safe to use them without locking
-        for (int ci = 0; ci < act.children.length; ci++) {
+        Action[] children = act.children;
+        for (int ci = 0; ci < children.length; ci++) {
             Action child = act.children[ci];
             eventuallyCommit(child);
+            children = act.children;
         }
     }
 

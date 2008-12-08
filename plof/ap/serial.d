@@ -28,6 +28,9 @@ module plof.ap.serial;
 import tango.core.Array;
 import tango.core.sync.ReadWriteMutex;
 
+import tango.text.convert.Integer;
+alias tango.text.convert.Integer.toString intToString;
+
 import tango.io.Stdout;
 
 /// Serialization ID
@@ -43,13 +46,13 @@ class SID {
         }
     }
 
-    /*void debugOut() {
-        Stdout(_val);
+    char[] toDebugString() {
+        char[] str = intToString(_val);
         if (_next !is null) {
-            Stdout(":");
-            _next.debugOut();
+            str ~= ":" ~ _next.toDebugString();
         }
-    }*/
+        return str;
+    }
 
     /// Can compare to other SIDs, but that's all
     int opCmp(SID r) {

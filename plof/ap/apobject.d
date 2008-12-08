@@ -359,6 +359,10 @@ class Action {
                     debugOut("marked for re-enqueueing.");
                     break;
 
+                case ActionState.Destroyed:
+                    // ignore
+                    break;
+
                 case ActionState.Done:
                     state = ActionState.Canceled;
                     debugOut("re-enqueueing.");
@@ -391,7 +395,10 @@ class Action {
         synchronized (this) {
             debugOut("destroyed.");
 
+            doneMutex.lock();
             state = ActionState.Destroyed;
+            doneCondition.notify();
+            doneMutex.unlock();
 
             oldChildren = _children;
             _children = null;
@@ -442,6 +449,25 @@ class Action {
             exit(42);
         } else {
             return _parent.findExcptHandler();
+        }
+    }
+
+    /// Do the cancels associated with a throw from this action
+    void throwCancel(Action from = null) {
+        if (from !is null) {
+            // destroy the children
+            Action[] oldChildren;
+            synchronized (this) {
+                oldChildren = _children[from.sid.val+1 .. $].dup;
+                _children.length = from.sid.val+1;
+            }
+            foreach (child; oldChildren)
+                child.destroy();
+        }
+
+        // and perhaps propagate
+        if (!catches() && _parent !is null) {
+            _parent.throwCancel(this);
         }
     }
   

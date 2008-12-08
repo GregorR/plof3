@@ -166,7 +166,7 @@ class APInterpVisitor : PASTVisitor {
       return obj.getParent(_act);
     }
 
-    APObject call_try(APObject func, APObject excptHandler) {
+    APObject call_try(APObject func, APObject excptHandler, APObject arg) {
       // make sure it's really a function
       PASTNode fast = func.getAST(_act);
       if (fast is null) {
@@ -180,6 +180,7 @@ class APInterpVisitor : PASTVisitor {
       
       // make the context for this call
       APObject nctx = new APObject(_act, func.getParent(_act));
+      nctx.setMember(_act, cast(ubyte[]) "\x1bargument", arg);
       
       // and temps
       APAccessor[] temps;
@@ -199,8 +200,9 @@ class APInterpVisitor : PASTVisitor {
     }
 
     Object visit(PASTCatch node) {
-      APObject func = cast(APObject) node.a1.accept(this);
-      APObject excptHandler = cast(APObject) node.a2.accept(this);
+        APObject arg = cast(APObject) node.a1.accept(this);
+      APObject func = cast(APObject) node.a2.accept(this);
+      APObject excptHandler = cast(APObject) node.a3.accept(this);
       PASTNode fast = func.getAST(_act);
       if (fast is null) {
 	throw new APInterpFailure("Called uninitialized thing.");
@@ -209,12 +211,17 @@ class APInterpVisitor : PASTVisitor {
       if (fproc is null) {
 	throw new APInterpFailure("Called a non-procedure.");
       }
-      return call_try(func, excptHandler);
+      return call_try(func, excptHandler, arg);
     }
 
     Object visit(PASTThrow node) {
       APObject excpt = cast(APObject) node.a1.accept(this);
       APObject handler = _act.findExcptHandler();
+
+      // set up the commit action
+      PASTThrowCommit ptc = new PASTThrowCommit();
+      _act.addCommit(&ptc.commit);
+
       return call(handler, excpt);
     }
 
@@ -852,5 +859,12 @@ class PASTPrintCommit {
     private {
         APObject _obj;
         ubyte[] _data;
+    }
+}
+
+/// Committer for PASTThrow
+class PASTThrowCommit {
+    void commit(Action act) {
+        act.throwCancel();
     }
 }
