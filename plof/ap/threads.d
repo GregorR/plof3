@@ -364,6 +364,17 @@ class APThreadPool {
         return ret;
     }
 
+    /// Heuristically determine whether we should inline functions
+    bool shouldInline() {
+        /* we don't need to lock the queues since we're just guessing here. The
+         * only change this makes is what thread runs an action, not the result */
+        foreach (thread; _threads) {
+            if (thread._queue.length == 0)
+                return false;
+        }
+        return true;
+    }
+
     private {
         APThread[] _threads;
         bool _running = false;

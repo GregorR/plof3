@@ -74,13 +74,54 @@ class APInterpVisitor : PASTVisitor {
             temps[i] = new APAccessor();
         }
 
-        // and run them
+        // and put them in a queue
         Action[] toEnqueue;
         toEnqueue.length = fproc.stmts.length;
         foreach (i, ast; fproc.stmts) {
             toEnqueue[i] = _act.createChild(ast, nctx, temps);
         }
-        _act.gctx.tp.enqueue(toEnqueue);
+
+        return runsub(toEnqueue, nctx, temps);
+    }
+
+    /// Run a number of sub-actions, perhaps inline (FIXME: needed to make temps an Object[] due to silly circular reference issues)
+    APObject runsub(Action[] toEnqueue, APObject nctx, Object[] temps) {
+        // run them, potentially inline
+        if (_act.gctx.tp.shouldInline()) {
+            foreach (act; toEnqueue) {
+                act.state = ActionState.Running;
+                act.run();
+
+                // perhaps requeue it, or signal that it's done
+                synchronized (act) {
+                    switch (act.state) {
+                        case ActionState.Running:
+                            act.doneMutex.lock();
+                            act.state = ActionState.Done;
+                            act.doneCondition.notify();
+                            act.doneMutex.unlock();
+                            break;
+
+                        case ActionState.Canceled:
+                            _act.gctx.tp.enqueue([act]);
+                            break;
+
+                        case ActionState.Destroyed:
+                            // ignore
+                            break;
+
+                        default:
+                            synchronized (Stderr)
+                                Stderr("Action ")(act.ast.toXML())(" in bad state for inline completion: ")(act.state).newline;
+                            break;
+                    }
+                }
+            }
+
+        } else {
+            _act.gctx.tp.enqueue(toEnqueue);
+
+        }
 
         return nctx;
     }
@@ -682,9 +723,6 @@ class APInterpVisitor : PASTVisitor {
             ntemps[ti] = new APAccessor();
         }
 
-        // unroll the loop across the number of threads
-        uint tc = _act.gctx.tp.threadCount();
-
         // get each of the statements
         PASTNode[] stmts = node.stmts;
         foreach (stmti, stmt; stmts) {
@@ -702,15 +740,16 @@ class APInterpVisitor : PASTVisitor {
             toEnqueue ~= nact;
         }
 
-        // as well as a repeat of ourself
+        // repeat ourself
         nact = _act.createSibling(node, ntemps);
         if (nact is null) {
             return _act.gctx.nul;
         }
-        toEnqueue ~= nact;
+        // in the queue to avoid recursion
+        _act.gctx.tp.enqueue([nact]);
 
-        // and enqueue them
-        _act.gctx.tp.enqueue(toEnqueue);
+        // and run the steps
+        runsub(toEnqueue, _act.ctx, cast(Object[]) ntemps);
 
         return _act.gctx.nul;
     }
