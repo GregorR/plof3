@@ -113,7 +113,10 @@ class APThread : Thread {
 
                     return (done == false);
                 });*/
-                bool done = !_parent.commitThread.running;
+                bool done;
+                synchronized (_parent.commitThread) {
+                    done = !_parent.commitThread.running;
+                }
 
                 // if we're done, stop
                 if (done) {
@@ -145,17 +148,12 @@ class APThread : Thread {
 
                         case ActionState.Running:
                         case ActionState.Destroyed:
+                        case ActionState.Done:
                         case ActionState.Committing:
                         case ActionState.Committed:
                             // can't run this!
                             _action.stateMutex.unlock();
                             _action = null;
-                            notdone = false;
-                            break;
-
-                        case ActionState.Done:
-                            // commit this
-                            _action.state = ActionState.Committing;
                             notdone = false;
                             break;
 
@@ -406,7 +404,9 @@ class CommitThread : Thread {
     /// Find things to commit, and commit them
     void run() {
         eventuallyCommit(_initAction);
-        running = false;
+        synchronized (this) {
+            running = false;
+        }
     }
 
     /// Commit the given action and its children
@@ -463,10 +463,10 @@ childloop:
                 return;
             }
             child = children[i];
-            i++;
         }
 
         eventuallyCommit(child);
+        i++;
         goto childloop;
     }
 

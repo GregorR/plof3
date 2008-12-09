@@ -753,44 +753,8 @@ class APInterpVisitor : PASTVisitor {
     }
 
     Object visit(PASTLoop node) {
-        Action[] toEnqueue;
-        Action nact;
-
-        // temporaries can't be shared across loop boundaries, so there's no reason to create conflicts in them
-        APAccessor[] ntemps;
-        ntemps.length = _act.temps.length;
-        foreach (ti, _; ntemps) {
-            ntemps[ti] = new APAccessor();
-        }
-
-        // get each of the statements
-        PASTNode[] stmts = node.stmts;
-        foreach (stmti, stmt; stmts) {
-            if (stmti == stmts.length - 1) {
-                // this is the last statement, so we need to result as the argument of the next iteration
-                stmt = new PASTMemberSet(new PASTThis(), new PASTRaw(cast(ubyte[]) "\x1bargument"), stmt);
-            }
-
-            // now make the corresponding action
-            nact = _act.createSibling(stmt, ntemps);
-            if (nact is null) {
-                // must have been canceled
-                return _act.gctx.nul;
-            }
-            toEnqueue ~= nact;
-        }
-
-        // repeat ourself
-        nact = _act.createSibling(node, ntemps);
-        if (nact is null) {
-            return _act.gctx.nul;
-        }
-        // in the queue to avoid recursion
-        _act.gctx.tp.enqueue([nact]);
-
-        // and run the steps
-        runsub(toEnqueue, _act.ctx, cast(Object[]) ntemps);
-
+        PASTLoopCommit plc = new PASTLoopCommit(node);
+        _act.addCommit(&plc.commit);
         return _act.gctx.nul;
     }
 
@@ -858,5 +822,51 @@ class PASTPrintCommit {
 class PASTThrowCommit {
     void commit(Action act) {
         act.throwCancel();
+    }
+}
+
+/// Committer for PASTLoop
+class PASTLoopCommit {
+    this(PASTLoop node) {
+        this.node = node;
+    }
+    PASTLoop node;
+
+    void commit(Action act) {
+        Action[] toEnqueue;
+        Action nact;
+
+        // temporaries can't be shared across loop boundaries, so there's no reason to create conflicts in them
+        APAccessor[] ntemps;
+        ntemps.length = act.temps.length;
+        foreach (ti, _; ntemps) {
+            ntemps[ti] = new APAccessor();
+        }
+
+        // get each of the statements
+        PASTNode[] stmts = node.stmts;
+        foreach (stmti, stmt; stmts) {
+            if (stmti == stmts.length - 1) {
+                // this is the last statement, so we need to result as the argument of the next iteration
+                stmt = new PASTMemberSet(new PASTThis(), new PASTRaw(cast(ubyte[]) "\x1bargument"), stmt);
+            }
+
+            // now make the corresponding action
+            nact = act.createSibling(stmt, ntemps);
+            if (nact is null) {
+                // must have been canceled
+                return;
+            }
+            toEnqueue ~= nact;
+        }
+
+        // repeat ourself
+        nact = act.createSibling(node, ntemps);
+        if (nact is null) {
+            return;
+        }
+        toEnqueue ~= nact;
+
+        act.gctx.tp.enqueue(toEnqueue);
     }
 }

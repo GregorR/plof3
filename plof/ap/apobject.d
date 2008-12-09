@@ -355,6 +355,7 @@ class Action {
 
                     case ActionState.Running:
                     case ActionState.Done:
+                    case ActionState.Committing:
                         // these are OK
                         notdone = false;
                         break;
@@ -363,6 +364,10 @@ class Action {
                         // definitely can't make children
                         stateMutex.unlock();
                         return null;
+
+                    default:
+                        synchronized (Stderr)
+                            Stderr("Action ")(ast.toXML())(" in bad state for creating siblings: ")(state).newline;
                 }
             }
 
@@ -388,12 +393,16 @@ class Action {
         stateMutex.unlock();
 
         if (committing) {
+            debugOut("committing.");
+
             // run all the commit actions
             foreach (commit; _commits) {
                 commit(this);
             }
 
         } else {
+            debugOut("running.");
+
             ast.accept(new APInterpVisitor(this));
 
         }
