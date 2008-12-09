@@ -387,6 +387,13 @@ class Action {
             if (state == ActionState.Committing) committing = true;
         stateMutex.unlock();
 
+        version (ThreadDebug) {
+            if (committing)
+                debugOut("committing.");
+            else
+                debugOut("running.");
+        }
+
         if (committing) {
             // run all the commit actions
             foreach (commit; _commits) {
@@ -546,7 +553,7 @@ class Action {
     // Debug output
     version (ThreadDebug) {
         final void debugOut(char[] msg) {
-            synchronized (Stderr) Stderr("Action ")(ast.toXML())(" ")(msg).newline;
+            synchronized (Stderr) Stderr("Action ")(sid.toDebugString())(" ")(ast.toXML())(" ")(msg).newline;
         }
     } else {
         final void debugOut(char[] msg) {}
