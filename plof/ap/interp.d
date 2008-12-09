@@ -843,21 +843,29 @@ class PASTLoopCommit {
             ntemps[ti] = new APAccessor();
         }
 
-        // get each of the statements
-        PASTNode[] stmts = node.stmts;
-        foreach (stmti, stmt; stmts) {
-            if (stmti == stmts.length - 1) {
-                // this is the last statement, so we need to result as the argument of the next iteration
-                stmt = new PASTMemberSet(new PASTThis(), new PASTRaw(cast(ubyte[]) "\x1bargument"), stmt);
-            }
+        // unroll to the number of threads
+        uint tc = act.gctx.tp.threadCount();
 
-            // now make the corresponding action
-            nact = act.createSibling(stmt, ntemps);
-            if (nact is null) {
-                // must have been canceled
-                return;
+        // get the statements out
+        PASTNode[] stmts = node.stmts;
+
+        // get each of the threads
+        for (int t = 0; t < tc; t++) {
+            // get each statement
+            foreach (stmti, stmt; stmts) {
+                if (stmti == stmts.length - 1) {
+                    // this is the last statement, so we need to result as the argument of the next iteration
+                    stmt = new PASTMemberSet(new PASTThis(), new PASTRaw(cast(ubyte[]) "\x1bargument"), stmt);
+                }
+
+                // now make the corresponding action
+                nact = act.createSibling(stmt, ntemps);
+                if (nact is null) {
+                    // must have been canceled
+                    return;
+                }
+                toEnqueue ~= nact;
             }
-            toEnqueue ~= nact;
         }
 
         // repeat ourself
