@@ -409,7 +409,7 @@ class Action {
     }
 
     /// Cancel this action
-    void cancel() {
+    void cancel(bool fromRunning = false) {
         Action[] oldChildren;
         void delegate(Action)[] oldUndos;
 
@@ -421,7 +421,13 @@ class Action {
         while (notdone) {
             switch (state) {
                 case ActionState.Running:
-                    stateCondition.wait();
+                    if (fromRunning) {
+                        // we're allowed to cancel it while running (the running thread canceled itself)
+                        notdone = false;
+                        state = ActionState.Canceled;
+                    } else {
+                        stateCondition.wait();
+                    }
                     break;
 
                 case ActionState.None:

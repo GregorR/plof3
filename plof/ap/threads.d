@@ -172,7 +172,11 @@ class APThread : Thread {
 
                 } catch (APInterpFailure ex) {
                     // failed to interpret, need to re-enqueue
-                    _action.cancel();
+                    _action.cancel(true);
+                    _queueLock.lock();
+                    _action = null;
+                    _queueLock.unlock();
+                    continue;
 
                 } catch (APUnimplementedException ex) {
                     // just mention it
