@@ -457,6 +457,7 @@ class Action {
             _csid = new SID(_csid.val + 1, _sid);
             oldUndos = _undos;
             _undos = null;
+            _commits = null;
 
             gctx.tp.enqueue([this]);
         }
@@ -531,6 +532,7 @@ class Action {
             _csid = new SID(_csid.val + 1, _sid);
             oldUndos = _undos;
             _undos = null;
+            _commits = null;
         }
 
         // destroy the children

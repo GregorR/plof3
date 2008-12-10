@@ -866,6 +866,8 @@ class PASTLoopCommit {
                 }
                 toEnqueue ~= nact;
             }
+            act.gctx.tp.enqueue(toEnqueue);
+            toEnqueue = null;
         }
 
         // repeat ourself
@@ -873,8 +875,6 @@ class PASTLoopCommit {
         if (nact is null) {
             return;
         }
-        toEnqueue ~= nact;
-
-        act.gctx.tp.enqueue(toEnqueue);
+        act.gctx.tp.enqueue([nact]);
     }
 }

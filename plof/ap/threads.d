@@ -308,18 +308,18 @@ class APThreadPool {
         uint t;
 
         // try to add it to the calling thread's queue
-        APThread caller = cast(APThread) Thread.getThis();
+        /*APThread caller = cast(APThread) Thread.getThis();
         if (caller !is null) {
             t = caller._tnum;
 
-        } else {
+        } else {*/
             // otherwise just use a global counter
             synchronized (this) {
                 // choose a thread to start adding to
                 t = (toEnqueue++) % _threads.length;
             }
 
-        }
+        //}
 
         // now assign to the appropriate thread if possible
         for (;; t = (t + 1) % _threads.length) {
