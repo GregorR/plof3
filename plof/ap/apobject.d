@@ -355,6 +355,7 @@ class Action {
 
                     case ActionState.Running:
                     case ActionState.Done:
+                    case ActionState.Committing:
                         // these are OK
                         notdone = false;
                         break;
@@ -363,6 +364,10 @@ class Action {
                         // definitely can't make children
                         stateMutex.unlock();
                         return null;
+
+                    default:
+                        synchronized (Stderr)
+                            Stderr("Action ")(ast.toXML())(" in bad state for creating siblings: ")(state).newline;
                 }
             }
 
@@ -395,19 +400,23 @@ class Action {
         }
 
         if (committing) {
+            debugOut("committing.");
+
             // run all the commit actions
             foreach (commit; _commits) {
                 commit(this);
             }
 
         } else {
+            debugOut("running.");
+
             ast.accept(new APInterpVisitor(this));
 
         }
     }
 
     /// Cancel this action
-    void cancel() {
+    void cancel(bool fromRunning = false) {
         Action[] oldChildren;
         void delegate(Action)[] oldUndos;
 
@@ -419,7 +428,13 @@ class Action {
         while (notdone) {
             switch (state) {
                 case ActionState.Running:
-                    stateCondition.wait();
+                    if (fromRunning) {
+                        // we're allowed to cancel it while running (the running thread canceled itself)
+                        notdone = false;
+                        state = ActionState.Canceled;
+                    } else {
+                        stateCondition.wait();
+                    }
                     break;
 
                 case ActionState.None:
