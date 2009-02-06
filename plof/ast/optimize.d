@@ -25,6 +25,8 @@
 
 module plof.ast.optimize;
 
+import tango.io.Stdout;
+
 import plof.ast.ast;
 
 /// Optimize an AST
@@ -75,9 +77,6 @@ class PASTOptimizer : PASTVisitor {
     Object visit(PASTPrint x) {
         return new PASTPrint(cast(PASTNode) x.a1.accept(this));
     }
-    Object visit(PASTReturnGet x) {
-        return new PASTReturnGet(cast(PASTNode) x.a1.accept(this));
-    }
     Object visit(PASTCombine x) {
         return new PASTCombine(cast(PASTNode) x.a1.accept(this), cast(PASTNode) x.a2.accept(this));
     }
@@ -90,9 +89,35 @@ class PASTOptimizer : PASTVisitor {
     Object visit(PASTCatch x) {
         return new PASTCatch(cast(PASTNode) x.a1.accept(this), cast(PASTNode) x.a2.accept(this), cast(PASTNode) x.a3.accept(this));
     }
+
     Object visit(PASTConcat x) {
-        return new PASTConcat(cast(PASTNode) x.a1.accept(this), cast(PASTNode) x.a2.accept(this));
+        // we can optimize proc-proc concats and raw-raw concats
+        PASTNode l = cast(PASTNode) x.a1.accept(this);
+        PASTNode r = cast(PASTNode) x.a2.accept(this);
+        Stdout("Concat of ")(l.toXML())(" and ")(r.toXML()).newline;
+        PASTProc pl, pr;
+        PASTRaw rl, rr;
+        if ((pl = cast(PASTProc) l) !is null) {
+            if ((pr = cast(PASTProc) r) !is null) {
+                int maxtemps = pl.temps;
+                if (pr.temps > maxtemps) maxtemps = pr.temps;
+                return new PASTProc(pl.stmts ~ pr.stmts, maxtemps, pl.dfile, pl.dline, pl.dcol);
+            } else {
+                return new PASTConcat(l, r);
+            }
+
+        } else if ((rl = cast(PASTRaw) l) !is null) {
+            if ((rr = cast(PASTRaw) r) !is null) {
+                return new PASTRaw(rl.data ~ rr.data);
+            } else {
+                return new PASTConcat(l, r);
+            }
+
+        } else {
+            return new PASTConcat(l, r);
+        }
     }
+
     Object visit(PASTWrap x) {
         return new PASTWrap(cast(PASTNode) x.a1.accept(this), cast(PASTNode) x.a2.accept(this));
     }
@@ -146,9 +171,6 @@ class PASTOptimizer : PASTVisitor {
     }
     Object visit(PASTBitwiseNXOr x) {
         return new PASTBitwiseNXOr(cast(PASTNode) x.a1.accept(this), cast(PASTNode) x.a2.accept(this));
-    }
-    Object visit(PASTReturnSet x) {
-        return new PASTReturnSet(cast(PASTNode) x.a1.accept(this), cast(PASTNode) x.a2.accept(this));
     }
     Object visit(PASTMemberSet x) {
         return new PASTMemberSet(cast(PASTNode) x.a1.accept(this), cast(PASTNode) x.a2.accept(this), cast(PASTNode) x.a3.accept(this));
