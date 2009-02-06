@@ -48,6 +48,7 @@ import plof.psl.interp;
 import plof.psl.pslobject;
 
 import plof.ast.ast;
+import plof.ast.optimize;
 import plof.ast.toast;
 
 import plof.searchpath.searchpath;
@@ -58,7 +59,7 @@ int main(char[][] args)
     char[][] plofFiles;
     char[] outFile;
     ubyte[] outPSL;
-    bool interactive, defaultPSL, outputXML;
+    bool interactive, defaultPSL, outputXML, optimizeAST;
 
     /// Figure out the base search path
     char[] exePath = Environment.exePath(args[0]).toString();
@@ -107,6 +108,9 @@ int main(char[][] args)
 
         } else if (args[argi] == "--xml") {
             outputXML = true;
+
+        } else if (args[argi] == "--ast-optimize") {
+            optimizeAST = true;
 
 
         } else {
@@ -236,6 +240,9 @@ int main(char[][] args)
     // or XML
     } else if (outputXML) {
         PASTNode ast = pslToAST(outPSL);
+        if (optimizeAST) {
+            ast = optimize(ast);
+        }
         Stdout(ast.toXML()).newline;
 
     }
@@ -256,5 +263,6 @@ void usage()
     ("  -c <output file>:       Compile into PSL only, do not run.").newline()
     ("  -I|--interactive:       Interactive mode.").newline()
     ("  --debug:                Debug mode (MUCH slower).").newline()
-    ("  --xml:                  Output XML of the PSL AST instead of running.").newline();
+    ("  --xml:                  Output XML of the PSL AST instead of running.").newline()
+    ("  --ast-optimize:         Optimize the AST before outputting XML.").newline();
 }

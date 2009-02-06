@@ -444,6 +444,9 @@ class PASTProc : PASTNode {
 
     PASTNode[] stmts() { return _stmts; }
     uint temps() { return _temps; }
+    char[] dfile() { return _dfile.dup; }
+    int dline() { return _dline; }
+    int dcol() { return _dcol; }
 
     char[] toXML() {
         char[] ret = "<Proc temps=\"" ~ intToString(_temps) ~ "\"";
