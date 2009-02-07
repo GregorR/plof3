@@ -1,18 +1,19 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "jump.h"
 #include "plof.h"
 #include "psl.h"
 
-/* Macro for getting the address of a label (currently only supports GCC) */
-#define addressof(label) &&label
 
 /* Internal functions for handling PSL bignums */
 size_t pslBignumLength(size_t val);
 void pslIntToBignum(unsigned char *buf, size_t val, size_t len);
 
 /* The main PSL interpreter */
+#ifdef __GNUC__
 __attribute__((__noinline__))
+#endif
 struct PlofReturn interpretPSL(
         struct PlofObject *context,
         struct PlofObject *arg,
@@ -523,8 +524,8 @@ struct PlofReturn interpretPSL(
     goto **pc;
 
     /* These will need to change for non-GCC */
-#define STEP pc += 2; goto **pc
-#define LOOP pc = cpsl; goto **pc
+#define STEP pc += 2; jump(*pc)
+#define LOOP pc = cpsl; jump(*pc)
 #define UNIMPL(cmd) fprintf(stderr, "UNIMPLEMENTED: " cmd "\n"); STEP
 
 #ifdef DEBUG
@@ -533,7 +534,7 @@ struct PlofReturn interpretPSL(
 #define DEBUG_CMD(cmd)
 #endif
 
-interp_psl_nop:
+label(interp_psl_nop);
     DEBUG_CMD("nop");
     /* do nothing */
     STEP;
@@ -547,43 +548,43 @@ interp_psl_nop:
         STACK_PUSH(stack[stacktop - n - 1]); \
     } \
     STEP
-interp_psl_push0: PSL_PUSH(0);
-interp_psl_push1: PSL_PUSH(1);
-interp_psl_push2: PSL_PUSH(2);
-interp_psl_push3: PSL_PUSH(3);
-interp_psl_push4: PSL_PUSH(4);
-interp_psl_push5: PSL_PUSH(5);
-interp_psl_push6: PSL_PUSH(6);
-interp_psl_push7: PSL_PUSH(7);
+label(interp_psl_push0); PSL_PUSH(0);
+label(interp_psl_push1); PSL_PUSH(1);
+label(interp_psl_push2); PSL_PUSH(2);
+label(interp_psl_push3); PSL_PUSH(3);
+label(interp_psl_push4); PSL_PUSH(4);
+label(interp_psl_push5); PSL_PUSH(5);
+label(interp_psl_push6); PSL_PUSH(6);
+label(interp_psl_push7); PSL_PUSH(7);
 
-interp_psl_pop:
+label(interp_psl_pop);
     DEBUG_CMD("pop");
     UNARY;
     STEP;
 
-interp_psl_this:
+label(interp_psl_this);
     DEBUG_CMD("this");
     STACK_PUSH(context);
     STEP;
 
-interp_psl_null:
+label(interp_psl_null);
     DEBUG_CMD("null");
     STACK_PUSH(plofNull);
     STEP;
 
-interp_psl_global:
+label(interp_psl_global);
     DEBUG_CMD("global");
     STACK_PUSH(plofGlobal);
     STEP;
 
-interp_psl_new:
+label(interp_psl_new);
     DEBUG_CMD("new");
     a = GC_NEW_Z(struct PlofObject);
     a->parent = context;
     STACK_PUSH(a);
     STEP;
 
-interp_psl_combine:
+label(interp_psl_combine);
     DEBUG_CMD("combine");
     BINARY;
 
@@ -673,7 +674,7 @@ interp_psl_combine:
 
     STEP;
 
-interp_psl_member:
+label(interp_psl_member);
     DEBUG_CMD("member");
     BINARY;
     if (ISRAW(b)) {
@@ -690,7 +691,7 @@ interp_psl_member:
     }
     STEP;
 
-interp_psl_memberset:
+label(interp_psl_memberset);
     DEBUG_CMD("memberset");
     TRINARY;
     if (ISRAW(b)) {
@@ -704,19 +705,19 @@ interp_psl_memberset:
     }
     STEP;
 
-interp_psl_parent:
+label(interp_psl_parent);
     DEBUG_CMD("parent");
     UNARY;
     STACK_PUSH(a->parent);
     STEP;
 
-interp_psl_parentset:
+label(interp_psl_parentset);
     DEBUG_CMD("parentset");
     BINARY;
     a->parent = b;
     STEP;
 
-interp_psl_call:
+label(interp_psl_call);
     DEBUG_CMD("call");
     BINARY;
     if (ISRAW(b)) {
@@ -740,14 +741,14 @@ interp_psl_call:
     }
     STEP;
 
-interp_psl_return: UNIMPL("psl_return");
+label(interp_psl_return); UNIMPL("psl_return");
 
-interp_psl_throw:
+label(interp_psl_throw);
     DEBUG_CMD("throw");
     UNARY;
     return (struct PlofReturn) {a, 1};
 
-interp_psl_catch:
+label(interp_psl_catch);
     DEBUG_CMD("catch");
     TRINARY;
     if (ISRAW(b)) {
@@ -772,7 +773,7 @@ interp_psl_catch:
     }
     STEP;
 
-interp_psl_cmp:
+label(interp_psl_cmp);
     DEBUG_CMD("cmp");
     QUINARY;
     if (b == c) {
@@ -802,7 +803,7 @@ interp_psl_cmp:
     }
     STEP;
 
-interp_psl_concat:
+label(interp_psl_concat);
     DEBUG_CMD("concat");
     BINARY;
     if (ISRAW(a) && ISRAW(b)) {
@@ -830,7 +831,7 @@ interp_psl_concat:
     }
     STEP;
 
-interp_psl_wrap:
+label(interp_psl_wrap);
     DEBUG_CMD("wrap");
     BINARY;
     if (ISRAW(a) && ISRAW(b)) {
@@ -868,7 +869,7 @@ interp_psl_wrap:
     }
     STEP;
 
-interp_psl_resolve:
+label(interp_psl_resolve);
     DEBUG_CMD("resolve");
     BINARY;
     {
@@ -917,7 +918,7 @@ interp_psl_resolve:
     }
     STEP;
 
-interp_psl_loop:
+label(interp_psl_loop);
     DEBUG_CMD("loop");
     UNARY;
 
@@ -928,9 +929,9 @@ interp_psl_loop:
     /* then loop */
     LOOP;
 
-interp_psl_replace: UNIMPL("psl_replace");
+label(interp_psl_replace); UNIMPL("psl_replace");
 
-interp_psl_array:
+label(interp_psl_array);
     DEBUG_CMD("array");
     UNARY;
     {
@@ -973,7 +974,7 @@ interp_psl_array:
     }
     STEP;
 
-interp_psl_aconcat:
+label(interp_psl_aconcat);
     DEBUG_CMD("aconcat");
     BINARY;
     {
@@ -1017,7 +1018,7 @@ interp_psl_aconcat:
     }
     STEP;
 
-interp_psl_length:
+label(interp_psl_length);
     DEBUG_CMD("length");
     UNARY;
     if (ISARRAY(a)) {
@@ -1027,9 +1028,9 @@ interp_psl_length:
     }
     STEP;
 
-interp_psl_lengthset: UNIMPL("psl_lengthset");
+label(interp_psl_lengthset); UNIMPL("psl_lengthset");
 
-interp_psl_index:
+label(interp_psl_index);
     DEBUG_CMD("index");
     BINARY;
     if (ISARRAY(a) && ISINT(b)) {
@@ -1046,7 +1047,7 @@ interp_psl_index:
     }
     STEP;
 
-interp_psl_indexset:
+label(interp_psl_indexset);
     DEBUG_CMD("indexset");
     TRINARY;
     if (ISARRAY(a) && ISINT(b)) {
@@ -1070,7 +1071,7 @@ interp_psl_indexset:
     }
     STEP;
 
-interp_psl_members:
+label(interp_psl_members);
     DEBUG_CMD("members");
     UNARY;
     ad = plofMembers(a);
@@ -1080,7 +1081,7 @@ interp_psl_members:
     STACK_PUSH(b);
     STEP;
 
-interp_psl_integer:
+label(interp_psl_integer);
     DEBUG_CMD("integer");
     UNARY;
     {
@@ -1124,90 +1125,90 @@ interp_psl_integer:
     }
     STEP;
 
-interp_psl_intwidth: UNIMPL("psl_intwidth");
+label(interp_psl_intwidth); UNIMPL("psl_intwidth");
 
-interp_psl_mul:
+label(interp_psl_mul);
     DEBUG_CMD("mul");
     INTBINOP(*);
     STEP;
 
-interp_psl_div:
+label(interp_psl_div);
     DEBUG_CMD("div");
     INTBINOP(/);
     STEP;
 
-interp_psl_mod:
+label(interp_psl_mod);
     DEBUG_CMD("mod");
     INTBINOP(%);
     STEP;
 
-interp_psl_add:
+label(interp_psl_add);
     DEBUG_CMD("add");
     INTBINOP(+);
     STEP;
 
-interp_psl_sub:
+label(interp_psl_sub);
     DEBUG_CMD("sub");
     INTBINOP(-);
     STEP;
 
-interp_psl_lt:
+label(interp_psl_lt);
     DEBUG_CMD("lt");
     INTCMP(<);
     STEP;
 
-interp_psl_lte:
+label(interp_psl_lte);
     DEBUG_CMD("lte");
     INTCMP(<=);
     STEP;
 
-interp_psl_eq:
+label(interp_psl_eq);
     DEBUG_CMD("eq");
     INTCMP(==);
     STEP;
 
-interp_psl_ne: UNIMPL("psl_ne");
-interp_psl_gt: UNIMPL("psl_gt");
-interp_psl_gte: UNIMPL("psl_gte");
-interp_psl_sl: UNIMPL("psl_sl");
-interp_psl_sr: UNIMPL("psl_sr");
-interp_psl_or: UNIMPL("psl_or");
+label(interp_psl_ne); UNIMPL("psl_ne");
+label(interp_psl_gt); UNIMPL("psl_gt");
+label(interp_psl_gte); UNIMPL("psl_gte");
+label(interp_psl_sl); UNIMPL("psl_sl");
+label(interp_psl_sr); UNIMPL("psl_sr");
+label(interp_psl_or); UNIMPL("psl_or");
 
-interp_psl_nor:
+label(interp_psl_nor);
     DEBUG_CMD("nor");
     /* or it, then not it */
     INTBINOP(|);
     ASINT(stack[stacktop]) = ~ASINT(stack[stacktop]);
     STEP;
 
-interp_psl_xor:
+label(interp_psl_xor);
     DEBUG_CMD("xor");
     INTBINOP(^);
     STEP;
 
-interp_psl_nxor: UNIMPL("psl_nxor");
-interp_psl_and: UNIMPL("psl_and");
-interp_psl_nand: UNIMPL("psl_nand");
-interp_psl_byte: UNIMPL("psl_byte");
-interp_psl_float: UNIMPL("psl_float");
-interp_psl_fint: UNIMPL("psl_fint");
-interp_psl_fmul: UNIMPL("psl_fmul");
-interp_psl_fdiv: UNIMPL("psl_fdiv");
-interp_psl_fmod: UNIMPL("psl_fmod");
-interp_psl_fadd: UNIMPL("psl_fadd");
-interp_psl_fsub: UNIMPL("psl_fsub");
-interp_psl_flt: UNIMPL("psl_flt");
-interp_psl_flte: UNIMPL("psl_flte");
-interp_psl_feq: UNIMPL("psl_feq");
-interp_psl_fne: UNIMPL("psl_fne");
-interp_psl_fgt: UNIMPL("psl_fgt");
-interp_psl_fgte: UNIMPL("psl_fgte");
-interp_psl_version: UNIMPL("psl_version");
-interp_psl_dsrcfile: UNIMPL("psl_dsrcfile");
-interp_psl_dsrcline: UNIMPL("psl_dsrcline");
-interp_psl_dsrccol: UNIMPL("psl_dsrccol");
+label(interp_psl_nxor); UNIMPL("psl_nxor");
+label(interp_psl_and); UNIMPL("psl_and");
+label(interp_psl_nand); UNIMPL("psl_nand");
+label(interp_psl_byte); UNIMPL("psl_byte");
+label(interp_psl_float); UNIMPL("psl_float");
+label(interp_psl_fint); UNIMPL("psl_fint");
+label(interp_psl_fmul); UNIMPL("psl_fmul");
+label(interp_psl_fdiv); UNIMPL("psl_fdiv");
+label(interp_psl_fmod); UNIMPL("psl_fmod");
+label(interp_psl_fadd); UNIMPL("psl_fadd");
+label(interp_psl_fsub); UNIMPL("psl_fsub");
+label(interp_psl_flt); UNIMPL("psl_flt");
+label(interp_psl_flte); UNIMPL("psl_flte");
+label(interp_psl_feq); UNIMPL("psl_feq");
+label(interp_psl_fne); UNIMPL("psl_fne");
+label(interp_psl_fgt); UNIMPL("psl_fgt");
+label(interp_psl_fgte); UNIMPL("psl_fgte");
+label(interp_psl_version); UNIMPL("psl_version");
+label(interp_psl_dsrcfile); UNIMPL("psl_dsrcfile");
+label(interp_psl_dsrcline); UNIMPL("psl_dsrcline");
+label(interp_psl_dsrccol); UNIMPL("psl_dsrccol");
 
-interp_psl_print:
+label(interp_psl_print);
     DEBUG_CMD("print");
     /* do our best to print this (debugging) */
     UNARY;
@@ -1222,21 +1223,21 @@ interp_psl_print:
     }
     STEP;
 
-interp_psl_debug: UNIMPL("psl_debug");
-interp_psl_include: UNIMPL("psl_include");
-interp_psl_parse: UNIMPL("psl_parse");
-interp_psl_gadd: UNIMPL("psl_gadd");
-interp_psl_grem: UNIMPL("psl_grem");
-interp_psl_gaddstop: UNIMPL("psl_gaddstop");
-interp_psl_gremstop: UNIMPL("psl_gremstop");
-interp_psl_gaddgroup: UNIMPL("psl_gaddgroup");
-interp_psl_gremgroup: UNIMPL("psl_gremgroup");
-interp_psl_gcommit: UNIMPL("psl_gcommit");
-interp_psl_marker: UNIMPL("psl_marker");
-interp_psl_immediate: UNIMPL("psl_immediate");
+label(interp_psl_debug); UNIMPL("psl_debug");
+label(interp_psl_include); UNIMPL("psl_include");
+label(interp_psl_parse); UNIMPL("psl_parse");
+label(interp_psl_gadd); UNIMPL("psl_gadd");
+label(interp_psl_grem); UNIMPL("psl_grem");
+label(interp_psl_gaddstop); UNIMPL("psl_gaddstop");
+label(interp_psl_gremstop); UNIMPL("psl_gremstop");
+label(interp_psl_gaddgroup); UNIMPL("psl_gaddgroup");
+label(interp_psl_gremgroup); UNIMPL("psl_gremgroup");
+label(interp_psl_gcommit); UNIMPL("psl_gcommit");
+label(interp_psl_marker); UNIMPL("psl_marker");
+label(interp_psl_immediate); UNIMPL("psl_immediate");
 
-interp_psl_code:
-interp_psl_raw:
+label(interp_psl_code);
+label(interp_psl_raw);
     DEBUG_CMD("raw");
     a = GC_NEW_Z(struct PlofObject);
     a->parent = context;
@@ -1244,22 +1245,22 @@ interp_psl_raw:
     STACK_PUSH(a);
     STEP;
 
-interp_psl_dlopen: UNIMPL("psl_dlopen");
-interp_psl_dlclose: UNIMPL("psl_dlclose");
-interp_psl_dlsym: UNIMPL("psl_dlsym");
-interp_psl_cmalloc: UNIMPL("psl_cmalloc");
-interp_psl_cfree: UNIMPL("psl_cfree");
-interp_psl_cget: UNIMPL("psl_cget");
-interp_psl_cset: UNIMPL("psl_cset");
-interp_psl_ctype: UNIMPL("psl_ctype");
-interp_psl_cstruct: UNIMPL("psl_cstruct");
-interp_psl_csizeof: UNIMPL("psl_csizeof");
-interp_psl_csget: UNIMPL("psl_csget");
-interp_psl_csset: UNIMPL("psl_csset");
-interp_psl_prepcif: UNIMPL("psl_prepcif");
-interp_psl_ccall: UNIMPL("psl_ccall");
+label(interp_psl_dlopen); UNIMPL("psl_dlopen");
+label(interp_psl_dlclose); UNIMPL("psl_dlclose");
+label(interp_psl_dlsym); UNIMPL("psl_dlsym");
+label(interp_psl_cmalloc); UNIMPL("psl_cmalloc");
+label(interp_psl_cfree); UNIMPL("psl_cfree");
+label(interp_psl_cget); UNIMPL("psl_cget");
+label(interp_psl_cset); UNIMPL("psl_cset");
+label(interp_psl_ctype); UNIMPL("psl_ctype");
+label(interp_psl_cstruct); UNIMPL("psl_cstruct");
+label(interp_psl_csizeof); UNIMPL("psl_csizeof");
+label(interp_psl_csget); UNIMPL("psl_csget");
+label(interp_psl_csset); UNIMPL("psl_csset");
+label(interp_psl_prepcif); UNIMPL("psl_prepcif");
+label(interp_psl_ccall); UNIMPL("psl_ccall");
 
-interp_psl_done:
+label(interp_psl_done);
     UNARY;
     return (struct PlofReturn) {a, 0};
 }
