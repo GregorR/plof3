@@ -511,6 +511,11 @@ struct PlofReturn interpretPSL(
 
         /* now close off the end */
         cpsl[cpsli] = addressof(interp_psl_done);
+
+        /* and save it */
+        if (pslraw && !immediate) {
+            pslraw->idata = cpsl;
+        }
     }
 
     /* ACTUAL INTERPRETER BEYOND HERE */
@@ -1001,12 +1006,8 @@ interp_psl_aconcat:
         ra->data = (struct PlofObject **) GC_MALLOC(rl * sizeof(struct PlofObject *));
 
         /* then copy */
-        for (ai = 0; ai < al; ai++) {
-            ra->data[ai] = aa->data[ai];
-        }
-        for (ai = 0; ai < bl; ai++) {
-            ra->data[al+ai] = ba->data[ai];
-        }
+        memcpy(ra->data, aa->data, al * sizeof(struct PlofObject *));
+        memcpy(ra->data + al, ba->data, bl * sizeof(struct PlofObject *));
 
         /* now put it in an object */
         a = GC_NEW_Z(struct PlofObject);
