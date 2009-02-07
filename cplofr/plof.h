@@ -50,7 +50,7 @@ struct PlofData;
 { \
     struct PlofOHashTable *_nht = GC_NEW_Z(struct PlofOHashTable); \
     _nht->hashedName = (snamehash); \
-    _nht->name = GC_strdup((sname)); \
+    _nht->name = GC_STRDUP((sname)); \
     _nht->value = (svalue); \
     into = _nht; \
 }
@@ -142,7 +142,8 @@ struct PlofData {
 struct PlofRawData {
     int type;
     size_t length;
-    void *data, *idata;
+    unsigned char *data;
+    void *idata;
     PlofFunction proc;
 };
 

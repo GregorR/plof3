@@ -11,6 +11,7 @@
 int pslBignumToInt(unsigned char *bignum, ptrdiff_t *into);
 
 /* The main PSL interpreter */
+__attribute__((__noinline__))
 struct PlofReturn interpretPSL(
         struct PlofObject *context,
         struct PlofObject *arg,
@@ -26,11 +27,15 @@ struct PlofReturn interpretPSL(
     /* Slots for n-ary ops */
     struct PlofObject *a, *b, *c, *d, *e;
 
+    /* Slots for data */
+    struct PlofRawData *rd;
+    struct PlofArrayData *ad;
+
     /* The PSL in various forms */
     size_t psllen;
     unsigned char *psl;
-    void **cpsl;
-    void **pc;
+    volatile void **cpsl;
+    volatile void **pc;
     /* Compiled PSL is an array of pointers. Every pointer which is 0 mod 2 is
      * the op to run, the next pointer is an argument as a PlofRawData (if
      * applicable) */
@@ -66,11 +71,54 @@ struct PlofReturn interpretPSL(
 #define QUATERNARY STACK_POP(d) STACK_POP(c) STACK_POP(b) STACK_POP(a)
 #define QUINARY STACK_POP(e) STACK_POP(d) STACK_POP(c) STACK_POP(b) STACK_POP(a)
 
+    /* Basic type-checks */
+#define ISRAW(obj) ((obj)->data && \
+                    (obj)->data->type == PLOF_DATA_RAW)
+#define ISARRAY(obj) ((obj)->data && \
+                      (obj)->data->type == PLOF_DATA_ARRAY)
+#define RAW(obj) ((struct PlofRawData *) (obj)->data)
+#define ARRAY(obj) ((struct PlofArrayData *) (obj)->data)
+
+#define ISINT(obj) (ISRAW(obj) && RAW(obj)->length == sizeof(ptrdiff_t))
+#define ASINT(obj) (*((ptrdiff_t *) RAW(obj)->data))
+
+    /* Type coercions */
+#define PUSHINT(val) \
+    { \
+        rd = GC_NEW_Z(struct PlofRawData); \
+        rd->length = sizeof(ptrdiff_t); \
+        rd->data = (unsigned char *) GC_NEW_Z(ptrdiff_t); \
+        *((ptrdiff_t *) rd->data) = (val); \
+        \
+        a = GC_NEW_Z(struct PlofObject); \
+        a->parent = context; \
+        a->data = (struct PlofData *) rd; \
+        STACK_PUSH(a); \
+    }
+
+    /* "Function" for integer ops */
+#define INTBINOP(op) \
+    BINARY; \
+    { \
+        ptrdiff_t res = 0; \
+        \
+        if (ISINT(a) && ISINT(b)) { \
+            ptrdiff_t ia, ib; \
+            \
+            /* get the values */ \
+            ia = ASINT(a); \
+            ib = ASINT(b); \
+            res = ia op ib; \
+        } \
+        \
+        PUSHINT(res); \
+    }
+
     /* Get out the PSL */
     if (pslraw) {
         psllen = pslraw->length;
         psl = pslraw->data;
-        cpsl = (void **) pslraw->idata;
+        cpsl = (volatile void **) pslraw->idata;
     } else {
         psllen = pslaltlen;
         psl = pslalt;
@@ -78,7 +126,7 @@ struct PlofReturn interpretPSL(
 
     /* Make sure it's compiled */
     if (!cpsl) {
-        int psli, cpsli;
+        volatile int psli, cpsli;
 
         /* start with 8 slots */
         size_t cpsllen = 8;
@@ -475,7 +523,25 @@ interp_psl_member: UNIMPL("psl_member");
 interp_psl_memberset: UNIMPL("psl_memberset");
 interp_psl_parent: UNIMPL("psl_parent");
 interp_psl_parentset: UNIMPL("psl_parentset");
-interp_psl_call: UNIMPL("psl_call");
+
+interp_psl_call:
+    BINARY;
+    if (ISRAW(b)) {
+        struct PlofReturn ret =
+            interpretPSL(b->parent, a, (struct PlofRawData *) b->data, 0, NULL, 0);
+
+        /* check the return */
+        if (ret.isThrown) {
+            return ret;
+        }
+
+        STACK_PUSH(ret.ret);
+    } else {
+        /* quay? (ERROR) */
+        STACK_PUSH(plofNull);
+    }
+    STEP;
+
 interp_psl_return: UNIMPL("psl_return");
 interp_psl_throw: UNIMPL("psl_throw");
 interp_psl_catch: UNIMPL("psl_catch");
@@ -485,18 +551,159 @@ interp_psl_wrap: UNIMPL("psl_wrap");
 interp_psl_resolve: UNIMPL("psl_resolve");
 interp_psl_loop: UNIMPL("psl_loop");
 interp_psl_replace: UNIMPL("psl_replace");
-interp_psl_array: UNIMPL("psl_array");
-interp_psl_aconcat: UNIMPL("psl_aconcat");
+
+interp_psl_array:
+    UNARY;
+    {
+        size_t length;
+        ptrdiff_t stacki, arri;
+        length = stacki = arri = 0;
+
+        if (ISINT(a)) {
+            length = ASINT(a);
+        }
+
+        /* now make an array of the appropriate size */
+        ad = GC_NEW_Z(struct PlofArrayData);
+        ad->type = PLOF_DATA_ARRAY;
+        ad->length = length;
+        ad->data = GC_MALLOC(length * sizeof(struct PlofObject *));
+
+        /* copy in the stack */
+        if (length > 0) {
+            for (stacki = stacktop - 1,
+                 arri = length - 1;
+                 stacki >= 0,
+                 arri >= 0;
+                 stacki--, arri--) {
+                ad->data[arri] = stack[stacki];
+            }
+            stacktop = stacki + 1;
+        }
+
+        /* we may have exhausted the stack */
+        for (; arri >= 0; arri--) {
+            ad->data[arri] = plofNull;
+        }
+
+        /* then just put it in an object */
+        a = GC_NEW_Z(struct PlofObject);
+        a->parent = context;
+        a->data = (struct PlofData *) ad;
+        STACK_PUSH(a);
+    }
+    STEP;
+
+interp_psl_aconcat:
+    BINARY;
+    {
+        struct PlofArrayData *aa, *ba, *ra;
+        size_t al, bl, rl, ai;
+        aa = ba = ra = NULL;
+        al = bl = rl = 0;
+
+        /* get the arrays ... */
+        if (ISARRAY(a)) {
+            aa = ARRAY(a);
+        }
+        if (ISARRAY(b)) {
+            ba = ARRAY(b);
+        }
+
+        /* get the lengths ... */
+        if (aa) {
+            al = aa->length;
+        }
+        if (ba) {
+            bl = ba->length;
+        }
+        rl = al + bl;
+
+        /* make the new array object */
+        ra = GC_NEW_Z(struct PlofArrayData);
+        ra->type = PLOF_DATA_ARRAY;
+        ra->length = rl;
+        ra->data = (struct PlofObject **) GC_MALLOC(rl * sizeof(struct PlofObject *));
+
+        /* then copy */
+        for (ai = 0; ai < al; ai++) {
+            ra->data[ai] = aa->data[ai];
+        }
+        for (ai = 0; ai < bl; ai++) {
+            ra->data[al+ai] = ba->data[ai];
+        }
+
+        /* now put it in an object */
+        a = GC_NEW_Z(struct PlofObject);
+        a->parent = context;
+        a->data = (struct PlofData *) ra;
+        STACK_PUSH(a);
+    }
+    STEP;
+
 interp_psl_length: UNIMPL("psl_length");
 interp_psl_lengthset: UNIMPL("psl_lengthset");
 interp_psl_index: UNIMPL("psl_index");
 interp_psl_indexset: UNIMPL("psl_indexset");
 interp_psl_members: UNIMPL("psl_members");
-interp_psl_integer: UNIMPL("psl_integer");
+
+interp_psl_integer:
+    UNARY;
+    {
+        ptrdiff_t val = 0;
+
+        /* get the value */
+        if (ISRAW(a)) {
+            rd = (struct PlofRawData *) a->data;
+
+            switch (rd->length) {
+                case 1:
+                    val = rd->data[0];
+                    break;
+
+                case 2:
+                    val = ((ptrdiff_t) rd->data[0] << 8) |
+                          ((ptrdiff_t) rd->data[1]);
+                    break;
+
+                case 4:
+                    val = ((ptrdiff_t) rd->data[0] << 24) |
+                          ((ptrdiff_t) rd->data[1] << 16) |
+                          ((ptrdiff_t) rd->data[2] << 8) |
+                          ((ptrdiff_t) rd->data[3]);
+                    break;
+
+                case 8:
+                    val = ((ptrdiff_t) rd->data[0] << 56) |
+                          ((ptrdiff_t) rd->data[1] << 48) |
+                          ((ptrdiff_t) rd->data[2] << 40) |
+                          ((ptrdiff_t) rd->data[3] << 32) |
+                          ((ptrdiff_t) rd->data[4] << 24) |
+                          ((ptrdiff_t) rd->data[5] << 16) |
+                          ((ptrdiff_t) rd->data[6] << 8) |
+                          ((ptrdiff_t) rd->data[7]);
+                    break;
+            }
+        }
+
+        PUSHINT(val);
+    }
+    STEP;
+
 interp_psl_intwidth: UNIMPL("psl_intwidth");
-interp_psl_mul: UNIMPL("psl_mul");
-interp_psl_div: UNIMPL("psl_div");
-interp_psl_mod: UNIMPL("psl_mod");
+
+interp_psl_mul:
+    INTBINOP(*);
+    STEP;
+
+interp_psl_div:
+    INTBINOP(/);
+    STEP;
+
+interp_psl_mod:
+    INTBINOP(%);
+    STEP;
+
 interp_psl_add: UNIMPL("psl_add");
 interp_psl_sub: UNIMPL("psl_sub");
 interp_psl_lt: UNIMPL("psl_lt");
@@ -509,7 +716,11 @@ interp_psl_sl: UNIMPL("psl_sl");
 interp_psl_sr: UNIMPL("psl_sr");
 interp_psl_or: UNIMPL("psl_or");
 interp_psl_nor: UNIMPL("psl_nor");
-interp_psl_xor: UNIMPL("psl_xor");
+
+interp_psl_xor:
+    INTBINOP(^);
+    STEP;
+
 interp_psl_nxor: UNIMPL("psl_nxor");
 interp_psl_and: UNIMPL("psl_and");
 interp_psl_nand: UNIMPL("psl_nand");
@@ -544,12 +755,12 @@ interp_psl_gremgroup: UNIMPL("psl_gremgroup");
 interp_psl_gcommit: UNIMPL("psl_gcommit");
 interp_psl_marker: UNIMPL("psl_marker");
 interp_psl_immediate: UNIMPL("psl_immediate");
-interp_psl_code: UNIMPL("psl_code");
 
+interp_psl_code:
 interp_psl_raw:
     a = GC_NEW_Z(struct PlofObject);
     a->parent = context;
-    a->data = pc[1];
+    a->data = (void *) pc[1];
     STACK_PUSH(a);
     STEP;
 
