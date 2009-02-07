@@ -23,7 +23,7 @@ struct PlofData;
 { \
     struct PlofObject *_obj = (obj); \
     size_t _namehash = (namehash); \
-    struct PlofObject *_res = NULL; \
+    struct PlofObject *_res = plofNull; \
     struct PlofOHashTable *_cur = (obj)->hashTable; \
     while (_cur) { \
         if (_namehash < _cur->hashedName) { \
@@ -31,16 +31,13 @@ struct PlofData;
         } else if (_namehash > _cur->hashedName) { \
             _cur = _cur->right; \
         } else { \
-            if (_cur->value & 1) { \
-                _res = (obj)->itable[_cur->value>>>1]; \
+            if (((size_t) _cur->value) & 1) { \
+                _res = (obj)->itable[((size_t) _cur->value)>>1]; \
             } else { \
                 _res = _cur->value; \
             } \
             _cur = NULL; \
         } \
-    } \
-    if (!_res) { \
-        _res = plofNull; \
     } \
     into = _res; \
 }
@@ -84,8 +81,8 @@ struct PlofData;
                 } \
                 \
             } else { \
-                if (_cur->value & 1) { \
-                    _obj->idata[_cur->value>>>1] = (svalue); \
+                if ((size_t) _cur->value & 1) { \
+                    _obj->itable[((size_t) _cur->value)>>1] = (svalue); \
                 } else { \
                     _cur->value = (svalue); /* FIXME, collisions */ \
                 } \
@@ -122,7 +119,7 @@ struct PlofReturn {
  * value */
 struct PlofOHashTable {
     size_t hashedName;
-    char *name;
+    unsigned char *name;
     struct PlofObject *value;
     struct PlofOHashTable *left, *right;
 };
@@ -171,5 +168,8 @@ struct PlofReturn interpretPSL(
 
 /* Convert a PSL bignum to an int */
 int pslBignumToInt(unsigned char *bignum, ptrdiff_t *into);
+
+/* Hash function */
+size_t plofHash(unsigned char *str);
 
 #endif

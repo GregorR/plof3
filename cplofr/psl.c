@@ -7,8 +7,9 @@
 /* Macro for getting the address of a label (currently only supports GCC) */
 #define addressof(label) &&label
 
-/* Internal function for handling PSL bignums */
-int pslBignumToInt(unsigned char *bignum, ptrdiff_t *into);
+/* Internal functions for handling PSL bignums */
+size_t pslBignumLength(size_t val);
+void pslIntToBignum(unsigned char *buf, size_t val, size_t len);
 
 /* The main PSL interpreter */
 __attribute__((__noinline__))
@@ -27,7 +28,6 @@ struct PlofReturn interpretPSL(
     /* Slots for n-ary ops */
     struct PlofObject *a, *b, *c, *d, *e;
 
-    /* Slots for data */
     struct PlofRawData *rd;
     struct PlofArrayData *ad;
 
@@ -54,6 +54,7 @@ struct PlofReturn interpretPSL(
             stack = GC_REALLOC(stack, stacklen * sizeof(struct PlofObject *)); \
         } \
         stack[stacktop] = (val); \
+        stacktop++; \
     }
 #define STACK_POP(into) \
     { \
@@ -152,8 +153,9 @@ struct PlofReturn interpretPSL(
 
                 psli++;
                 psli += pslBignumToInt(psl + psli, &raw->length);
-                raw->data = psl + psli;
-                psli += raw->length;
+                raw->data = (unsigned char *) GC_MALLOC(raw->length);
+                memcpy(raw->data, psl + psli, raw->length);
+                psli += raw->length - 1;
 
                 cpsl[cpsli + 1] = raw;
             } else {
@@ -492,12 +494,20 @@ struct PlofReturn interpretPSL(
 #define LOOP pc = cpsl; goto **pc
 #define UNIMPL(cmd) fprintf(stderr, "UNIMPLEMENTED: " cmd "\n"); STEP
 
+#ifdef DEBUG
+#define DEBUG_CMD(cmd) fprintf(stderr, "DEBUG: " cmd "\n")
+#else
+#define DEBUG_CMD(cmd)
+#endif
+
 interp_psl_nop:
+    DEBUG_CMD("nop");
     /* do nothing */
     STEP;
 
     /* General "function" for PSL push* commands */
 #define PSL_PUSH(n) \
+    DEBUG_CMD("push"); \
     if (stacktop <= n) { \
         STACK_PUSH(plofNull); \
     } else { \
@@ -513,22 +523,74 @@ interp_psl_push5: PSL_PUSH(5);
 interp_psl_push6: PSL_PUSH(6);
 interp_psl_push7: PSL_PUSH(7);
 
-interp_psl_pop: UNIMPL("psl_pop");
-interp_psl_this: UNIMPL("psl_this");
-interp_psl_null: UNIMPL("psl_null");
-interp_psl_global: UNIMPL("psl_global");
-interp_psl_new: UNIMPL("psl_new");
+interp_psl_pop:
+    DEBUG_CMD("pop");
+    UNARY;
+    STEP;
+
+interp_psl_this:
+    DEBUG_CMD("this");
+    STACK_PUSH(context);
+    STEP;
+
+interp_psl_null:
+    DEBUG_CMD("null");
+    STACK_PUSH(plofNull);
+    STEP;
+
+interp_psl_global:
+    DEBUG_CMD("global");
+    STACK_PUSH(plofGlobal);
+    STEP;
+
+interp_psl_new:
+    DEBUG_CMD("new");
+    a = GC_NEW_Z(struct PlofObject);
+    a->parent = context;
+    STACK_PUSH(a);
+    STEP;
+
 interp_psl_combine: UNIMPL("psl_combine");
-interp_psl_member: UNIMPL("psl_member");
-interp_psl_memberset: UNIMPL("psl_memberset");
+
+interp_psl_member:
+    DEBUG_CMD("member");
+    BINARY;
+    if (ISRAW(b)) {
+        unsigned char *name = RAW(b)->data;
+        size_t namehash = plofHash(name);
+
+        PLOF_READ(a, a, name, namehash);
+        STACK_PUSH(a);
+    } else {
+        STACK_PUSH(plofNull);
+    }
+    STEP;
+
+interp_psl_memberset:
+    DEBUG_CMD("memberset");
+    TRINARY;
+    if (ISRAW(b)) {
+        unsigned char *name = RAW(b)->data;
+        size_t namehash = plofHash(name);
+
+        PLOF_WRITE(a, name, namehash, c);
+    }
+    STEP;
+
 interp_psl_parent: UNIMPL("psl_parent");
-interp_psl_parentset: UNIMPL("psl_parentset");
+
+interp_psl_parentset:
+    DEBUG_CMD("parentset");
+    BINARY;
+    a->parent = b;
+    STEP;
 
 interp_psl_call:
+    DEBUG_CMD("call");
     BINARY;
     if (ISRAW(b)) {
         struct PlofReturn ret =
-            interpretPSL(b->parent, a, (struct PlofRawData *) b->data, 0, NULL, 0);
+            interpretPSL(b->parent, a, RAW(b), 0, NULL, 0);
 
         /* check the return */
         if (ret.isThrown) {
@@ -545,17 +607,133 @@ interp_psl_call:
 interp_psl_return: UNIMPL("psl_return");
 interp_psl_throw: UNIMPL("psl_throw");
 interp_psl_catch: UNIMPL("psl_catch");
-interp_psl_cmp: UNIMPL("psl_cmp");
+
+interp_psl_cmp:
+    DEBUG_CMD("cmp");
+    QUINARY;
+    if (b == c) {
+        if (ISRAW(d)) {
+            struct PlofReturn ret = interpretPSL(d->parent, a, RAW(d), 0, NULL, 0);
+
+            /* rethrow */
+            if (ret.isThrown) {
+                return ret;
+            }
+            STACK_PUSH(ret.ret);
+        } else {
+            STACK_PUSH(plofNull);
+        }
+    } else {
+        if (ISRAW(e)) {
+            struct PlofReturn ret = interpretPSL(e->parent, a, RAW(e), 0, NULL, 0);
+
+            /* rethrow */
+            if (ret.isThrown) {
+                return ret;
+            }
+            STACK_PUSH(ret.ret);
+        } else {
+            STACK_PUSH(plofNull);
+        }
+    }
+    STEP;
+
 interp_psl_concat: UNIMPL("psl_concat");
-interp_psl_wrap: UNIMPL("psl_wrap");
-interp_psl_resolve: UNIMPL("psl_resolve");
+
+interp_psl_wrap:
+    DEBUG_CMD("wrap");
+    BINARY;
+    if (ISRAW(a) && ISRAW(b)) {
+        size_t bignumsz;
+        struct PlofRawData *ra, *rb;
+
+        ra = RAW(a);
+        rb = RAW(b);
+
+        /* create the new rd */
+        rd = GC_NEW_Z(struct PlofRawData);
+        rd->type = PLOF_DATA_RAW;
+
+        /* figure out how much space is needed */
+        bignumsz = pslBignumLength(ra->length);
+        rd->length = 1 + bignumsz + ra->length;
+        rd->data = (unsigned char *) GC_MALLOC(rd->length);
+
+        /* copy in the instruction */
+        if (rb->length >= 1) {
+            rd->data[0] = rb->data[0];
+        }
+
+        /* and the bignum */
+        pslIntToBignum(rd->data + 1, ra->length, bignumsz);
+
+        /* and the data */
+        memcpy(rd->data + 1 + bignumsz, ra->data, ra->length);
+
+        /* then push it */
+        a = GC_NEW_Z(struct PlofObject);
+        a->parent = context;
+        a->data = (struct PlofData *) rd;
+        STACK_PUSH(a);
+    }
+    STEP;
+
+interp_psl_resolve:
+    DEBUG_CMD("resolve");
+    BINARY;
+    {
+        int i;
+        size_t *hashes;
+
+        /* get an array of names regardless */
+        if (ISARRAY(b)) {
+            ad = ARRAY(b);
+        } else {
+            ad = GC_NEW_Z(struct PlofArrayData);
+            ad->type = PLOF_DATA_ARRAY;
+
+            if (ISRAW(b)) {
+                ad->length = 1;
+                ad->data = (struct PlofObject **) GC_MALLOC(sizeof(struct PlofObject *));
+                ad->data[0] = b;
+            }
+        }
+
+        /* hash them all */
+        hashes = (size_t *) GC_MALLOC(ad->length * sizeof(size_t));
+        for (i = 0; i < ad->length; i++) {
+            hashes[i] = plofHash(RAW(ad->data[i])->data);
+        }
+
+        /* now try to find a match */
+        while (a && a != plofNull) {
+            for (i = 0; i < ad->length; i++) {
+                PLOF_READ(b, a, RAW(ad->data[i])->data, hashes[i]);
+                if (b != plofNull) {
+                    /* done */
+                    STACK_PUSH(a);
+                    STACK_PUSH(ad->data[i]);
+                    STEP;
+                }
+            }
+
+            a = a->parent;
+        }
+
+        /* didn't find one */
+        STACK_PUSH(plofNull);
+        STACK_PUSH(plofNull);
+    }
+    STEP;
+
 interp_psl_loop: UNIMPL("psl_loop");
 interp_psl_replace: UNIMPL("psl_replace");
 
 interp_psl_array:
+    DEBUG_CMD("array");
     UNARY;
     {
-        size_t length;
+        size_t length = 0;
         ptrdiff_t stacki, arri;
         length = stacki = arri = 0;
 
@@ -595,6 +773,7 @@ interp_psl_array:
     STEP;
 
 interp_psl_aconcat:
+    DEBUG_CMD("aconcat");
     BINARY;
     {
         struct PlofArrayData *aa, *ba, *ra;
@@ -641,13 +820,40 @@ interp_psl_aconcat:
     }
     STEP;
 
-interp_psl_length: UNIMPL("psl_length");
+interp_psl_length:
+    DEBUG_CMD("length");
+    UNARY;
+    if (ISARRAY(a)) {
+        PUSHINT(ARRAY(a)->length);
+    } else {
+        PUSHINT(0);
+    }
+    STEP;
+
 interp_psl_lengthset: UNIMPL("psl_lengthset");
-interp_psl_index: UNIMPL("psl_index");
+
+interp_psl_index:
+    DEBUG_CMD("index");
+    BINARY;
+    if (ISARRAY(a) && ISINT(b)) {
+        ptrdiff_t index = ASINT(b);
+        ad = ARRAY(a);
+
+        if (index < 0 || index >= ad->length) {
+            STACK_PUSH(plofNull);
+        } else {
+            STACK_PUSH(ad->data[index]);
+        }
+    } else {
+        STACK_PUSH(plofNull);
+    }
+    STEP;
+
 interp_psl_indexset: UNIMPL("psl_indexset");
 interp_psl_members: UNIMPL("psl_members");
 
 interp_psl_integer:
+    DEBUG_CMD("integer");
     UNARY;
     {
         ptrdiff_t val = 0;
@@ -693,14 +899,17 @@ interp_psl_integer:
 interp_psl_intwidth: UNIMPL("psl_intwidth");
 
 interp_psl_mul:
+    DEBUG_CMD("mul");
     INTBINOP(*);
     STEP;
 
 interp_psl_div:
+    DEBUG_CMD("div");
     INTBINOP(/);
     STEP;
 
 interp_psl_mod:
+    DEBUG_CMD("mod");
     INTBINOP(%);
     STEP;
 
@@ -708,16 +917,28 @@ interp_psl_add: UNIMPL("psl_add");
 interp_psl_sub: UNIMPL("psl_sub");
 interp_psl_lt: UNIMPL("psl_lt");
 interp_psl_lte: UNIMPL("psl_lte");
-interp_psl_eq: UNIMPL("psl_eq");
+
+interp_psl_eq:
+    DEBUG_CMD("eq");
+    INTBINOP(==);
+    STEP;
+
 interp_psl_ne: UNIMPL("psl_ne");
 interp_psl_gt: UNIMPL("psl_gt");
 interp_psl_gte: UNIMPL("psl_gte");
 interp_psl_sl: UNIMPL("psl_sl");
 interp_psl_sr: UNIMPL("psl_sr");
 interp_psl_or: UNIMPL("psl_or");
-interp_psl_nor: UNIMPL("psl_nor");
+
+interp_psl_nor:
+    DEBUG_CMD("nor");
+    /* or it, then not it */
+    INTBINOP(|);
+    ASINT(stack[stacktop]) = ~ASINT(stack[stacktop]);
+    STEP;
 
 interp_psl_xor:
+    DEBUG_CMD("xor");
     INTBINOP(^);
     STEP;
 
@@ -742,7 +963,22 @@ interp_psl_version: UNIMPL("psl_version");
 interp_psl_dsrcfile: UNIMPL("psl_dsrcfile");
 interp_psl_dsrcline: UNIMPL("psl_dsrcline");
 interp_psl_dsrccol: UNIMPL("psl_dsrccol");
-interp_psl_print: UNIMPL("psl_print");
+
+interp_psl_print:
+    DEBUG_CMD("print");
+    /* do our best to print this (debugging) */
+    UNARY;
+    if (ISRAW(a)) {
+        printf("%.*s\n", RAW(a)->length, RAW(a)->data);
+
+        if (RAW(a)->length == sizeof(ptrdiff_t)) {
+            printf("Integer value: %d\n", *((ptrdiff_t *) RAW(a)->data));
+        }
+    } else {
+        printf("%p\n", a);
+    }
+    STEP;
+
 interp_psl_debug: UNIMPL("psl_debug");
 interp_psl_include: UNIMPL("psl_include");
 interp_psl_parse: UNIMPL("psl_parse");
@@ -758,9 +994,10 @@ interp_psl_immediate: UNIMPL("psl_immediate");
 
 interp_psl_code:
 interp_psl_raw:
+    DEBUG_CMD("raw");
     a = GC_NEW_Z(struct PlofObject);
     a->parent = context;
-    a->data = (void *) pc[1];
+    a->data = (struct PlofData *) pc[1];
     STACK_PUSH(a);
     STEP;
 
@@ -800,6 +1037,57 @@ int pslBignumToInt(unsigned char *bignum, ptrdiff_t *into)
     *into = ret;
 
     return c;
+}
+
+/* Determine the number of bytes a bignum of a particular number will take */
+size_t pslBignumLength(size_t val)
+{
+    if (val < ((size_t) 1<<7)) {
+        return 1;
+    } else if (val < ((size_t) 1<<14)) {
+        return 2;
+    } else if (val < ((size_t) 1<<21)) {
+        return 3;
+    } else if (val < ((size_t) 1<<28)) {
+        return 4;
+    } else if (val < ((size_t) 1<<35)) {
+        return 5;
+    } else if (val < ((size_t) 1<<42)) {
+        return 6;
+    } else if (val < ((size_t) 1<<49)) {
+        return 7;
+    } else if (val < ((size_t) 1<<56)) {
+        return 8;
+    } else if (val < ((size_t) 1<<63)) {
+        return 9;
+    } else {
+        return 10;
+    }
+}
+
+/* Write a bignum into a buffer */
+void pslIntToBignum(unsigned char *buf, size_t val, size_t len)
+{
+    buf[--len] = val & 0x7F;
+    val >>= 7;
+
+    for (len--; len != (size_t) -1; len--) {
+        buf[len] = (val & 0x7F) | 0x80;
+        val >>= 7;
+    }
+}
+
+/* Hash function */
+size_t plofHash(unsigned char *str)
+{
+    /* this is the hash function used in sdbm */
+    size_t hash = 0;
+    int c;
+
+    while (c = *str++)
+        hash = c + (hash << 6) + (hash << 16) - hash;
+
+    return hash;
 }
 
 /* Null and global */

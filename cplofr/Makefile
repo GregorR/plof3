@@ -19,3 +19,8 @@ psli$(EXEEXT): $(PSLI_OBJS)
 
 clean:
 	rm -f psli$(EXEEXT) $(PSLI_OBJS)
+
+deps:
+	$(CC) $(CFLAGS) -MM *.c > deps
+
+include deps
