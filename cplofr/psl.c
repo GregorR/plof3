@@ -97,7 +97,7 @@ struct PlofReturn interpretPSL(
         STACK_PUSH(a); \
     }
 
-    /* "Function" for integer ops */
+    /* "Functions" for integer ops */
 #define INTBINOP(op) \
     BINARY; \
     { \
@@ -113,6 +113,34 @@ struct PlofReturn interpretPSL(
         } \
         \
         PUSHINT(res); \
+    }
+#define INTCMP(op) \
+    QUINARY; \
+    { \
+        if (ISINT(b) && ISINT(c) && ISRAW(d) && ISRAW(e)) { \
+            ptrdiff_t ia, ib; \
+            struct PlofReturn ret; \
+            \
+            /* get the values */ \
+            ia = ASINT(b); \
+            ib = ASINT(c); \
+            \
+            /* check them */ \
+            if (ia op ib) { \
+                ret = interpretPSL(d->parent, a, RAW(d), 0, NULL, 0); \
+            } else { \
+                ret = interpretPSL(e->parent, a, RAW(e), 0, NULL, 0); \
+            } \
+            \
+            /* maybe rethrow */ \
+            if (ret.isThrown) { \
+                return ret; \
+            } \
+            \
+            STACK_PUSH(ret.ret); \
+        } else { \
+            STACK_PUSH(plofNull); \
+        } \
     }
 
     /* Get out the PSL */
@@ -550,16 +578,107 @@ interp_psl_new:
     STACK_PUSH(a);
     STEP;
 
-interp_psl_combine: UNIMPL("psl_combine");
+interp_psl_combine:
+    DEBUG_CMD("combine");
+    BINARY;
+
+    /* start making the new object */
+    c = GC_NEW_Z(struct PlofObject);
+    c->parent = b->parent;
+
+    /* duplicate the left object */
+    plofObjCopy(c, a->hashTable);
+
+    /* then the right */
+    plofObjCopy(c, b->hashTable);
+
+    /* now get any data */
+    if (ISRAW(a)) {
+        if (ISRAW(b)) {
+            struct PlofRawData *ra, *rb;
+            ra = RAW(a);
+            rb = RAW(b);
+
+            rd = GC_NEW_Z(struct PlofRawData);
+            rd->type = PLOF_DATA_RAW;
+
+            rd->length = ra->length + rb->length;
+            rd->data = (unsigned char *) GC_MALLOC(rd->length);
+
+            /* copy in both */
+            memcpy(rd->data, ra->data, ra->length);
+            memcpy(rd->data + ra->length, rb->data, rb->length);
+
+            c->data = (struct PlofData *) rd;
+
+        } else {
+            /* just the left */
+            c->data = a->data;
+
+        }
+
+    } else if (ISARRAY(a)) {
+        if (ISRAW(b)) {
+            /* just the right */
+            c->data = b->data;
+
+        } else if (ISARRAY(b)) {
+            /* combine the arrays */
+            struct PlofArrayData *aa, *ab;
+            aa = ARRAY(a);
+            ab = ARRAY(b);
+
+            ad = GC_NEW_Z(struct PlofArrayData);
+            ad->type = PLOF_DATA_ARRAY;
+
+            ad->length = aa->length + ab->length;
+            ad->data = (struct PlofObject **) GC_MALLOC(ad->length * sizeof(struct PlofObject *));
+
+            /* copy in both */
+            memcpy(ad->data, aa->data, aa->length * sizeof(struct PlofObject *));
+            memcpy(ad->data + aa->length, ab->data, ab->length * sizeof(struct PlofObject *));
+
+            c->data = (struct PlofData *) ad;
+
+        } else {
+            /* duplicate the left array */
+            ad = GC_NEW_Z(struct PlofArrayData);
+            memcpy(ad, ARRAY(a), sizeof(struct PlofArrayData));
+            ad->data = (struct PlofObject **) GC_MALLOC(ad->length * sizeof(struct PlofObject *));
+            memcpy(ad->data, ARRAY(a)->data, ad->length * sizeof(struct PlofObject *));
+
+        }
+
+    } else {
+        if (ISRAW(b)) {
+            c->data = b->data;
+
+        } else if (ISARRAY(b)) {
+            /* duplicate the right array */
+            ad = GC_NEW_Z(struct PlofArrayData);
+            memcpy(ad, ARRAY(b), sizeof(struct PlofArrayData));
+            ad->data = (struct PlofObject **) GC_MALLOC(ad->length * sizeof(struct PlofObject *));
+            memcpy(ad->data, ARRAY(b)->data, ad->length * sizeof(struct PlofObject *));
+
+        }
+
+    }
+
+    STACK_PUSH(c);
+
+    STEP;
 
 interp_psl_member:
     DEBUG_CMD("member");
     BINARY;
     if (ISRAW(b)) {
-        unsigned char *name = RAW(b)->data;
-        size_t namehash = plofHash(name);
+        unsigned char *name;
+        size_t namehash;
+        rd = RAW(b);
+        name = rd->data;
+        namehash = plofHash(name);
 
-        PLOF_READ(a, a, name, namehash);
+        PLOF_READ(a, a, rd->length, name, namehash);
         STACK_PUSH(a);
     } else {
         STACK_PUSH(plofNull);
@@ -570,14 +689,21 @@ interp_psl_memberset:
     DEBUG_CMD("memberset");
     TRINARY;
     if (ISRAW(b)) {
-        unsigned char *name = RAW(b)->data;
-        size_t namehash = plofHash(name);
+        unsigned char *name;
+        size_t namehash;
+        rd = RAW(b);
+        name = rd->data;
+        namehash = plofHash(name);
 
-        PLOF_WRITE(a, name, namehash, c);
+        PLOF_WRITE(a, rd->length, name, namehash, c);
     }
     STEP;
 
-interp_psl_parent: UNIMPL("psl_parent");
+interp_psl_parent:
+    DEBUG_CMD("parent");
+    UNARY;
+    STACK_PUSH(a->parent);
+    STEP;
 
 interp_psl_parentset:
     DEBUG_CMD("parentset");
@@ -589,8 +715,13 @@ interp_psl_call:
     DEBUG_CMD("call");
     BINARY;
     if (ISRAW(b)) {
-        struct PlofReturn ret =
-            interpretPSL(b->parent, a, RAW(b), 0, NULL, 0);
+        struct PlofReturn ret;
+
+        /* make the context */
+        c = GC_NEW_Z(struct PlofObject);
+        c->parent = b->parent;
+
+        ret = interpretPSL(c, a, RAW(b), 0, NULL, 0);
 
         /* check the return */
         if (ret.isThrown) {
@@ -605,8 +736,36 @@ interp_psl_call:
     STEP;
 
 interp_psl_return: UNIMPL("psl_return");
-interp_psl_throw: UNIMPL("psl_throw");
-interp_psl_catch: UNIMPL("psl_catch");
+
+interp_psl_throw:
+    DEBUG_CMD("throw");
+    UNARY;
+    return (struct PlofReturn) {a, 1};
+
+interp_psl_catch:
+    DEBUG_CMD("catch");
+    TRINARY;
+    if (ISRAW(b)) {
+        struct PlofReturn ret = interpretPSL(b->parent, a, RAW(b), 0, NULL, 0);
+
+        /* perhaps catch */
+        if (ret.isThrown) {
+            if (ISRAW(c)) {
+                ret = interpretPSL(c->parent, ret.ret, RAW(c), 0, NULL, 0);
+                if (ret.isThrown) {
+                    return ret;
+                }
+            } else {
+                ret.ret = plofNull;
+            }
+        }
+
+        /* then push the result */
+        STACK_PUSH(ret.ret);
+    } else {
+        STACK_PUSH(plofNull);
+    }
+    STEP;
 
 interp_psl_cmp:
     DEBUG_CMD("cmp");
@@ -638,7 +797,33 @@ interp_psl_cmp:
     }
     STEP;
 
-interp_psl_concat: UNIMPL("psl_concat");
+interp_psl_concat:
+    DEBUG_CMD("concat");
+    BINARY;
+    if (ISRAW(a) && ISRAW(b)) {
+        struct PlofRawData *ra, *rb;
+
+        ra = RAW(a);
+        rb = RAW(b);
+
+        rd = GC_NEW_Z(struct PlofRawData);
+        rd->type = PLOF_DATA_RAW;
+        rd->length = ra->length + rb->length;
+        rd->data = (unsigned char *) GC_MALLOC(rd->length);
+        memcpy(rd->data, ra->data, ra->length);
+        memcpy(rd->data + ra->length, rb->data, rb->length);
+
+        a = GC_NEW_Z(struct PlofObject);
+        a->parent = context;
+        a->data = (struct PlofData *) rd;
+
+        STACK_PUSH(a);
+
+    } else {
+        STACK_PUSH(plofNull);
+
+    }
+    STEP;
 
 interp_psl_wrap:
     DEBUG_CMD("wrap");
@@ -708,7 +893,8 @@ interp_psl_resolve:
         /* now try to find a match */
         while (a && a != plofNull) {
             for (i = 0; i < ad->length; i++) {
-                PLOF_READ(b, a, RAW(ad->data[i])->data, hashes[i]);
+                rd = RAW(ad->data[i]);
+                PLOF_READ(b, a, rd->length, rd->data, hashes[i]);
                 if (b != plofNull) {
                     /* done */
                     STACK_PUSH(a);
@@ -726,7 +912,17 @@ interp_psl_resolve:
     }
     STEP;
 
-interp_psl_loop: UNIMPL("psl_loop");
+interp_psl_loop:
+    DEBUG_CMD("loop");
+    UNARY;
+
+    /* fix the stack */
+    stacktop = 1;
+    stack[0] = a;
+
+    /* then loop */
+    LOOP;
+
 interp_psl_replace: UNIMPL("psl_replace");
 
 interp_psl_array:
@@ -849,8 +1045,39 @@ interp_psl_index:
     }
     STEP;
 
-interp_psl_indexset: UNIMPL("psl_indexset");
-interp_psl_members: UNIMPL("psl_members");
+interp_psl_indexset:
+    DEBUG_CMD("indexset");
+    TRINARY;
+    if (ISARRAY(a) && ISINT(b)) {
+        ptrdiff_t index = ASINT(b);
+        ad = ARRAY(a);
+
+        /* make sure it's long enough */
+        if (index >= ad->length) {
+            size_t i = ad->length;
+            ad->length = index + 1;
+            ad->data = GC_REALLOC(ad->data, ad->length * sizeof(struct PlofObject *));
+            for (; i < ad->length; i++) {
+                ad->data[i] = plofNull;
+            }
+        }
+
+        /* then set it */
+        if (index >= 0) {
+            ad->data[index] = c;
+        }
+    }
+    STEP;
+
+interp_psl_members:
+    DEBUG_CMD("members");
+    UNARY;
+    ad = plofMembers(a);
+    b = GC_NEW_Z(struct PlofObject);
+    b->parent = context;
+    b->data = (struct PlofData *) ad;
+    STACK_PUSH(b);
+    STEP;
 
 interp_psl_integer:
     DEBUG_CMD("integer");
@@ -913,14 +1140,29 @@ interp_psl_mod:
     INTBINOP(%);
     STEP;
 
-interp_psl_add: UNIMPL("psl_add");
-interp_psl_sub: UNIMPL("psl_sub");
-interp_psl_lt: UNIMPL("psl_lt");
-interp_psl_lte: UNIMPL("psl_lte");
+interp_psl_add:
+    DEBUG_CMD("add");
+    INTBINOP(+);
+    STEP;
+
+interp_psl_sub:
+    DEBUG_CMD("sub");
+    INTBINOP(-);
+    STEP;
+
+interp_psl_lt:
+    DEBUG_CMD("lt");
+    INTCMP(<);
+    STEP;
+
+interp_psl_lte:
+    DEBUG_CMD("lte");
+    INTCMP(<=);
+    STEP;
 
 interp_psl_eq:
     DEBUG_CMD("eq");
-    INTBINOP(==);
+    INTCMP(==);
     STEP;
 
 interp_psl_ne: UNIMPL("psl_ne");
@@ -1088,6 +1330,78 @@ size_t plofHash(unsigned char *str)
         hash = c + (hash << 6) + (hash << 16) - hash;
 
     return hash;
+}
+
+/* Copy the content of one object into another */
+void plofObjCopy(struct PlofObject *to, struct PlofOHashTable *from)
+{
+    if (from == NULL) return;
+
+    /*if ((ptrdiff_t) from->value & 1) {
+        PLOF_WRITE(to, from->namelen, from->name, from->hashedName, from->itable[(ptrdiff_t) from->value>>1]);
+    } else {*/
+    /* FIXME */
+        PLOF_WRITE(to, from->namelen, from->name, from->hashedName, from->value);
+    /*}*/
+    plofObjCopy(to, from->left);
+    plofObjCopy(to, from->right);
+}
+
+
+struct PlofObjects {
+    size_t length;
+    struct PlofObject **data;
+};
+
+/* Internal function used by plofMembers */
+struct PlofObjects plofMembersSub(struct PlofOHashTable *of)
+{
+    struct PlofObjects left, right, ret;
+    struct PlofObject *obj;
+    struct PlofRawData *rd;
+
+    if (of == NULL) return (struct PlofObjects) { 0, NULL };
+
+    /* get the left and right members */
+    left = plofMembersSub(of->left);
+    right = plofMembersSub(of->right);
+
+    /* prepare ours */
+    ret.length = left.length + right.length + 1;
+    ret.data = (struct PlofObject **) GC_MALLOC(ret.length * sizeof(struct PlofObject *));
+
+    /* and the object */
+    rd = GC_NEW_Z(struct PlofRawData);
+    rd->type = PLOF_DATA_RAW;
+    rd->length = of->namelen;
+    rd->data = of->name;
+    obj = GC_NEW_Z(struct PlofObject);
+    obj->parent = plofNull; /* FIXME */
+    obj->data = (struct PlofData *) rd;
+
+    /* then copy */
+    memcpy(ret.data, left.data, left.length * sizeof(struct PlofObject *));
+    ret.data[left.length] = obj;
+    memcpy(ret.data + left.length + 1, right.data, right.length * sizeof(struct PlofObject *));
+
+    return ret;
+}
+
+/* Make an array of the list of members of an object */
+struct PlofArrayData *plofMembers(struct PlofObject *of)
+{
+    struct PlofArrayData *ad;
+
+    /* get out the members */
+    struct PlofObjects objs = plofMembersSub(of->hashTable);
+
+    /* then make it into a PlofArrayData and an object */
+    ad = GC_NEW_Z(struct PlofArrayData);
+    ad->type = PLOF_DATA_ARRAY;
+    ad->length = objs.length;
+    ad->data = objs.data;
+
+    return ad;
 }
 
 /* Null and global */

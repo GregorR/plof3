@@ -13,6 +13,7 @@ int main(int argc, char **argv)
     size_t len, rd, i;
     size_t slen, stype, stl;
     struct PlofObject *context;
+    struct PlofReturn ret;
 
     GC_INIT();
 
@@ -79,5 +80,9 @@ int main(int argc, char **argv)
     context->parent = plofNull;
 
     /* Now interp */
-    interpretPSL(context, plofNull, NULL, slen - stl, psl + i, 0);
+    ret = interpretPSL(context, plofNull, NULL, slen - stl, psl + i, 0);
+
+    if (ret.isThrown) {
+        fprintf(stderr, "PSL threw up!\n");
+    }
 }

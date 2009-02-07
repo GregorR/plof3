@@ -19,7 +19,7 @@ struct PlofData;
 #endif
 
 /* "Function" for getting a value from the hash table in an object */
-#define PLOF_READ(into, obj, name, namehash) \
+#define PLOF_READ(into, obj, namelen, name, namehash) \
 { \
     struct PlofObject *_obj = (obj); \
     size_t _namehash = (namehash); \
@@ -43,23 +43,24 @@ struct PlofData;
 }
 
 /* "Function" for creating a new hashTable object */
-#define PLOF_HASHTABLE_NEW(into, sname, snamehash, svalue) \
+#define PLOF_HASHTABLE_NEW(into, snamelen, sname, snamehash, svalue) \
 { \
     struct PlofOHashTable *_nht = GC_NEW_Z(struct PlofOHashTable); \
     _nht->hashedName = (snamehash); \
+    _nht->namelen = snamelen; \
     _nht->name = GC_STRDUP((sname)); \
     _nht->value = (svalue); \
     into = _nht; \
 }
 
 /* "Function" for writing a value into an object */
-#define PLOF_WRITE(obj, sname, snamehash, svalue) \
+#define PLOF_WRITE(obj, snamelen, sname, snamehash, svalue) \
 { \
     struct PlofObject *_obj = (obj); \
     size_t _namehash = (snamehash); \
     struct PlofOHashTable *_cur; \
     if (_obj->hashTable == NULL) { \
-        PLOF_HASHTABLE_NEW(_obj->hashTable, (sname), _namehash, (svalue)); \
+        PLOF_HASHTABLE_NEW(_obj->hashTable, (snamelen), (sname), _namehash, (svalue)); \
         \
     } else { \
         _cur = _obj->hashTable; \
@@ -68,7 +69,7 @@ struct PlofData;
                 if (_cur->left) { \
                     _cur = _cur->left; \
                 } else { \
-                    PLOF_HASHTABLE_NEW(_cur->left, (sname), _namehash, (svalue)); \
+                    PLOF_HASHTABLE_NEW(_cur->left, (snamelen), (sname), _namehash, (svalue)); \
                     _cur = NULL; \
                 } \
                 \
@@ -76,7 +77,7 @@ struct PlofData;
                 if (_cur->right) { \
                     _cur = _cur->right; \
                 } else { \
-                    PLOF_HASHTABLE_NEW(_cur->right, (sname), _namehash, (svalue)); \
+                    PLOF_HASHTABLE_NEW(_cur->right, (snamelen), (sname), _namehash, (svalue)); \
                     _cur = NULL; \
                 } \
                 \
@@ -119,6 +120,7 @@ struct PlofReturn {
  * value */
 struct PlofOHashTable {
     size_t hashedName;
+    size_t namelen;
     unsigned char *name;
     struct PlofObject *value;
     struct PlofOHashTable *left, *right;
@@ -171,5 +173,11 @@ int pslBignumToInt(unsigned char *bignum, ptrdiff_t *into);
 
 /* Hash function */
 size_t plofHash(unsigned char *str);
+
+/* Copy the content of one object into another (for 'combine') */
+void plofObjCopy(struct PlofObject *to, struct PlofOHashTable *from);
+
+/* Make an array of the list of members of an object (for 'members') */
+struct PlofArrayData *plofMembers(struct PlofObject *of);
 
 #endif
