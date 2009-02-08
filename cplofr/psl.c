@@ -110,6 +110,14 @@ struct PlofReturn interpretPSL(
 
                 psli++;
                 psli += pslBignumToInt(psl + psli, &raw->length);
+
+                /* make sure this doesn't go off the edge */
+                if (psli + raw->length > psllen) {
+                    fprintf(stderr, "Bad data in PSL!\n");
+                    raw->length = psllen - psli;
+                }
+
+                /* copy it in */
                 raw->data = (unsigned char *) GC_MALLOC(raw->length);
                 memcpy(raw->data, psl + psli, raw->length);
                 psli += raw->length - 1;
