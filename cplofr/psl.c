@@ -28,7 +28,7 @@ __attribute__((__noinline__))
 struct PlofReturn interpretPSL(
         struct PlofObject *context,
         struct PlofObject *arg,
-        struct PlofRawData *pslraw,
+        struct PlofObject *pslraw,
         size_t pslaltlen,
         unsigned char *pslalt,
         int generateContext,
@@ -64,7 +64,9 @@ struct PlofReturn interpretPSL(
     }
 
     /* Set +procedure */
-    PLOF_WRITE(context, 10, "+procedure", plofHash(10, "+procedure"), context);
+    if (pslraw) {
+        PLOF_WRITE(context, 10, "+procedure", plofHash(10, "+procedure"), pslraw);
+    }
 
     /* Start the stack at size 8 */
     stack = GC_MALLOC(8 * sizeof(struct PlofObject *));
@@ -78,9 +80,10 @@ struct PlofReturn interpretPSL(
 
     /* Get out the PSL */
     if (pslraw) {
-        psllen = pslraw->length;
-        psl = pslraw->data;
-        cpsl = (volatile void **) pslraw->idata;
+        rd = (struct PlofRawData *) pslraw->data;
+        psllen = rd->length;
+        psl = rd->data;
+        cpsl = (volatile void **) rd->idata;
     } else {
         psllen = pslaltlen;
         psl = pslalt;
@@ -158,7 +161,7 @@ struct PlofReturn interpretPSL(
 
         /* and save it */
         if (pslraw && !immediate) {
-            pslraw->idata = cpsl;
+            ((struct PlofRawData *) pslraw->data)->idata = cpsl;
         }
     }
 
@@ -249,9 +252,9 @@ struct PlofReturn interpretPSL(
             \
             /* check them */ \
             if (ia op ib) { \
-                ret = interpretPSL(d->parent, a, RAW(d), 0, NULL, 1, 0); \
+                ret = interpretPSL(d->parent, a, d, 0, NULL, 1, 0); \
             } else { \
-                ret = interpretPSL(e->parent, a, RAW(e), 0, NULL, 1, 0); \
+                ret = interpretPSL(e->parent, a, e, 0, NULL, 1, 0); \
             } \
             \
             /* maybe rethrow */ \
@@ -467,7 +470,7 @@ label(interp_psl_call);
     DEBUG_CMD("call");
     BINARY;
     if (ISRAW(b)) {
-        struct PlofReturn ret = interpretPSL(b->parent, a, RAW(b), 0, NULL, 1, 0);
+        struct PlofReturn ret = interpretPSL(b->parent, a, b, 0, NULL, 1, 0);
 
         /* check the return */
         if (ret.isThrown) {
@@ -492,12 +495,12 @@ label(interp_psl_catch);
     DEBUG_CMD("catch");
     TRINARY;
     if (ISRAW(b)) {
-        struct PlofReturn ret = interpretPSL(b->parent, a, RAW(b), 0, NULL, 1, 0);
+        struct PlofReturn ret = interpretPSL(b->parent, a, b, 0, NULL, 1, 0);
 
         /* perhaps catch */
         if (ret.isThrown) {
             if (ISRAW(c)) {
-                ret = interpretPSL(c->parent, ret.ret, RAW(c), 0, NULL, 1, 0);
+                ret = interpretPSL(c->parent, ret.ret, c, 0, NULL, 1, 0);
                 if (ret.isThrown) {
                     return ret;
                 }
@@ -518,7 +521,7 @@ label(interp_psl_cmp);
     QUINARY;
     if (b == c) {
         if (ISRAW(d)) {
-            struct PlofReturn ret = interpretPSL(d->parent, a, RAW(d), 0, NULL, 1, 0);
+            struct PlofReturn ret = interpretPSL(d->parent, a, d, 0, NULL, 1, 0);
 
             /* rethrow */
             if (ret.isThrown) {
@@ -530,7 +533,7 @@ label(interp_psl_cmp);
         }
     } else {
         if (ISRAW(e)) {
-            struct PlofReturn ret = interpretPSL(e->parent, a, RAW(e), 0, NULL, 1, 0);
+            struct PlofReturn ret = interpretPSL(e->parent, a, e, 0, NULL, 1, 0);
 
             /* rethrow */
             if (ret.isThrown) {
@@ -915,8 +918,17 @@ label(interp_psl_eq);
     STEP;
 
 label(interp_psl_ne); UNIMPL("psl_ne");
-label(interp_psl_gt); UNIMPL("psl_gt");
-label(interp_psl_gte); UNIMPL("psl_gte");
+
+label(interp_psl_gt);
+    DEBUG_CMD("gt");
+    INTCMP(>);
+    STEP;
+
+label(interp_psl_gte);
+    DEBUG_CMD("gte");
+    INTCMP(>=);
+    STEP;
+
 label(interp_psl_sl); UNIMPL("psl_sl");
 label(interp_psl_sr); UNIMPL("psl_sr");
 label(interp_psl_or); UNIMPL("psl_or");
@@ -991,7 +1003,8 @@ label(interp_psl_marker); DEBUG_CMD("marker"); STEP;
 label(interp_psl_immediate);
     DEBUG_CMD("immediate");
     if (immediate) {
-        interpretPSL(context, plofNull, (struct PlofRawData *) pc[1], 0, NULL, 0, 0);
+        rd = (struct PlofRawData *) pc[1];
+        interpretPSL(context, plofNull, NULL, rd->length, rd->data, 0, 0);
     }
     STEP;
 

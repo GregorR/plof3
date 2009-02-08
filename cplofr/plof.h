@@ -163,7 +163,7 @@ extern struct PlofObject *plofNull, *plofGlobal;
 struct PlofReturn interpretPSL(
         struct PlofObject *context,
         struct PlofObject *arg,
-        struct PlofRawData *pslraw,
+        struct PlofObject *pslraw,
         size_t pslaltlen,
         unsigned char *pslalt,
         int generateContext,
