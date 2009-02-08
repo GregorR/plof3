@@ -23,7 +23,7 @@ int main(int argc, char **argv)
     }
 
     /* open the file */
-    pslf = fopen(argv[1], "r");
+    pslf = fopen(argv[1], "rb");
     if (pslf == NULL) {
         perror(argv[1]);
         return 1;
@@ -41,6 +41,7 @@ int main(int argc, char **argv)
         /* allocate more */
         psl = GC_REALLOC(psl, len + BUFSTEP);
     }
+    fclose(pslf);
 
     /* FIXME: bounds checking */
 
