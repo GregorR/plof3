@@ -116,7 +116,7 @@ struct PlofReturn interpretPSL(
                 raw->type = PLOF_DATA_RAW;
 
                 psli++;
-                psli += pslBignumToInt(psl + psli, &raw->length);
+                psli += pslBignumToInt(psl + psli, (size_t *) &raw->length);
 
                 /* make sure this doesn't go off the edge */
                 if (psli + raw->length > psllen) {
@@ -1040,9 +1040,9 @@ label(interp_psl_done);
 }
 
 /* Convert a PSL bignum to an int */
-int pslBignumToInt(unsigned char *bignum, ptrdiff_t *into)
+int pslBignumToInt(unsigned char *bignum, size_t *into)
 {
-    ptrdiff_t ret = 0;
+    size_t ret = 0;
     unsigned c = 0;
 
     for (;; bignum++) {

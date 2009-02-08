@@ -48,10 +48,10 @@ int main(int argc, char **argv)
     /* Go section-by-section */
     for (i = 8; i < len;) {
         /* section length */
-        i += pslBignumToInt(psl + i, &slen);
+        i += pslBignumToInt(psl + i, (size_t *) &slen);
 
         /* section type */
-        stl = pslBignumToInt(psl + i, &stype);
+        stl = pslBignumToInt(psl + i, (size_t *) &stype);
 
         /* if it's program data, we found it */
         if (stype == 0) {
@@ -86,5 +86,8 @@ int main(int argc, char **argv)
 
     if (ret.isThrown) {
         fprintf(stderr, "PSL threw up!\n");
+        return 1;
     }
+
+    return 0;
 }
