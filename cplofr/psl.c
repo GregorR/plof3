@@ -606,6 +606,8 @@ label(interp_psl_wrap);
         a->parent = context;
         a->data = (struct PlofData *) rd;
         STACK_PUSH(a);
+    } else {
+        STACK_PUSH(plofNull);
     }
     STEP;
 
