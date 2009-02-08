@@ -6,6 +6,17 @@
 #include "psl.h"
 
 
+/* Some versions of 'jump' require an enum */
+#ifdef jumpenum
+enum jumplabel {
+    interp_psl_nop,
+#define FOREACH(inst) interp_ ## inst,
+#include "psl_instructions.h"
+#undef FOREACH
+    interp_psl_done
+};
+#endif
+
 /* Internal functions for handling PSL bignums */
 size_t pslBignumLength(size_t val);
 void pslIntToBignum(unsigned char *buf, size_t val, size_t len);
@@ -22,6 +33,9 @@ struct PlofReturn interpretPSL(
         unsigned char *pslalt,
         int immediate)
 {
+    /* Necessary jump variables */
+    jumpvars;
+
     /* The stack */
     size_t stacklen, stacktop;
     struct PlofObject **stack;
@@ -200,312 +214,12 @@ struct PlofReturn interpretPSL(
 
             } else {
                 switch (cmd) {
-                    case psl_push0:
-                        cpsl[cpsli] = addressof(interp_psl_push0);
-                        break;
-                    case psl_push1:
-                        cpsl[cpsli] = addressof(interp_psl_push1);
-                        break;
-                    case psl_push2:
-                        cpsl[cpsli] = addressof(interp_psl_push2);
-                        break;
-                    case psl_push3:
-                        cpsl[cpsli] = addressof(interp_psl_push3);
-                        break;
-                    case psl_push4:
-                        cpsl[cpsli] = addressof(interp_psl_push4);
-                        break;
-                    case psl_push5:
-                        cpsl[cpsli] = addressof(interp_psl_push5);
-                        break;
-                    case psl_push6:
-                        cpsl[cpsli] = addressof(interp_psl_push6);
-                        break;
-                    case psl_push7:
-                        cpsl[cpsli] = addressof(interp_psl_push7);
-                        break;
-                    case psl_pop:
-                        cpsl[cpsli] = addressof(interp_psl_pop);
-                        break;
-                    case psl_this:
-                        cpsl[cpsli] = addressof(interp_psl_this);
-                        break;
-                    case psl_null:
-                        cpsl[cpsli] = addressof(interp_psl_null);
-                        break;
-                    case psl_global:
-                        cpsl[cpsli] = addressof(interp_psl_global);
-                        break;
-                    case psl_new:
-                        cpsl[cpsli] = addressof(interp_psl_new);
-                        break;
-                    case psl_combine:
-                        cpsl[cpsli] = addressof(interp_psl_combine);
-                        break;
-                    case psl_member:
-                        cpsl[cpsli] = addressof(interp_psl_member);
-                        break;
-                    case psl_memberset:
-                        cpsl[cpsli] = addressof(interp_psl_memberset);
-                        break;
-                    case psl_parent:
-                        cpsl[cpsli] = addressof(interp_psl_parent);
-                        break;
-                    case psl_parentset:
-                        cpsl[cpsli] = addressof(interp_psl_parentset);
-                        break;
-                    case psl_call:
-                        cpsl[cpsli] = addressof(interp_psl_call);
-                        break;
-                    case psl_return:
-                        cpsl[cpsli] = addressof(interp_psl_return);
-                        break;
-                    case psl_throw:
-                        cpsl[cpsli] = addressof(interp_psl_throw);
-                        break;
-                    case psl_catch:
-                        cpsl[cpsli] = addressof(interp_psl_catch);
-                        break;
-                    case psl_cmp:
-                        cpsl[cpsli] = addressof(interp_psl_cmp);
-                        break;
-                    case psl_concat:
-                        cpsl[cpsli] = addressof(interp_psl_concat);
-                        break;
-                    case psl_wrap:
-                        cpsl[cpsli] = addressof(interp_psl_wrap);
-                        break;
-                    case psl_resolve:
-                        cpsl[cpsli] = addressof(interp_psl_resolve);
-                        break;
-                    case psl_loop:
-                        cpsl[cpsli] = addressof(interp_psl_loop);
-                        break;
-                    case psl_replace:
-                        cpsl[cpsli] = addressof(interp_psl_replace);
-                        break;
-                    case psl_array:
-                        cpsl[cpsli] = addressof(interp_psl_array);
-                        break;
-                    case psl_aconcat:
-                        cpsl[cpsli] = addressof(interp_psl_aconcat);
-                        break;
-                    case psl_length:
-                        cpsl[cpsli] = addressof(interp_psl_length);
-                        break;
-                    case psl_lengthset:
-                        cpsl[cpsli] = addressof(interp_psl_lengthset);
-                        break;
-                    case psl_index:
-                        cpsl[cpsli] = addressof(interp_psl_index);
-                        break;
-                    case psl_indexset:
-                        cpsl[cpsli] = addressof(interp_psl_indexset);
-                        break;
-                    case psl_members:
-                        cpsl[cpsli] = addressof(interp_psl_members);
-                        break;
-                    case psl_integer:
-                        cpsl[cpsli] = addressof(interp_psl_integer);
-                        break;
-                    case psl_intwidth:
-                        cpsl[cpsli] = addressof(interp_psl_intwidth);
-                        break;
-                    case psl_mul:
-                        cpsl[cpsli] = addressof(interp_psl_mul);
-                        break;
-                    case psl_div:
-                        cpsl[cpsli] = addressof(interp_psl_div);
-                        break;
-                    case psl_mod:
-                        cpsl[cpsli] = addressof(interp_psl_mod);
-                        break;
-                    case psl_add:
-                        cpsl[cpsli] = addressof(interp_psl_add);
-                        break;
-                    case psl_sub:
-                        cpsl[cpsli] = addressof(interp_psl_sub);
-                        break;
-                    case psl_lt:
-                        cpsl[cpsli] = addressof(interp_psl_lt);
-                        break;
-                    case psl_lte:
-                        cpsl[cpsli] = addressof(interp_psl_lte);
-                        break;
-                    case psl_eq:
-                        cpsl[cpsli] = addressof(interp_psl_eq);
-                        break;
-                    case psl_ne:
-                        cpsl[cpsli] = addressof(interp_psl_ne);
-                        break;
-                    case psl_gt:
-                        cpsl[cpsli] = addressof(interp_psl_gt);
-                        break;
-                    case psl_gte:
-                        cpsl[cpsli] = addressof(interp_psl_gte);
-                        break;
-                    case psl_sl:
-                        cpsl[cpsli] = addressof(interp_psl_sl);
-                        break;
-                    case psl_sr:
-                        cpsl[cpsli] = addressof(interp_psl_sr);
-                        break;
-                    case psl_or:
-                        cpsl[cpsli] = addressof(interp_psl_or);
-                        break;
-                    case psl_nor:
-                        cpsl[cpsli] = addressof(interp_psl_nor);
-                        break;
-                    case psl_xor:
-                        cpsl[cpsli] = addressof(interp_psl_xor);
-                        break;
-                    case psl_nxor:
-                        cpsl[cpsli] = addressof(interp_psl_nxor);
-                        break;
-                    case psl_and:
-                        cpsl[cpsli] = addressof(interp_psl_and);
-                        break;
-                    case psl_nand:
-                        cpsl[cpsli] = addressof(interp_psl_nand);
-                        break;
-                    case psl_byte:
-                        cpsl[cpsli] = addressof(interp_psl_byte);
-                        break;
-                    case psl_float:
-                        cpsl[cpsli] = addressof(interp_psl_float);
-                        break;
-                    case psl_fint:
-                        cpsl[cpsli] = addressof(interp_psl_fint);
-                        break;
-                    case psl_fmul:
-                        cpsl[cpsli] = addressof(interp_psl_fmul);
-                        break;
-                    case psl_fdiv:
-                        cpsl[cpsli] = addressof(interp_psl_fdiv);
-                        break;
-                    case psl_fmod:
-                        cpsl[cpsli] = addressof(interp_psl_fmod);
-                        break;
-                    case psl_fadd:
-                        cpsl[cpsli] = addressof(interp_psl_fadd);
-                        break;
-                    case psl_fsub:
-                        cpsl[cpsli] = addressof(interp_psl_fsub);
-                        break;
-                    case psl_flt:
-                        cpsl[cpsli] = addressof(interp_psl_flt);
-                        break;
-                    case psl_flte:
-                        cpsl[cpsli] = addressof(interp_psl_flte);
-                        break;
-                    case psl_feq:
-                        cpsl[cpsli] = addressof(interp_psl_feq);
-                        break;
-                    case psl_fne:
-                        cpsl[cpsli] = addressof(interp_psl_fne);
-                        break;
-                    case psl_fgt:
-                        cpsl[cpsli] = addressof(interp_psl_fgt);
-                        break;
-                    case psl_fgte:
-                        cpsl[cpsli] = addressof(interp_psl_fgte);
-                        break;
-                    case psl_version:
-                        cpsl[cpsli] = addressof(interp_psl_version);
-                        break;
-                    case psl_dsrcfile:
-                        cpsl[cpsli] = addressof(interp_psl_dsrcfile);
-                        break;
-                    case psl_dsrcline:
-                        cpsl[cpsli] = addressof(interp_psl_dsrcline);
-                        break;
-                    case psl_dsrccol:
-                        cpsl[cpsli] = addressof(interp_psl_dsrccol);
-                        break;
-                    case psl_print:
-                        cpsl[cpsli] = addressof(interp_psl_print);
-                        break;
-                    case psl_debug:
-                        cpsl[cpsli] = addressof(interp_psl_debug);
-                        break;
-                    case psl_include:
-                        cpsl[cpsli] = addressof(interp_psl_include);
-                        break;
-                    case psl_parse:
-                        cpsl[cpsli] = addressof(interp_psl_parse);
-                        break;
-                    case psl_gadd:
-                        cpsl[cpsli] = addressof(interp_psl_gadd);
-                        break;
-                    case psl_grem:
-                        cpsl[cpsli] = addressof(interp_psl_grem);
-                        break;
-                    case psl_gaddstop:
-                        cpsl[cpsli] = addressof(interp_psl_gaddstop);
-                        break;
-                    case psl_gremstop:
-                        cpsl[cpsli] = addressof(interp_psl_gremstop);
-                        break;
-                    case psl_gaddgroup:
-                        cpsl[cpsli] = addressof(interp_psl_gaddgroup);
-                        break;
-                    case psl_gremgroup:
-                        cpsl[cpsli] = addressof(interp_psl_gremgroup);
-                        break;
-                    case psl_gcommit:
-                        cpsl[cpsli] = addressof(interp_psl_gcommit);
-                        break;
-                    case psl_marker:
-                        cpsl[cpsli] = addressof(interp_psl_marker);
-                        break;
-                    case psl_code:
-                        cpsl[cpsli] = addressof(interp_psl_code);
-                        break;
-                    case psl_raw:
-                        cpsl[cpsli] = addressof(interp_psl_raw);
-                        break;
-                    case psl_dlopen:
-                        cpsl[cpsli] = addressof(interp_psl_dlopen);
-                        break;
-                    case psl_dlclose:
-                        cpsl[cpsli] = addressof(interp_psl_dlclose);
-                        break;
-                    case psl_dlsym:
-                        cpsl[cpsli] = addressof(interp_psl_dlsym);
-                        break;
-                    case psl_cmalloc:
-                        cpsl[cpsli] = addressof(interp_psl_cmalloc);
-                        break;
-                    case psl_cfree:
-                        cpsl[cpsli] = addressof(interp_psl_cfree);
-                        break;
-                    case psl_cget:
-                        cpsl[cpsli] = addressof(interp_psl_cget);
-                        break;
-                    case psl_cset:
-                        cpsl[cpsli] = addressof(interp_psl_cset);
-                        break;
-                    case psl_ctype:
-                        cpsl[cpsli] = addressof(interp_psl_ctype);
-                        break;
-                    case psl_cstruct:
-                        cpsl[cpsli] = addressof(interp_psl_cstruct);
-                        break;
-                    case psl_csizeof:
-                        cpsl[cpsli] = addressof(interp_psl_csizeof);
-                        break;
-                    case psl_csget:
-                        cpsl[cpsli] = addressof(interp_psl_csget);
-                        break;
-                    case psl_csset:
-                        cpsl[cpsli] = addressof(interp_psl_csset);
-                        break;
-                    case psl_prepcif:
-                        cpsl[cpsli] = addressof(interp_psl_prepcif);
-                        break;
-                    case psl_ccall:
-                        cpsl[cpsli] = addressof(interp_psl_ccall);
-                        break;
+#define FOREACH(inst) \
+                    case inst: \
+                        cpsl[cpsli] = addressof(interp_ ## inst); \
+                        break;
+#include "psl_instructions.h"
+#undef FOREACH
                 }
             }
         }
@@ -521,7 +235,7 @@ struct PlofReturn interpretPSL(
 
     /* ACTUAL INTERPRETER BEYOND HERE */
     pc = cpsl;
-    goto **pc;
+    prejump(*pc);
 
     /* These will need to change for non-GCC */
 #define STEP pc += 2; jump(*pc)
@@ -533,6 +247,8 @@ struct PlofReturn interpretPSL(
 #else
 #define DEBUG_CMD(cmd)
 #endif
+
+    jumphead;
 
 label(interp_psl_nop);
     DEBUG_CMD("nop");
@@ -1263,6 +979,8 @@ label(interp_psl_ccall); UNIMPL("psl_ccall");
 label(interp_psl_done);
     UNARY;
     return (struct PlofReturn) {a, 0};
+
+    jumptail;
 }
 
 /* Convert a PSL bignum to an int */
