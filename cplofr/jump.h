@@ -33,8 +33,8 @@
 #define jumptail                } }
 #define addressof(label)        (void *) label
 #define label(name)             case name:
-#define prejump(var)            __jump_to = (enum jumplabel) var
-#define jump(var)               __jump_to = (enum jumplabel) var; break
+#define prejump(var)            __jump_to = (enum jumplabel) (var)
+#define jump(var)               __jump_to = (enum jumplabel) (var); break
 
 #endif
 

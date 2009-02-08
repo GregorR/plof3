@@ -80,7 +80,8 @@ int main(int argc, char **argv)
     context->parent = plofNull;
 
     /* Now interp */
-    ret = interpretPSL(context, plofNull, NULL, slen - stl, psl + i, 0);
+    interpretPSL(context, plofNull, NULL, slen - stl, psl + i, 0, 1);
+    ret = interpretPSL(context, plofNull, NULL, slen - stl, psl + i, 0, 0);
 
     if (ret.isThrown) {
         fprintf(stderr, "PSL threw up!\n");

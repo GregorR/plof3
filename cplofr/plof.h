@@ -166,13 +166,14 @@ struct PlofReturn interpretPSL(
         struct PlofRawData *pslraw,
         size_t pslaltlen,
         unsigned char *pslalt,
+        int generateContext,
         int immediate);
 
 /* Convert a PSL bignum to an int */
 int pslBignumToInt(unsigned char *bignum, ptrdiff_t *into);
 
 /* Hash function */
-size_t plofHash(unsigned char *str);
+size_t plofHash(size_t slen, unsigned char *str);
 
 /* Copy the content of one object into another (for 'combine') */
 void plofObjCopy(struct PlofObject *to, struct PlofOHashTable *from);

@@ -31,6 +31,7 @@ struct PlofReturn interpretPSL(
         struct PlofRawData *pslraw,
         size_t pslaltlen,
         unsigned char *pslalt,
+        int generateContext,
         int immediate)
 {
     /* Necessary jump variables */
@@ -48,18 +49,111 @@ struct PlofReturn interpretPSL(
 
     /* The PSL in various forms */
     size_t psllen;
-    unsigned char *psl;
-    volatile void **cpsl;
-    volatile void **pc;
+    unsigned char *psl = NULL;
+    volatile void **cpsl = NULL;
+    volatile void **pc = NULL;
     /* Compiled PSL is an array of pointers. Every pointer which is 0 mod 2 is
      * the op to run, the next pointer is an argument as a PlofRawData (if
      * applicable) */
+
+    /* Perhaps generate the context */
+    if (generateContext) {
+        a = GC_NEW_Z(struct PlofObject);
+        a->parent = context;
+        context = a;
+    }
+
+    /* Set +procedure */
+    PLOF_WRITE(context, 10, "+procedure", plofHash(10, "+procedure"), context);
 
     /* Start the stack at size 8 */
     stack = GC_MALLOC(8 * sizeof(struct PlofObject *));
     stacklen = 8;
     stack[0] = arg;
     stacktop = 1;
+
+    /* Get out the PSL */
+    if (pslraw) {
+        psllen = pslraw->length;
+        psl = pslraw->data;
+        cpsl = (volatile void **) pslraw->idata;
+    } else {
+        psllen = pslaltlen;
+        psl = pslalt;
+    }
+
+    /* Make sure it's compiled */
+    if (!cpsl) {
+        volatile int psli, cpsli;
+
+        /* start with 8 slots */
+        size_t cpsllen = 8;
+        cpsl = GC_MALLOC(cpsllen * sizeof(void*));
+
+        /* now go through the PSL and translate it into compiled PSL */
+        for (psli = 0, cpsli = 0;
+             psli < psllen;
+             psli++, cpsli += 2) {
+            unsigned char cmd = psl[psli];
+            struct PlofRawData *raw;
+
+            /* make sure cpsl is big enough */
+            if (cpsli > cpsllen - 2) {
+                cpsllen *= 2;
+                cpsl = GC_REALLOC(cpsl, cpsllen * sizeof(void*));
+            }
+
+            /* maybe it has raw data */
+            if (cmd >= psl_immediate) {
+                raw = GC_NEW_Z(struct PlofRawData);
+                raw->type = PLOF_DATA_RAW;
+
+                psli++;
+                psli += pslBignumToInt(psl + psli, &raw->length);
+                raw->data = (unsigned char *) GC_MALLOC(raw->length);
+                memcpy(raw->data, psl + psli, raw->length);
+                psli += raw->length - 1;
+
+                cpsl[cpsli + 1] = raw;
+            } else {
+                cpsl[cpsli + 1] = NULL;
+            }
+
+            /* either get only immediates, or not */
+            cpsl[cpsli] = addressof(interp_psl_nop);
+            if (immediate) {
+                if (cmd == psl_immediate) {
+                    cpsl[cpsli] = addressof(interp_psl_immediate);
+                }
+
+            } else {
+                switch (cmd) {
+#define FOREACH(inst) \
+                    case inst: \
+                        cpsl[cpsli] = addressof(interp_ ## inst); \
+                        break;
+#include "psl_instructions.h"
+#undef FOREACH
+
+                    default:
+                        fprintf(stderr, "Invalid operation: 0x%x\n", cmd);
+                }
+            }
+        }
+
+        /* now close off the end */
+        cpsl[cpsli] = addressof(interp_psl_done);
+
+        /* and save it */
+        if (pslraw && !immediate) {
+            pslraw->idata = cpsl;
+        }
+    }
+
+    /* ACTUAL INTERPRETER BEYOND HERE */
+    pc = cpsl;
+    prejump(*pc);
+
 
     /* "Function" for pushing to the stack */
 #define STACK_PUSH(val) \
@@ -142,9 +236,9 @@ struct PlofReturn interpretPSL(
             \
             /* check them */ \
             if (ia op ib) { \
-                ret = interpretPSL(d->parent, a, RAW(d), 0, NULL, 0); \
+                ret = interpretPSL(d->parent, a, RAW(d), 0, NULL, 1, 0); \
             } else { \
-                ret = interpretPSL(e->parent, a, RAW(e), 0, NULL, 0); \
+                ret = interpretPSL(e->parent, a, RAW(e), 0, NULL, 1, 0); \
             } \
             \
             /* maybe rethrow */ \
@@ -158,86 +252,6 @@ struct PlofReturn interpretPSL(
         } \
     }
 
-    /* Get out the PSL */
-    if (pslraw) {
-        psllen = pslraw->length;
-        psl = pslraw->data;
-        cpsl = (volatile void **) pslraw->idata;
-    } else {
-        psllen = pslaltlen;
-        psl = pslalt;
-    }
-
-    /* Make sure it's compiled */
-    if (!cpsl) {
-        volatile int psli, cpsli;
-
-        /* start with 8 slots */
-        size_t cpsllen = 8;
-        cpsl = GC_MALLOC(cpsllen * sizeof(void*));
-
-        /* now go through the PSL and translate it into compiled PSL */
-        for (psli = 0, cpsli = 0;
-             psli < psllen;
-             psli++, cpsli += 2) {
-            unsigned char cmd = psl[psli];
-            struct PlofRawData *raw;
-
-            /* make sure cpsl is big enough */
-            if (cpsli > cpsllen - 2) {
-                cpsllen *= 2;
-                cpsl = GC_REALLOC(cpsl, cpsllen * sizeof(void*));
-            }
-
-            /* maybe it has raw data */
-            if (cmd >= psl_immediate) {
-                raw = GC_NEW_Z(struct PlofRawData);
-                raw->type = PLOF_DATA_RAW;
-
-                psli++;
-                psli += pslBignumToInt(psl + psli, &raw->length);
-                raw->data = (unsigned char *) GC_MALLOC(raw->length);
-                memcpy(raw->data, psl + psli, raw->length);
-                psli += raw->length - 1;
-
-                cpsl[cpsli + 1] = raw;
-            } else {
-                cpsl[cpsli + 1] = NULL;
-            }
-
-            /* either get only immediates, or not */
-            cpsl[cpsli] = addressof(interp_psl_nop);
-            if (immediate) {
-                if (cmd == psl_immediate) {
-                    cpsl[cpsli] = addressof(interp_psl_immediate);
-                }
-
-            } else {
-                switch (cmd) {
-#define FOREACH(inst) \
-                    case inst: \
-                        cpsl[cpsli] = addressof(interp_ ## inst); \
-                        break;
-#include "psl_instructions.h"
-#undef FOREACH
-                }
-            }
-        }
-
-        /* now close off the end */
-        cpsl[cpsli] = addressof(interp_psl_done);
-
-        /* and save it */
-        if (pslraw && !immediate) {
-            pslraw->idata = cpsl;
-        }
-    }
-
-    /* ACTUAL INTERPRETER BEYOND HERE */
-    pc = cpsl;
-    prejump(*pc);
-
-    /* These will need to change for non-GCC */
 #define STEP pc += 2; jump(*pc)
 #define LOOP pc = cpsl; jump(*pc)
 #define UNIMPL(cmd) fprintf(stderr, "UNIMPLEMENTED: " cmd "\n"); STEP
@@ -247,6 +261,7 @@ struct PlofReturn interpretPSL(
 #else
 #define DEBUG_CMD(cmd)
 #endif
+
 
     jumphead;
 
@@ -398,7 +413,7 @@ label(interp_psl_member);
         size_t namehash;
         rd = RAW(b);
         name = rd->data;
-        namehash = plofHash(name);
+        namehash = plofHash(rd->length, name);
 
         PLOF_READ(a, a, rd->length, name, namehash);
         STACK_PUSH(a);
@@ -415,7 +430,7 @@ label(interp_psl_memberset);
         size_t namehash;
         rd = RAW(b);
         name = rd->data;
-        namehash = plofHash(name);
+        namehash = plofHash(rd->length, name);
 
         PLOF_WRITE(a, rd->length, name, namehash, c);
     }
@@ -437,13 +452,7 @@ label(interp_psl_call);
     DEBUG_CMD("call");
     BINARY;
     if (ISRAW(b)) {
-        struct PlofReturn ret;
-
-        /* make the context */
-        c = GC_NEW_Z(struct PlofObject);
-        c->parent = b->parent;
-
-        ret = interpretPSL(c, a, RAW(b), 0, NULL, 0);
+        struct PlofReturn ret = interpretPSL(b->parent, a, RAW(b), 0, NULL, 1, 0);
 
         /* check the return */
         if (ret.isThrown) {
@@ -468,12 +477,12 @@ label(interp_psl_catch);
     DEBUG_CMD("catch");
     TRINARY;
     if (ISRAW(b)) {
-        struct PlofReturn ret = interpretPSL(b->parent, a, RAW(b), 0, NULL, 0);
+        struct PlofReturn ret = interpretPSL(b->parent, a, RAW(b), 0, NULL, 1, 0);
 
         /* perhaps catch */
         if (ret.isThrown) {
             if (ISRAW(c)) {
-                ret = interpretPSL(c->parent, ret.ret, RAW(c), 0, NULL, 0);
+                ret = interpretPSL(c->parent, ret.ret, RAW(c), 0, NULL, 1, 0);
                 if (ret.isThrown) {
                     return ret;
                 }
@@ -494,7 +503,7 @@ label(interp_psl_cmp);
     QUINARY;
     if (b == c) {
         if (ISRAW(d)) {
-            struct PlofReturn ret = interpretPSL(d->parent, a, RAW(d), 0, NULL, 0);
+            struct PlofReturn ret = interpretPSL(d->parent, a, RAW(d), 0, NULL, 1, 0);
 
             /* rethrow */
             if (ret.isThrown) {
@@ -506,7 +515,7 @@ label(interp_psl_cmp);
         }
     } else {
         if (ISRAW(e)) {
-            struct PlofReturn ret = interpretPSL(e->parent, a, RAW(e), 0, NULL, 0);
+            struct PlofReturn ret = interpretPSL(e->parent, a, RAW(e), 0, NULL, 1, 0);
 
             /* rethrow */
             if (ret.isThrown) {
@@ -609,10 +618,12 @@ label(interp_psl_resolve);
         /* hash them all */
         hashes = (size_t *) GC_MALLOC(ad->length * sizeof(size_t));
         for (i = 0; i < ad->length; i++) {
-            hashes[i] = plofHash(RAW(ad->data[i])->data);
+            rd = RAW(ad->data[i]);
+            hashes[i] = plofHash(rd->length, rd->data);
         }
 
         /* now try to find a match */
+        b = plofNull;
         while (a && a != plofNull) {
             for (i = 0; i < ad->length; i++) {
                 rd = RAW(ad->data[i]);
@@ -621,16 +632,19 @@ label(interp_psl_resolve);
                     /* done */
                     STACK_PUSH(a);
                     STACK_PUSH(ad->data[i]);
-                    STEP;
+                    a = plofNull;
+                    break;
                 }
             }
 
             a = a->parent;
         }
 
-        /* didn't find one */
-        STACK_PUSH(plofNull);
-        STACK_PUSH(plofNull);
+        if (b == plofNull) {
+            /* didn't find one */
+            STACK_PUSH(plofNull);
+            STACK_PUSH(plofNull);
+        }
     }
     STEP;
 
@@ -929,7 +943,8 @@ label(interp_psl_print);
     /* do our best to print this (debugging) */
     UNARY;
     if (ISRAW(a)) {
-        printf("%.*s\n", RAW(a)->length, RAW(a)->data);
+        fwrite(RAW(a)->data, 1, RAW(a)->length, stdout);
+        fputc('\n', stdout);
 
         if (RAW(a)->length == sizeof(ptrdiff_t)) {
             printf("Integer value: %d\n", *((ptrdiff_t *) RAW(a)->data));
@@ -942,15 +957,22 @@ label(interp_psl_print);
 label(interp_psl_debug); UNIMPL("psl_debug");
 label(interp_psl_include); UNIMPL("psl_include");
 label(interp_psl_parse); UNIMPL("psl_parse");
-label(interp_psl_gadd); UNIMPL("psl_gadd");
-label(interp_psl_grem); UNIMPL("psl_grem");
-label(interp_psl_gaddstop); UNIMPL("psl_gaddstop");
-label(interp_psl_gremstop); UNIMPL("psl_gremstop");
-label(interp_psl_gaddgroup); UNIMPL("psl_gaddgroup");
-label(interp_psl_gremgroup); UNIMPL("psl_gremgroup");
-label(interp_psl_gcommit); UNIMPL("psl_gcommit");
-label(interp_psl_marker); UNIMPL("psl_marker");
-label(interp_psl_immediate); UNIMPL("psl_immediate");
+
+label(interp_psl_gadd); STEP;
+label(interp_psl_grem); STEP;
+label(interp_psl_gaddstop); STEP;
+label(interp_psl_gremstop); STEP;
+label(interp_psl_gaddgroup); STEP;
+label(interp_psl_gremgroup); STEP;
+label(interp_psl_gcommit); STEP;
+label(interp_psl_marker); STEP;
+
+label(interp_psl_immediate);
+    DEBUG_CMD("immediate");
+    if (immediate) {
+        interpretPSL(context, plofNull, (struct PlofRawData *) pc[1], 0, NULL, 0, 0);
+    }
+    STEP;
 
 label(interp_psl_code);
 label(interp_psl_raw);
@@ -1040,14 +1062,13 @@ void pslIntToBignum(unsigned char *buf, size_t val, size_t len)
 }
 
 /* Hash function */
-size_t plofHash(unsigned char *str)
+size_t plofHash(size_t slen, unsigned char *str)
 {
     /* this is the hash function used in sdbm */
     size_t hash = 0;
-    int c;
 
-    while (c = *str++)
-        hash = c + (hash << 6) + (hash << 16) - hash;
+    for (; slen > 0; slen--)
+        hash = (*str++) + (hash << 6) + (hash << 16) - hash;
 
     return hash;
 }
@@ -1123,6 +1144,11 @@ struct PlofArrayData *plofMembers(struct PlofObject *of)
 
     return ad;
 }
+
+/* GC on DJGPP is screwy */
+#ifdef __DJGPP__
+void vsnprintf() {}
+#endif
 
 /* Null and global */
 struct PlofObject *plofNull = NULL;
