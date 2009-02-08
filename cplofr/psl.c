@@ -69,8 +69,12 @@ struct PlofReturn interpretPSL(
     /* Start the stack at size 8 */
     stack = GC_MALLOC(8 * sizeof(struct PlofObject *));
     stacklen = 8;
-    stack[0] = arg;
-    stacktop = 1;
+    if (arg) {
+        stack[0] = arg;
+        stacktop = 1;
+    } else {
+        stacktop = 0;
+    }
 
     /* Get out the PSL */
     if (pslraw) {
@@ -204,6 +208,7 @@ struct PlofReturn interpretPSL(
 #define PUSHINT(val) \
     { \
         rd = GC_NEW_Z(struct PlofRawData); \
+        rd->type = PLOF_DATA_RAW; \
         rd->length = sizeof(ptrdiff_t); \
         rd->data = (unsigned char *) GC_NEW_Z(ptrdiff_t); \
         *((ptrdiff_t *) rd->data) = (val); \
@@ -388,6 +393,7 @@ label(interp_psl_combine);
         } else {
             /* duplicate the left array */
             ad = GC_NEW_Z(struct PlofArrayData);
+            ad->type = PLOF_DATA_ARRAY;
             memcpy(ad, ARRAY(a), sizeof(struct PlofArrayData));
             ad->data = (struct PlofObject **) GC_MALLOC(ad->length * sizeof(struct PlofObject *));
             memcpy(ad->data, ARRAY(a)->data, ad->length * sizeof(struct PlofObject *));
@@ -401,6 +407,7 @@ label(interp_psl_combine);
         } else if (ISARRAY(b)) {
             /* duplicate the right array */
             ad = GC_NEW_Z(struct PlofArrayData);
+            ad->type = PLOF_DATA_ARRAY;
             memcpy(ad, ARRAY(b), sizeof(struct PlofArrayData));
             ad->data = (struct PlofObject **) GC_MALLOC(ad->length * sizeof(struct PlofObject *));
             memcpy(ad->data, ARRAY(b)->data, ad->length * sizeof(struct PlofObject *));
@@ -962,18 +969,22 @@ label(interp_psl_print);
     }
     STEP;
 
-label(interp_psl_debug); UNIMPL("psl_debug");
+label(interp_psl_debug);
+    DEBUG_CMD("debug");
+    printf("STACK LENGTH: %d\n", stacktop);
+    STEP;
+
 label(interp_psl_include); UNIMPL("psl_include");
 label(interp_psl_parse); UNIMPL("psl_parse");
 
-label(interp_psl_gadd); STEP;
-label(interp_psl_grem); STEP;
-label(interp_psl_gaddstop); STEP;
-label(interp_psl_gremstop); STEP;
-label(interp_psl_gaddgroup); STEP;
-label(interp_psl_gremgroup); STEP;
-label(interp_psl_gcommit); STEP;
-label(interp_psl_marker); STEP;
+label(interp_psl_gadd); DEBUG_CMD("gadd"); STEP;
+label(interp_psl_grem); DEBUG_CMD("grem"); STEP;
+label(interp_psl_gaddstop); DEBUG_CMD("gaddstop"); STEP;
+label(interp_psl_gremstop); DEBUG_CMD("gremstop"); STEP;
+label(interp_psl_gaddgroup); DEBUG_CMD("gaddgroup"); STEP;
+label(interp_psl_gremgroup); DEBUG_CMD("gremgroup"); STEP;
+label(interp_psl_gcommit); DEBUG_CMD("gcommit"); STEP;
+label(interp_psl_marker); DEBUG_CMD("marker"); STEP;
 
 label(interp_psl_immediate);
     DEBUG_CMD("immediate");
