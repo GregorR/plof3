@@ -78,6 +78,7 @@
 #define psl_dsrccol   0xD2
 #define psl_print     0xE0
 #define psl_debug     0xE1
+#define psl_trap      0xED
 #define psl_include   0xEE
 #define psl_parse     0xEF
 #define psl_gadd      0xF0

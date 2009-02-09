@@ -173,6 +173,7 @@ static this() {
     "dsrccol"   :psl_dsrccol,
     "print"     :psl_print,
     "debug"     :psl_debug,
+    "trap"      :psl_trap,
     "include"   :psl_include,
     "parse"     :psl_parse,
     "gadd"      :psl_gadd,

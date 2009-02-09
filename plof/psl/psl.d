@@ -102,6 +102,7 @@ const ubyte psl_dsrcline  = 0xD1;
 const ubyte psl_dsrccol   = 0xD2;
 const ubyte psl_print     = 0xE0;
 const ubyte psl_debug     = 0xE1;
+const ubyte psl_trap      = 0xED;
 const ubyte psl_include   = 0xEE;
 const ubyte psl_parse     = 0xEF;
 const ubyte psl_gadd      = 0xF0;

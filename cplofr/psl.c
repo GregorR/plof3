@@ -1022,6 +1022,7 @@ label(interp_psl_debug);
     printf("STACK LENGTH: %d\n", (int) stacktop);
     STEP;
 
+label(interp_psl_trap); UNIMPL("psl_trap");
 label(interp_psl_include); UNIMPL("psl_include");
 label(interp_psl_parse); UNIMPL("psl_parse");
 

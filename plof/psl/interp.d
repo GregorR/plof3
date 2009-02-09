@@ -1805,6 +1805,24 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
                     Stdout("STACK LENGTH: ")(stack.stack.length).newline;
                     break;
 
+                case psl_trap:
+                {
+                    PSLObject thrown;
+                    use2((PSLObject a, PSLObject b) {
+                        if (!a.isArray && a.raw !is null) {
+                            thrown = call(a, a.parent, a.raw.data);
+                        } else {
+                            throw new InterpreterFailure("trap expects a procedure operand.");
+                        }
+                    });
+    
+                    // if it threw, die
+                    if (thrown !is null) {
+                        return thrown;
+                    }
+                    break;
+                }
+
                 case psl_include:
                     use1((PSLObject a) {
                         if (!a.isArray && a.raw !is null) {

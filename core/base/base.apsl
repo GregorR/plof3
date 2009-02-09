@@ -216,6 +216,7 @@ gadd
 "pslOp" "/sub/" "token" "white" 3 integer array {{sub}} gadd
 "pslOp" "/this/" "token" "white" 3 integer array {{this}} gadd
 "pslOp" "/throw/" "token" "white" 3 integer array {{throw}} gadd
+"pslOp" "/trap/" "token" "white" 3 integer array {{trap}} gadd
 "pslOp" "/version/" "token" "white" 3 integer array {{version}} gadd
 "pslOp" "/wrap/" "token" "white" 3 integer array {{wrap}} gadd
 "pslOp" "/xor/" "token" "white" 3 integer array {{xor}} gadd
