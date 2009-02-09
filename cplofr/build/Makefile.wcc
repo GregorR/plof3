@@ -2,21 +2,29 @@ CC=wcc386
 
 CPU=5
 CALLING=s
-CFLAGS=-$(CPU)$(CALLING)
+ECFLAGS=
+CFLAGS=-$(CPU)$(CALLING) $(ECFLAGS)
 
 LINK=wlink
 LFLAGS=system dos4g
-LIBS=library gc
 
-PSLI_OBJS=psli.obj psl.obj
+LIB=wlib
 
-all: psli.exe
+PLOF_LIB_OBJS=psl.obj
+PSLI_OBJS=psli.obj
+PSLI_LIBS=library plof library gc
 
-psli.exe: $(PSLI_OBJS)
-	$(LINK) $(LFLAGS) $(LIBS) option stack=10485760 file psli file psl
+all: plof.lib psli.exe
+
+plof.lib: $(PLOF_LIB_OBJS)
+	$(LIB) -n plof.lib $(PLOF_LIB_OBJS)
+
+psli.exe: plof.lib $(PSLI_OBJS)
+	$(LINK) $(LFLAGS) $(PSLI_LIBS) option stack=10485760 file psli
 
 .c.obj:
 	$(CC) $(CFLAGS) $<
 
 clean:
-	del psli.exe psli.obj psl.obj
+	del plof.lib $(PLOF_LIB_OBJS)
+	del psli.exe $(PSLI_OBJS)
