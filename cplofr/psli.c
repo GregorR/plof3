@@ -34,7 +34,7 @@ int main(int argc, char **argv)
     len = 0;
 
     /* now start reading */
-    while (rd = fread(psl + len, 1, BUFSTEP, pslf)) {
+    while ((rd = fread(psl + len, 1, BUFSTEP, pslf))) {
         len += rd;
         if (rd < BUFSTEP) break;
 

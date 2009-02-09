@@ -35,7 +35,7 @@ struct PlofReturn interpretPSL(
         int immediate)
 {
     /* Necessary jump variables */
-    jumpvars;
+    jumpvars
 
     /* The stack */
     size_t stacklen, stacktop;
@@ -56,6 +56,9 @@ struct PlofReturn interpretPSL(
      * the op to run, the next pointer is an argument as a PlofRawData (if
      * applicable) */
 
+    /* The eventual return */
+    struct PlofReturn ret;
+
     /* Perhaps generate the context */
     if (generateContext) {
         a = GC_NEW_Z(struct PlofObject);
@@ -65,7 +68,8 @@ struct PlofReturn interpretPSL(
 
     /* Set +procedure */
     if (pslraw) {
-        PLOF_WRITE(context, 10, "+procedure", plofHash(10, "+procedure"), pslraw);
+        PLOF_WRITE(context, 10, (unsigned char *) "+procedure",
+                   plofHash(10, (unsigned char *) "+procedure"), pslraw);
     }
 
     /* Start the stack at size 8 */
@@ -489,7 +493,9 @@ label(interp_psl_return); UNIMPL("psl_return");
 label(interp_psl_throw);
     DEBUG_CMD("throw");
     UNARY;
-    return (struct PlofReturn) {a, 1};
+    ret.ret = a;
+    ret.isThrown = 1;
+    return ret;
 
 label(interp_psl_catch);
     DEBUG_CMD("catch");
@@ -703,7 +709,7 @@ label(interp_psl_array);
         if (length > 0) {
             for (stacki = stacktop - 1,
                  arri = length - 1;
-                 stacki >= 0,
+                 stacki >= 0 &&
                  arri >= 0;
                  stacki--, arri--) {
                 ad->data[arri] = stack[stacki];
@@ -729,7 +735,7 @@ label(interp_psl_aconcat);
     BINARY;
     {
         struct PlofArrayData *aa, *ba, *ra;
-        size_t al, bl, rl, ai;
+        size_t al, bl, rl;
         aa = ba = ra = NULL;
         al = bl = rl = 0;
 
@@ -976,16 +982,16 @@ label(interp_psl_print);
         fputc('\n', stdout);
 
         if (RAW(a)->length == sizeof(ptrdiff_t)) {
-            printf("Integer value: %d\n", *((ptrdiff_t *) RAW(a)->data));
+            printf("Integer value: %d\n", (int) *((ptrdiff_t *) RAW(a)->data));
         }
     } else {
-        printf("%p\n", a);
+        printf("%p\n", (void *) a);
     }
     STEP;
 
 label(interp_psl_debug);
     DEBUG_CMD("debug");
-    printf("STACK LENGTH: %d\n", stacktop);
+    printf("STACK LENGTH: %d\n", (int) stacktop);
     STEP;
 
 label(interp_psl_include); UNIMPL("psl_include");
@@ -1034,7 +1040,9 @@ label(interp_psl_ccall); UNIMPL("psl_ccall");
 
 label(interp_psl_done);
     UNARY;
-    return (struct PlofReturn) {a, 0};
+    ret.ret = a;
+    ret.isThrown = 0;
+    return ret;
 
     jumptail;
 }
@@ -1135,7 +1143,11 @@ struct PlofObjects plofMembersSub(struct PlofOHashTable *of)
     struct PlofObject *obj;
     struct PlofRawData *rd;
 
-    if (of == NULL) return (struct PlofObjects) { 0, NULL };
+    if (of == NULL) {
+        ret.length = 0;
+        ret.data = NULL;
+        return ret;
+    }
 
     /* get the left and right members */
     left = plofMembersSub(of->left);

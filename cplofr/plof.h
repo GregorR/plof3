@@ -24,7 +24,7 @@ struct PlofData;
     struct PlofObject *_obj = (obj); \
     size_t _namehash = (namehash); \
     struct PlofObject *_res = plofNull; \
-    struct PlofOHashTable *_cur = (obj)->hashTable; \
+    struct PlofOHashTable *_cur = _obj->hashTable; \
     while (_cur) { \
         if (_namehash < _cur->hashedName) { \
             _cur = _cur->left; \
@@ -32,7 +32,7 @@ struct PlofData;
             _cur = _cur->right; \
         } else { \
             if (((size_t) _cur->value) & 1) { \
-                _res = (obj)->itable[((size_t) _cur->value)>>1]; \
+                _res = _obj->itable[((size_t) _cur->value)>>1]; \
             } else { \
                 _res = _cur->value; \
             } \
@@ -48,7 +48,7 @@ struct PlofData;
     struct PlofOHashTable *_nht = GC_NEW_Z(struct PlofOHashTable); \
     _nht->hashedName = (snamehash); \
     _nht->namelen = snamelen; \
-    _nht->name = GC_STRDUP((sname)); \
+    _nht->name = (unsigned char *) GC_STRDUP((char *) (sname)); \
     _nht->value = (svalue); \
     into = _nht; \
 }
@@ -104,7 +104,7 @@ struct PlofObject {
     struct PlofObject *parent;
     struct PlofData *data;
     struct PlofOHashTable *hashTable;
-    struct PlofObject *itable[0];
+    struct PlofObject *itable[1];
 };
 
 /* The return type from Plof functions, which specifies whether a value is
