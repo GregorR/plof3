@@ -5,6 +5,11 @@
 #include "plof.h"
 #include "psl.h"
 
+/* If we don't have __WORDSIZE (which is a Linux thing), try to guess it */
+#ifndef __WORDSIZE
+#define __WORDSIZE 32 /* good guess, no? :P */
+#endif
+
 
 /* Some versions of 'jump' require an enum */
 #ifdef jumpenum
@@ -858,12 +863,16 @@ label(interp_psl_integer);
                     break;
 
                 case 4:
+#if __WORDSIZE < 64
+                case 8:
+#endif
                     val = ((ptrdiff_t) rd->data[0] << 24) |
                           ((ptrdiff_t) rd->data[1] << 16) |
                           ((ptrdiff_t) rd->data[2] << 8) |
                           ((ptrdiff_t) rd->data[3]);
                     break;
 
+#if __WORDSIZE >= 64
                 case 8:
                     val = ((ptrdiff_t) rd->data[0] << 56) |
                           ((ptrdiff_t) rd->data[1] << 48) |
@@ -874,6 +883,7 @@ label(interp_psl_integer);
                           ((ptrdiff_t) rd->data[6] << 8) |
                           ((ptrdiff_t) rd->data[7]);
                     break;
+#endif
             }
         }
 
@@ -1072,10 +1082,18 @@ size_t pslBignumLength(size_t val)
         return 1;
     } else if (val < ((size_t) 1<<14)) {
         return 2;
+#if __WORDSIZE <= 16
+    } else {
+        return 3;
+#else
     } else if (val < ((size_t) 1<<21)) {
         return 3;
     } else if (val < ((size_t) 1<<28)) {
         return 4;
+#if __WORDSIZE <= 32
+    } else {
+        return 5;
+#else
     } else if (val < ((size_t) 1<<35)) {
         return 5;
     } else if (val < ((size_t) 1<<42)) {
@@ -1088,6 +1106,8 @@ size_t pslBignumLength(size_t val)
         return 9;
     } else {
         return 10;
+#endif /* 32 */
+#endif /* 16 */
     }
 }
 
