@@ -93,8 +93,9 @@ struct PlofData;
     } \
 }
 
-/* All functions accessible directly from Plof should be of this form */
-typedef struct PlofReturn (*PlofFunction)(struct PlofObject *);
+/* All functions accessible directly from Plof should be of this form
+ * args: context, arg */
+typedef struct PlofReturn (*PlofFunction)(struct PlofObject *, struct PlofObject *);
 
 /* A Plof object
  * data: raw or array data associated with the object
