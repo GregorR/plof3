@@ -125,7 +125,7 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
         PSLObject a = popBless();
         f(a, b, c, d);
     }
-    PSLObject call(PSLObject called, PSLObject incontext, ubyte[] npsl) {
+    PSLObject call(PSLObject called, PSLObject incontext, ubyte[] npsl, bool immediate = false) {
         // Create a stack,
         PSLStack nstack = new PSLStack();
 
@@ -140,7 +140,7 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
         ncontext.members.add("+procedure", cast(void*) called);
 
         // and run it
-        PSLObject thrown = interpret(npsl, nstack, ncontext, false, prp);
+        PSLObject thrown = interpret(npsl, nstack, ncontext, immediate, prp);
 
         // get the argument back
         if (nstack.stack.length) {
@@ -675,6 +675,24 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
                         }
                      });
                      break;
+
+                case psl_calli:
+                {
+                    PSLObject thrown;
+                    use1((PSLObject a) {
+                        if (!a.isArray && a.raw !is null) {
+                            thrown = call(a, a.parent, a.raw.data, true);
+                        } else {
+                            throw new InterpreterFailure("call expects a procedure operand.");
+                        }
+                    });
+    
+                    // if it threw, die
+                    if (thrown !is null) {
+                        return thrown;
+                    }
+                    break;
+                }
     
                 case psl_loop:
                     // simple

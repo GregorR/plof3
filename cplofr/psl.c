@@ -679,6 +679,24 @@ label(interp_psl_resolve);
     }
     STEP;
 
+label(interp_psl_calli);
+    DEBUG_CMD("calli");
+    UNARY;
+    if (ISRAW(a)) {
+        struct PlofReturn ret = interpretPSL(b->parent, a, b, 0, NULL, 1, 1);
+
+        /* check the return */
+        if (ret.isThrown) {
+            return ret;
+        }
+
+        STACK_PUSH(ret.ret);
+    } else {
+        /* quay? (ERROR) */
+        STACK_PUSH(plofNull);
+    }
+    STEP;
+
 label(interp_psl_loop);
     DEBUG_CMD("loop");
     UNARY;
