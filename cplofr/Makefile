@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-O2 -g
+CFLAGS=-O3 -g
 
 LD=$(CC)
 LDFLAGS=
