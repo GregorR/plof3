@@ -31,10 +31,10 @@
 #define jumpvars                enum jumplabel __jump_to;
 #define jumphead                while (1) { switch (__jump_to) {
 #define jumptail                } }
-#define addressof(label)        (void *) (int) label
+#define addressof(label)        (void *) (size_t) label
 #define label(name)             case name:
-#define prejump(var)            __jump_to = (enum jumplabel) (int) (var)
-#define jump(var)               __jump_to = (enum jumplabel) (int) (var); break
+#define prejump(var)            __jump_to = (enum jumplabel) (size_t) (var)
+#define jump(var)               __jump_to = (enum jumplabel) (size_t) (var); break
 
 #endif
 

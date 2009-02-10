@@ -493,7 +493,12 @@ label(interp_psl_call);
     }
     STEP;
 
-label(interp_psl_return); UNIMPL("psl_return");
+label(interp_psl_return);
+    DEBUG_CMD("return");
+    UNARY;
+    ret.ret = a;
+    ret.isThrown = 0;
+    return ret;
 
 label(interp_psl_throw);
     DEBUG_CMD("throw");
@@ -683,7 +688,7 @@ label(interp_psl_calli);
     DEBUG_CMD("calli");
     UNARY;
     if (ISRAW(a)) {
-        struct PlofReturn ret = interpretPSL(b->parent, a, b, 0, NULL, 1, 1);
+        struct PlofReturn ret = interpretPSL(a->parent, plofNull, a, 0, NULL, 1, 1);
 
         /* check the return */
         if (ret.isThrown) {
@@ -807,7 +812,24 @@ label(interp_psl_length);
     }
     STEP;
 
-label(interp_psl_lengthset); UNIMPL("psl_lengthset");
+label(interp_psl_lengthset);
+    DEBUG_CMD("lengthset");
+    BINARY;
+    if (ISARRAY(a) && ISINT(b)) {
+        size_t oldlen, newlen, i;
+        ad = ARRAY(a);
+        oldlen = ad->length;
+        newlen = ASINT(b);
+
+        /* reallocate */
+        ad->data = (struct PlofObject **) GC_REALLOC(ad->data, newlen * sizeof(struct PlofObject *));
+
+        /* and assign nulls */
+        for (i = oldlen; i < newlen; i++) {
+            ad->data[i] = plofNull;
+        }
+    }
+    STEP;
 
 label(interp_psl_index);
     DEBUG_CMD("index");
@@ -909,7 +931,10 @@ label(interp_psl_integer);
     }
     STEP;
 
-label(interp_psl_intwidth); UNIMPL("psl_intwidth");
+label(interp_psl_intwidth);
+    DEBUG_CMD("intwidth");
+    PUSHINT(sizeof(void *));
+    STEP;
 
 label(interp_psl_mul);
     DEBUG_CMD("mul");
@@ -951,7 +976,10 @@ label(interp_psl_eq);
     INTCMP(==);
     STEP;
 
-label(interp_psl_ne); UNIMPL("psl_ne");
+label(interp_psl_ne);
+    DEBUG_CMD("ne");
+    INTCMP(!=);
+    STEP;
 
 label(interp_psl_gt);
     DEBUG_CMD("gt");
@@ -963,9 +991,20 @@ label(interp_psl_gte);
     INTCMP(>=);
     STEP;
 
-label(interp_psl_sl); UNIMPL("psl_sl");
-label(interp_psl_sr); UNIMPL("psl_sr");
-label(interp_psl_or); UNIMPL("psl_or");
+label(interp_psl_sl);
+    DEBUG_CMD("sl");
+    INTBINOP(<<);
+    STEP;
+
+label(interp_psl_sr);
+    DEBUG_CMD("sr");
+    INTBINOP(>>);
+    STEP;
+
+label(interp_psl_or);
+    DEBUG_CMD("or");
+    INTBINOP(|);
+    STEP;
 
 label(interp_psl_nor);
     DEBUG_CMD("nor");
@@ -979,10 +1018,46 @@ label(interp_psl_xor);
     INTBINOP(^);
     STEP;
 
-label(interp_psl_nxor); UNIMPL("psl_nxor");
-label(interp_psl_and); UNIMPL("psl_and");
-label(interp_psl_nand); UNIMPL("psl_nand");
-label(interp_psl_byte); UNIMPL("psl_byte");
+label(interp_psl_nxor);
+    DEBUG_CMD("nxor");
+    INTBINOP(^);
+    ASINT(stack[stacktop]) = ~ASINT(stack[stacktop]);
+    STEP;
+
+label(interp_psl_and);
+    DEBUG_CMD("and");
+    INTBINOP(&);
+    STEP;
+
+label(interp_psl_nand);
+    DEBUG_CMD("nand");
+    INTBINOP(&);
+    ASINT(stack[stacktop]) = ~ASINT(stack[stacktop]);
+    STEP;
+
+label(interp_psl_byte);
+    DEBUG_CMD("byte");
+    UNARY;
+    if (ISINT(a)) {
+        ptrdiff_t val = ASINT(a);
+
+        /* prepare the new value */
+        rd = (struct PlofRawData *) GC_NEW_Z(struct PlofRawData);
+        rd->type = PLOF_DATA_RAW;
+        rd->length = 1;
+        rd->data = (unsigned char *) GC_MALLOC(1);
+        rd->data[0] = (unsigned char) (val & 0xFF);
+
+        /* and push it */
+        a = (struct PlofObject *) GC_NEW_Z(struct PlofObject);
+        a->parent = context;
+        a->data = (struct PlofData *) rd;
+        STACK_PUSH(a);
+    } else {
+        STACK_PUSH(plofNull);
+    }
+    STEP;
+
 label(interp_psl_float); UNIMPL("psl_float");
 label(interp_psl_fint); UNIMPL("psl_fint");
 label(interp_psl_fmul); UNIMPL("psl_fmul");
