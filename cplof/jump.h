@@ -22,7 +22,7 @@
 #define jumptail
 #define addressof(label)        &&label
 #define label(name)             name:
-#define jump(var)               goto *(var)
+#define jump(var)               goto *((void *) (var))
 #define prejump                 jump
 
 #else /* if defined(FAKE_JUMPS) or unsupported compiler */
