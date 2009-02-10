@@ -26,6 +26,9 @@ enum jumplabel {
 size_t pslBignumLength(size_t val);
 void pslIntToBignum(unsigned char *buf, size_t val, size_t len);
 
+/* Implementation of 'replace' */
+struct PlofRawData *pslReplace(struct PlofRawData *in, struct PlofArrayData *with);
+
 /* The main PSL interpreter */
 #ifdef __GNUC__
 __attribute__((__noinline__))
@@ -120,7 +123,7 @@ struct PlofReturn interpretPSL(
             }
 
             /* maybe it has raw data */
-            if (cmd >= psl_immediate) {
+            if (cmd >= psl_marker) {
                 raw = GC_NEW_Z(struct PlofRawData);
                 raw->type = PLOF_DATA_RAW;
 
@@ -713,7 +716,35 @@ label(interp_psl_loop);
     /* then loop */
     LOOP;
 
-label(interp_psl_replace); UNIMPL("psl_replace");
+label(interp_psl_replace);
+    DEBUG_CMD("replace");
+    BINARY;
+    if (ISRAW(a) && ISARRAY(b)) {
+        size_t i;
+
+        ad = ARRAY(b);
+
+        /* verify that the array contains only raw data */
+        for (i = 0; i < ad->length; i++) {
+            if (!ISRAW(ad->data[i])) {
+                /* problem! */
+                goto psl_replace_error;
+            }
+        }
+
+        /* now replace */
+        rd = pslReplace(RAW(a), ad);
+
+        /* and put it in an object */
+        b = GC_NEW_Z(struct PlofObject);
+        b->parent = a->parent;
+        b->data = (struct PlofData *) rd;
+        STACK_PUSH(b);
+    } else {
+psl_replace_error:
+        STACK_PUSH(plofNull);
+    }
+    STEP;
 
 label(interp_psl_array);
     DEBUG_CMD("array");
@@ -1303,6 +1334,103 @@ struct PlofArrayData *plofMembers(struct PlofObject *of)
     ad->data = objs.data;
 
     return ad;
+}
+
+/* Implementation of 'replace' */
+struct PlofRawData *pslReplace(struct PlofRawData *in, struct PlofArrayData *with)
+{
+    size_t i, retalloc;
+    struct PlofRawData *ret = GC_NEW_Z(struct PlofRawData);
+    struct PlofRawData *wr;
+    ret->type = PLOF_DATA_RAW;
+
+    /* preallocate some space */
+    retalloc = in->length;
+    ret->length = 0;
+    ret->data = (unsigned char *) GC_MALLOC(retalloc);
+
+    /* auto-reallocation */
+#define SPACEFOR(n) \
+    while (ret->length + (n) > retalloc) { \
+        retalloc *= 2; \
+        ret->data = (unsigned char *) GC_REALLOC(ret->data, retalloc); \
+    }
+
+    /* go through the commands in 'in' ... */
+    for (i = 0; i < in->length; i++) {
+        unsigned char cmd = in->data[i];
+        struct PlofRawData *data = NULL;
+
+        /* get out the data */
+        if (cmd >= psl_marker) {
+            data = GC_NEW_Z(struct PlofRawData);
+
+            i++;
+            i += pslBignumToInt(in->data + i, (size_t *) &data->length);
+            if (i + data->length > in->length) {
+                data->length = in->length - i;
+            }
+            data->data = in->data + i;
+            i += data->length - 1;
+        }
+
+        /* do something with the command */
+        if (cmd == psl_marker) {
+            /* what's the marker #? */
+            size_t mval = (size_t) -1;
+            if (data->length == sizeof(size_t)) {
+                mval = *((size_t *) data);
+            }
+
+            /* maybe replace it */
+            if (mval < with->length) {
+                /* yup! */
+                wr = RAW(with->data[mval]);
+
+                /* do we have enough space? */
+                SPACEFOR(wr->length);
+
+                /* copy it in */
+                memcpy(ret->data + ret->length, wr->data, wr->length);
+                ret->length += wr->length;
+            }
+
+        } else if (cmd == psl_code) {
+            size_t bignumlen;
+
+            /* recurse */
+            struct PlofRawData *sub = pslReplace(data, with);
+
+            /* figure out the bignum length */
+            bignumlen = pslBignumLength(sub->length);
+
+            /* make sure we have enough room */
+            SPACEFOR(1 + bignumlen + sub->length);
+
+            /* then copy it all in */
+            ret->data[ret->length] = cmd;
+            pslIntToBignum(ret->data + ret->length + 1, sub->length, bignumlen);
+            memcpy(ret->data + ret->length + 1 + bignumlen, sub->data, sub->length);
+            ret->length += 1 + bignumlen + sub->length;
+
+        } else if (cmd > psl_marker) {
+            /* rewrite it */
+            size_t bignumlen = pslBignumLength(data->length);
+            SPACEFOR(1 + bignumlen + data->length);
+            ret->data[ret->length] = cmd;
+            pslIntToBignum(ret->data + ret->length + 1, data->length, bignumlen);
+            memcpy(ret->data + ret->length + 1 + bignumlen, data->data, data->length);
+            ret->length += 1 + bignumlen + data->length;
+
+        } else {
+            /* just write out the command */
+            SPACEFOR(1);
+            ret->data[ret->length++] = cmd;
+
+        }
+    }
+
+    return ret;
 }
 
 /* GC on DJGPP is screwy */
