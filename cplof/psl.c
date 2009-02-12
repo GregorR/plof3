@@ -216,21 +216,19 @@ struct PlofReturn interpretPSL(
 #define RAW(obj) ((struct PlofRawData *) (obj)->data)
 #define ARRAY(obj) ((struct PlofArrayData *) (obj)->data)
 
-#define ISINT(obj) (ISRAW(obj) && RAW(obj)->length == sizeof(ptrdiff_t))
-#define ASINT(obj) (*((ptrdiff_t *) RAW(obj)->data))
+/*#define ISINT(obj) (ISRAW(obj) && RAW(obj)->length == sizeof(ptrdiff_t))*/
+#define ISINT(obj) 1
+/*#define ASINT(obj) (*((ptrdiff_t *) RAW(obj)->data))*/
+#define ASINT(obj) ((obj)->direct_data.int_data)
 
     /* Type coercions */
 #define PUSHINT(val) \
     { \
-        rd = GC_NEW_Z(struct PlofRawData); \
-        rd->type = PLOF_DATA_RAW; \
-        rd->length = sizeof(ptrdiff_t); \
-        rd->data = (unsigned char *) GC_NEW_Z(ptrdiff_t); \
-        *((ptrdiff_t *) rd->data) = (val); \
+        ptrdiff_t _val = (val); \
         \
         a = GC_NEW_Z(struct PlofObject); \
         a->parent = context; \
-        a->data = (struct PlofData *) rd; \
+        a->direct_data.int_data = (ptrdiff_t) _val; \
         STACK_PUSH(a); \
     }
 
@@ -1119,7 +1117,7 @@ label(interp_psl_print);
             printf("Integer value: %d\n", (int) *((ptrdiff_t *) RAW(a)->data));
         }
     } else {
-        printf("%p\n", (void *) a);
+        printf("%d %p\n", ASINT(a), (void *) a);
     }
     STEP;
 
