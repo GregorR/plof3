@@ -219,11 +219,11 @@ struct PlofReturn interpretPSL(
 #else
 #define ISOBJ(obj) (((size_t) (obj) & 1) == 0)
 #endif
-#define ISRAW(obj) ISOBJ(obj) && \
-                   ((obj)->data && \
+#define ISRAW(obj) (ISOBJ(obj) && \
+                    (obj)->data && \
                     (obj)->data->type == PLOF_DATA_RAW)
-#define ISARRAY(obj) ISOBJ(obj) && \
-                     ((obj)->data && \
+#define ISARRAY(obj) (ISOBJ(obj) && \
+                      (obj)->data && \
                       (obj)->data->type == PLOF_DATA_ARRAY)
 #define RAW(obj) ((struct PlofRawData *) (obj)->data)
 #define ARRAY(obj) ((struct PlofArrayData *) (obj)->data)
