@@ -1,5 +1,6 @@
 CC=gcc
-CFLAGS=-DPLOF_INTS_IN_OBJECTS -O3 -g
+ECLFAGS=
+CFLAGS=-O3 -fno-crossjumping -fno-gcse -g $(ECFLAGS)
 
 LD=$(CC)
 LDFLAGS=
