@@ -7,4 +7,5 @@ There are three methods of boxing (or not boxing) ints in PSL
         Objects contain ints directly, not in raw data, but ints are still objects.
 
 -DPLOF_FREE_INTS
-        Use ints instead of objects (not really spec-compliant per se).
+        Use ints instead of objects (not really spec-compliant per se, but the
+        spec will be adjusted to match this by removing all guarantees on ints).
