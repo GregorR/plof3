@@ -30,7 +30,7 @@ int main(int argc, char **argv)
     }
 
     /* preallocate the buffer */
-    psl = GC_MALLOC(BUFSTEP);
+    psl = GC_MALLOC_ATOMIC(BUFSTEP);
     len = 0;
 
     /* now start reading */

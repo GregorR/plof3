@@ -141,7 +141,7 @@ struct PlofReturn interpretPSL(
                 }
 
                 /* copy it in */
-                raw->data = (unsigned char *) GC_MALLOC(raw->length);
+                raw->data = (unsigned char *) GC_MALLOC_ATOMIC(raw->length);
                 memcpy(raw->data, psl + psli, raw->length);
                 psli += raw->length - 1;
 
@@ -429,7 +429,7 @@ label(interp_psl_combine);
             rd->type = PLOF_DATA_RAW;
 
             rd->length = ra->length + rb->length;
-            rd->data = (unsigned char *) GC_MALLOC(rd->length);
+            rd->data = (unsigned char *) GC_MALLOC_ATOMIC(rd->length);
 
             /* copy in both */
             memcpy(rd->data, ra->data, ra->length);
@@ -654,7 +654,7 @@ label(interp_psl_concat);
         rd = GC_NEW_Z(struct PlofRawData);
         rd->type = PLOF_DATA_RAW;
         rd->length = ra->length + rb->length;
-        rd->data = (unsigned char *) GC_MALLOC(rd->length);
+        rd->data = (unsigned char *) GC_MALLOC_ATOMIC(rd->length);
         memcpy(rd->data, ra->data, ra->length);
         memcpy(rd->data + ra->length, rb->data, rb->length);
 
@@ -688,7 +688,7 @@ label(interp_psl_wrap);
         /* figure out how much space is needed */
         bignumsz = pslBignumLength(ra->length);
         rd->length = 1 + bignumsz + ra->length;
-        rd->data = (unsigned char *) GC_MALLOC(rd->length);
+        rd->data = (unsigned char *) GC_MALLOC_ATOMIC(rd->length);
 
         /* copy in the instruction */
         if (rb->length >= 1) {
@@ -744,7 +744,7 @@ label(interp_psl_resolve);
         }
 
         /* hash them all */
-        hashes = (size_t *) GC_MALLOC(ad->length * sizeof(size_t));
+        hashes = (size_t *) GC_MALLOC_ATOMIC(ad->length * sizeof(size_t));
         for (i = 0; i < ad->length; i++) {
             rd = RAW(ad->data[i]);
             HASHOF(hashes[i], rd);
@@ -1186,7 +1186,7 @@ label(interp_psl_byte);
         rd = (struct PlofRawData *) GC_NEW_Z(struct PlofRawData);
         rd->type = PLOF_DATA_RAW;
         rd->length = 1;
-        rd->data = (unsigned char *) GC_MALLOC(1);
+        rd->data = (unsigned char *) GC_MALLOC_ATOMIC(1);
         rd->data[0] = (unsigned char) (val & 0xFF);
 
         /* and push it */
@@ -1462,7 +1462,7 @@ struct PlofRawData *pslReplace(struct PlofRawData *in, struct PlofArrayData *wit
     /* preallocate some space */
     retalloc = in->length;
     ret->length = 0;
-    ret->data = (unsigned char *) GC_MALLOC(retalloc);
+    ret->data = (unsigned char *) GC_MALLOC_ATOMIC(retalloc);
 
     /* auto-reallocation */
 #define SPACEFOR(n) \
