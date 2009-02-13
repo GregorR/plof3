@@ -209,19 +209,57 @@ struct PlofReturn interpretPSL(
 #define QUINARY STACK_POP(e) STACK_POP(d) STACK_POP(c) STACK_POP(b) STACK_POP(a)
 
     /* Basic type-checks */
-#define ISRAW(obj) ((obj)->data && \
+#ifdef DEBUG
+#define BADTYPE(cmd) fprintf(stderr, "Type error in " cmd "\n")
+#else
+#define BADTYPE(cmd)
+#endif
+#if defined(PLOF_BOX_NUMBERS) || defined(PLOF_INTS_IN_OBJECTS)
+#define ISOBJ(obj) 1
+#else
+#define ISOBJ(obj) (((size_t) (obj) & 1) == 0)
+#endif
+#define ISRAW(obj) ISOBJ(obj) && \
+                   ((obj)->data && \
                     (obj)->data->type == PLOF_DATA_RAW)
-#define ISARRAY(obj) ((obj)->data && \
+#define ISARRAY(obj) ISOBJ(obj) && \
+                     ((obj)->data && \
                       (obj)->data->type == PLOF_DATA_ARRAY)
 #define RAW(obj) ((struct PlofRawData *) (obj)->data)
 #define ARRAY(obj) ((struct PlofArrayData *) (obj)->data)
 
-/*#define ISINT(obj) (ISRAW(obj) && RAW(obj)->length == sizeof(ptrdiff_t))*/
+#if defined(PLOF_BOX_NUMBERS)
+#define ISINT(obj) (ISRAW(obj) && RAW(obj)->length == sizeof(ptrdiff_t))
+#define ASINT(obj) (*((ptrdiff_t *) RAW(obj)->data))
+#define SETINT(obj, val) ASINT(obj) = (val)
+#elif defined(PLOF_INTS_IN_OBJECTS)
 #define ISINT(obj) 1
-/*#define ASINT(obj) (*((ptrdiff_t *) RAW(obj)->data))*/
 #define ASINT(obj) ((obj)->direct_data.int_data)
+#define SETINT(obj, val) ASINT(obj) = (val)
+#else
+#define ISINT(obj) ((size_t)(obj)&1)
+#define ASINT(obj) ((ptrdiff_t)(obj)>>1)
+#define SETINT(obj, val) (obj) = (void *) (((ptrdiff_t)(val)<<1) | 1)
+#endif
 
     /* Type coercions */
+#if defined(PLOF_BOX_NUMBERS)
+#define PUSHINT(val) \
+    { \
+        ptrdiff_t _val = (val); \
+        \
+        rd = GC_NEW_Z(struct PlofRawData); \
+        rd->type = PLOF_DATA_RAW; \
+        rd->length = sizeof(ptrdiff_t); \
+        rd->data = (unsigned char *) GC_NEW(ptrdiff_t); \
+        *((ptrdiff_t *) rd->data) = _val; \
+        \
+        a = GC_NEW_Z(struct PlofObject); \
+        a->parent = context; \
+        a->data = (struct PlofData *) rd; \
+        STACK_PUSH(a); \
+    }
+#elif defined(PLOF_INTS_IN_OBJECTS)
 #define PUSHINT(val) \
     { \
         ptrdiff_t _val = (val); \
@@ -231,6 +269,12 @@ struct PlofReturn interpretPSL(
         a->direct_data.int_data = (ptrdiff_t) _val; \
         STACK_PUSH(a); \
     }
+#else
+#define PUSHINT(val) \
+    { \
+        STACK_PUSH((void *) (((ptrdiff_t)(val)<<1) | 1)); \
+    }
+#endif
 
     /* "Functions" for integer ops */
 #define INTBINOP(op) \
@@ -274,6 +318,7 @@ struct PlofReturn interpretPSL(
             \
             STACK_PUSH(ret.ret); \
         } else { \
+            BADTYPE("intcmp"); \
             STACK_PUSH(plofNull); \
         } \
     }
@@ -344,6 +389,13 @@ label(interp_psl_new);
 label(interp_psl_combine);
     DEBUG_CMD("combine");
     BINARY;
+
+    if (!ISOBJ(a) || !ISOBJ(b)) {
+        /* FIXME */
+        BADTYPE("combine");
+        STACK_PUSH(plofNull);
+        STEP;
+    }
 
     /* start making the new object */
     c = GC_NEW_Z(struct PlofObject);
@@ -436,7 +488,7 @@ label(interp_psl_combine);
 label(interp_psl_member);
     DEBUG_CMD("member");
     BINARY;
-    if (ISRAW(b)) {
+    if (ISOBJ(a) && ISRAW(b)) {
         unsigned char *name;
         size_t namehash;
         rd = RAW(b);
@@ -446,6 +498,7 @@ label(interp_psl_member);
         PLOF_READ(a, a, rd->length, name, namehash);
         STACK_PUSH(a);
     } else {
+        BADTYPE("member");
         STACK_PUSH(plofNull);
     }
     STEP;
@@ -453,7 +506,7 @@ label(interp_psl_member);
 label(interp_psl_memberset);
     DEBUG_CMD("memberset");
     TRINARY;
-    if (ISRAW(b)) {
+    if (ISOBJ(a) && ISRAW(b)) {
         unsigned char *name;
         size_t namehash;
         rd = RAW(b);
@@ -461,19 +514,30 @@ label(interp_psl_memberset);
         namehash = plofHash(rd->length, name);
 
         PLOF_WRITE(a, rd->length, name, namehash, c);
+    } else {
+        BADTYPE("memberset");
     }
     STEP;
 
 label(interp_psl_parent);
     DEBUG_CMD("parent");
     UNARY;
-    STACK_PUSH(a->parent);
+    if (ISOBJ(a)) {
+        STACK_PUSH(a->parent);
+    } else {
+        BADTYPE("parent");
+        STACK_PUSH(plofNull);
+    }
     STEP;
 
 label(interp_psl_parentset);
     DEBUG_CMD("parentset");
     BINARY;
-    a->parent = b;
+    if (ISOBJ(a) && ISOBJ(b)) {
+        a->parent = b;
+    } else {
+        BADTYPE("parentset");
+    }
     STEP;
 
 label(interp_psl_call);
@@ -490,6 +554,7 @@ label(interp_psl_call);
         STACK_PUSH(ret.ret);
     } else {
         /* quay? (ERROR) */
+        BADTYPE("call");
         STACK_PUSH(plofNull);
     }
     STEP;
@@ -529,6 +594,7 @@ label(interp_psl_catch);
         /* then push the result */
         STACK_PUSH(ret.ret);
     } else {
+        BADTYPE("catch");
         STACK_PUSH(plofNull);
     }
     STEP;
@@ -546,6 +612,7 @@ label(interp_psl_cmp);
             }
             STACK_PUSH(ret.ret);
         } else {
+            BADTYPE("cmp");
             STACK_PUSH(plofNull);
         }
     } else {
@@ -558,6 +625,7 @@ label(interp_psl_cmp);
             }
             STACK_PUSH(ret.ret);
         } else {
+            BADTYPE("cmp");
             STACK_PUSH(plofNull);
         }
     }
@@ -586,6 +654,7 @@ label(interp_psl_concat);
         STACK_PUSH(a);
 
     } else {
+        BADTYPE("concat");
         STACK_PUSH(plofNull);
 
     }
@@ -626,8 +695,11 @@ label(interp_psl_wrap);
         a->parent = context;
         a->data = (struct PlofData *) rd;
         STACK_PUSH(a);
+
     } else {
+        BADTYPE("raw");
         STACK_PUSH(plofNull);
+
     }
     STEP;
 
@@ -637,6 +709,14 @@ label(interp_psl_resolve);
     {
         int i;
         size_t *hashes;
+
+        if (!ISOBJ(a) || !ISOBJ(b)) {
+            /* FIXME */
+            BADTYPE("resolve");
+            STACK_PUSH(plofNull);
+            STACK_PUSH(plofNull);
+            STEP;
+        }
 
         /* get an array of names regardless */
         if (ISARRAY(b)) {
@@ -697,9 +777,12 @@ label(interp_psl_calli);
         }
 
         STACK_PUSH(ret.ret);
+
     } else {
         /* quay? (ERROR) */
+        BADTYPE("calli");
         STACK_PUSH(plofNull);
+
     }
     STEP;
 
@@ -738,9 +821,12 @@ label(interp_psl_replace);
         b->parent = a->parent;
         b->data = (struct PlofData *) rd;
         STACK_PUSH(b);
+
     } else {
+        BADTYPE("replace");
 psl_replace_error:
         STACK_PUSH(plofNull);
+
     }
     STEP;
 
@@ -837,6 +923,7 @@ label(interp_psl_length);
     if (ISARRAY(a)) {
         PUSHINT(ARRAY(a)->length);
     } else {
+        BADTYPE("length");
         PUSHINT(0);
     }
     STEP;
@@ -857,6 +944,8 @@ label(interp_psl_lengthset);
         for (i = oldlen; i < newlen; i++) {
             ad->data[i] = plofNull;
         }
+    } else {
+        BADTYPE("lengthset");
     }
     STEP;
 
@@ -873,6 +962,7 @@ label(interp_psl_index);
             STACK_PUSH(ad->data[index]);
         }
     } else {
+        BADTYPE("index");
         STACK_PUSH(plofNull);
     }
     STEP;
@@ -898,17 +988,24 @@ label(interp_psl_indexset);
         if (index >= 0) {
             ad->data[index] = c;
         }
+    } else {
+        BADTYPE("indexset");
     }
     STEP;
 
 label(interp_psl_members);
     DEBUG_CMD("members");
     UNARY;
-    ad = plofMembers(a);
-    b = GC_NEW_Z(struct PlofObject);
-    b->parent = context;
-    b->data = (struct PlofData *) ad;
-    STACK_PUSH(b);
+    if (ISOBJ(a)) {
+        ad = plofMembers(a);
+        b = GC_NEW_Z(struct PlofObject);
+        b->parent = context;
+        b->data = (struct PlofData *) ad;
+        STACK_PUSH(b);
+    } else {
+        BADTYPE("members");
+        STACK_PUSH(plofNull);
+    }
     STEP;
 
 label(interp_psl_integer);
@@ -962,6 +1059,7 @@ label(interp_psl_integer);
 
 label(interp_psl_intwidth);
     DEBUG_CMD("intwidth");
+    /* FIXME: actually shorter if ints are unboxed */
     PUSHINT(sizeof(void *));
     STEP;
 
@@ -1039,7 +1137,8 @@ label(interp_psl_nor);
     DEBUG_CMD("nor");
     /* or it, then not it */
     INTBINOP(|);
-    ASINT(stack[stacktop]) = ~ASINT(stack[stacktop]);
+    /*ASINT(stack[stacktop]) = ~ASINT(stack[stacktop]);*/
+    SETINT(stack[stacktop], ~ASINT(stack[stacktop]));
     STEP;
 
 label(interp_psl_xor);
@@ -1050,7 +1149,8 @@ label(interp_psl_xor);
 label(interp_psl_nxor);
     DEBUG_CMD("nxor");
     INTBINOP(^);
-    ASINT(stack[stacktop]) = ~ASINT(stack[stacktop]);
+    /*ASINT(stack[stacktop]) = ~ASINT(stack[stacktop]);*/
+    SETINT(stack[stacktop], ~ASINT(stack[stacktop]));
     STEP;
 
 label(interp_psl_and);
@@ -1061,7 +1161,8 @@ label(interp_psl_and);
 label(interp_psl_nand);
     DEBUG_CMD("nand");
     INTBINOP(&);
-    ASINT(stack[stacktop]) = ~ASINT(stack[stacktop]);
+    /*ASINT(stack[stacktop]) = ~ASINT(stack[stacktop]);*/
+    SETINT(stack[stacktop], ~ASINT(stack[stacktop]));
     STEP;
 
 label(interp_psl_byte);
@@ -1083,6 +1184,7 @@ label(interp_psl_byte);
         a->data = (struct PlofData *) rd;
         STACK_PUSH(a);
     } else {
+        BADTYPE("byte");
         STACK_PUSH(plofNull);
     }
     STEP;
@@ -1116,8 +1218,10 @@ label(interp_psl_print);
         if (RAW(a)->length == sizeof(ptrdiff_t)) {
             printf("Integer value: %d\n", (int) *((ptrdiff_t *) RAW(a)->data));
         }
-    } else {
+    } else if (ISOBJ(a)) {
         printf("%d %p\n", ASINT(a), (void *) a);
+    } else if (ISINT(a)) {
+        printf("%d\n", ASINT(a));
     }
     STEP;
 

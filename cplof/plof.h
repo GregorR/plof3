@@ -31,11 +31,11 @@ struct PlofData;
         } else if (_namehash > _cur->hashedName) { \
             _cur = _cur->right; \
         } else { \
-            if (((size_t) _cur->value) & 1) { \
-                _res = _obj->itable[((size_t) _cur->value)>>1]; \
-            } else { \
+            /*if (((size_t) _cur->value) & 1) {*/ \
+                /*_res = _obj->itable[((size_t) _cur->value)>>1];*/ \
+            /*} else {*/ \
                 _res = _cur->value; \
-            } \
+            /*}*/ \
             _cur = NULL; \
         } \
     } \
@@ -82,11 +82,11 @@ struct PlofData;
                 } \
                 \
             } else { \
-                if ((size_t) _cur->value & 1) { \
-                    _obj->itable[((size_t) _cur->value)>>1] = (svalue); \
-                } else { \
+                /*if ((size_t) _cur->value & 1) {*/ \
+                    /*_obj->itable[((size_t) _cur->value)>>1] = (svalue);*/ \
+                /*} else {*/ \
                     _cur->value = (svalue); /* FIXME, collisions */ \
-                } \
+                /*}*/ \
                 _cur = NULL; \
             } \
         } \
@@ -103,10 +103,12 @@ typedef struct PlofReturn (*PlofFunction)(struct PlofObject *, struct PlofObject
  * itable: immediate table, for objects with known members */
 struct PlofObject {
     struct PlofObject *parent;
+#ifdef PLOF_INTS_IN_OBJECTS
     union {
         ptrdiff_t int_data;
         double float_data;
     } direct_data;
+#endif
     struct PlofData *data;
     struct PlofOHashTable *hashTable;
     struct PlofObject *itable[1];
