@@ -10,6 +10,11 @@ struct PlofReturn;
 struct PlofOHashTable;
 struct PlofData;
 
+/* Choose a good method of boxing */
+#if !defined(PLOF_BOX_INTS) && !defined(PLOF_INTS_IN_OBJECTS) && !defined(PLOF_FREE_INTS)
+#define PLOF_INTS_IN_OBJECTS
+#endif
+
 #define PLOF_DATA_RAW 0
 #define PLOF_DATA_ARRAY 1
 
@@ -149,6 +154,7 @@ struct PlofRawData {
     int type;
     size_t length;
     unsigned char *data;
+    size_t hash;
     void *idata;
     PlofFunction proc;
 };

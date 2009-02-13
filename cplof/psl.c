@@ -42,6 +42,8 @@ struct PlofReturn interpretPSL(
         int generateContext,
         int immediate)
 {
+    static size_t procedureHash = 0;
+
     /* Necessary jump variables */
     jumpvars
 
@@ -76,8 +78,10 @@ struct PlofReturn interpretPSL(
 
     /* Set +procedure */
     if (pslraw) {
-        PLOF_WRITE(context, 10, (unsigned char *) "+procedure",
-                   plofHash(10, (unsigned char *) "+procedure"), pslraw);
+        if (procedureHash == 0) {
+            procedureHash = plofHash(10, (unsigned char *) "+procedure");
+        }
+        PLOF_WRITE(context, 10, (unsigned char *) "+procedure", procedureHash, pslraw);
     }
 
     /* Start the stack at size 8 */
@@ -227,6 +231,13 @@ struct PlofReturn interpretPSL(
                       (obj)->data->type == PLOF_DATA_ARRAY)
 #define RAW(obj) ((struct PlofRawData *) (obj)->data)
 #define ARRAY(obj) ((struct PlofArrayData *) (obj)->data)
+
+#define HASHOF(into, rd) \
+    if ((rd)->hash) { \
+        (into) = (rd)->hash; \
+    } else { \
+        (into) = (rd)->hash = plofHash((rd)->length, (rd)->data); \
+    }
 
 #if defined(PLOF_BOX_NUMBERS)
 #define ISINT(obj) (ISRAW(obj) && RAW(obj)->length == sizeof(ptrdiff_t))
@@ -493,7 +504,7 @@ label(interp_psl_member);
         size_t namehash;
         rd = RAW(b);
         name = rd->data;
-        namehash = plofHash(rd->length, name);
+        HASHOF(namehash, rd);
 
         PLOF_READ(a, a, rd->length, name, namehash);
         STACK_PUSH(a);
@@ -511,7 +522,7 @@ label(interp_psl_memberset);
         size_t namehash;
         rd = RAW(b);
         name = rd->data;
-        namehash = plofHash(rd->length, name);
+        HASHOF(namehash, rd);
 
         PLOF_WRITE(a, rd->length, name, namehash, c);
     } else {
@@ -736,7 +747,7 @@ label(interp_psl_resolve);
         hashes = (size_t *) GC_MALLOC(ad->length * sizeof(size_t));
         for (i = 0; i < ad->length; i++) {
             rd = RAW(ad->data[i]);
-            hashes[i] = plofHash(rd->length, rd->data);
+            HASHOF(hashes[i], rd);
         }
 
         /* now try to find a match */
@@ -1358,6 +1369,8 @@ size_t plofHash(size_t slen, unsigned char *str)
 
     for (; slen > 0; slen--)
         hash = (*str++) + (hash << 6) + (hash << 16) - hash;
+
+    if (hash == 0) hash = 1; /* 0 is used as "hasn't been hashed" */
 
     return hash;
 }
