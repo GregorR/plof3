@@ -11,7 +11,7 @@ struct PlofOHashTable;
 struct PlofData;
 
 /* Choose a good method of boxing */
-#if !defined(PLOF_BOX_INTS) && !defined(PLOF_INTS_IN_OBJECTS) && !defined(PLOF_FREE_INTS)
+#if !defined(PLOF_BOX_NUMBERS) && !defined(PLOF_INTS_IN_OBJECTS) && !defined(PLOF_FREE_INTS)
 #define PLOF_INTS_IN_OBJECTS
 #endif
 

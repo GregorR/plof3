@@ -1,6 +1,6 @@
 There are three methods of boxing (or not boxing) ints in PSL
 
--DPLOF_BOX_INTS
+-DPLOF_BOX_NUMBERS
         Fully boxed, ints go in raw data.
 
 -DPLOF_INTS_IN_OBJECTS (default)

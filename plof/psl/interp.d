@@ -966,7 +966,7 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
     
                 case psl_intwidth:
                 {
-                    ptrdiff_t wid = ptrdiff_t.sizeof;
+                    ptrdiff_t wid = ptrdiff_t.sizeof*8;
     
                     // put it in raw data
                     PSLRawData rd = new PSLRawData(
