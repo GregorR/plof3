@@ -8,7 +8,7 @@ DPLOF=dplof
 $DPLOF > /dev/null 2> /dev/null
 if [ "$?" = "127" ]
 then
-    DPLOF=./dplof
+    DPLOF="`dirname $0`"/dplof
 fi
 
 # Parse arguments
