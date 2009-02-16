@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "jump.h"
 #include "plof.h"
@@ -9,6 +10,10 @@
 #ifndef __WORDSIZE
 #define __WORDSIZE 32 /* good guess, no? :P */
 #endif
+
+
+/* the maximum number of version strings */
+#define VERSION_MAX 100
 
 
 /* Some versions of 'jump' require an enum */
@@ -1218,7 +1223,104 @@ label(interp_psl_feq); UNIMPL("psl_feq");
 label(interp_psl_fne); UNIMPL("psl_fne");
 label(interp_psl_fgt); UNIMPL("psl_fgt");
 label(interp_psl_fgte); UNIMPL("psl_fgte");
-label(interp_psl_version); UNIMPL("psl_version");
+
+label(interp_psl_version);
+    DEBUG_CMD("version");
+    {
+        size_t i;
+        ad = GC_NEW_Z(struct PlofArrayData);
+        ad->type = PLOF_DATA_ARRAY;
+
+#define CREATE_VERSION(str) \
+        { \
+            rd = GC_NEW_Z(struct PlofRawData); \
+            rd->type = PLOF_DATA_RAW; \
+            rd->length = strlen(str); \
+            rd->data = str; \
+            \
+            a = GC_NEW_Z(struct PlofObject); \
+            a->parent = context; \
+            a->data = (struct PlofData *) rd; \
+            \
+            ad->data[i++] = a; \
+        }
+
+        ad->data = (struct PlofObject **) GC_MALLOC(VERSION_MAX * sizeof(struct PlofObject *));
+
+        // now go step by step
+        i = 0;
+        CREATE_VERSION("cplof");
+
+        /* Standards */
+#ifdef _POSIX_VERSION
+        CREATE_VERSION("POSIX");
+#endif
+
+        /* Architectures */
+#ifdef __arm__
+        CREATE_VERSION("ARM");
+#endif
+#ifdef __mips__
+        CREATE_VERSION("MIPS");
+#endif
+#ifdef __powerpc
+        CREATE_VERSION("PowerPC");
+#endif
+#if defined(i386) || defined(__amd64__)
+        CREATE_VERSION("x86");
+#endif
+#ifdef __amd64__
+        CREATE_VERSION("x86_64");
+#endif
+
+        /* Kernels */
+#ifdef __APPLE__
+        CREATE_VERSION("Darwin");
+#endif
+#ifdef __FreeBSD__
+        CREATE_VERSION("FreeBSD");
+#endif
+#ifdef __GNU__
+        CREATE_VERSION("HURD");
+#endif
+#ifdef linux
+        CREATE_VERSION("Linux");
+#endif
+#ifdef __NetBSD__
+        CREATE_VERSION("NetBSD");
+#endif
+#ifdef __OpenBSD__
+        CREATE_VERSION("OpenBSD");
+#endif
+#ifdef sun
+        CREATE_VERSION("Solaris");
+#endif
+
+        /* Standard libraries */
+#ifdef BSD
+        CREATE_VERSION("BSD");
+#endif
+#ifdef __GLIBC__
+        CREATE_VERSION("glibc");
+#endif
+#ifdef __APPLE__
+        CREATE_VERSION("Mac OS X");
+#endif
+#ifdef _WIN32
+        CREATE_VERSION("Windows");
+#endif
+
+
+        /* Finally, put it in an object */
+        ad->length = i;
+        a = GC_NEW_Z(struct PlofObject);
+        a->parent = context;
+        a->data = (struct PlofData *) ad;
+        STACK_PUSH(a);
+    }
+    STEP;
+
+
 label(interp_psl_dsrcfile); UNIMPL("psl_dsrcfile");
 label(interp_psl_dsrcline); UNIMPL("psl_dsrcline");
 label(interp_psl_dsrccol); UNIMPL("psl_dsrccol");
