@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <string.h>
+
+/* For predefs */
+#if defined(unix) || defined(__unix__) || defined(__unix)
 #include <unistd.h>
+#endif
 
 #include "jump.h"
 #include "plof.h"
@@ -12,7 +16,7 @@
 #endif
 
 
-/* the maximum number of version strings */
+/* The maximum number of version strings */
 #define VERSION_MAX 100
 
 
