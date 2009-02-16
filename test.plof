@@ -1,3 +1,8 @@
+psl { "Version strings:" print };
+versions.each((x) {
+    psl { plof{x.__pul_val} pul_eval print }
+});
+
 psl { "Integer value 3 is always good." print };
 
 // Prototypes test
