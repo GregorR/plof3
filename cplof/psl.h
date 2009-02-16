@@ -83,10 +83,6 @@
 #define psl_parse     0xEF
 #define psl_gadd      0xF0
 #define psl_grem      0xF1
-#define psl_gaddstop  0xF2
-#define psl_gremstop  0xF3
-#define psl_gaddgroup 0xF4
-#define psl_gremgroup 0xF5
 #define psl_gcommit   0xFB
 #define psl_marker    0xFC
 #define psl_immediate 0xFD

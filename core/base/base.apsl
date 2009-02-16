@@ -164,13 +164,9 @@ gadd
 "pslOp" "/fne/" "token" "white" 3 integer array {{fne}} gadd
 "pslOp" "/fsub/" "token" "white" 3 integer array {{fsub}} gadd
 "pslOp" "/gadd/" "token" "white" 3 integer array {{gadd}} gadd
-"pslOp" "/gaddgroup/" "token" "white" 3 integer array {{gaddgroup}} gadd
-"pslOp" "/gaddstop/" "token" "white" 3 integer array {{gaddstop}} gadd
 "pslOp" "/gcommit/" "token" "white" 3 integer array {{gcommit}} gadd
 "pslOp" "/global/" "token" "white" 3 integer array {{global}} gadd
 "pslOp" "/grem/" "token" "white" 3 integer array {{grem}} gadd
-"pslOp" "/gremgroup/" "token" "white" 3 integer array {{gremgroup}} gadd
-"pslOp" "/gremstop/" "token" "white" 3 integer array {{gremstop}} gadd
 "pslOp" "/gt/" "token" "white" 3 integer array {{gt}} gadd
 "pslOp" "/gte/" "token" "white" 3 integer array {{gte}} gadd
 "pslOp" "/include/" "token" "white" 3 integer array {{include}} gadd

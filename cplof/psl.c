@@ -1252,10 +1252,6 @@ label(interp_psl_parse); UNIMPL("psl_parse");
 
 label(interp_psl_gadd); DEBUG_CMD("gadd"); STEP;
 label(interp_psl_grem); DEBUG_CMD("grem"); STEP;
-label(interp_psl_gaddstop); DEBUG_CMD("gaddstop"); STEP;
-label(interp_psl_gremstop); DEBUG_CMD("gremstop"); STEP;
-label(interp_psl_gaddgroup); DEBUG_CMD("gaddgroup"); STEP;
-label(interp_psl_gremgroup); DEBUG_CMD("gremgroup"); STEP;
 label(interp_psl_gcommit); DEBUG_CMD("gcommit"); STEP;
 label(interp_psl_marker); DEBUG_CMD("marker"); STEP;
 

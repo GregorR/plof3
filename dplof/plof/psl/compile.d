@@ -178,10 +178,6 @@ static this() {
     "parse"     :psl_parse,
     "gadd"      :psl_gadd,
     "grem"      :psl_grem,
-    "gaddstop"  :psl_gaddstop,
-    "gremstop"  :psl_gremstop,
-    "gaddgroup" :psl_gaddgroup,
-    "gremgroup" :psl_gremgroup,
     "gcommit"   :psl_gcommit
     ];
 
