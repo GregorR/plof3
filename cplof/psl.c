@@ -1270,7 +1270,8 @@ label(interp_psl_version);
 #ifdef __powerpc
         CREATE_VERSION("PowerPC");
 #endif
-#if defined(i386) || defined(__amd64__)
+#if defined(i386) || defined(__i386) || defined(_M_IX86) || \
+    defined(__THW_INTEL__) || defined(__INTEL__) || defined(__amd64__)
         CREATE_VERSION("x86");
 #endif
 #ifdef __amd64__
@@ -1280,6 +1281,9 @@ label(interp_psl_version);
         /* Kernels */
 #ifdef __APPLE__
         CREATE_VERSION("Darwin");
+#endif
+#ifdef MSDOS
+        CREATE_VERSION("DOS");
 #endif
 #ifdef __FreeBSD__
         CREATE_VERSION("FreeBSD");
