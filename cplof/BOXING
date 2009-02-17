@@ -3,9 +3,11 @@ There are three methods of boxing (or not boxing) ints in PSL
 -DPLOF_BOX_NUMBERS
         Fully boxed, ints go in raw data.
 
--DPLOF_INTS_IN_OBJECTS (default)
-        Objects contain ints directly, not in raw data, but ints are still objects.
+-DPLOF_INTS_IN_OBJECTS
+        Objects contain ints directly, not in raw data, but ints are still
+        objects.
 
--DPLOF_FREE_INTS
-        Use ints instead of objects (not really spec-compliant per se, but the
-        spec will be adjusted to match this by removing all guarantees on ints).
+-DPLOF_FREE_INTS (default)
+        Use ints instead of objects. This is optimal and spec-compliant, but
+        has the disadvantage of providing ints that are one bit shorter than in
+        either of the other methods.

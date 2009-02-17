@@ -146,12 +146,12 @@ psl { plof{x[14]} pul_eval "__pul_val" member print };
 psl { "Strings" print };
 x = "Hello, ";
 if (x == "Hello, ") (
-    psl { "GOOD" print };
+    psl { "GOOD " print };
 ) else (
     psl { "BAD" print };
 );
 if (x == "world!") (
     psl { "BAD" print };
 ) else (
-    psl { "GOOD" print };
+    psl { "GOOD " print };
 );

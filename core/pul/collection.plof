@@ -107,7 +107,7 @@ var Array = IndexableCollection : ConcatableCollection : [
         this.__pul_val = intarr;
     };
 
-    opCastFrom = (x as Collection) {
+    opCastFrom = (x) {
         if (x is Collection) (
             var arr = new Array(psl { 0 integer array });
 
@@ -314,7 +314,7 @@ var ListArray = IndexableCollection : ConcatableCollection : AppendableCollectio
         mlist = new MList();
     };
 
-    opCastTo = (x as Collection) {
+    opCastTo = (x) {
         if (x is Array) (
             var retarr = psl { 0 integer array };
 

@@ -12,7 +12,7 @@ struct PlofData;
 
 /* Choose a good method of boxing */
 #if !defined(PLOF_BOX_NUMBERS) && !defined(PLOF_INTS_IN_OBJECTS) && !defined(PLOF_FREE_INTS)
-#define PLOF_INTS_IN_OBJECTS
+#define PLOF_FREE_INTS
 #endif
 
 #define PLOF_DATA_RAW 0
