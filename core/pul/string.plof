@@ -110,4 +110,16 @@ var String = Object : [
     this (intstring) {
         this.__pul_val = intstring;
     };
+
+    opEquals = (x) {
+        var xs = x as String;
+        if (!(xs is null)) (
+            return (opInteger(psl {
+                    plof{this.__pul_val} pul_eval
+                    plof{xs.__pul_val} pul_eval
+                    rawcmp
+                }) == 0);
+        );
+        return False;
+    };
 ];

@@ -30,6 +30,7 @@ import tango.io.FilePath;
 import tango.io.Stdout;
 
 import tango.stdc.stdlib;
+import tango.stdc.string;
 
 version (Posix) {
     import tango.stdc.posix.dlfcn;
@@ -897,6 +898,44 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
                        
                         // and push it 
                         push(no);
+                    });
+                    break;
+
+                case psl_rawlength:
+                case psl_slice:
+                    throw new InterpreterFailure("Unimplemented operation!");
+
+                case psl_rawcmp:
+                    use2((PSLObject a, PSLObject b) {
+                        if (!a.isArray && a.raw !is null &&
+                            !b.isArray && b.raw !is null) {
+                            // memcmp using the shorter one
+                            size_t shorter = a.raw.data.length;
+                            if (b.raw.data.length < shorter)
+                                shorter = b.raw.data.length;
+
+                            ptrdiff_t res = memcmp(a.raw.data.ptr, b.raw.data.ptr, shorter);
+                            if (res == 0) {
+                                // actually, maybe one was was shorter
+                                if (a.raw.data.length < b.raw.data.length)
+                                    res = -1;
+                                else if (a.raw.data.length > b.raw.data.length)
+                                    res = 1;
+                            }
+
+                            // put it in raw data
+                            PSLRawData rd = new PSLRawData(
+                                (cast(ubyte*) &res)[0..ptrdiff_t.sizeof]);
+
+                            // and in an object
+                            PSLObject no = new PSLObject(context);
+                            no.raw = rd;
+
+                            push(no);
+
+                        } else {
+                            throw new InterpreterFailure("rawcmp expects two raw data operands.");
+                        }
                     });
                     break;
     

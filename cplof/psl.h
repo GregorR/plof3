@@ -37,6 +37,9 @@
 #define psl_index     0x24
 #define psl_indexset  0x25
 #define psl_members   0x26
+#define psl_rawlength 0x60
+#define psl_slice     0x61
+#define psl_rawcmp    0x62
 #define psl_integer   0x70
 #define psl_intwidth  0x71
 #define psl_mul       0x72
