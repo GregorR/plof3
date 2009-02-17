@@ -314,6 +314,22 @@ var ListArray = IndexableCollection : ConcatableCollection : AppendableCollectio
         mlist = new MList();
     };
 
+    opCastTo = (x as Collection) {
+        if (x is Array) (
+            var retarr = psl { 0 integer array };
+
+            // we can do this faster by going over the arrays directly
+            mlist.each((x) {
+                retarr = psl { plof{retarr} pul_eval plof{x.__pul_val} pul_eval aconcat };
+            });
+
+            // then make the result
+            return (new Array(retarr));
+        ) else (
+            return Null;
+        );
+    };
+
     opIndex = (x as Number) {
         var ret;
         var retx;

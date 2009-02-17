@@ -18,7 +18,7 @@ STD_PSL_SOURCE=core/pul/object.plof \
                core/pul/number.plof \
                core/pul/string.plof \
                core/pul/collection.plof \
-               core/pul/nfi.plof
+               core/pul/versions.plof
 #STD_PSL_SOURCE=core/pul/object.plof \
 #	       core/pul/std.plof \
 #	       core/pul/boolean.plof \

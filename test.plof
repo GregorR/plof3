@@ -137,3 +137,6 @@ x = [[ 0, 1, 2, 3, 4, 5 ]];
 psl { plof{x[3]} pul_eval "__pul_val" member print };
 x ~= [[ 4, 3, 2, 1, 0 ]];
 psl { plof{x[7]} pul_eval "__pul_val" member print };
+
+x ~= x;
+psl { plof{x[14]} pul_eval "__pul_val" member print };
