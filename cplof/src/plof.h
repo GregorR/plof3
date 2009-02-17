@@ -10,11 +10,6 @@ struct PlofReturn;
 struct PlofOHashTable;
 struct PlofData;
 
-/* Choose a good method of boxing */
-#if !defined(PLOF_BOX_NUMBERS) && !defined(PLOF_INTS_IN_OBJECTS) && !defined(PLOF_FREE_INTS)
-#define PLOF_FREE_INTS
-#endif
-
 #define PLOF_DATA_RAW 0
 #define PLOF_DATA_ARRAY 1
 
@@ -108,7 +103,7 @@ typedef struct PlofReturn (*PlofFunction)(struct PlofObject *, struct PlofObject
  * itable: immediate table, for objects with known members */
 struct PlofObject {
     struct PlofObject *parent;
-#ifdef PLOF_INTS_IN_OBJECTS
+#ifdef PLOF_NUMBERS_IN_OBJECTS
     union {
         ptrdiff_t int_data;
         double float_data;

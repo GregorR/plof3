@@ -230,7 +230,7 @@ struct PlofReturn interpretPSL(
 #define BADTYPE(cmd)
 #endif
 
-#if defined(PLOF_BOX_NUMBERS) || defined(PLOF_INTS_IN_OBJECTS)
+#if defined(PLOF_BOX_NUMBERS) || defined(PLOF_NUMBERS_IN_OBJECTS)
 #define ISOBJ(obj) 1
 #elif defined(PLOF_FREE_INTS)
 #define ISOBJ(obj) (((size_t) (obj) & 1) == 0)
@@ -256,7 +256,7 @@ struct PlofReturn interpretPSL(
 #define ISINT(obj) (ISRAW(obj) && RAW(obj)->length == sizeof(ptrdiff_t))
 #define ASINT(obj) (*((ptrdiff_t *) RAW(obj)->data))
 #define SETINT(obj, val) ASINT(obj) = (val)
-#elif defined(PLOF_INTS_IN_OBJECTS)
+#elif defined(PLOF_NUMBERS_IN_OBJECTS)
 #define ISINT(obj) 1
 #define ASINT(obj) ((obj)->direct_data.int_data)
 #define SETINT(obj, val) ASINT(obj) = (val)
@@ -283,7 +283,7 @@ struct PlofReturn interpretPSL(
         a->data = (struct PlofData *) rd; \
         STACK_PUSH(a); \
     }
-#elif defined(PLOF_INTS_IN_OBJECTS)
+#elif defined(PLOF_NUMBERS_IN_OBJECTS)
 #define PUSHINT(val) \
     { \
         ptrdiff_t _val = (val); \
@@ -1124,7 +1124,7 @@ label(interp_psl_integer);
 
 label(interp_psl_intwidth);
     DEBUG_CMD("intwidth");
-#if defined(PLOF_BOX_NUMBERS) || defined(PLOF_INTS_IN_OBJECTS)
+#if defined(PLOF_BOX_NUMBERS) || defined(PLOF_NUMBERS_IN_OBJECTS)
     PUSHINT(sizeof(ptrdiff_t)*8);
 #elif defined(PLOF_FREE_INTS)
     PUSHINT(sizeof(ptrdiff_t)*8-1);

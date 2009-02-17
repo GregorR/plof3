@@ -34,6 +34,22 @@ AC_COMPILE_CHECK_SIZEOF(void *)
 # Checks for library functions.
 #AC_FUNC_MEMCMP
 
+# Inclusions/exclusions
+AC_ARG_WITH([boxed-numbers],
+            [AC_HELP_STRING([--with-boxed-numbers], [Fully box all numbers])])
+AC_ARG_WITH([numbers-in-objects],
+            [AC_HELP_STRING([--with-numbers-in-objects], [Put numbers directly in objects, which is faster than full boxing but slower than free ints])])
+AC_ARG_WITH([free-ints],
+            [AC_HELP_STRING([--with-free-ints], [Use completely unboxed ints, the default])])
+
+if test x$with_boxed_numbers = xyes; then
+    AC_DEFINE([PLOF_BOX_NUMBERS], [], [Fully box all numbers])
+elif test x$with_numbers_in_objects = xyes; then
+    AC_DEFINE([PLOF_NUMBERS_IN_OBJECTS], [], [Put numbers directly in objects])
+else
+    AC_DEFINE([PLOF_FREE_INTS], [], [Use completely unboxed ints])
+fi
+
 AC_CONFIG_FILES([Makefile
                  src/Makefile])
 AC_OUTPUT
