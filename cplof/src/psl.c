@@ -1,8 +1,14 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef HAVE_CONFIG_H
+#include "../config.h"
+#else
+#include "basicconfig.h"
+#endif
+
 /* For predefs */
-#if defined(unix) || defined(__unix__) || defined(__unix)
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 

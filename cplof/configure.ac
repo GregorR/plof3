@@ -8,6 +8,8 @@ AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([src/psl.c])
 AC_CONFIG_HEADER([config.h])
 
+m4_include([scripts/ac_compile_check_sizeof.ac])
+
 # Checks for programs.
 AC_PROG_CC
 AM_PROG_CC_C_O
