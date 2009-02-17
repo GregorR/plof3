@@ -10,8 +10,8 @@ LFLAGS=system dos4g
 
 LIB=wlib
 
-PLOF_LIB_OBJS=psl.obj
-PSLI_OBJS=psli.obj
+PLOF_LIB_OBJS=src\psl.obj
+PSLI_OBJS=src\psli.obj
 PSLI_LIBS=library plof library gc
 
 all: plof.lib psli.exe

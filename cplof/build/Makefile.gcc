@@ -14,8 +14,8 @@ RANLIB=ranlib
 EXEEXT=
 
 
-LIBPLOF_A_OBJS=psl.o
-PSLI_OBJS=psli.o libplof.a
+LIBPLOF_A_OBJS=src/psl.o
+PSLI_OBJS=src/psli.o libplof.a
 
 
 all: libplof.a psli$(EXEEXT)
@@ -37,6 +37,6 @@ clean:
 	rm -f psli$(EXEEXT) $(PSLI_OBJS)
 
 deps:
-	$(CC) $(CFLAGS) -MM *.c > deps
+	$(CC) $(CFLAGS) -MM src/*.c > deps
 
 include deps
