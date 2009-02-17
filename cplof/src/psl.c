@@ -952,8 +952,10 @@ label(interp_psl_aconcat);
         ra->data = (struct PlofObject **) GC_MALLOC(rl * sizeof(struct PlofObject *));
 
         /* then copy */
-        memcpy(ra->data, aa->data, al * sizeof(struct PlofObject *));
-        memcpy(ra->data + al, ba->data, bl * sizeof(struct PlofObject *));
+        if (al)
+            memcpy(ra->data, aa->data, al * sizeof(struct PlofObject *));
+        if (bl)
+            memcpy(ra->data + al, ba->data, bl * sizeof(struct PlofObject *));
 
         /* now put it in an object */
         a = GC_NEW_Z(struct PlofObject);

@@ -47,7 +47,7 @@ plofbnf {
 var Collection = Object : [
     NilElement = Object:[];
 
-    each = (x as Function) {
+    each = (r, act) {
         Abstract();
     };
 
@@ -63,13 +63,15 @@ var Collection = Object : [
 
     size = {
         var i = 0;
-        each((x){i++});
+        var x;
+        each (ref x) (i++);
         i
     };
 
     fold = (init, f as Function) {
         var ret = init;
-        each((x){ret = f(ret,x)});
+        var x;
+        each (ref x) (ret = f(ret, x));
         ret
     };
 
@@ -110,15 +112,16 @@ var Array = IndexableCollection : ConcatableCollection : [
     opCastFrom = (x) {
         if (x is Collection) (
             var arr = new Array(psl { 0 integer array });
+            var y;
 
             // now add element-by-element
-            x.each((y) {
+            x.each (ref y) (
                 arr.__pul_val = psl {
-                    plof{arr.__pul_val} pul_eval
-                    plof{y} pul_eval 1 integer array
-                    aconcat
-                };
-            });
+                   plof{arr.__pul_val} pul_eval
+                   plof{y} pul_eval 1 integer array
+                   aconcat
+                }
+            );
 
             return arr;
         ) else (
@@ -157,9 +160,10 @@ var Array = IndexableCollection : ConcatableCollection : [
         })
     };
 
-    each = (x as Function) {
+    each = (r, act) {
         for (var i = 0) (i < size()) (i++) (
-            x(this[i])
+            r.write (this[i]);
+            forceEval(act)
         );
         this
     };
@@ -230,26 +234,29 @@ var MList = IndexableCollection : ConcatableCollection : AppendableCollection : 
     opConcat = (x as IndexableCollection) {
         var newlist = new MList();
 
-        each((y) {
+        var y;
+        each (ref y) (
             newlist.snoc(y)
-        });
-        x.each((y) {
+        );
+        x.each (ref y) (
             newlist.snoc(y)
-        });
+        );
 
         newlist
     };
 
     opAppend = (x as IndexableCollection) {
-        x.each((y) {
+        var y;
+        x.each (ref y) (
             snoc(y)
-        });
+        );
         this
     };
 
-    each = (x as Function) {
+    each = (r, act) {
         for (var cur = head) (Null != cur) (cur = cur.next) (
-            x(cur.val)
+            r.write (cur.val);
+            forceEval(act)
         );
         this
     };
@@ -284,11 +291,12 @@ var MList = IndexableCollection : ConcatableCollection : AppendableCollection : 
 
     dup = {
         var res = new MList();
+        var x;
 
         // just snoc
-        each((x) {
+        each (ref x) (
             res.snoc(x)
-        });
+        );
 
         res
     };
@@ -317,11 +325,12 @@ var ListArray = IndexableCollection : ConcatableCollection : AppendableCollectio
     opCastTo = (x) {
         if (x is Array) (
             var retarr = psl { 0 integer array };
+            var x;
 
             // we can do this faster by going over the arrays directly
-            mlist.each((x) {
+            mlist.each (ref x) (
                 retarr = psl { plof{retarr} pul_eval plof{x.__pul_val} pul_eval aconcat };
-            });
+            );
 
             // then make the result
             return (new Array(retarr));
@@ -333,16 +342,17 @@ var ListArray = IndexableCollection : ConcatableCollection : AppendableCollectio
     opIndex = (x as Number) {
         var ret;
         var retx;
+        var y;
 
         // find the right list
-        mlist.each((y) {
+        mlist.each (ref y) (
             var sz = y.size();
             if (x >= 0 && sz > x) (
                 ret = y;
                 retx = x;
             );
             x = x - sz;
-        });
+        );
 
         // perhaps fail
         if (Null == ret) (
@@ -369,10 +379,11 @@ var ListArray = IndexableCollection : ConcatableCollection : AppendableCollectio
         this
     };
 
-    each = (x as Function) {
-        mlist.each((y) {
-            y.each(x)
-        });
+    each = (r, act) {
+        var y;
+        mlist.each (ref y) (
+            y.each r (forceEval(act))
+        );
         this
     };
 
@@ -391,9 +402,10 @@ var ListArray = IndexableCollection : ConcatableCollection : AppendableCollectio
 
     size = {
         var sz = 0;
-        mlist.each((x) {
+        var x;
+        mlist.each (ref x) (
             sz = sz + x.size()
-        });
+        );
         sz
     };
 ];

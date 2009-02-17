@@ -1,7 +1,8 @@
 psl { "Version strings:" print };
-versions.each((x) {
+var x;
+versions.each (ref x) (
     psl { plof{x.__pul_val} pul_eval print }
-});
+);
 
 psl { "Integer value 3 is always good." print };
 

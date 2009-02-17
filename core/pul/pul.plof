@@ -392,6 +392,12 @@ pslbnf {
     plof_bind = plof_bind_next => { push0 0 integer index }
     plof_bind => plof_group;
 
+    plof_group = "forceEval" "\(" plof_group "\)" => {
+        push0 2 integer index
+        {pul_forceEval} concat
+        cwrap {pul_funcwrap} concat
+    }
+
     plof_group = plof_group "\." plof_identifier => {
         push0 0 integer index
         {pul_eval} concat
