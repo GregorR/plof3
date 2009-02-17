@@ -1054,7 +1054,7 @@ label(interp_psl_rawcmp);
                 shorter = rb->length;
 
             /* memcmp them */
-            val = memcmp(ra->data, rb->data, shorter);
+            val = -memcmp(ra->data, rb->data, shorter);
 
             /* a zero might be false */
             if (val == 0) {

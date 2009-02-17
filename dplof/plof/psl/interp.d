@@ -914,7 +914,7 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
                             if (b.raw.data.length < shorter)
                                 shorter = b.raw.data.length;
 
-                            ptrdiff_t res = memcmp(a.raw.data.ptr, b.raw.data.ptr, shorter);
+                            ptrdiff_t res = -memcmp(a.raw.data.ptr, b.raw.data.ptr, shorter);
                             if (res == 0) {
                                 // actually, maybe one was was shorter
                                 if (a.raw.data.length < b.raw.data.length)
