@@ -29,6 +29,7 @@ AC_CHECK_HEADERS([unistd.h gc/gc.h])
 #AC_TYPE_SIZE_T
 #AC_C_VOLATILE
 #AC_CHECK_TYPES([ptrdiff_t])
+AC_COMPILE_CHECK_SIZEOF(void *)
 
 # Checks for library functions.
 #AC_FUNC_MEMCMP

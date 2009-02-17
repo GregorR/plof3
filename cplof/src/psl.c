@@ -16,10 +16,6 @@
 #include "plof.h"
 #include "psl.h"
 
-/* If we don't have __WORDSIZE (which is a Linux thing), try to guess it */
-#ifndef __WORDSIZE
-#define __WORDSIZE 32 /* good guess, no? :P */
-#endif
 
 
 /* The maximum number of version strings */
@@ -1098,7 +1094,7 @@ label(interp_psl_integer);
                     break;
 
                 case 4:
-#if __WORDSIZE < 64
+#if SIZEOF_VOID_P < 8
                 case 8:
 #endif
                     val = ((ptrdiff_t) rd->data[0] << 24) |
@@ -1107,7 +1103,7 @@ label(interp_psl_integer);
                           ((ptrdiff_t) rd->data[3]);
                     break;
 
-#if __WORDSIZE >= 64
+#if SIZEOF_VOID_P >= 8
                 case 8:
                     val = ((ptrdiff_t) rd->data[0] << 56) |
                           ((ptrdiff_t) rd->data[1] << 48) |
@@ -1478,7 +1474,7 @@ size_t pslBignumLength(size_t val)
         return 1;
     } else if (val < ((size_t) 1<<14)) {
         return 2;
-#if __WORDSIZE <= 16
+#if SIZEOF_VOID_P <= 2
     } else {
         return 3;
 #else
@@ -1486,7 +1482,7 @@ size_t pslBignumLength(size_t val)
         return 3;
     } else if (val < ((size_t) 1<<28)) {
         return 4;
-#if __WORDSIZE <= 32
+#if SIZEOF_VOID_P <= 4
     } else {
         return 5;
 #else
