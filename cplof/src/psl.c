@@ -1347,7 +1347,7 @@ label(interp_psl_version);
             rd = GC_NEW_Z(struct PlofRawData); \
             rd->type = PLOF_DATA_RAW; \
             rd->length = strlen(str); \
-            rd->data = str; \
+            rd->data = (unsigned char *) str; \
             \
             a = GC_NEW_Z(struct PlofObject); \
             a->parent = context; \
@@ -1358,7 +1358,7 @@ label(interp_psl_version);
 
         ad->data = (struct PlofObject **) GC_MALLOC(VERSION_MAX * sizeof(struct PlofObject *));
 
-        // now go step by step
+        /* now go step by step */
         i = 0;
         CREATE_VERSION("cplof");
 
@@ -1454,9 +1454,9 @@ label(interp_psl_print);
         }
 #endif
     } else if (ISOBJ(a)) {
-        printf("%d %p\n", ASINT(a), (void *) a);
+        printf("%d %p\n", (int) ASINT(a), (void *) a);
     } else if (ISINT(a)) {
-        printf("%d\n", ASINT(a));
+        printf("%d\n", (int) ASINT(a));
     }
     STEP;
 
