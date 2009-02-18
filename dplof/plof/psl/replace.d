@@ -56,9 +56,9 @@ ubyte[] pslfreplace(ubyte[] rin, ubyte[][] to)
         }
 
         if (cmd == psl_marker &&
-            sub.length == ptrdiff_t.sizeof) {
+            sub.length == 1) {
             // which marker ...
-            int markn = *(cast(ptrdiff_t*) sub.ptr);
+            int markn = *(cast(ubyte*) sub.ptr);
 
             // if it's valid, use it
             if (markn >= 0 && markn < to.length) {

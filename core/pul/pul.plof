@@ -426,7 +426,7 @@ pslbnf {
     }
     plof_literal = /\$/ number => {
         null push1 1 integer index call
-        integer
+        integer byte
         "ü" wrap
     }
     plof_literal = plof_literal_next => { push0 0 integer index }

@@ -1713,8 +1713,8 @@ struct PlofRawData *pslReplace(struct PlofRawData *in, struct PlofArrayData *wit
         if (cmd == psl_marker) {
             /* what's the marker #? */
             size_t mval = (size_t) -1;
-            if (data->length == sizeof(size_t)) {
-                mval = *((size_t *) data);
+            if (data->length == 1) {
+                mval = *((unsigned char *) data);
             }
 
             /* maybe replace it */

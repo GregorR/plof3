@@ -268,7 +268,7 @@ gadd
 "/\$/" "number"
 2 integer array
 {null push1 1 integer index call
- integer "ü" wrap}
+ integer byte "ü" wrap}
 gadd
 
 "digits"
