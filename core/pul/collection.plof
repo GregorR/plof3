@@ -22,7 +22,7 @@
  *  IN THE SOFTWARE.
  */
 
-// indexing in the grammar
+// indexing and similar in the grammar
 plofbnf {
     plof_group = plof_group "\[" plof_semicolon "\]" => plof {
         $0.opIndex($2)
@@ -38,6 +38,16 @@ plofbnf {
     plof_assign = plof_assign_next "~=" plof_assign => plof {
         $0.opAppend($2)
     }
+
+    plof_mul => plof_range;
+
+    plof_range = plof_range "to" plof_range_next => plof {
+        new Range($0, $2, 1)
+    }
+    plof_range = plof_range "to" plof_range_next "by" plof_range_next => plof {
+        new Range($0, $2, $4)
+    }
+    plof_range = plof_range_next => plof { $0 }
 };
 
 /* Note that opArray is used in the core of the language, but is redefined here
@@ -407,6 +417,27 @@ var ListArray = IndexableCollection : ConcatableCollection : AppendableCollectio
             sz = sz + x.size()
         );
         sz
+    };
+];
+
+/// Automatic ranges
+var Range = Collection : [
+    start = Null;
+    end = Null;
+    step = Null;
+
+    this (start, end, step) {
+        this.start = start;
+        this.end = end;
+        this.step = step;
+    };
+
+    each = (r, act) {
+        var x;
+        for (x = start) (x < end) (x = x + step) (
+            r.write x;
+            forceEval(act)
+        );
     };
 ];
 

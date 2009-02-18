@@ -156,3 +156,11 @@ if (x == "world!") (
 ) else (
     psl { "GOOD " print };
 );
+
+
+// Ranges
+psl { "Ranges" print };
+psl { "This test should print all the numbers from 0 to 9 which are divisible by 2" print };
+(0 to 10 by 2).each (ref x) (
+    psl { plof{x.__pul_val} pul_eval print }
+);
