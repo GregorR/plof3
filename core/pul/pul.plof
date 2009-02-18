@@ -424,7 +424,7 @@ pslbnf {
         push0 2 integer index
         cwrap {pul_funcwrap} concat
     }
-    plof_literal = /\$/ number token white => {
+    plof_literal = /\$/ number => {
         null push1 1 integer index call
         integer
         "ü" wrap
@@ -480,6 +480,7 @@ pslbnf {
 
     plof_notkeyword =
         /()(?!as[^A-Za-z0-9_])/
+        /()(?!by[^A-Za-z0-9_])/
         /()(?!forceEval[^A-Za-z0-9_])/
         /()(?!is[^A-Za-z0-9_])/
         /()(?!in[^A-Za-z0-9_])/
@@ -487,6 +488,7 @@ pslbnf {
         /()(?!parent[^A-Za-z0-9_])/
         /()(?!return[^A-Za-z0-9_])/
         /()(?!rtInclude[^A-Za-z0-9_])/
+        /()(?!to[^A-Za-z0-9_])/
         /()(?!var[^A-Za-z0-9_])/
         => {{}}
 };
@@ -551,7 +553,7 @@ psl {
     } memberset
 };
 pslbnf {
-    plof_literal = number token white => {
+    plof_literal = number => {
         push0 0 integer index
         {
             // call opInteger to wrap it up
