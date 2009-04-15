@@ -164,3 +164,15 @@ psl { "This test should print all the numbers from 0 to 9 which are divisible by
 (0 to 10 by 2).each (ref x) (
     psl { plof{x.__pul_val} pul_eval print }
 );
+
+
+// Concatenation
+var y;
+psl { "Concatenation" print };
+psl { "This should print the numbers from 1 to 5, then Hello, world!" print };
+x = [[ 1, 2, 3 ]] ~ [[ 4, 5 ]];
+x.each (ref y) (
+    psl { plof{y.__pul_val} pul_eval print };
+);
+x = "Hello, " ~ "world!";
+psl { plof{x.__pul_val} pul_eval print };

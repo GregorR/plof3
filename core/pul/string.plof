@@ -26,6 +26,18 @@
 // A string in Plof supports the typical C escapes
 
 plofbnf {
+    // String/collection concatenation
+    plof_cmp => plof_concat;
+
+    plof_concat = plof_concat "~" plof_concat_next => plof {
+        $0.opConcat($2)
+    }
+    plof_concat = plof_concat_next => plof { $0 }
+
+    plof_assign = plof_assign_next "~=" plof_assign => plof {
+        $0.opAppend($2)
+    }
+
     // The pul_char stuff. Basically, a normal char + escapes
     pul_char = /[^\\"]/ => {
         push0 0 integer index call
@@ -87,22 +99,6 @@ plofbnf {
     plof_literal = /""/ white => plof {
         new String(psl { "" })
     }
-
-    /* pul_string = white /"/ pul_chars /"/ => {
-        push0 2 integer index wrap
-        {1 integer array
-         this "opString" pul_var member pul_eval call} concat
-        wrap {pul_funcwrap} concat
-    }
-    pul_string = white /""/ => {
-        "" wrap
-        {1 integer array
-         this "opString" pul_var member pul_eval call} concat
-        wrap {pul_funcwrap} concat
-    }
-    plof_literal = pul_string => {
-        0index
-    }*/
 };
 
 // Strings are all String objects, which is currently a stub
@@ -121,5 +117,13 @@ var String = Object : [
                 }) == 0);
         );
         return False;
+    };
+
+    opConcat = (x as String) {
+        return (new String(psl {
+            plof{this.__pul_val} pul_eval
+            plof{x.__pul_val} pul_eval
+            concat
+        }));
     };
 ];

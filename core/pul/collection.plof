@@ -28,17 +28,6 @@ plofbnf {
         $0.opIndex($2)
     }
 
-    plof_cmp => plof_concat;
-
-    plof_concat = plof_concat "~" plof_concat_next => plof {
-        $0.opConcat($2)
-    }
-    plof_concat = plof_concat_next => plof { $0 }
-
-    plof_assign = plof_assign_next "~=" plof_assign => plof {
-        $0.opAppend($2)
-    }
-
     plof_mul => plof_range;
 
     plof_range = plof_range "to" plof_range_next => plof {
@@ -90,7 +79,7 @@ var Collection = Object : [
     };
 
     product = {
-        fold(0, (x, y) { x * y })
+        fold(1, (x, y) { x * y })
     };
 ];
 
@@ -379,13 +368,22 @@ var ListArray = IndexableCollection : ConcatableCollection : AppendableCollectio
         var ret = dup();
 
         // then just append the other one
-        ret ~= x.dup();
+        if (x is ListArray) (
+            // do it the fast way
+            ret.mlist.snoc(x as Array);
+        ) else (
+            ret ~= x.dup();
+        );
 
         ret
     };
 
-    opAppend = (x as Array) {
-        mlist.snoc(x.dup());
+    opAppend = (x as IndexableCollection) {
+        if (x is ListArray) (
+            mlist.snoc(x as Array);
+        ) else (
+            mlist.snoc((x as Array).dup());
+        );
         this
     };
 
@@ -399,7 +397,7 @@ var ListArray = IndexableCollection : ConcatableCollection : AppendableCollectio
 
     dup = {
         var res = new ListArray();
-        res ~= this as Array;
+        res ~= this;
         res
     };
 
