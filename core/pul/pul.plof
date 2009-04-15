@@ -562,12 +562,25 @@ pslbnf {
         { {} {} {} {} {} {} {} {} {} {} 10 integer array aconcat }
 
         // parse the code ...
-        push2 10 integer index cwrap concat
+        push2 10 integer index
 
+        push0 "isfuncwrap" member null
         {
-            // replace markers
-            push1 replace
-        } concat cwrap concat
+            cwrap
+            {
+                push1 replace
+            } concat
+        }
+        {
+            "orig" member
+            cwrap
+            {
+                push1 replace
+                pul_apply_funcwrap
+            } concat
+        } cmp
+
+        concat cwrap concat
 
         // gadd the whole thing
         {gadd} concat
