@@ -233,6 +233,7 @@ psl {
         } memberset
     } memberset
 
+
     // create an unevaluated value from a variable
     global "__pul_varwrap" {
         // arg: [context, name]
@@ -334,6 +335,39 @@ pslbnf {
         {global "__pul_funcwrap" member call}
     }
 
+    /* mark this code as something which should be pul_funcwrap'd, but might be
+     * extracted if we're just going to add a pul_eval to it */
+    pslOp = "pul_apply_funcwrap" => {
+        {
+            push0 "isfuncwrap" member null
+            {
+                // not already a funcwrap, so wrap it
+                push0 cwrap {global "__pul_funcwrap" member call} concat
+
+                push0 "orig" push3 memberset
+                push0 "isfuncwrap" new memberset
+            }
+            {
+                // already a funcwrap, don't need to do anything
+            } cmp
+        }
+    }
+
+    // apply an eval unless this is a funcwrap, in which case just use it directly
+    pslOp = "pul_apply_eval" => {
+        {
+            push0 "isfuncwrap" member null
+            {
+                // is not a funcwrap, just use it and eval it
+                {global "__pul_eval" member call} concat
+            }
+            {
+                // it is a funcwrap, get out the version before wrapping. Still need to call pul_eval because it's recursive
+                "orig" member {global "__pul_eval" member call} concat
+            } cmp
+        }
+    }
+
     pslOp = "pul_varwrap" => {
         {2 integer array global "__pul_varwrap" member call}
     }
@@ -353,7 +387,7 @@ pslbnf {
     top => plof_statement;
 
     plof_statement = plof_statement_next ";" => {
-        push0 0 integer index {pul_eval pop} concat
+        push0 0 integer index pul_apply_eval {pop} concat
     }
     plof_statement => plof_assign;
 
@@ -363,22 +397,22 @@ pslbnf {
     }
 
     plof_semicolon = plof_semicolon ";" plof_semicolon_next => {
-        push0 0 integer index {pul_eval pop} concat
+        push0 0 integer index pul_apply_eval {pop} concat
         push1 2 integer index concat
-        cwrap {pul_funcwrap} concat
+        pul_apply_funcwrap
     }
     plof_semicolon = plof_semicolon ";" => {
-        push0 0 integer index {pul_eval pop this "Null" resolve member} concat
-        cwrap {pul_funcwrap} concat
+        push0 0 integer index pul_apply_eval {pop this "Null" resolve member} concat
+        pul_apply_funcwrap
     }
     plof_semicolon = plof_semicolon_next => { push0 0 integer index }
     plof_semicolon => plof_assign;
 
     plof_assign = plof_assign_next "=" plof_assign => {
-        push0 2 integer index
+        push0 2 integer index pul_apply_eval
         push1 0 integer index concat
-        {push1 pul_eval pul_set} concat
-        cwrap {pul_funcwrap} concat
+        {push1 pul_set} concat
+        pul_apply_funcwrap
     }
     plof_assign = plof_assign_next => { push0 0 integer index }
     plof_assign => plof_bind;
@@ -387,7 +421,7 @@ pslbnf {
         push0 3 integer index
         push1 1 integer index concat
         {push1 pul_set} concat
-        cwrap {pul_funcwrap} concat
+        pul_apply_funcwrap
     }
     plof_bind = plof_bind_next => { push0 0 integer index }
     plof_bind => plof_group;
@@ -395,20 +429,19 @@ pslbnf {
     plof_group = "forceEval" "\(" plof_group "\)" => {
         push0 2 integer index
         {pul_forceEval} concat
-        cwrap {pul_funcwrap} concat
+        pul_apply_funcwrap
     }
 
     plof_group = plof_group "\." plof_identifier => {
-        push0 0 integer index
-        {pul_eval} concat
+        push0 0 integer index pul_apply_eval
         push1 2 integer index concat
         {pul_varwrap} concat
-        cwrap {pul_funcwrap} concat
+        pul_apply_funcwrap
     }
     plof_group = plof_group "\." "parent" => {
-        push0 0 integer index
-        {pul_eval pul_parentwrap} concat
-        cwrap {pul_funcwrap} concat
+        push0 0 integer index pul_apply_eval
+        {pul_parentwrap} concat
+        pul_apply_funcwrap
     }
     plof_group = plof_group_next => { push0 0 integer index }
     plof_group => plof_parens;
@@ -422,7 +455,7 @@ pslbnf {
     // none of these literals are actually literals (hm), but they're at the same precedence
     plof_literal = "psl" "\{" pslOps "\}" => {
         push0 2 integer index
-        cwrap {pul_funcwrap} concat
+        pul_apply_funcwrap
     }
     plof_literal = /\$/ number => {
         null push1 1 integer index call
@@ -436,7 +469,7 @@ pslbnf {
         {pul_fcontext}
         push1 1 integer index concat
         {push1 push1 this "Null" resolve member memberset pul_varwrap} concat
-        cwrap {pul_funcwrap} concat
+        pul_apply_funcwrap
     }
     plof_var = plof_var_next => { push0 0 integer index }
     plof_var => plof_ident;
@@ -471,7 +504,7 @@ pslbnf {
         } concat
 
         // wrap it up
-        cwrap {pul_funcwrap} concat
+        pul_apply_funcwrap
     }
 
     plof_identifier = plof_notkeyword /[A-Za-z_][A-Za-z0-9_]*/ token white => {
@@ -705,21 +738,19 @@ pslbnf {
 
     plof_assign = plof_assign_next ":=" "\[" plof_obj_defs "\]" => {
         // get the left
-        push0 0 integer index
-        {pul_eval} concat
+        push0 0 integer index pul_apply_eval
 
         // then run the extender
         push1 3 integer index concat
 
         // wrap it up
-        cwrap {pul_funcwrap} concat
+        pul_apply_funcwrap
     }
 
     plof_combine = plof_combine ":" "\[" plof_obj_defs "\]" => {
         // call opDuplicate
-        push0 0 integer index
+        push0 0 integer index pul_apply_eval
         {
-            pul_eval
             1 integer array
             this "opDuplicate" resolve member call
             push0
@@ -733,15 +764,14 @@ pslbnf {
         } concat
 
         // wrap
-        cwrap {pul_funcwrap} concat
+        pul_apply_funcwrap
     }
     plof_combine = plof_combine ":" plof_combine_next => {
         // combine them
-        push0 0 integer index
-        {pul_eval} concat
-        push1 2 integer index concat
+        push0 0 integer index pul_apply_eval
+        push1 2 integer index pul_apply_eval concat
         {
-            pul_eval push1 push1 combine
+            push1 push1 combine
 
             // stack: old1 old2 new
 
@@ -751,7 +781,7 @@ pslbnf {
         } concat
 
         // wrap
-        cwrap {pul_funcwrap} concat
+        pul_apply_funcwrap
     }
     plof_combine = plof_combine_next => {
         push0 0 integer index
@@ -772,8 +802,8 @@ pslbnf {
     plof_obj_def = plof_identifier "=" plof_bind_next ";" => {
         {push0}
         push1 0 integer index concat
-        push1 2 integer index concat
-        {pul_eval push0 push4 parentset memberset} concat
+        push1 2 integer index pul_apply_eval concat
+        {push0 push4 parentset memberset} concat
     }
 };
 
