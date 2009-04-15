@@ -32,7 +32,7 @@ CNFI_PSL_SOURCE=core/pul/cnfi.plof
 
 #all: plof_include/std.psl plof_include/debug/std.psl plof_include/debug/stddebug.psl \
 #     plof_include/cnfi.psl plof_include/debug/cnfi.psl
-all: plof_include/std.psl
+all: plof_include/std.psl test.psl
 
 base.psl: $(BASE_PSL_SOURCE) $(PSLASM)
 	$(PSLASM) $(BASE_PSL_SOURCE) base.psl
@@ -60,6 +60,10 @@ plof_include/cnfi.psl: $(CNFI_PSL_SOURCE) plof_include/std.psl $(PLOFC_REQ)
 
 plof_include/debug/cnfi.psl: $(CNFI_PSL_SOURCE) plof_include/debug/std.psl $(PLOFC_REQ)
 	$(PLOFC) --debug $(PLOF_FLAGS) $(CNFI_PSL_SOURCE) -o plof_include/debug/cnfi.psl
+
+
+test.psl: plof_include/std.psl test.plof $(PLOFC_REQ)
+	$(PLOFC) plof_include/std.psl test.plof -o test.psl
 
 
 clean:
