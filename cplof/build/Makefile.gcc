@@ -4,7 +4,7 @@ CFLAGS=-O3 -fno-crossjumping -fno-gcse -g $(ECFLAGS)
 
 LD=$(CC)
 LDFLAGS=
-LIBS=-lgc
+LIBS=-lgc -pthread
 
 AR=ar
 ARFLAGS=rc
