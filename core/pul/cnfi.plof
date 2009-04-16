@@ -1,0 +1,235 @@
+/*
+ * Interface for the C Native Function Interface
+ *
+ *  Copyright (c) 2008, 2009  Gregor Richards
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to
+ *  deal in the Software without restriction, including without limitation the
+ *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *  sell copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *  IN THE SOFTWARE.
+ */
+
+// the psl operations
+pslbnf {
+    pslOp = "dlopen" =>     { 193 integer byte }
+    pslOp = "dlclose" =>    { 194 integer byte }
+    pslOp = "dlsym" =>      { 195 integer byte }
+    pslOp = "cmalloc" =>    { 196 integer byte }
+    pslOp = "cfree" =>      { 197 integer byte }
+    pslOp = "cget" =>       { 198 integer byte }
+    pslOp = "cset" =>       { 199 integer byte }
+    pslOp = "ctype" =>      { 200 integer byte }
+    pslOp = "cstruct" =>    { 201 integer byte }
+    pslOp = "csizeof" =>    { 202 integer byte }
+    pslOp = "csget" =>      { 203 integer byte }
+    pslOp = "csset" =>      { 204 integer byte }
+    pslOp = "prepcif" =>    { 205 integer byte }
+    pslOp = "ccall" =>      { 206 integer byte }
+};
+
+// and their Plof equivalents
+var C = Object : [
+    dlopen = (filename as String) {
+        psl {
+            plof{this.filename.__pul_val} pul_eval
+            dlopen
+            push0 null
+            { plof{Null} }
+            {
+                1 integer array
+                plof{opCDlHandle} pul_eval call
+            } cmp
+        }
+    };
+
+    dlclose = (handle as CDlHandle) {
+        psl {
+            plof{handle.__pul_val} pul_eval
+            dlclose null
+        }
+    };
+
+    dlsym = (handle as CDlHandle, symbol as String) {
+        psl {
+            plof{handle.__pul_val} pul_eval
+            plof{symbol.__pul_val} pul_eval
+            dlsym
+            push0 null
+            { plof{Null} }
+            {
+                1 integer array
+                plof{opCPointer} pul_eval call
+            } cmp
+        }
+    };
+
+    malloc = (sz as NativeInteger) {
+        opCPointer(psl {
+            plof{sz.__pul_val} pul_eval
+            cmalloc
+        })
+    };
+
+    free = (ptr as CPointer) {
+        psl {
+            plof{ptr.__pul_val} pul_eval
+            cfree null
+        }
+    };
+
+    get = (ptr as CPointer, sz as NativeInteger) {
+        var ret = CData : [];
+        ret.__pul_val = psl {
+            plof{ptr.__pul_val} pul_eval
+            plof{sz.__pul_val} pul_eval
+            cget
+        };
+        return(ret);
+    };
+
+    set = (ptr as CPointer, value as String) {
+        psl {
+            plof{ptr.__pul_val} pul_eval
+            plof{value.__pul_val} pul_eval
+            cset null
+        }
+    };
+
+    sizeof = (type as NativeInteger) {
+        opInteger(psl {
+            plof{type.__pul_val} pul_eval
+            csizeof
+        })
+    };
+
+    prepcif = (rtype as NativeInteger, atypes as Array, abi as NativeInteger) {
+        // extract the values out of the types array
+        var nat = psl { 0 integer array };
+        var elem;
+        atypes.each (ref elem) (
+            nat = psl {
+                plof{nat} pul_eval
+                plof{elem.__pul_val} pul_eval
+                1 integer array aconcat
+            };
+        );
+
+        // and call prepcif
+        return(opCPointer(psl {
+            plof{rtype.__pul_val} pul_eval
+            plof{nat} pul_eval
+            plof{abi.__pul_val} pul_eval
+            prepcif
+        }));
+    };
+
+    call = (cif as NativeInteger, fn as NativeInteger, cargs as Array) {
+        // extract the values out of the args array
+        var nargs = psl { 0 integer array };
+        var elem;
+        cargs.each (ref elem) (
+            nargs = psl {
+                plof{nargs} pul_eval
+
+                // elem as CData
+                /* FIXME
+                this "CData" pul_var member pul_eval 1 integer array
+                this "elem"  pul_var member pul_eval "opAs" member call
+                "__pul_val" member */
+                plof{elem.__pul_val} pul_eval
+
+                // combine them
+                1 integer array aconcat
+            };
+        );
+
+        // then call
+        var ret = CData:[];
+        ret.__pul_val = psl {
+            plof{cif.__pul_val} pul_eval
+            plof{fn.__pul_val} pul_eval
+            plof{nargs} pul_eval
+            ccall
+        };
+        return(ret);
+    };
+
+    // types
+    void = opInteger(psl { 0 integer ctype });
+    int = opInteger(psl { 1 integer ctype });
+    float = opInteger(psl { 2 integer ctype });
+    double = opInteger(psl { 3 integer ctype });
+    longdouble = opInteger(psl { 4 integer ctype });
+    uint8 = opInteger(psl { 5 integer ctype });
+    int8 = opInteger(psl { 6 integer ctype });
+    uint16 = opInteger(psl { 7 integer ctype });
+    int16 = opInteger(psl { 8 integer ctype });
+    uint32 = opInteger(psl { 9 integer ctype });
+    int32 = opInteger(psl { 10 integer ctype });
+    uint64 = opInteger(psl { 11 integer ctype });
+    int64 = opInteger(psl { 12 integer ctype });
+    pointer = opInteger(psl { 14 integer ctype });
+    uchar = opInteger(psl { 24 integer ctype });
+    schar = opInteger(psl { 25 integer ctype });
+    ushort = opInteger(psl { 26 integer ctype });
+    short = opInteger(psl { 27 integer ctype });
+    uint = opInteger(psl { 28 integer ctype });
+    ulong = opInteger(psl { 30 integer ctype });
+    long = opInteger(psl { 31 integer ctype });
+    ulonglong = opInteger(psl { 32 integer ctype });
+    longlong = opInteger(psl { 33 integer ctype });
+];
+
+// the type of handles from dlopen
+var CDlHandle = Object : [
+    init = (x) {
+        this.__pul_val = x;
+    };
+];
+var opCDlHandle = (x) {
+    new CDlHandle(x)
+};
+
+// the type of handles from dlsym
+var CPointer = Object : [
+    init = (x) {
+        this.__pul_val = x;
+    };
+];
+var opCPointer = (x) {
+    new CPointer(x)
+};
+
+// a pseudotype containing raw data for C
+var CData = Object : [
+    opCastFrom = (x) {
+        if (x is Number) (
+            // it already has __pul_val, so accept it as-is
+            return(this : (x as NativeInteger));
+        ) else (
+            return(psl { null });
+        );
+    };
+
+    opCastTo = (x) {
+        if (x is Number) (
+            // this already has __pul_val, so accept it as-is
+            return(this : NativeInteger);
+        ) else (
+            return(psl { null });
+        );
+    };
+];

@@ -1,7 +1,5 @@
-/* nothing yet */
-
-// then include (at runtime) the appropriate NFI
-/*if(("CNFI" in versions), (
+// include (at runtime) the appropriate NFI
+if ("CNFI" in versions) (
     rtInclude(cnfi.psl);
-)); // need opEquals on Strings for this
-rtInclude(cnfi.psl); */
+);
+// no others supported (yet)
