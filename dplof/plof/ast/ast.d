@@ -149,6 +149,12 @@ class PASTMembers : PASTUnary {
     mixin Accept;
 }
 
+/// Raw length
+class PASTRawLength : PASTUnary {
+    this(PASTNode a1) { super(a1); }
+    mixin Accept;
+}
+
 /// Non-native integer
 class PASTInteger : PASTUnary {
     this(PASTNode a1) { super(a1); }
@@ -241,6 +247,12 @@ class PASTArrayLengthSet : PASTBinary {
 
 /// Get an element from an array
 class PASTArrayIndex : PASTBinary {
+    this(PASTNode a1, PASTNode a2) { super(a1, a2); }
+    mixin Accept;
+}
+
+/// Raw comparison
+class PASTRawCmp : PASTBinary {
     this(PASTNode a1, PASTNode a2) { super(a1, a2); }
     mixin Accept;
 }
@@ -338,6 +350,12 @@ class PASTArrayIndexSet : PASTTrinary {
     bool usesHeap() { return true; }
     bool hasEffects() { return true; }
 
+    mixin Accept;
+}
+
+/// Slice
+class PASTSlice : PASTTrinary {
+    this(PASTNode a1, PASTNode a2, PASTNode a3) { super(a1, a2, a3); }
     mixin Accept;
 }
 
@@ -681,6 +699,9 @@ interface PASTVisitor {
     Object visit(PASTThrow);
     Object visit(PASTArrayLength);
     Object visit(PASTMembers);
+    Object visit(PASTRawLength);
+    Object visit(PASTSlice);
+    Object visit(PASTRawCmp);
     Object visit(PASTInteger);
     Object visit(PASTByte);
     Object visit(PASTPrint);

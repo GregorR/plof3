@@ -68,6 +68,15 @@ class PASTOptimizer : PASTVisitor {
     Object visit(PASTMembers x) {
         return new PASTMembers(cast(PASTNode) x.a1.accept(this));
     }
+    Object visit(PASTRawLength x) {
+        return new PASTRawLength(cast(PASTNode) x.a1.accept(this));
+    }
+    Object visit(PASTSlice x) {
+        return new PASTSlice(cast(PASTNode) x.a1.accept(this), cast(PASTNode) x.a2.accept(this), cast(PASTNode) x.a3.accept(this));
+    }
+    Object visit(PASTRawCmp x) {
+        return new PASTRawCmp(cast(PASTNode) x.a1.accept(this), cast(PASTNode) x.a2.accept(this));
+    }
     Object visit(PASTInteger x) {
         return new PASTInteger(cast(PASTNode) x.a1.accept(this));
     }

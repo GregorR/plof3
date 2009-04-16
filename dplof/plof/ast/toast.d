@@ -349,6 +349,24 @@ PASTProc pslToAST(ubyte[] psl)
                 });
                 break;
 
+            case psl_rawlength:
+                use1((PASTNode a) {
+                    stack ~= new PASTRawLength(a);
+                });
+                break;
+
+            case psl_slice:
+                use3((PASTNode a, PASTNode b, PASTNode c) {
+                    stack ~= new PASTSlice(a, b, c);
+                });
+                break;
+
+            case psl_rawcmp:
+                use2((PASTNode a, PASTNode b) {
+                    stack ~= new PASTRawCmp(a, b);
+                });
+                break;
+
             case psl_integer:
                 use1((PASTNode pnfrom) {
                     // optimize this if possible
