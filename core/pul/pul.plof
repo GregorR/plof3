@@ -608,7 +608,7 @@ pslbnf {
             this "opInteger" resolve member call
         } concat
 
-        cwrap {pul_funcwrap} concat
+        pul_apply_funcwrap
     }
 };
 
