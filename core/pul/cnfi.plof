@@ -44,25 +44,25 @@ pslbnf {
 var C = Object : [
     dlopen = (filename as String) {
         psl {
-            plof{this.filename.__pul_val} pul_eval
+            plof{filename.__pul_val} pul_eval
             dlopen
             push0 null
             { plof{Null} }
             {
                 1 integer array
-                plof{opCDlHandle} pul_eval call
+                plof{opCPointer} pul_eval call
             } cmp
         }
     };
 
-    dlclose = (handle as CDlHandle) {
+    dlclose = (handle as CPointer) {
         psl {
             plof{handle.__pul_val} pul_eval
             dlclose null
         }
     };
 
-    dlsym = (handle as CDlHandle, symbol as String) {
+    dlsym = (handle as CPointer, symbol as String) {
         psl {
             plof{handle.__pul_val} pul_eval
             plof{symbol.__pul_val} pul_eval
@@ -136,7 +136,7 @@ var C = Object : [
         }));
     };
 
-    call = (cif as NativeInteger, fn as NativeInteger, cargs as Array) {
+    call = (cif as CPointer, fn as CPointer, cargs as Array) {
         // extract the values out of the args array
         var nargs = psl { 0 integer array };
         var elem;
@@ -193,20 +193,11 @@ var C = Object : [
     longlong = opInteger(psl { 33 integer ctype });
 ];
 
-// the type of handles from dlopen
-var CDlHandle = Object : [
-    init = (x) {
-        this.__pul_val = x;
-    };
-];
-var opCDlHandle = (x) {
-    new CDlHandle(x)
-};
-
-// the type of handles from dlsym
+// the type of pointers from dlopen/dlsym/etc
 var CPointer = Object : [
     init = (x) {
         this.__pul_val = x;
+        return this;
     };
 ];
 var opCPointer = (x) {
