@@ -28,6 +28,13 @@ plofbnf {
         $0.opIndex($2)
     }
 
+    plof_as => plof_in;
+
+    plof_in = plof_in_next "in" plof_in_next => plof {
+        $2.opContains($0)
+    }
+    plof_in = plof_in_next => plof { $0 }
+
     plof_mul => plof_range;
 
     plof_range = plof_range "to" plof_range_next => plof {
@@ -39,12 +46,29 @@ plofbnf {
     plof_range = plof_range_next => plof { $0 }
 };
 
+// Default implementations
+Object := [
+    opContains = (x) {
+        False
+    };
+];
+
 /* Note that opArray is used in the core of the language, but is redefined here
  * in terms of the user-defined Array type. This allows arrays such as 'args'
  * in functions to be Arrays. */
 
 var Collection = Object : [
     NilElement = Object:[];
+
+    opContains = (x) {
+        var y;
+        each (ref y) (
+            if (y == x) (
+                return True;
+            );
+        );
+        return False;
+    };
 
     each = (r, act) {
         Abstract();
