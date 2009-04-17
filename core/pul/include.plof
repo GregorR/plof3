@@ -25,13 +25,13 @@
 plofbnf {
     plof_group = "include" "\(" /[A-Za-z0-9_\-\.]+/ white "\)" => {
         // get the file name
-        push0 2 integer index call
+        null push1 2 integer index call
         this "filename" push2 memberset
 
         // try it with .psl
-        push0 ".psl" concat
+        ".psl" concat
         include
-        // stack: filename_base content_of_.psl
+        // stack: content_of_.psl
 
         push0 null
         {
@@ -39,7 +39,7 @@ plofbnf {
             this parent "filename" member
             ".plof" concat push0
             include
-            // stack: filename_base filename.plof content
+            // stack: filename.plof content
 
             push0 null
             {
@@ -47,12 +47,12 @@ plofbnf {
                 "FILE NOT FOUND" push0 print throw
             } {} cmp
         } {} cmp
+        // stack: content_of_file
 
         // OK, we got the content, parse it
-        "top" push2 parse
+        "top" push2 2 integer index parse
 
-        // top-level parsing won't have a return, so return null
-        { null } concat
+        pul_apply_funcwrap
     }
 
     plof_group = "rtInclude" "\(" /[A-Za-z0-9_\-\.]+/ white "\)" => {
