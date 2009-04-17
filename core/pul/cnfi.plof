@@ -100,7 +100,7 @@ var C = Object : [
         return(ret);
     };
 
-    set = (ptr as CPointer, value as String) {
+    set = (ptr as CPointer, value) {
         psl {
             plof{ptr.__pul_val} pul_eval
             plof{value.__pul_val} pul_eval
@@ -193,11 +193,37 @@ var C = Object : [
     longlong = opInteger(psl { 33 integer ctype });
 ];
 
+// convenient wrappers
+C.calloc_s = C.dlsym(Null, "calloc");
+C.calloc_c = C.prepcif(C.pointer, [[C.pointer, C.pointer]], 0);
+C.calloc = (x as NativeInteger) {
+    C.call(C.calloc_c, C.calloc_s, [[x, 1]])
+};
+C.strlen_s = C.dlsym(Null, "strlen");
+C.strlen_c = C.prepcif(C.pointer, [[C.pointer]], 0);
+C.strlen = (x as CPointer) {
+    C.call(C.strlen_c, C.strlen_s, [[x]]) as Number
+};
+
+C.getstr = (x as CPointer) {
+    var l = C.strlen(x);
+    C.get(x, l) as String
+};
+
+
 // the type of pointers from dlopen/dlsym/etc
 var CPointer = Object : [
     init = (x) {
         this.__pul_val = x;
         return this;
+    };
+
+    opCastFrom = (x) {
+        if (x is Null) (
+            return (new CPointer(psl { null }));
+        ) else (
+            return Null;
+        );
     };
 ];
 var opCPointer = (x) {
@@ -210,6 +236,8 @@ var CData = Object : [
         if (x is Number) (
             // it already has __pul_val, so accept it as-is
             return(this : (x as NativeInteger));
+        ) else if (x is String) (
+            return(this : (x as String));
         ) else (
             return(psl { null });
         );
@@ -219,6 +247,8 @@ var CData = Object : [
         if (x is Number) (
             // this already has __pul_val, so accept it as-is
             return(this : NativeInteger);
+        ) else if (x is String) (
+            return(this : String);
         ) else (
             return(psl { null });
         );

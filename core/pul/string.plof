@@ -126,4 +126,11 @@ var String = Object : [
             concat
         }));
     };
+
+    length = {
+        opInteger(psl {
+            plof{this.__pul_val} pul_eval
+            length
+        })
+    };
 ];

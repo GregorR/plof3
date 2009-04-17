@@ -1,5 +1,7 @@
 // include (at runtime) the appropriate NFI
+var CNFI = False;
 if ("CNFI" in versions) (
+    CNFI = True;
     rtInclude(cnfi.psl);
 );
 // no others supported (yet)
