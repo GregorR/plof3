@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.61)
+AC_PREREQ(2.6)
 AC_INIT([cplof], [0], [cdgregorr@sourceforge.net])
 AC_CONFIG_AUX_DIR([scripts])
 AM_INIT_AUTOMAKE
@@ -17,8 +17,24 @@ AC_PROG_RANLIB
 AM_CONDITIONAL([GCC], [test x$GCC = xyes])
 
 # Checks for libraries.
-AC_CHECK_LIB([gc], [GC_malloc])
-# AC_CHECK_LIB([ffi], [ffi_raw_call])
+AC_SEARCH_LIBS([GC_malloc], [gc])
+
+# Need libdl and libffi for CNFI
+
+have_dl=no
+AC_CHECK_LIB([dl], [dlopen], [
+    AC_CHECK_HEADER([dlfcn.h], [
+        have_dl=yes
+    ], [])
+], [])
+
+have_ffi=no
+AC_CHECK_LIB([ffi], [ffi_call], [
+    AC_CHECK_HEADER([ffi.h], [
+        have_ffi=yes
+    ], [])
+], [])
+
 
 # Checks for header files.
 #AC_HEADER_STDC
@@ -49,6 +65,20 @@ elif test x$with_numbers_in_objects = xyes; then
 else
     AC_DEFINE([PLOF_FREE_INTS], [], [Use completely unboxed ints])
 fi
+
+# CNFI
+AC_ARG_WITH([cnfi],
+            [AC_HELP_STRING([--without-cnfi], [Do not include CNFI support])])
+
+cnfi_libs=
+if test "x$with_cnfi" != "xno" -a "x$have_dl" = "xyes" -a "x$have_ffi" = "xyes"; then
+    AC_DEFINE([WITH_CNFI], [1], [Enable support for CNFI])
+    cnfi_libs="-lffi -ldl"
+else
+    AC_MSG_WARN([[CNFI support will not be included. Although CNFI is not strictly required, without it, Plof programs cannot interact with lower-level code, so it's very unlikely that this is the desired configuration.]])
+fi
+AC_SUBST([CNFI_LIBS], [$cnfi_libs])
+
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile])

@@ -4,7 +4,8 @@ CFLAGS=-O3 -fno-crossjumping -fno-gcse -g $(ECFLAGS)
 
 LD=$(CC)
 LDFLAGS=
-LIBS=-lgc -pthread
+LIBFLAGS=-DHAVE_LIBFFI
+LIBS=-lffi -ldl -lgc -pthread
 
 AR=ar
 ARFLAGS=rc
@@ -25,12 +26,12 @@ libplof.a: $(LIBPLOF_A_OBJS)
 	$(RANLIB) libplof.a
 
 psli$(EXEEXT): $(PSLI_OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(PSLI_OBJS) $(LIBS) -o psli$(EXEEXT)
+	$(CC) $(CFLAGS) $(LIBFLAGS) $(LDFLAGS) $(PSLI_OBJS) $(LIBS) -o psli$(EXEEXT)
 
 .SUFFIXES: c o
 
 .c.o:
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(LIBFLAGS) -c $< -o $@
 
 clean:
 	rm -f libplof.a $(LIBPLOF_A_OBJS)

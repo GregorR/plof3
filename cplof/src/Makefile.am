@@ -9,4 +9,4 @@ libplof_a_CFLAGS=-O3 -fno-crossjumping -fno-gcse $(AM_CFLAGS)
 endif
 
 psli_SOURCES=psli.c
-psli_LDADD=libplof.a
+psli_LDADD=libplof.a @CNFI_LIBS@
