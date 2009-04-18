@@ -54,7 +54,6 @@ const ubyte psl_resolve   = 0x19;
 const ubyte psl_while     = 0x1A;
 const ubyte psl_calli     = 0x1B;
 const ubyte psl_replace   = 0x1C;
-const ubyte psl_if        = 0x1E;
 const ubyte psl_array     = 0x20;
 const ubyte psl_aconcat   = 0x21;
 const ubyte psl_length    = 0x22;
