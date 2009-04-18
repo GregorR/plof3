@@ -5,7 +5,7 @@ STD_PSL=../plof_include/std.psl
 all: \
     test.psl \
     curry.psl \
-    cnfi.psl \
+    test_cnfi.psl \
     include.psl
 
 ../plof_include/included.psl: included.psl
