@@ -190,13 +190,11 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
     }
 
     // integer comparison operation over 2 args
-    PSLObject intcmp(bool delegate(ptrdiff_t, ptrdiff_t) op) {
-        PSLObject thrown;
-
-        use4((PSLObject a, PSLObject b, PSLObject procy, PSLObject procn) {
+    bool intcmp(bool delegate(ptrdiff_t, ptrdiff_t) op) {
+        bool res;
+        use2((PSLObject a, PSLObject b) {
             // get the left and right values
             ptrdiff_t left, right;
-            bool res;
             if (!a.isArray && a.raw !is null &&
                 a.raw.data.length == ptrdiff_t.sizeof) {
                 left = *(cast(ptrdiff_t*) a.raw.data.ptr);
@@ -212,24 +210,9 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
 
             // perform the op
             res = op(left, right);
-
-            // perform the procedure
-            if (res) {
-                if (!procy.isArray && procy.raw !is null) {
-                    thrown = call(procy, procy.parent, procy.raw.data);
-                } else {
-                    throw new InterpreterFailure("Expected procedure as argument to integer comparison.");
-                }
-            } else {
-                if (!procn.isArray && procn.raw !is null) {
-                    thrown = call(procy, procy.parent, procn.raw.data);
-                } else {
-                    throw new InterpreterFailure("Expected procedure as argument to integer comparison.");
-                }
-            }
         });
 
-        return thrown;
+        return res;
     }
 
     // float operation over 2 args
@@ -267,13 +250,12 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
     }
 
     // float comparison operation over 2 args
-    PSLObject floatcmp(bool delegate(real, real) op) {
-        PSLObject thrown;
+    bool floatcmp(bool delegate(real, real) op) {
+        bool res;
 
-        use4((PSLObject a, PSLObject b, PSLObject procy, PSLObject procn) {
+        use2((PSLObject a, PSLObject b) {
             // get the left and right values
             real left, right;
-            bool res;
             if (!a.isArray && a.raw !is null &&
                 a.raw.data.length == real.sizeof) {
                 left = *(cast(real*) a.raw.data.ptr);
@@ -289,24 +271,9 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
 
             // perform the op
             res = op(left, right);
-
-            // perform the procedure
-            if (res) {
-                if (!procy.isArray && procy.raw !is null) {
-                    thrown = call(procy, procy.parent, procy.raw.data);
-                } else {
-                    throw new InterpreterFailure("Expected procedure as argument to floating point comparison.");
-                }
-            } else {
-                if (!procn.isArray && procn.raw !is null) {
-                    thrown = call(procn, procn.parent, procn.raw.data);
-                } else {
-                    throw new InterpreterFailure("Expected procedure as argument to floating point comparison.");
-                }
-            }
         });
 
-        return thrown;
+        return res;
     }
 
     try {
@@ -531,28 +498,13 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
     
                 case psl_cmp:
                 {
-                    PSLObject thrown;
-                    
-                    use4((PSLObject a, PSLObject b, PSLObject procy, PSLObject procn) {
+                    use2((PSLObject a, PSLObject b) {
                         if (a is b) {
-                            if (!procy.isArray && procy.raw !is null) {
-                                thrown = call(procy, procy.parent, procy.raw.data);
-                            } else {
-                                throw new InterpreterFailure("cmp expects procedure operands.");
-                            }
+                            push(pslGlobal);
                         } else {
-                            if (!procn.isArray && procn.raw !is null) {
-                                thrown = call(procn, procn.parent, procn.raw.data);
-                            } else {
-                                throw new InterpreterFailure("cmp expects procedure operands.");
-                            }
+                            push(pslNull);
                         }
                     });
-    
-                    if (thrown !is null) {
-                        // one side or the other threw, so throw
-                        return thrown;
-                    }
                     break;
                 }
     
@@ -747,6 +699,33 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
                         }
                     });
                     break;
+
+                case psl_if:
+                {
+                    PSLObject thrown;
+                    
+                    use3((PSLObject a, PSLObject procy, PSLObject procn) {
+                        if (a is pslNull) {
+                            if (!procn.isArray && procn.raw !is null) {
+                                thrown = call(procn, procn.parent, procn.raw.data);
+                            } else {
+                                throw new InterpreterFailure("if expects procedure operands.");
+                            }
+                        } else {
+                            if (!procy.isArray && procy.raw !is null) {
+                                thrown = call(procy, procy.parent, procy.raw.data);
+                            } else {
+                                throw new InterpreterFailure("if expects procedure operands.");
+                            }
+                        }
+                    });
+    
+                    if (thrown !is null) {
+                        // one side or the other threw, so throw
+                        return thrown;
+                    }
+                    break;
+                }
     
                 case psl_array:
                     use1((PSLObject olen) {
@@ -1073,8 +1052,7 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
                 case psl_gt:
                 case psl_gte: // integer comparisons
                 {
-                    PSLObject thrown =
-                        intcmp((ptrdiff_t left, ptrdiff_t right) {
+                        if (intcmp((ptrdiff_t left, ptrdiff_t right) {
                             bool res;
     
                             switch (cmd) {
@@ -1104,12 +1082,11 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
                             }
     
                             return res;
-                        });
-    
-                    if (thrown !is null) {
-                        // threw something, so bail out
-                        return thrown;
-                    }
+                        })) {
+                            push(pslGlobal);
+                        } else {
+                            push(pslNull);
+                        }
                     break;
                 }
     
@@ -1271,8 +1248,7 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
                 case psl_fgt:
                 case psl_fgte: // float comparisons
                 {
-                    PSLObject thrown =
-                        floatcmp((real left, real right) {
+                        if (floatcmp((real left, real right) {
                             bool res;
     
                             switch (cmd) {
@@ -1302,12 +1278,11 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
                             }
     
                             return res;
-                        });
-    
-                    if (thrown !is null) {
-                        // threw something, so bail out
-                        return thrown;
-                    }
+                        })) {
+                            push(pslGlobal);
+                        } else {
+                            push(pslNull);
+                        }
                     break;
                 }
 

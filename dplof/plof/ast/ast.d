@@ -395,6 +395,16 @@ class PASTQuaternary : PASTTrinary {
     private PASTNode _a4;
 }
 
+class PASTIf : PASTQuaternary {
+    this(PASTNode a1, PASTNode a2, PASTNode a3, PASTNode a4) {
+        super(a1, a2, a3, a4);
+    }
+
+    bool hasEffects() { return true; }
+
+    mixin Accept;
+}
+
 
 
 /// Quinary nodes
@@ -419,21 +429,17 @@ class PASTQuinary : PASTQuaternary {
 }
 
 /// Compare objects
-class PASTCmp : PASTQuinary {
-    this(PASTNode a1, PASTNode a2, PASTNode a3, PASTNode a4, PASTNode a5) {
-        super(a1, a2, a3, a4, a5);
-    }
-    bool hasEffects() { return true; }
+class PASTCmp : PASTBinary {
+    this(PASTNode a1, PASTNode a2) { super(a1, a2); }
     mixin Accept;
 }
 
 /// Integer comparisons
-class PASTIntCmp : PASTQuinary {
-    this(PASTNode a1, PASTNode a2, PASTNode a3, PASTNode a4, PASTNode a5, ubyte cmd) {
-        super(a1, a2, a3, a4, a5);
+class PASTIntCmp : PASTBinary {
+    this(PASTNode a1, PASTNode a2, ubyte cmd) {
+        super(a1, a2);
         _cmd = cmd;
     }
-    bool hasEffects() { return true; }
 
     ubyte cmd() { return _cmd; }
 
@@ -704,6 +710,7 @@ interface PASTVisitor {
     Object visit(PASTTempGet);
     Object visit(PASTResolve);
     Object visit(PASTWhile);
+    Object visit(PASTIf);
     Object visit(PASTArray);
     Object visit(PASTNativeInteger);
     Object visit(PASTRaw);

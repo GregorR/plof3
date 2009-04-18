@@ -354,11 +354,10 @@ struct PlofReturn interpretPSL(
         PUSHINT(res); \
     }
 #define INTCMP(op) \
-    QUINARY; \
+    BINARY; \
     { \
-        if (ISINT(b) && ISINT(c) && ISRAW(d) && ISRAW(e)) { \
+        if (ISINT(a) && ISINT(b)) { \
             ptrdiff_t ia, ib; \
-            struct PlofReturn ret; \
             \
             /* get the values */ \
             ia = ASINT(b); \
@@ -366,17 +365,10 @@ struct PlofReturn interpretPSL(
             \
             /* check them */ \
             if (ia op ib) { \
-                ret = interpretPSL(d->parent, a, d, 0, NULL, 1, 0); \
+                STACK_PUSH(plofGlobal); \
             } else { \
-                ret = interpretPSL(e->parent, a, e, 0, NULL, 1, 0); \
+                STACK_PUSH(plofNull); \
             } \
-            \
-            /* maybe rethrow */ \
-            if (ret.isThrown) { \
-                return ret; \
-            } \
-            \
-            STACK_PUSH(ret.ret); \
         } else { \
             BADTYPE("intcmp"); \
             STACK_PUSH(plofNull); \
@@ -660,33 +652,11 @@ label(interp_psl_catch);
 
 label(interp_psl_cmp);
     DEBUG_CMD("cmp");
-    QUINARY;
-    if (b == c) {
-        if (ISRAW(d)) {
-            struct PlofReturn ret = interpretPSL(d->parent, a, d, 0, NULL, 1, 0);
-
-            /* rethrow */
-            if (ret.isThrown) {
-                return ret;
-            }
-            STACK_PUSH(ret.ret);
-        } else {
-            BADTYPE("cmp");
-            STACK_PUSH(plofNull);
-        }
+    BINARY;
+    if (a == b) {
+        STACK_PUSH(plofGlobal);
     } else {
-        if (ISRAW(e)) {
-            struct PlofReturn ret = interpretPSL(e->parent, a, e, 0, NULL, 1, 0);
-
-            /* rethrow */
-            if (ret.isThrown) {
-                return ret;
-            }
-            STACK_PUSH(ret.ret);
-        } else {
-            BADTYPE("cmp");
-            STACK_PUSH(plofNull);
-        }
+        STACK_PUSH(plofNull);
     }
     STEP;
 
@@ -912,6 +882,38 @@ label(interp_psl_replace);
 psl_replace_error:
         STACK_PUSH(plofNull);
 
+    }
+    STEP;
+
+label(interp_psl_if);
+    DEBUG_CMD("if");
+    QUATERNARY;
+    if (b == plofNull) {
+        if (ISRAW(d)) {
+            struct PlofReturn ret = interpretPSL(d->parent, a, d, 0, NULL, 1, 0);
+
+            /* rethrow */
+            if (ret.isThrown) {
+                return ret;
+            }
+            STACK_PUSH(ret.ret);
+        } else {
+            BADTYPE("if");
+            STACK_PUSH(plofNull);
+        }
+    } else {
+        if (ISRAW(c)) {
+            struct PlofReturn ret = interpretPSL(c->parent, a, c, 0, NULL, 1, 0);
+
+            /* rethrow */
+            if (ret.isThrown) {
+                return ret;
+            }
+            STACK_PUSH(ret.ret);
+        } else {
+            BADTYPE("if");
+            STACK_PUSH(plofNull);
+        }
     }
     STEP;
 

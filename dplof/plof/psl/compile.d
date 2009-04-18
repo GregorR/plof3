@@ -125,6 +125,7 @@ static this() {
     "calli"     :psl_calli,
     "while"     :psl_while,
     "replace"   :psl_replace,
+    "if"        :psl_if,
     "array"     :psl_array,
     "aconcat"   :psl_aconcat,
     "length"    :psl_length,
