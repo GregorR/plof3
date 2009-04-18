@@ -648,24 +648,36 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
                 }
     
                 case psl_while:
+                    PSLObject thrown = null;
+                    PSLObject ret;
+
                     use3((PSLObject arg, PSLObject cond, PSLObject code) {
                         if (!cond.isArray && cond.raw !is null &&
                             !code.isArray && code.raw !is null) {
                             /* run the loop */
                             while (true) {
                                 push(pslNull);
-                                if (call(cond, cond.parent, cond.raw.data) is pslNull) {
+                                thrown = call(cond, cond.parent, cond.raw.data);
+                                if (thrown !is null) break;
+                                ret = popBless();
+                                if (ret is pslNull) {
                                     /* condition failed */
                                     break;
                                 }
 
                                 push(arg);
-                                arg = call(code, code.parent, code.raw.data);
+                                thrown = call(code, code.parent, code.raw.data);
+                                if (thrown !is null) break;
+                                arg = popBless();
                             }
                         } else {
                             throw new InterpreterFailure("while expects two raw data operands.");
                         }
                     });
+
+                    if (thrown !is null) {
+                        return thrown;
+                    }
                     break;
 
                 case psl_replace:
