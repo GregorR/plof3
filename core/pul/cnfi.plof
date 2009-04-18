@@ -193,23 +193,6 @@ var C = Object : [
     longlong = opInteger(psl { 33 integer ctype });
 ];
 
-// convenient wrappers
-C.calloc_s = C.dlsym(Null, "calloc");
-C.calloc_c = C.prepcif(C.pointer, [[C.pointer, C.pointer]], 0);
-C.calloc = (x as NativeInteger) {
-    C.call(C.calloc_c, C.calloc_s, [[x, 1]])
-};
-C.strlen_s = C.dlsym(Null, "strlen");
-C.strlen_c = C.prepcif(C.pointer, [[C.pointer]], 0);
-C.strlen = (x as CPointer) {
-    C.call(C.strlen_c, C.strlen_s, [[x]]) as Number
-};
-
-C.getstr = (x as CPointer) {
-    var l = C.strlen(x);
-    C.get(x, l) as String
-};
-
 
 // the type of pointers from dlopen/dlsym/etc
 var CPointer = Object : [
@@ -254,3 +237,20 @@ var CData = Object : [
         );
     };
 ];
+
+// convenient wrappers
+C.calloc_s = C.dlsym(Null, "calloc");
+C.calloc_c = C.prepcif(C.pointer, [[C.pointer, C.pointer]], 0);
+C.calloc = (x as NativeInteger) {
+    C.call(C.calloc_c, C.calloc_s, [[x, 1]])
+};
+C.strlen_s = C.dlsym(Null, "strlen");
+C.strlen_c = C.prepcif(C.pointer, [[C.pointer]], 0);
+C.strlen = (x as CPointer) {
+    C.call(C.strlen_c, C.strlen_s, [[x]]) as Number
+};
+
+C.getstr = (x as CPointer) {
+    var l = C.strlen(x);
+    C.get(x, l) as String
+};

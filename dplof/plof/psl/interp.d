@@ -1399,9 +1399,14 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
                  * * * * * * * * * */
                 case psl_dlopen:
                     use1((PSLObject a) {
-                        if (!a.isArray && a.raw !is null) {
+                        if ((!a.isArray && a.raw !is null) || a is pslNull) {
                             // try to open this file
-                            void *handle = dlopen(((cast(char[]) a.raw.data)~'\0').ptr,
+                            char *fname = null;
+                            if (a !is pslNull) {
+                                fname = ((cast(char[]) a.raw.data)~'\0').ptr;
+                            }
+
+                            void *handle = dlopen(fname,
                                                   RTLD_NOW|RTLD_GLOBAL);
 
                             if (handle is null) {
@@ -1437,10 +1442,10 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
 
                 case psl_dlsym:
                     use2((PSLObject a, PSLObject b) {
-                        if (!b.isArray && b.raw !is null) {
+                        if ((!b.isArray && b.raw !is null) {
                             void* handle = null; // RTLD_DEFAULT is usually null
 
-                            if (a != pslNull && !a.isArray && a.raw !is null &&
+                            if (a !is pslNull && !a.isArray && a.raw !is null &&
                                 a.raw.data.length == ptrdiff_t.sizeof) {
                                 handle = *(cast(void**) a.raw.data.ptr);
 
