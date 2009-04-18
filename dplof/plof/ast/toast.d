@@ -242,8 +242,8 @@ PASTProc pslToAST(ubyte[] psl)
                 break;
 
             case psl_cmp:
-                use2((PASTNode a, PASTNode b) {
-                    stack ~= new PASTCmp(a, b);
+                use5((PASTNode arg, PASTNode a, PASTNode b, PASTNode procy, PASTNode procn) {
+                    stack ~= new PASTCmp(arg, a, b, procy, procn);
                 });
                 break;
 
@@ -281,12 +281,6 @@ PASTProc pslToAST(ubyte[] psl)
 
             case psl_replace:
                 throw new PASTFailure("Replace is unsupported.");
-                break;
-
-            case psl_if:
-                use4((PASTNode arg, PASTNode a, PASTNode ift, PASTNode iff) {
-                    stack ~= new PASTIf(arg, a, ift, iff);
-                });
                 break;
 
             case psl_array:
@@ -475,8 +469,8 @@ PASTProc pslToAST(ubyte[] psl)
             case psl_ne:
             case psl_gt:
             case psl_gte: // integer comparisons
-                use2((PASTNode a, PASTNode b) {
-                    stack ~= new PASTIntCmp(a, b, cmd);
+                use5((PASTNode arg, PASTNode a, PASTNode b, PASTNode c, PASTNode d) {
+                    stack ~= new PASTIntCmp(arg, a, b, c, d, cmd);
                 });
                 break;
 

@@ -188,10 +188,10 @@ class PASTOptimizer : PASTVisitor {
         return new PASTArrayIndexSet(cast(PASTNode) x.a1.accept(this), cast(PASTNode) x.a2.accept(this), cast(PASTNode) x.a3.accept(this));
     }
     Object visit(PASTCmp x) {
-        return new PASTCmp(cast(PASTNode) x.a1.accept(this), cast(PASTNode) x.a2.accept(this));
+        return new PASTCmp(cast(PASTNode) x.a1.accept(this), cast(PASTNode) x.a2.accept(this), cast(PASTNode) x.a3.accept(this), cast(PASTNode) x.a4.accept(this), cast(PASTNode) x.a5.accept(this));
     }
     Object visit(PASTIntCmp x) {
-        return new PASTIntCmp(cast(PASTNode) x.a1.accept(this), cast(PASTNode) x.a2.accept(this), x.cmd);
+        return new PASTIntCmp(cast(PASTNode) x.a1.accept(this), cast(PASTNode) x.a2.accept(this), cast(PASTNode) x.a3.accept(this), cast(PASTNode) x.a4.accept(this), cast(PASTNode) x.a5.accept(this), x.cmd);
     }
     Object visit(PASTProc x) {
         PASTNode[] newstmts;
@@ -215,13 +215,6 @@ class PASTOptimizer : PASTVisitor {
                 cast(PASTNode) x.a1.accept(this),
                 cast(PASTNode) x.a2.accept(this),
                 cast(PASTNode) x.a3.accept(this));
-    }
-    Object visit(PASTIf x) {
-        return new PASTIf(
-                cast(PASTNode) x.a1.accept(this),
-                cast(PASTNode) x.a2.accept(this),
-                cast(PASTNode) x.a3.accept(this),
-                cast(PASTNode) x.a4.accept(this));
     }
     Object visit(PASTArray x) {
         PASTNode[] newelems;
