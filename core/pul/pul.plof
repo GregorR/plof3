@@ -679,66 +679,48 @@ psl {
     // opReparent reparents members of $0 from $1
     pul_fcontext "opReparent"
     {
-        push0 0 integer index
-        push1 1 integer index
-        push1 members
-        0 integer
-        4 integer array
+        this "object"  push2 0 integer index memberset
+        this "old"     push2 1 integer index memberset
+        this "members" push2 0 integer index members memberset
+        this "index"   0 integer memberset
+
+        null
         {
-            // args: [object, old, members, index]
-
-            // have we finished?
-            push0 2 integer index length
-            push1 3 integer index
-            {
-                // yes, we're done
-                new
-                    push0 "__pul_opreparent_done" new memberset
-                throw
-            }
-            {
-                // no, check this one
-                push0 0 integer index
-                    push1 2 integer index
-                        push2 3 integer index
-                    index
-                member
-
-                // if the parent is the old one, we'll reparent
-                parent push1 1 integer index
-                {
-                    push0 0 integer index
-                        push1 2 integer index
-                            push2 3 integer index
-                        index
-
-                        // now we have the object and the name, so reparent it
-                        push1 push1 member
-                        1 integer array
-                        this "opDuplicate" resolve member call pul_eval
-                        push0 push3 parentset
-                    memberset
-                }
-                {} cmp
-            } lte
-
-            // now step
-            push0
-            3 integer
-                push1 3 integer index
-                    1 integer
-                add
-            indexset
-            loop
+            // we've finished if the index is >= the length
+            this "index" resolve member
+            this "members" resolve member length
+            { global } { null } lt
         }
         {
-            // was this our throw?
-            push0 "__pul_opreparent_done" member null
-            {
-                // nope
-                throw
-            } {} cmp
-        } catch
+            // no, check this one
+            this "object" resolve member
+                this "members" resolve member
+                    this "index" resolve member
+                        index
+                    member
+
+                // if the parent is the old one, we'll reparent
+                parent this "old" resolve member
+                {
+                    this "object" resolve member
+                        this "members" resolve member
+                            this "index" resolve member
+                                index
+
+                            // now we have the object and the name, so reparent it
+                            push1 push1 member
+                                1 integer array
+                                this "opDuplicate" resolve member call pul_eval
+                                push0 push3 parentset
+                                memberset
+                }
+                {} cmp
+
+                // and increment the index
+                this "index" resolve
+                        this "index" resolve member 1 integer add
+                            memberset
+        } while pop
     } memberset
 
     // opCombine is defined below as it depends on duplication

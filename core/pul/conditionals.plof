@@ -34,18 +34,18 @@ var else = (then) {
 
 var while = (cond, act) {
     psl {
-        // check the condition
-        this "cc" plof{cond} pul_forceEval memberset
+        { global } // while true
+        {
+            // check the condition
+            this "cc" plof{cond} pul_forceEval memberset
 
-        plof{
-            (cc&&True).ifFalse(return(True););
-        } pul_eval
+            plof {
+                (cc&&True).ifFalse(return(True););
+            } pul_eval
 
-        // perform the action
-        plof{act} pul_forceEval
-
-        // and repeat
-        loop
+            // perform the action
+            plof{act} pul_forceEval
+        } while
     }
 };
 

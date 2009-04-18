@@ -42,45 +42,41 @@ plofbnf {
 Object := [
     opIs = (type) {
         psl {
+            this "mytype"
             plof{this} pul_eval "__pul_type" member
-            0 integer
-            2 integer array
+            memberset
+            this "index" 0 integer memberset
 
             // go through each element
+            null
             {
-                // arg: [pul type, index]
-
-                // are we too far?
-                push0 0 integer index length
-                push1 1 integer index
+                this "index" resolve member
+                this "mytype" resolve member length
+                { global } { null } lt
+            }
+            {
+                // check this one
+                this "mytype" resolve member
+                    this "index" resolve member
+                        index
+                    plof{type} pul_eval
                 {
-                    // Ran out. This is not that
-                    plof{return False} pul_eval
+                    // they're equal, this matches
+                    plof{return True} pul_eval
                 }
                 {
-                    // check this one
-                    push0 0 integer index
-                    push1 1 integer index index
-                    plof{type} pul_eval
-                    {
-                        // they're equal, this matches
-                        plof{return True} pul_eval
-                    }
-                    {
-                        // no match
-                    } cmp
-                } lte
+                    // no match
+                } cmp
 
                 // increment the index
-                push0
-                1 integer
-                    push1 1 integer index
-                        1 integer add
-                indexset
+                this "index" resolve
+                        this "index" resolve member
+                            1 integer add
+                            memberset
+            } while pop
 
-                // and loop
-                loop
-            } call
+            // didn't find it
+            plof{return False} pul_eval
         }
     };
 
