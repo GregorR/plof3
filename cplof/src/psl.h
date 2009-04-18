@@ -107,4 +107,30 @@
 #define psl_prepcif   0xCD
 #define psl_ccall     0xCE
 
+/* ctypes */
+#define psl_ctype_void          0
+#define psl_ctype_int           1
+#define psl_ctype_float         2
+#define psl_ctype_double        3
+#define psl_ctype_long_double   4
+#define psl_ctype_uint8         5
+#define psl_ctype_int8          6
+#define psl_ctype_uint16        7
+#define psl_ctype_int16         8
+#define psl_ctype_uint32        9
+#define psl_ctype_int32         10
+#define psl_ctype_uint64        11
+#define psl_ctype_int64         12
+#define psl_ctype_pointer       14
+#define psl_ctype_uchar         24
+#define psl_ctype_schar         25
+#define psl_ctype_ushort        26
+#define psl_ctype_sshort        27
+#define psl_ctype_uint          28
+#define psl_ctype_sint          29
+#define psl_ctype_ulong         30
+#define psl_ctype_slong         31
+#define psl_ctype_ulonglong     32
+#define psl_ctype_slonglong     33
+
 #endif

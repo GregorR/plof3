@@ -21,12 +21,19 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #ifdef HAVE_CONFIG_H
 #include "../config.h"
 #else
 #include "basicconfig.h"
+#endif
+
+/* For CNFI */
+#ifdef WITH_CNFI
+#include <dlfcn.h>
+#include <ffi.h>
 #endif
 
 /* For predefs */
@@ -274,6 +281,10 @@ struct PlofReturn interpretPSL(
         (into) = (rd)->hash = plofHash((rd)->length, (rd)->data); \
     }
 
+#define ISPTR(obj) (ISRAW(obj) && RAW(obj)->length == sizeof(void*))
+#define ASPTR(obj) (*((void **) RAW(obj)->data))
+#define SETPTR(obj, val) ASPTR(obj) = (val)
+
 #if defined(PLOF_BOX_NUMBERS)
 #define ISINT(obj) (ISRAW(obj) && RAW(obj)->length == sizeof(ptrdiff_t))
 #define ASINT(obj) (*((ptrdiff_t *) RAW(obj)->data))
@@ -289,10 +300,9 @@ struct PlofReturn interpretPSL(
 #endif
 
     /* Type coercions */
-#if defined(PLOF_BOX_NUMBERS)
-#define PUSHINT(val) \
+#define PUSHPTR(val) \
     { \
-        ptrdiff_t _val = (val); \
+        ptrdiff_t _val = (ptrdiff_t) (val); \
         \
         rd = GC_NEW_Z(struct PlofRawData); \
         rd->type = PLOF_DATA_RAW; \
@@ -305,6 +315,10 @@ struct PlofReturn interpretPSL(
         a->data = (struct PlofData *) rd; \
         STACK_PUSH(a); \
     }
+
+#if defined(PLOF_BOX_NUMBERS)
+#define PUSHINT(val) PUSHPTR(val)
+
 #elif defined(PLOF_NUMBERS_IN_OBJECTS)
 #define PUSHINT(val) \
     { \
@@ -1362,6 +1376,11 @@ label(interp_psl_version);
         i = 0;
         CREATE_VERSION("cplof");
 
+        /* CNFI, if applicable */
+#ifdef WITH_CNFI
+        CREATE_VERSION("CNFI");
+#endif
+
         /* Standards */
 #ifdef _POSIX_VERSION
         CREATE_VERSION("POSIX");
@@ -1491,6 +1510,7 @@ label(interp_psl_raw);
     STACK_PUSH(a);
     STEP;
 
+#ifndef WITH_CNFI
 label(interp_psl_dlopen); UNIMPL("psl_dlopen");
 label(interp_psl_dlclose); UNIMPL("psl_dlclose");
 label(interp_psl_dlsym); UNIMPL("psl_dlsym");
@@ -1505,6 +1525,314 @@ label(interp_psl_csget); UNIMPL("psl_csget");
 label(interp_psl_csset); UNIMPL("psl_csset");
 label(interp_psl_prepcif); UNIMPL("psl_prepcif");
 label(interp_psl_ccall); UNIMPL("psl_ccall");
+#else
+
+label(interp_psl_dlopen);
+    DEBUG_CMD("dlopen");
+    UNARY;
+
+    /* the argument can be a string, or NULL */
+    {
+        void *hnd;
+        char *fname = NULL;
+        if (a != plofNull) {
+            if (ISRAW(a)) {
+                fname = (char *) RAW(a)->data;
+            } else {
+                BADTYPE("dlopen");
+            }
+        }
+
+        /* OK, try to dlopen it */
+        hnd = dlopen(fname, RTLD_LAZY|RTLD_GLOBAL);
+
+        /* either turn that into a pointer in raw data, or push null */
+        if (hnd == NULL) {
+            STACK_PUSH(plofNull);
+
+        } else {
+            PUSHPTR(hnd);
+
+        }
+    }
+    STEP;
+
+label(interp_psl_dlclose);
+    DEBUG_CMD("dlclose");
+    UNARY;
+    if (ISPTR(a)) {
+        dlclose(ASPTR(a));
+    } else {
+        BADTYPE("dlclose");
+    }
+    STEP;
+
+label(interp_psl_dlsym);
+    DEBUG_CMD("dlsym");
+    BINARY;
+
+    {
+        void *hnd = NULL;
+        char *fname;
+        void *fun;
+
+        /* the handle may be null */
+        if (a != plofNull) {
+            if (ISPTR(a)) {
+                hnd = ASPTR(a);
+
+            } else {
+                BADTYPE("dlsym");
+                
+            }
+        }
+
+        /* the function name can't */
+        if (ISRAW(b)) {
+            fname = (char *) RAW(b)->data;
+
+            fun = dlsym(hnd, fname);
+
+            if (fun == NULL) {
+                STACK_PUSH(plofNull);
+
+            } else {
+                PUSHPTR(fun);
+
+            }
+        }
+
+    }
+    STEP;
+
+label(interp_psl_cmalloc);
+    DEBUG_CMD("cmalloc");
+    UNARY;
+
+    if (ISINT(a)) {
+        void *ret = malloc(ASINT(a));
+        if (ret == NULL) {
+            STACK_PUSH(plofNull);
+        } else {
+            PUSHPTR(ret);
+        }
+
+    } else {
+        BADTYPE("cmalloc");
+        STACK_PUSH(plofNull);
+    }
+
+    STEP;
+
+label(interp_psl_cfree);
+    DEBUG_CMD("cfree");
+    UNARY;
+
+    if (ISPTR(a)) {
+        free(ASPTR(a));
+    } else {
+        BADTYPE("cfree");
+    }
+
+    STEP;
+
+label(interp_psl_cget);
+    DEBUG_CMD("cget");
+    BINARY;
+
+    if (ISPTR(a) && ISINT(b)) {
+        /* construct a raw data object */
+        rd = GC_NEW_Z(struct PlofRawData);
+        rd->type = PLOF_DATA_RAW;
+        rd->length = ASINT(b);
+        rd->data = (unsigned char *) ASPTR(a);
+
+        c = GC_NEW_Z(struct PlofObject);
+        c->parent = context;
+        c->data = (struct PlofData *) rd;
+
+        STACK_PUSH(c);
+
+    } else {
+        BADTYPE("cget");
+        STACK_PUSH(plofNull);
+
+    }
+
+    STEP;
+
+label(interp_psl_cset);
+    DEBUG_CMD("cset");
+    BINARY;
+    if (ISPTR(a) && ISRAW(b)) {
+        memcpy(a, RAW(b)->data, RAW(b)->length);
+    } else {
+        BADTYPE("cset");
+    }
+    STEP;
+
+label(interp_psl_ctype);
+    DEBUG_CMD("ctype");
+    UNARY;
+
+    if (ISINT(a)) {
+        int typenum = ASINT(a);
+        ffi_type *type = NULL;
+
+        switch (typenum) {
+            case psl_ctype_void:
+                type = &ffi_type_void;
+                break;
+            case psl_ctype_int:
+                type = &ffi_type_sint;
+                break;
+            case psl_ctype_float:
+                type = &ffi_type_float;
+                break;
+            case psl_ctype_double:
+                type = &ffi_type_double;
+                break;
+            case psl_ctype_long_double:
+                type = &ffi_type_longdouble;
+                break;
+            case psl_ctype_uint8:
+                type = &ffi_type_uint8;
+                break;
+            case psl_ctype_int8:
+                type = &ffi_type_sint8;
+                break;
+            case psl_ctype_uint16:
+                type = &ffi_type_uint16;
+                break;
+            case psl_ctype_int16:
+                type = &ffi_type_sint16;
+                break;
+            case psl_ctype_uint32:
+                type = &ffi_type_uint32;
+                break;
+            case psl_ctype_int32:
+                type = &ffi_type_sint32;
+                break;
+            case psl_ctype_uint64:
+                type = &ffi_type_uint64;
+                break;
+            case psl_ctype_int64:
+                type = &ffi_type_sint64;
+                break;
+            case psl_ctype_pointer:
+                type = &ffi_type_pointer;
+                break;
+            case psl_ctype_uchar:
+                type = &ffi_type_uchar;
+                break;
+            case psl_ctype_schar:
+                type = &ffi_type_schar;
+                break;
+            case psl_ctype_ushort:
+                type = &ffi_type_ushort;
+                break;
+            case psl_ctype_sshort:
+                type = &ffi_type_sshort;
+                break;
+            case psl_ctype_uint:
+                type = &ffi_type_uint;
+                break;
+            case psl_ctype_sint:
+                type = &ffi_type_sint;
+                break;
+            case psl_ctype_ulong:
+                type = &ffi_type_ulong;
+                break;
+            case psl_ctype_slong:
+                type = &ffi_type_slong;
+                break;
+            case psl_ctype_ulonglong:
+                type = &ffi_type_uint64;
+                break;
+            case psl_ctype_slonglong:
+                type = &ffi_type_sint64;
+                break;
+            default:
+                BADTYPE("ctype");
+                type = &ffi_type_void;
+        }
+
+        PUSHPTR(type);
+
+    } else {
+        BADTYPE("ctype");
+        STACK_PUSH(plofNull);
+
+    }
+
+    STEP;
+
+label(interp_psl_cstruct); UNIMPL("psl_cstruct");
+
+label(interp_psl_csizeof);
+    DEBUG_CMD("csizeof");
+    UNARY;
+    if (ISPTR(a)) {
+        /* this had better be an ffi_type pointer :) */
+        ffi_type *type = (ffi_type *) ASPTR(a);
+        PUSHINT(type->size);
+    } else {
+        BADTYPE("csizeof");
+        STACK_PUSH(plofNull);
+    }
+    STEP;
+
+label(interp_psl_csget); UNIMPL("psl_csget");
+label(interp_psl_csset); UNIMPL("psl_csset");
+
+label(interp_psl_prepcif); UNIMPL("psl_prepcif");
+    DEBUG_CMD("prepcif");
+    TRINARY;
+
+    if (ISPTR(a) && ISARRAY(b) && ISINT(c)) {
+        ffi_cif *cif;
+        ffi_type *rettype;
+        int abi, i;
+        ffi_type **atypes;
+        ffi_status pcret;
+
+        /* get the data for prepcif */
+        rettype = (ffi_type *) ASPTR(a);
+        ad = ARRAY(b);
+        abi = ASINT(c);
+
+        /* put the argument types in the proper type of array */
+        atypes = GC_MALLOC_ATOMIC(ad->length * sizeof(ffi_type *));
+        for (i = 0; i < ad->length; i++) {
+            if (ISPTR(ad->data[i])) {
+                atypes[i] = (ffi_type *) ASPTR(ad->data[i]);
+            } else {
+                atypes[i] = NULL;
+            }
+        }
+
+        /* allocate space for the cif itself */
+        cif = GC_MALLOC_ATOMIC(sizeof(ffi_cif));
+
+        /* and call prepcif */
+        pcret = ffi_prep_cif(cif, abi, ad->length, rettype, atypes);
+        if (pcret != FFI_OK) {
+            STACK_PUSH(plofNull);
+        } else {
+            PUSHPTR(cif);
+        }
+
+    } else {
+        BADTYPE("prepcif");
+        STACK_PUSH(plofNull);
+
+    }
+
+    STEP;
+
+label(interp_psl_ccall); UNIMPL("psl_ccall");
+
+#endif
 
 label(interp_psl_done);
     UNARY;
