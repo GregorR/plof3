@@ -68,8 +68,8 @@ Object.opMember = psl { {
         this "type" this "__pul_type" resolve member memberset
         this "index" 1 integer memberset
 
+        null
         {
-            null
             {
                 // continue so long as the index is < the length
                 this "index" resolve member
@@ -140,13 +140,14 @@ Object.opMember = psl { {
         }
         {
             // is this our response?
-            push0 "__pul_opmember_search" null
+            push0 "__pul_opmember_search" member null
             {
                 // no, throw it again
                 throw
             }
             {
                 // yes, just pass it along
+                "__pul_opmember_search" member
             } cmp
         } catch
     }

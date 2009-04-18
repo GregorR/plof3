@@ -34,6 +34,7 @@ var else = (then) {
 
 var while = (cond, act) {
     psl {
+        null
         { global } // while true
         {
             // check the condition
