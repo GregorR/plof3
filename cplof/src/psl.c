@@ -384,7 +384,6 @@ struct PlofReturn interpretPSL(
     }
 
 #define STEP pc += 2; jump(*pc)
-#define LOOP pc = cpsl; jump(*pc)
 #define UNIMPL(cmd) fprintf(stderr, "UNIMPLEMENTED: " cmd "\n"); STEP
 
 #ifdef DEBUG
@@ -846,16 +845,42 @@ label(interp_psl_calli);
     }
     STEP;
 
-label(interp_psl_loop);
-    DEBUG_CMD("loop");
-    UNARY;
+label(interp_psl_while);
+    DEBUG_CMD("while");
+    TRINARY;
 
-    /* fix the stack */
-    stacktop = 1;
-    stack[0] = a;
+    if (ISRAW(b) && ISRAW(c)) {
+        struct PlofReturn ret;
 
-    /* then loop */
-    LOOP;
+        /* now run the loop */
+        while (1) {
+            ret = interpretPSL(b->parent, plofNull, b, 0, NULL, 1, 0);
+            
+            if (ret.isThrown) {
+                return ret;
+            } else if (ret.ret == plofNull) {
+                break;
+            }
+
+            /* condition succeeded, run the code */
+            ret = interpretPSL(c->parent, a, c, 0, NULL, 1, 0);
+
+            if (ret.isThrown) {
+                return ret;
+            }
+
+            a = ret.ret;
+        }
+
+        STACK_PUSH(a);
+
+    } else {
+        BADTYPE("while");
+        STACK_PUSH(plofNull);
+
+    }
+
+    STEP;
 
 label(interp_psl_replace);
     DEBUG_CMD("replace");

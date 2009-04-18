@@ -273,15 +273,10 @@ PASTProc pslToAST(ubyte[] psl)
                 });
                 break;
 
-            case psl_loop:
-                // basically, need to wrap everything else
-                orderStack();
-                res ~= stack;
-                stack = null;
-                res = [new PASTLoop(res)];
-
-                // and we can't do any more
-                i = psl.length;
+            case psl_while:
+                use3((PASTNode arg, PASTNode cond, PASTNode code) {
+                    stack ~= new PASTWhile(arg, cond, code);
+                });
                 break;
 
             case psl_replace:

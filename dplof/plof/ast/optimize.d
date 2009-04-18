@@ -210,13 +210,11 @@ class PASTOptimizer : PASTVisitor {
     Object visit(PASTResolve x) {
         return new PASTResolve(cast(PASTNode) x.obj.accept(this), cast(PASTNode) x.name.accept(this), x.t1, x.t2);
     }
-    Object visit(PASTLoop x) {
-        PASTNode[] newstmts;
-        newstmts.length = x.stmts.length;
-        foreach (i, stmt; x.stmts) {
-            newstmts[i] = cast(PASTNode) stmt.accept(this);
-        }
-        return new PASTLoop(newstmts);
+    Object visit(PASTWhile x) {
+        return new PASTWhile(
+                cast(PASTNode) x.a1.accept(this),
+                cast(PASTNode) x.a2.accept(this),
+                cast(PASTNode) x.a3.accept(this));
     }
     Object visit(PASTArray x) {
         PASTNode[] newelems;

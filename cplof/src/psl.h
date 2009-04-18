@@ -27,7 +27,7 @@
 #define psl_concat    0x17
 #define psl_wrap      0x18
 #define psl_resolve   0x19
-#define psl_loop      0x1A
+#define psl_while     0x1A
 #define psl_calli     0x1B
 #define psl_replace   0x1C
 #define psl_array     0x20

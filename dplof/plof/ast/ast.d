@@ -359,6 +359,20 @@ class PASTSlice : PASTTrinary {
     mixin Accept;
 }
 
+/// Catch exceptions
+class PASTCatch : PASTTrinary {
+    this(PASTNode a1, PASTNode a2, PASTNode a3) { super(a1, a2, a3); }
+    bool hasEffects() { return true; }
+    mixin Accept;
+}
+
+/// While
+class PASTWhile : PASTTrinary {
+    this(PASTNode a1, PASTNode a2, PASTNode a3) { super(a1, a2, a3); }
+    bool hasEffects() { return true; }
+    mixin Accept;
+}
+
 
 /// Quaternary nodes
 class PASTQuaternary : PASTTrinary {
@@ -379,13 +393,6 @@ class PASTQuaternary : PASTTrinary {
     }
 
     private PASTNode _a4;
-}
-
-/// Catch exceptions
-class PASTCatch : PASTTrinary {
-    this(PASTNode a1, PASTNode a2, PASTNode a3) { super(a1, a2, a3); }
-    bool hasEffects() { return true; }
-    mixin Accept;
 }
 
 
@@ -567,46 +574,6 @@ class PASTResolve : PASTNode {
     }
 }
 
-/// Loop a list of statments
-class PASTLoop : PASTNode {
-    this(PASTNode[] stmts) {
-        _stmts = stmts;
-    }
-
-    // usesHeap and hasEffects are complicated because all sub-statements must be checked
-    bool usesHeap() {
-        foreach (stmt; _stmts) {
-            if (stmt.usesHeap()) return true;
-        }
-        return false;
-    }
-    bool hasEffects() {
-        foreach (stmt; _stmts) {
-            if (stmt.hasEffects()) return true;
-        }
-        return false;
-    }
-
-    PASTNode[] stmts() { return _stmts; }
-
-    char[] toXML() {
-        char[] ret = "<Loop>";
-
-        // now go through each of the elements
-        foreach (stmt; _stmts) {
-            ret ~= stmt.toXML();
-        }
-
-        ret ~= "</Loop>";
-
-        return ret;
-    }
-
-    mixin Accept;
-
-    private PASTNode[] _stmts;
-}
-
 /// Creation of an array
 class PASTArray : PASTNode {
     this(PASTNode[] elems) {
@@ -736,7 +703,7 @@ interface PASTVisitor {
     Object visit(PASTTempSet);
     Object visit(PASTTempGet);
     Object visit(PASTResolve);
-    Object visit(PASTLoop);
+    Object visit(PASTWhile);
     Object visit(PASTArray);
     Object visit(PASTNativeInteger);
     Object visit(PASTRaw);

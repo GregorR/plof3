@@ -177,7 +177,6 @@ gadd
 "pslOp" "/intwidth/" "token" "white" 3 integer array {{intwidth}} gadd
 "pslOp" "/length/" "token" "white" 3 integer array {{length}} gadd
 "pslOp" "/lengthset/" "token" "white" 3 integer array {{lengthset}} gadd
-"pslOp" "/loop/" "token" "white" 3 integer array {{loop}} gadd
 "pslOp" "/lt/" "token" "white" 3 integer array {{lt}} gadd
 "pslOp" "/lte/" "token" "white" 3 integer array {{lte}} gadd
 "pslOp" "/member/" "token" "white" 3 integer array {{member}} gadd
@@ -218,6 +217,7 @@ gadd
 "pslOp" "/throw/" "token" "white" 3 integer array {{throw}} gadd
 "pslOp" "/trap/" "token" "white" 3 integer array {{trap}} gadd
 "pslOp" "/version/" "token" "white" 3 integer array {{version}} gadd
+"pslOp" "/while/" "token" "white" 3 integer array {{while}} gadd
 "pslOp" "/wrap/" "token" "white" 3 integer array {{wrap}} gadd
 "pslOp" "/xor/" "token" "white" 3 integer array {{xor}} gadd
 
