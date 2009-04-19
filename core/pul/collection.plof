@@ -22,30 +22,6 @@
  *  IN THE SOFTWARE.
  */
 
-// indexing and similar in the grammar
-plofbnf {
-    plof_group = plof_group "\[" plof_semicolon "\]" => plof {
-        $0.opIndex($2)
-    }
-
-    plof_as => plof_in;
-
-    plof_in = plof_in_next "in" plof_in_next => plof {
-        $2.opContains($0)
-    }
-    plof_in = plof_in_next => plof { $0 }
-
-    plof_mul => plof_range;
-
-    plof_range = plof_range "to" plof_range_next => plof {
-        new Range($0, $2, 1)
-    }
-    plof_range = plof_range "to" plof_range_next "by" plof_range_next => plof {
-        new Range($0, $2, $4)
-    }
-    plof_range = plof_range_next => plof { $0 }
-};
-
 // Default implementations
 Object := [
     opContains = (x) {
@@ -462,34 +438,3 @@ var Range = Collection : [
         );
     };
 ];
-
-// the grammar for ListArrays
-plofbnf {
-    plof_literal = "\[\[" plof_arr_elems "\]\]" => plof {
-        new ListArray() ~= new Array($1)
-    }
-
-    plof_arr_elems = white => plof {
-        psl {
-            0 integer array
-        }
-    }
-    plof_arr_elems = plof_arr_elems_next => plof { $0 }
-    plof_arr_elems => plof_arr_elems_prime;
-
-    plof_arr_elems_prime = plof_arr_elems_prime "," plof_arr_elems_prime_next => plof {
-        psl {
-            $0 pul_eval
-            $2 1 integer array
-            aconcat
-        }
-    }
-    plof_arr_elems_prime = plof_arr_elems_prime_next => plof {
-        psl {
-            $0 1 integer array
-        }
-    }
-    plof_arr_elems_prime => plof_arr_elem;
-
-    plof_arr_elem = plof_semicolon_next => plof { $0 }
-};
