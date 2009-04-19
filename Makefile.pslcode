@@ -7,11 +7,11 @@ PLOFC_REQ=./dplof/dplof
 BASE_PSL_SOURCE=core/base/base.apsl
 
 # pul.psl is the minimum required for a PUL system
-PUL_PSL_SOURCE=base.psl core/pul/pul.plof
+PUL_PSL_SOURCE=base.psl core/pul/pul_g.plof core/pul/pul.plof
 
 # std.psl is the PUL standard library
 STD_PSL_SOURCE=core/pul/object.plof \
-	       core/pul/include.plof \
+               core/pul/include.plof \
                core/pul/exceptions.plof \
                core/pul/boolean.plof \
                core/pul/conditionals.plof \
@@ -20,14 +20,7 @@ STD_PSL_SOURCE=core/pul/object.plof \
                core/pul/string.plof \
                core/pul/collection.plof \
                core/pul/versions.plof \
-	       core/pul/nfi.plof
-#STD_PSL_SOURCE=core/pul/object.plof \
-#	       core/pul/std.plof \
-#	       core/pul/boolean.plof \
-#	       core/pul/number.plof \
-#	       core/pul/string.plof \
-#	       core/pul/collection.plof \
-#	       core/pul/nfi.plof
+               core/pul/nfi.plof
 
 # cnfi.psl is the C NFI, loaded by nfi.plof if CNFI is set
 CNFI_PSL_SOURCE=core/pul/cnfi.plof
