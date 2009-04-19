@@ -199,9 +199,6 @@ struct PlofReturn interpretPSL(
         int generateContext,
         int immediate);
 
-/* Convert a PSL bignum to an int */
-int pslBignumToInt(unsigned char *bignum, size_t *into);
-
 /* Hash function */
 size_t plofHash(size_t slen, unsigned char *str);
 

@@ -62,10 +62,6 @@ enum jumplabel {
 };
 #endif
 
-/* Internal functions for handling PSL bignums */
-size_t pslBignumLength(size_t val);
-void pslIntToBignum(unsigned char *buf, size_t val, size_t len);
-
 /* Implementation of 'replace' */
 struct PlofRawData *pslReplace(struct PlofRawData *in, struct PlofArrayData *with);
 
@@ -1866,72 +1862,6 @@ label(interp_psl_done);
     return ret;
 
     jumptail;
-}
-
-/* Convert a PSL bignum to an int */
-int pslBignumToInt(unsigned char *bignum, size_t *into)
-{
-    size_t ret = 0;
-    unsigned c = 0;
-
-    for (;; bignum++) {
-        c++;
-        ret <<= 7;
-        ret |= ((*bignum) & 0x7F);
-        if ((*bignum) < 128) break;
-    }
-
-    *into = ret;
-
-    return c;
-}
-
-/* Determine the number of bytes a bignum of a particular number will take */
-size_t pslBignumLength(size_t val)
-{
-    if (val < ((size_t) 1<<7)) {
-        return 1;
-    } else if (val < ((size_t) 1<<14)) {
-        return 2;
-#if SIZEOF_VOID_P <= 2
-    } else {
-        return 3;
-#else
-    } else if (val < ((size_t) 1<<21)) {
-        return 3;
-    } else if (val < ((size_t) 1<<28)) {
-        return 4;
-#if SIZEOF_VOID_P <= 4
-    } else {
-        return 5;
-#else
-    } else if (val < ((size_t) 1<<35)) {
-        return 5;
-    } else if (val < ((size_t) 1<<42)) {
-        return 6;
-    } else if (val < ((size_t) 1<<49)) {
-        return 7;
-    } else if (val < ((size_t) 1<<56)) {
-        return 8;
-    } else if (val < ((size_t) 1<<63)) {
-        return 9;
-    } else {
-        return 10;
-#endif /* 32 */
-#endif /* 16 */
-    }
-}
-
-/* Write a bignum into a buffer */
-void pslIntToBignum(unsigned char *buf, size_t val, size_t len)
-{
-    buf[--len] = val & 0x7F;
-    val >>= 7;
-
-    for (len--; len != (size_t) -1; len--) {
-        buf[len] = (val & 0x7F) | 0x80;
-        val >>= 7;
-    }
 }
 
 /* Hash function */
