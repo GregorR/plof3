@@ -34,6 +34,7 @@
 #ifdef jumpenum
 enum jumplabel {
     interp_top,
+    interp_run,
 #define FOREACH(func, name, fflags) \
     interp_ ## func,
 #include "builtins.h"
@@ -50,6 +51,7 @@ enum jumplabel {
 PloforthState runPloforth(unsigned char *code, PloforthState *istate)
 {
     PloforthState state;
+    jumpvars;
 
     /* initialize the state */
     if (istate) {
@@ -104,7 +106,7 @@ PloforthState runPloforth(unsigned char *code, PloforthState *istate)
     }
 
     /* now the interpreter itself */
-    STEP;
+    BUFFER_TOP(state.cstack) += 2;
     prejump(*BUFFER_TOP(state.cstack));
 
     /* header for commands */
