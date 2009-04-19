@@ -8,7 +8,7 @@ if GCC
 libplof_a_CFLAGS=-O3 -fno-crossjumping -fno-gcse $(AM_CFLAGS)
 endif
 
-psli_SOURCES=psli.c
+psli_SOURCES=psli.c whereami.c
 psli_LDADD=libplof.a @CNFI_LIBS@
 
 pslasm_SOURCES=lex.c parse.c pslasm.c
