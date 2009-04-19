@@ -1449,6 +1449,9 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
                                 a.raw.data.length == ptrdiff_t.sizeof) {
                                 handle = *(cast(void**) a.raw.data.ptr);
 
+                            } else if (a is pslNull) {
+                                handle = null;
+
                             } else {
                                 throw new InterpreterFailure(
                                     "dlsym expects an integer as the first operand.");
