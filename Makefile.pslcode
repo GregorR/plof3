@@ -1,4 +1,4 @@
-PSLASM=./dplof/pslasm
+PSLASM=./cplof/src/pslasm
 PLOFC=./dplof/plofc
 PLOFC_REQ=./dplof/dplof
 #PLOF_FLAGS=--debug
@@ -62,6 +62,10 @@ plof_include/cnfi.psl: $(CNFI_PSL_SOURCE) plof_include/std.psl $(PLOFC_REQ)
 
 plof_include/debug/cnfi.psl: $(CNFI_PSL_SOURCE) plof_include/debug/std.psl $(PLOFC_REQ)
 	$(PLOFC) --debug $(PLOF_FLAGS) $(CNFI_PSL_SOURCE) -o plof_include/debug/cnfi.psl
+
+
+cplof/src/pslasm:
+	cd cplof ; ./configure ; $(MAKE)
 
 
 
