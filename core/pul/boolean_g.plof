@@ -22,27 +22,23 @@
  *  IN THE SOFTWARE.
  */
 
-// Object is true for logic unless it's False
-Object := [
-    opOr = (x) { True };
-    opAnd = (x) { x };
-    opNot = { False };
-];
+plofbnf {
+    plof_bind => plof_or;
 
-// True and False are both Bools
-var Bool = Object : [
-    ifTrue = (x) { this };
-    ifFalse = (x) { this };
-];
+    plof_or = plof_or "\|\|" plof_or_next => plof {
+        $0.opOr($2)
+    }
+    plof_or = plof_or_next => plof { $0 }
+    plof_or => plof_and;
 
-var True = Bool : [
-    ifTrue = (x) { x; this };
-];
+    plof_and = plof_and "&&" plof_and_next => plof {
+        $0.opAnd($2)
+    }
+    plof_and = plof_and_next => plof { $0 }
+    plof_and => plof_unop;
 
-var False = Bool : [
-    ifFalse = (x) { x; this };
-
-    opOr = (x) { x };
-    opAnd = (x) { False };
-    opNot = { True };
-];
+    plof_unop = "\!" plof_unop => plof {
+        $1.opNot()
+    }
+    plof_unop = plof_unop_next => plof { $0 }
+};
