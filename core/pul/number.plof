@@ -22,65 +22,6 @@
  *  IN THE SOFTWARE.
  */
 
-// basic math
-plofbnf {
-    plof_and => plof_equals;
-
-    plof_equals = plof_equals "==" plof_equals_next => plof {
-        $0.opEquals($2)
-    }
-    plof_equals = plof_equals "!=" plof_equals_next => plof {
-        $0.opNEquals($2)
-    }
-    plof_equals = plof_equals_next => plof { $0 }
-    plof_equals => plof_cmp;
-
-    plof_cmp = plof_cmp "<" plof_cmp_next => plof {
-        $0.opLess($2)
-    }
-    plof_cmp = plof_cmp "<=" plof_cmp_next => plof {
-        $0.opLessEqual($2)
-    }
-    plof_cmp = plof_cmp ">" plof_cmp_next => plof {
-        $0.opGreater($2)
-    }
-    plof_cmp = plof_cmp ">=" plof_cmp_next => plof {
-        $0.opGreaterEqual($2)
-    }
-    plof_cmp = plof_cmp_next => plof { $0 }
-    plof_cmp => plof_add;
-
-    plof_add = plof_add "\+" plof_add_next => plof {
-        $0.opAdd($2)
-    }
-    plof_add = plof_add "-" plof_add_next => plof {
-        $0.opSub($2)
-    }
-    plof_add = plof_add_next => plof { $0 }
-    plof_add => plof_mul;
-
-    plof_mul = plof_mul "\*" plof_mul_next => plof {
-        $0.opMul($2)
-    }
-    plof_mul = plof_mul /\// white plof_mul_next => plof {
-        $0.opDiv($3)
-    }
-    plof_mul = plof_mul "%" plof_mul_next => plof {
-        $0.opMod($2)
-    }
-    plof_mul = plof_mul_next => plof { $0 }
-
-    plof_unop => plof_unopr;
-
-    plof_unopr = plof_unopr "\+\+" => plof {
-        $0 = $0.opInc()
-    }
-    plof_unopr = plof_unopr "--" => plof {
-        $0 = $0.opDec()
-    }
-    plof_unopr = plof_unopr_next => plof { $0 }
-};
-
 // operators on Object
 Object := [
     // Use object equality by default
