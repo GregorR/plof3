@@ -23,9 +23,14 @@
 #ifndef DICT_H
 #define DICT_H
 
+#define DICT_FLAG_IMMEDIATE             1
+
 typedef struct _Dict Dict;
 struct _Dict {
     Dict *next;
+
+    /* flags */
+    unsigned short flags;
 
     /* the word itself */
     char *word;

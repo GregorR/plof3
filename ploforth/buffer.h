@@ -60,7 +60,7 @@ BUFFER(int, int);
 #define BUFFER_TOP(buffer) ((buffer).buf[(buffer).bufused - 1])
 
 /* pop the top element off a buffer */
-#define POP_BUFFER(buffer)
+#define POP_BUFFER(buffer) ((buffer).bufused--)
 
 /* expand a buffer */
 #define EXPAND_BUFFER(buffer) \

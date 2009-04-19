@@ -22,12 +22,11 @@
 
 /* use this header to generate some code for every builtin */
 
-/* builtin words */
-FOREACH(nop, "nop");
-FOREACH(hello, "hello");
-FOREACH(define, ":");
-FOREACH(enddef, ";");
-FOREACH(exit, "exit");
+#include "dict.h"
 
-/* the builtin for interpreting, not really directly accessible */
-FOREACH(interp, "~~interp");
+/* builtin words. In the form name, string name, flags */
+FOREACH(nop, "nop", 0);
+FOREACH(hello, "hello", 0);
+FOREACH(define, ":", 0);
+FOREACH(enddef, ";", DICT_FLAG_IMMEDIATE);
+FOREACH(exit, "exit", 0);

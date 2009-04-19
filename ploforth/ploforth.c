@@ -34,10 +34,11 @@
 #ifdef jumpenum
 enum jumplabel {
     interp_top,
-#define FOREACH(func, name) \
+#define FOREACH(func, name, fflags) \
     interp_ ## func,
 #include "builtins.h"
 #undef FOREACH
+    interp_interp
 };
 #endif
 
@@ -72,9 +73,10 @@ PloforthState runPloforth(unsigned char *code, PloforthState *istate)
 
         /* generate the initial dictionary */
         dict = NULL;
-#define FOREACH(func, name) \
+#define FOREACH(func, name, fflags) \
         { \
             ndict = GC_NEW(Dict); \
+            ndict->flags = fflags; \
             ndict->next = dict; \
             ndict->word = name; \
             ndict->code = addressof(interp_ ## func); \
@@ -141,10 +143,17 @@ CMD(interp_run);
         /* if nothing was found, bad */
         if (cdict == NULL) return state; /* FIXME: not a useful return */
 
-        /* do this before coming back to interp_run again */
-        memcpy(BUFFER_TOP(state.cstack), &cdict->code, 2 * sizeof(void*));
+        /* if compiling and this isn't immediate */
+        if (state.compiling && (cdict->flags & DICT_FLAG_IMMEDIATE) == 0) {
+            /* add it to the compilation queue */
+            WRITE_BUFFER(state.compbuf, &cdict->code, 2);
+            STEP;
 
-        JUMP;
+        } else {
+            /* do this before coming back to interp_run again */
+            memcpy(BUFFER_TOP(state.cstack), &cdict->code, 2 * sizeof(void*));
+            JUMP;
+        }
     }
 
 CMD(interp_nop);
@@ -155,12 +164,52 @@ CMD(interp_hello);
     STEP;
 
 CMD(interp_define);
-    /* go into compiling mode */
-    state.compiling = 1;
+    {
+        char *token;
 
-    STEP;
+        /* go into compiling mode */
+        state.compiling = 1;
+        INIT_BUFFER(state.compbuf);
+
+        token = consumeToken(&state.code);
+
+        if (token == NULL) {
+            fprintf(stderr, ": without token!\n");
+            exit(1);
+        }
+
+        state.curword = GC_STRDUP(token);
+
+        STEP;
+    }
 
 CMD(interp_enddef);
+    if (!state.compiling) {
+        /* this makes no sense! */
+        fprintf(stderr, "; without :\n");
+
+    } else {
+        Dict *cdict, *ndict;
+
+        /* add exit */
+        for (cdict = state.dict; cdict && strcmp(cdict->word, "exit"); cdict = cdict->next);
+        if (cdict) {
+            WRITE_BUFFER(state.compbuf, &cdict->code, 2);
+        } /* else massive failure */
+
+        ndict = GC_NEW(Dict);
+
+        ndict->next = state.dict;
+        ndict->flags = 0; /* FIXME */
+        ndict->word = state.curword;
+        ndict->code = addressof(interp_interp);
+        ndict->arg = state.compbuf.buf;
+
+        state.dict = ndict;
+
+        state.compiling = 0;
+
+    }
     STEP;
 
 CMD(interp_exit);
