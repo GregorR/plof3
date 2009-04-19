@@ -55,7 +55,7 @@
 #ifdef jumpenum
 enum jumplabel {
     interp_psl_nop,
-#define FOREACH(inst) interp_ ## inst,
+#define FOREACH(inst) interp_psl_ ## inst,
 #include "psl_inst.h"
 #undef FOREACH
     interp_psl_done
@@ -196,8 +196,8 @@ struct PlofReturn interpretPSL(
             } else {
                 switch (cmd) {
 #define FOREACH(inst) \
-                    case inst: \
-                        cpsl[cpsli] = addressof(interp_ ## inst); \
+                    case psl_ ## inst: \
+                        cpsl[cpsli] = addressof(interp_psl_ ## inst); \
                         break;
 #include "psl_inst.h"
 #undef FOREACH

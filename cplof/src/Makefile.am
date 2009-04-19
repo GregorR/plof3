@@ -11,5 +11,5 @@ endif
 psli_SOURCES=psli.c
 psli_LDADD=libplof.a @CNFI_LIBS@
 
-pslasm_SOURCES=lex.c pslasm.c
+pslasm_SOURCES=lex.c parse.c pslasm.c
 pslasm_LDADD=libplof.a

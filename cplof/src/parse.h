@@ -20,12 +20,18 @@
  * THE SOFTWARE.
  */
 
-#ifndef LEX_H
-#define LEX_H
+#ifndef PARSE_H
+#define PARSE_H
 
 #include <stdint.h>
 
-/* lex a single token out of an APSL string */
-unsigned char *pslTok(unsigned char **apslp, unsigned char *intobuf, size_t intosz);
+/* parsed PSL code, which is just a buffer with a size */
+struct UCharBuf {
+    size_t len;
+    unsigned char *ptr;
+};
+
+/* parse a stream of APSL into PSL */
+struct UCharBuf pslParse(unsigned char **apsl);
 
 #endif

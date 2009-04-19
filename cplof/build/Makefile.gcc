@@ -18,7 +18,7 @@ EXEEXT=
 
 LIBPLOF_A_OBJS=src/psl.o src/bignum.o
 PSLI_OBJS=src/psli.o libplof.a
-PSLASM_OBJS=src/lex.o src/pslasm.o
+PSLASM_OBJS=src/lex.o src/parse.o src/pslasm.o
 
 
 all: libplof.a psli$(EXEEXT) pslasm$(EXEEXT)

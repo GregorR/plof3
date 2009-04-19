@@ -37,8 +37,13 @@ static int isalphanum(unsigned char c)
     );
 }
 
+static int isspecial(unsigned char c)
+{
+    return (c == '/' || c == '"' || c == '{' || c == '[' || c == ']' || c == '}');
+}
+
 /* lex a single token out of an APSL string */
-unsigned char *pslLex(unsigned char **apslp, unsigned char *intobuf, size_t intosz)
+unsigned char *pslTok(unsigned char **apslp, unsigned char *intobuf, size_t intosz)
 {
     unsigned char *apsl = *apslp;
     unsigned char *token;
@@ -68,8 +73,20 @@ unsigned char *pslLex(unsigned char **apslp, unsigned char *intobuf, size_t into
         /* find the end */
         for (apsl++; isalphanum(*apsl); apsl++);
 
+    } else if (*apsl == '"') {
+        /* a string */
+        for (apsl++; *apsl &&
+                     *apsl != '"';
+                     apsl++) {
+            if (*apsl == '\\') apsl++;
+        }
+        if (*apsl == '"') apsl++;
+
+    } else if (isspecial(*apsl)) {
+        apsl++;
+
     } else {
-        /* find the end */
+        /* symbolic, find the end */
         for (apsl++; *apsl &&
                      !iswhite(*apsl) &&
                      !isalphanum(*apsl) &&
