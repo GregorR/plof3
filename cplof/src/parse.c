@@ -68,8 +68,8 @@ struct UCharBuf pslParse(unsigned char **apsl)
         if (token[0] >= '0' && token[0] <= '9') {
             long val = atol(token);
 
-            /* a number, push as a 32-bit raw */
-            EXPAND_BUFFER(6);
+            /* a number, push as a 32-bit raw and an 'integer' operation*/
+            EXPAND_BUFFER(7);
             psl[psli++] = psl_raw;
             psl[psli++] = 4; /* length as (short) bignum */
             
@@ -80,8 +80,9 @@ struct UCharBuf pslParse(unsigned char **apsl)
             psl[psli+1] = val & 0xFF;
             val >>= 8;
             psl[psli] = val & 0xFF;
-
             psli += 4;
+
+            psl[psli++] = psl_integer;
 
         } else if (!strcmp(token, "{") || !strcmp(token, "[")) {
             /* nesting structures, do a sub-parse */
