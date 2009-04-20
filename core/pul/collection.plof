@@ -110,14 +110,14 @@ var Array = IndexableCollection : ConcatableCollection : [
 
     opCastFrom = (x) {
         if (x is Collection) (
-            var arr = new Array(psl { 0 integer array });
+            var arr = new Array(psl { 0 array });
             var y;
 
             // now add element-by-element
             x.each (ref y) (
                 arr.__pul_val = psl {
                    plof{arr.__pul_val} pul_eval
-                   plof{y} pul_eval 1 integer array
+                   plof{y} pul_eval 1 array
                    aconcat
                 }
             );
@@ -171,7 +171,7 @@ var Array = IndexableCollection : ConcatableCollection : [
         new Array(
             psl {
                 plof{this.__pul_val} pul_eval
-                0 integer array aconcat
+                0 array aconcat
             }
         )
     };
@@ -323,7 +323,7 @@ var ListArray = IndexableCollection : ConcatableCollection : AppendableCollectio
 
     opCastTo = (x) {
         if (x is Array) (
-            var retarr = psl { 0 integer array };
+            var retarr = psl { 0 array };
             var x;
 
             // we can do this faster by going over the arrays directly

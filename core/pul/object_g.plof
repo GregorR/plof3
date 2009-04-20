@@ -25,7 +25,7 @@
 // trivial plof function calls
 plofbnf {
     plof_group = plof_group plof_group_next => plof {
-        psl { $1 1 integer array $0 pul_eval call }
+        psl { $1 1 array $0 pul_eval call }
     }
 
     plof_group = plof_group "\(" plof_args "\)" => plof {
@@ -34,7 +34,7 @@ plofbnf {
 
 
     plof_args = white => plof {
-        psl { 0 integer array }
+        psl { 0 array }
     }
 
     plof_args = plof_args_prime => plof { $0 }
@@ -50,7 +50,7 @@ plofbnf {
     plof_args_prime => plof_arg;
 
     plof_arg = plof_semicolon_next => plof {
-        psl { $0 1 integer array }
+        psl { $0 1 array }
     }
 };
 
@@ -58,10 +58,10 @@ plofbnf {
 plofbnf {
     plof_group = "\(" plof_params "\)" "\{" plof_funcbody "\}" => {
         // get the params for future reference
-        null push1 1 integer index call
+        null push1 1 index call
 
         // keep track of the length
-        push0 0 integer index
+        push0 0 index
 
         // make this a function context
         {
@@ -73,9 +73,9 @@ plofbnf {
             push0 length }
             
             // make the length an int
-            push1 24 integer sr byte
-            push2 16 integer sr byte concat
-            push2 8 integer sr byte concat
+            push1 24 sr byte
+            push2 16 sr byte concat
+            push2 8 sr byte concat
             push2 byte concat swrap concat
             
             { integer
@@ -85,21 +85,21 @@ plofbnf {
                     this "__pul_args" resolve member
                     push1 aconcat
                     this "__pul_proc" resolve member call
-                } 1 integer array this "opFunction" resolve member call
+                } 1 array this "opFunction" resolve member call
             }
         } concat
 
         // everything from here on is in the not-currying case
 
         // set up the args
-        {pul_fcontext 0 integer}
-        push3 1 integer index concat
+        {pul_fcontext 0}
+        push3 1 index concat
         {
             pop pop pop
         } concat
         
         // then run the function itself
-        push4 4 integer index concat
+        push4 4 index concat
 
         // and make sure it's evaluated
         {pul_eval} concat
@@ -125,7 +125,7 @@ plofbnf {
         cwrap concat { lt } concat
 
         // wrap it up with opFunction
-        cwrap {1 integer array this "opFunction" resolve member call} concat
+        cwrap {1 array this "opFunction" resolve member call} concat
 
         // then wrap the whole thing up
         cwrap {pul_funcwrap} concat
@@ -133,21 +133,21 @@ plofbnf {
 
     
     plof_params = white => {
-        {0 integer {} 2 integer array}
+        {0 {} 2 array}
     }
 
 
     plof_params = plof_params "," plof_params_next => {
-        null push1 0 integer index call
-            push0 0 integer index 1 integer add swrap
-            push1 1 integer index push3 2 integer index concat cwrap concat
-            {2 integer array} concat
+        null push1 0 index call
+            push0 0 index 1 add swrap
+            push1 1 index push3 2 index concat cwrap concat
+            {2 array} concat
     }
 
     plof_params = plof_params_next => {
-        {1 integer}
-        push1 0 integer index cwrap concat
-        {2 integer array} concat
+        {1}
+        push1 0 index cwrap concat
+        {2 array} concat
     }
 
     plof_params => plof_param;
@@ -157,7 +157,7 @@ plofbnf {
     plof_param = plof_identifier => {
         // this.name ...
         {push1}
-        push1 0 integer index concat
+        push1 0 index concat
 
         // inner stack: args fcontext index fcontext name
 
@@ -166,7 +166,7 @@ plofbnf {
             push4 push3 index memberset
         
             // and increment
-            1 integer add
+            1 add
         } concat
     }
 
@@ -205,11 +205,11 @@ plofbnf {
             plof{this.init} pul_eval cwrap concat
             { memberset } concat
         }
-        push1 1 integer index concat
+        push1 1 index concat
         {
             pul_eval concat
             {plof{this}} concat
-            1 integer array this "opFunction" resolve member call
+            1 array this "opFunction" resolve member call
             push0 push3 parentset
             memberset
         } concat

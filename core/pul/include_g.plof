@@ -25,7 +25,7 @@
 plofbnf {
     plof_group = "include" "\(" /[A-Za-z0-9_\-\.]+/ white "\)" => {
         // get the file name
-        null push1 2 integer index call
+        null push1 2 index call
         this "filename" push2 memberset
 
         // try it with .psl
@@ -50,16 +50,16 @@ plofbnf {
         // stack: content_of_file
 
         // OK, we got the content, parse it
-        "top" push2 2 integer index parse
+        "top" push2 2 index parse
 
         pul_apply_funcwrap
     }
 
     plof_group = "rtInclude" "\(" /[A-Za-z0-9_\-\.]+/ white "\)" => {
         // include a file of /exactly this name/ at runtime
-        push0 2 integer index
+        push0 2 index
         { include "top" } concat
-        push1 2 integer index concat
+        push1 2 index concat
         { parse call } concat
         pul_apply_funcwrap
     }

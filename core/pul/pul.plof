@@ -67,14 +67,14 @@ psl {
         // arg: [byref object, new value]
 
         // make sure __pul_s is set
-        push0 0 integer index "__pul_s" member null
+        push0 0 index "__pul_s" member null
         {
             // not set: This should be handled better (FIXME)
         }
         {
             // OK, set it
-            push0 1 integer index
-            push1 0 integer index "__pul_s" member call
+            push0 1 index
+            push1 0 index "__pul_s" member call
         } cmp
     } memberset
 
@@ -97,7 +97,7 @@ psl {
         // then __pul_s
         push0 "__pul_s" {
             null this "proc" resolve member call
-            push1 2 integer array
+            push1 2 array
             global "__pul_set" member call
         } memberset
     } memberset
@@ -116,13 +116,13 @@ psl {
         // first, __pul_e
         push0 "__pul_e" {
             this "arg" resolve member
-            push0 0 integer index
+            push0 0 index
 
             // check if we have it directly
-            push1 1 integer index member null
+            push1 1 index member null
             {
                 // OK, maybe opMember?
-                push0 0 integer index
+                push0 0 index
                 "opMember" member null
                 {
                     // neither: Fail
@@ -130,16 +130,16 @@ psl {
                 }
                 {
                     // use opMember
-                    push0 1 integer index null 2 integer array
-                    push1 0 integer index "opMember" member
+                    push0 1 index null 2 array
+                    push1 0 index "opMember" member
                     global "__pul_eval" member call
                     call
                 } cmp
             }
             {
                 // have it directly, easy
-                push0 0 integer index
-                push1 1 integer index
+                push0 0 index
+                push1 1 index
                 member
             } cmp
         } memberset
@@ -147,8 +147,8 @@ psl {
         // then, __pul_s
         push0 "__pul_s" {
             this "arg" resolve member
-            push0 0 integer index
-            push1 1 integer index
+            push0 0 index
+            push1 1 index
             push3
             memberset
         } memberset
@@ -196,7 +196,7 @@ psl {
 psl {
     // basic opInteger, filled in later
     pul_fcontext "opInteger" {
-        new push0 "__pul_val" push3 0 integer index memberset
+        new push0 "__pul_val" push3 0 index memberset
     } memberset
 };
 
@@ -213,14 +213,14 @@ psl {
 
     // Object.__pul_type = [Object]
     push0 "__pul_type"
-        push2 1 integer array 
+        push2 1 array 
         push0 push4 parentset
     memberset
 
     // opDuplicate to duplicate objects
     pul_fcontext "opDuplicate"
     {
-        push0 0 integer index
+        push0 0 index
 
         // make the new object
         new combine
@@ -236,13 +236,13 @@ psl {
         {
             // no parent type
             push0 "__pul_type"
-                push2 1 integer array
+                push2 1 array
             memberset
         }
         {
             // use the parent type
             push0 "__pul_type"
-                push2 1 integer array
+                push2 1 array
                 push3 "__pul_type" member pul_eval
                 aconcat
                 push0 push4 parentset
@@ -260,17 +260,17 @@ psl {
         } cmp
 
         // and reparent everything
-        push0 push2 0 integer index 2 integer array
+        push0 push2 0 index 2 array
         this "opReparent" resolve member call pop
     } memberset
 
     // opReparent reparents members of $0 from $1
     pul_fcontext "opReparent"
     {
-        this "object"  push2 0 integer index memberset
-        this "old"     push2 1 integer index memberset
-        this "members" push2 0 integer index members memberset
-        this "index"   0 integer memberset
+        this "object"  push2 0 index memberset
+        this "old"     push2 1 index memberset
+        this "members" push2 0 index members memberset
+        this "index"   0 memberset
 
         null
         {
@@ -297,7 +297,7 @@ psl {
 
                             // now we have the object and the name, so reparent it
                             push1 push1 member
-                                1 integer array
+                                1 array
                                 this "opDuplicate" resolve member call pul_eval
                                 push0 push3 parentset
                                 memberset
@@ -306,7 +306,7 @@ psl {
 
                 // and increment the index
                 this "index" resolve
-                        this "index" resolve member 1 integer add
+                        this "index" resolve member 1 add
                             memberset
         } while pop
     } memberset
@@ -320,9 +320,9 @@ psl {
     pul_fcontext "opCombine"
     {
         // arg: [old1, old2, new]
-        this "old1" push2 0 integer index memberset
-        this "old2" push2 1 integer index memberset
-        push0 2 integer index this "new" push2 memberset
+        this "old1" push2 0 index memberset
+        this "old2" push2 1 index memberset
+        push0 2 index this "new" push2 memberset
 
         // object.this = object
         push0 "this" push2 memberset
@@ -339,13 +339,13 @@ psl {
             {
                 // none on either side, just use itself
                 this "new" resolve member "__pul_type"
-                    push1 1 integer array
+                    push1 1 array
                 memberset
             }
             {
                 // right but not left
                 this "new" resolve member "__pul_type"
-                    push1 1 integer array
+                    push1 1 array
                     this "old2" resolve member "__pul_type" member pul_eval
                     aconcat
                 memberset
@@ -357,7 +357,7 @@ psl {
             {
                 // left but not right
                 this "new" resolve member "__pul_type"
-                    push1 1 integer array
+                    push1 1 array
                     this "old1" resolve member "__pul_type" member pul_eval
                     aconcat
                 memberset
@@ -365,7 +365,7 @@ psl {
             {
                 // both set
                 this "new" resolve member "__pul_type"
-                    push1 1 integer array
+                    push1 1 array
                     this "old2" resolve member "__pul_type" member pul_eval
                     aconcat
                     this "old1" resolve member "__pul_type" member pul_eval
@@ -377,13 +377,13 @@ psl {
         // reparent all members
         this "new" member
         this "old1" member
-        2 integer array
+        2 array
         this "opReparent" resolve member call pop
         this "new" member
         this "old2" member
-        2 integer array
+        2 array
         this "opReparent" resolve member call pop
 
-        2 integer index
+        2 index
     } memberset
 };

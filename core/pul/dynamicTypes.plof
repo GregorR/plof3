@@ -29,7 +29,7 @@ Object := [
             this "mytype"
             plof{this} pul_eval "__pul_type" member
             memberset
-            this "index" 0 integer memberset
+            this "index" 0 memberset
 
             // go through each element
             null
@@ -55,7 +55,7 @@ Object := [
                 // increment the index
                 this "index" resolve
                         this "index" resolve member
-                            1 integer add
+                            1 add
                             memberset
             } while pop
 

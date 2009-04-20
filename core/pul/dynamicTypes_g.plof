@@ -43,17 +43,17 @@ plofbnf {
     plof_param = plof_identifier "as" plof_semicolon_next => {
         // still get the named param as usual
         {push1}
-        push1 0 integer index concat
+        push1 0 index concat
 
         // store the astype for later
-        push1 2 integer index concat
+        push1 2 index concat
         {
             this "astype" push2 memberset
         } concat
 
         {
             pul_eval
-            1 integer array
+            1 array
 
             // stack: args fcontext index fcontext ident astype
             push5 push4 index
@@ -78,7 +78,7 @@ plofbnf {
 
             // otherwise, set as usual
             memberset
-            1 integer add
+            1 add
         } concat
     }
 };

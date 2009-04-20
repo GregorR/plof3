@@ -54,7 +54,7 @@ plofbnf {
 
     plof_arr_elems = white => plof {
         psl {
-            0 integer array
+            0 array
         }
     }
     plof_arr_elems = plof_arr_elems_next => plof { $0 }
@@ -63,13 +63,13 @@ plofbnf {
     plof_arr_elems_prime = plof_arr_elems_prime "," plof_arr_elems_prime_next => plof {
         psl {
             $0 pul_eval
-            $2 1 integer array
+            $2 1 array
             aconcat
         }
     }
     plof_arr_elems_prime = plof_arr_elems_prime_next => plof {
         psl {
-            $0 1 integer array
+            $0 1 array
         }
     }
     plof_arr_elems_prime => plof_arr_elem;

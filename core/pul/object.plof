@@ -25,15 +25,15 @@
 // opMember is not a capital-F Function, as that would be a recursive definition (opMember.opMember.opMember...)
 Object.opMember = psl { {
     // args: [name, next context]
-    this "name" push2 0 integer index pul_eval memberset
-    this "next" push2 1 integer index pul_eval memberset
+    this "name" push2 0 index pul_eval memberset
+    this "next" push2 1 index pul_eval memberset
 
     // first check if it's in "this"
     null this "this" resolve member this "name" member member null
     {
         // it's not here, try the type
         this "type" this "__pul_type" resolve member memberset
-        this "index" 1 integer memberset
+        this "index" 1 memberset
 
         null
         {
@@ -56,7 +56,7 @@ Object.opMember = psl { {
                         push0 this "name" resolve member member 
 
                         // then duplicate it
-                        1 integer array
+                        1 array
                         this "opDuplicate" resolve member call
 
                         // reparent it
@@ -79,29 +79,29 @@ Object.opMember = psl { {
                 // now increment the index
                 this "index" resolve
                         this "index" resolve member
-                            1 integer add
+                            1 add
                             memberset
             } while pop
 
             // didn't find it. Check with the next guy
             this "name" resolve member "opMember"
             this "next" resolve member
-            push2 push2 2 integer array resolve
-            4 integer array
+            push2 push2 2 array resolve
+            4 array
 
             // now check whether we used opMember or the name
-            push0 1 integer index
-            push1 3 integer index
+            push0 1 index
+            push1 3 index
             {
                 // used opMember, call it
-                push0 0 integer index
-                push1 2 integer index parent 2 integer array
-                push1 2 integer index "opMember" member pul_eval call
+                push0 0 index
+                push1 2 index parent 2 array
+                push1 2 index "opMember" member pul_eval call
             }
             {
                 // no opMember
-                push0 2 integer index
-                push1 0 integer index
+                push0 2 index
+                push1 0 index
                 member
             } cmp
         }
@@ -135,7 +135,7 @@ var Function = Object : [];
 // FIXME: Should use proper combination
 var opFunction = Function:psl { {
     // get the procedure
-    this "proc" push2 0 integer index pul_eval memberset
+    this "proc" push2 0 index pul_eval memberset
 
     // combine it with Function
     plof { Function:proc } pul_eval

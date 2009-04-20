@@ -39,56 +39,56 @@ plofbnf {
 
     // The pul_char stuff. Basically, a normal char + escapes
     pul_char = /[^\\"]/ => {
-        push0 0 integer index call
+        push0 0 index call
     }
     pul_char = /\\0/ => { // NULL
-        0 integer byte
+        0 byte
     }
     pul_char = /\\a/ => { // Bell
-        7 integer byte
+        7 byte
     }
     pul_char = /\\b/ => { // Backspace
-        8 integer byte
+        8 byte
     }
     pul_char = /\\t/ => { // Horizontal tab
-        9 integer byte
+        9 byte
     }
     pul_char = /\\n/ => { // Newline
-        10 integer byte
+        10 byte
     }
     pul_char = /\\v/ => { // Vertical tab
-        11 integer byte
+        11 byte
     }
     pul_char = /\\f/ => { // Form feed
-        12 integer byte
+        12 byte
     }
     pul_char = /\\r/ => { // Carriage return
-        13 integer byte
+        13 byte
     }
     pul_char = /\\e/ => { // Escape
-        27 integer byte
+        27 byte
     }
     pul_char = /\\"/ => {  // "
-        34 integer byte
+        34 byte
     }
     pul_char = /\\\\/ => { // \
-        92 integer byte
+        92 byte
     }
     pul_char = /\\\{/ number /\}/ => { // \{code}
-        push0 1 integer index byte
+        push0 1 index byte
     }
 
     // pul_chars is any number of pul_char. . .
     pul_chars = pul_char pul_chars => {
-        push0 0 integer index push1 1 integer index concat
+        push0 0 index push1 1 index concat
     }
     pul_chars = pul_char => {
-        push0 0 integer index
+        push0 0 index
     }
 
     // and pul_str is pul_chars in PSL
     pul_str = pul_chars => {
-        push0 0 integer index {""} wrap
+        push0 0 index {""} wrap
     }
 
     // strings in plof
