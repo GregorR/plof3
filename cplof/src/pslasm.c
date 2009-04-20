@@ -27,6 +27,7 @@
 
 #include "bignum.h"
 #include "parse.h"
+#include "plof.h"
 
 #define BUFSTEP 1024
 
