@@ -95,7 +95,7 @@ int main(int argc, char **argv)
     }
 
     /* the header */
-    fwrite("\x9E\x50\x53\x4C\x17\xF2\x58\x8C", 1, 8, pslf);
+    fwrite(PSL_FILE_MAGIC, 1, sizeof(PSL_FILE_MAGIC)-1, pslf);
 
     /* the section header */
     bnumsz = pslBignumLength(parsed.len + 1);

@@ -38,6 +38,8 @@ extern char **plofIncludePaths;
 #define PLOF_DATA_RAW 0
 #define PLOF_DATA_ARRAY 1
 
+#define PSL_FILE_MAGIC "\x9E\x50\x53\x4C\x17\xF2\x58\x8C"
+
 /* GC_NEW with 0s */
 #ifndef GC_NEW_Z
 #define GC_NEW_Z(t) memset(GC_NEW(t), 0, sizeof(t))
