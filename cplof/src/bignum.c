@@ -1,4 +1,6 @@
 /*
+ * Support for reading/writing PSL bignums
+ *
  * Copyright (c) 2009 Gregor Richards
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy

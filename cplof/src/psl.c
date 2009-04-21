@@ -1,4 +1,6 @@
 /*
+ * PSL interpreter
+ *
  * Copyright (c) 2007, 2008, 2009 Gregor Richards
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -90,6 +92,7 @@ struct PlofReturn interpretPSL(
     /* The stack */
     size_t stacklen, stacktop;
     struct PlofObject **stack;
+    register struct PlofObject *s0, *s1, *s2, *s3, *s4, *s5, *s6, *s7;
 
     /* Slots for n-ary ops */
     struct PlofObject *a, *b, *c, *d, *e;

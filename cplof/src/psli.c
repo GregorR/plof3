@@ -1,4 +1,6 @@
 /*
+ * psli, the frontend to the PSL interpreter for simple PSL (non-Plof) files
+ *
  * Copyright (c) 2007, 2008, 2009 Gregor Richards
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy

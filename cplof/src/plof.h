@@ -1,4 +1,7 @@
 /*
+ * This header has generally accessible structs and functions, e.g. the
+ * functions in psl.c
+ *
  * Copyright (c) 2007, 2008, 2009 Gregor Richards
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
