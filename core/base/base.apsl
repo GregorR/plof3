@@ -80,9 +80,9 @@ gadd
 gadd
 
 "pslOpsX"
-"pslOpsX" "pslOp"
-2 array
-{push0 0 index push1 1 index concat}
+"pslOpsX" "white" "pslOp" "white"
+4 array
+{push0 0 index push1 2 index concat}
 gadd
 
 "pslOpsX"
@@ -122,14 +122,14 @@ gadd
 gadd
 
 "pslOp"
-"number"
-1 array
+"number" "white"
+2 array
 {push0 0 index}
 gadd
 
 "pslOp"
-"marker"
-1 array
+"marker" "white"
+2 array
 {push0 0 index}
 gadd
  
@@ -254,8 +254,8 @@ gadd
 gadd
 
 "number"
-"digits" "token" "white"
-3 array
+"digits" "token"
+2 array
 {push0 0 index
  push0 24 sr byte
  push1 16 sr byte

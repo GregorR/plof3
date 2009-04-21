@@ -1,7 +1,7 @@
 /*
- * The Plof User Language basic definitions. This file gets you from the grammar defined in base.psl
- * to a functional PUL grammar, and creates mostly-empty Object and Function objects. object.pul
- * should be loaded next to flesh out the important objects.
+ * The Plof User Language basic definitions. This file provides the procedures
+ * necessary to support lazy evaluation, as well as the now mostly-empty Object
+ * object.
  *
  *  Copyright (c) 2007, 2008, 2009  Gregor Richards
  *  
@@ -26,7 +26,9 @@
 
 psl {
     /* PUL objects can potentially be unevaluated. This function evaluates
-     * unevaluated objects, or just returns the object if it has been evaluated */
+     * unevaluated objects, or just returns the object if it has been evaluated.
+     * A boxed object has a __pul_e function to evaluate it, and a __pul_v
+     * member if it has already been evaluated */
     global "__pul_eval" {
         // is __pul_v set?
         push0 "__pul_v" member null
@@ -49,6 +51,7 @@ psl {
         } cmp
     } memberset
 
+    // This forces a boxed object to be evaluated, even if it already has been
     global "__pul_forceEval" {
         // is __pul_e set?
         push0 push0 "__pul_e" member null
@@ -62,7 +65,9 @@ psl {
         } cmp
     } memberset
 
-    // PUL returns are by-ref, so you can set through them. __pul_set does so
+    /* PUL returns are by-ref, so you can set through them. They include a
+     * __pul_s function to set. This function is just a wrapper around __pul_s
+     * Arguments: [wrapper object, new value] */
     global "__pul_set" {
         // arg: [byref object, new value]
 
@@ -105,6 +110,7 @@ psl {
 
     // create an unevaluated value from a variable
     global "__pul_varwrap" {
+        "VARWRAP" print
         // arg: [context, name]
 
         // put the argument in a var
@@ -117,31 +123,11 @@ psl {
         push0 "__pul_e" {
             this "arg" resolve member
             push0 0 index
+            push1 1 index
+            null
+            3 array
 
-            // check if we have it directly
-            push1 1 index member null
-            {
-                // OK, maybe opMember?
-                push0 0 index
-                "opMember" member null
-                {
-                    // neither: Fail
-                    null
-                }
-                {
-                    // use opMember
-                    push0 1 index null 2 array
-                    push1 0 index "opMember" member
-                    global "__pul_eval" member call
-                    call
-                } cmp
-            }
-            {
-                // have it directly, easy
-                push0 0 index
-                push1 1 index
-                member
-            } cmp
+            this "opMember" resolve member pul_eval call
         } memberset
 
         // then, __pul_s
@@ -179,30 +165,27 @@ psl {
     } memberset
 
 
-    // PUL functions are marked with the variable __pul_fc. This finds it
+    /* Because everything is wrapped, "var" needs to know where to put a
+     * variable correctly. Plof function contexts are marked with the member
+     * "__pul_fc" for this purpose, and __pul_fcontext finds the nearest
+     * function context */
     global "__pul_fcontext" {
         // arg: context
         "__pul_fc" resolve pop
     } memberset
-};
 
-// the top context is a PUL fcontext
-psl {
+    // the top context is a PUL fcontext
     this "__pul_fc" this memberset
-};
 
-
-// Integers
-psl {
-    // basic opInteger, filled in later
+    /* basic opInteger, filled in later to refer to NativeInteger. Given a
+     * primitive integer, opInteger creates an object with __pul_val set to
+     * that primitive value. */
     pul_fcontext "opInteger" {
         new push0 "__pul_val" push3 0 index memberset
     } memberset
-};
 
 
-// The most important object in the game, Object
-psl {
+    // The most important object in the game, Object
     new push0 pul_fcontext parentset
 
     // top.Object = ...
@@ -217,7 +200,12 @@ psl {
         push0 push4 parentset
     memberset
 
-    // opDuplicate to duplicate objects
+    // Object.__pul_fc = Object
+    push0 "__pul_fc"
+        push2
+    memberset
+
+    // opDuplicate duplicates an object, used for derivation
     pul_fcontext "opDuplicate"
     {
         push0 0 index
@@ -237,6 +225,7 @@ psl {
             // no parent type
             push0 "__pul_type"
                 push2 1 array
+                push0 push4 parentset
             memberset
         }
         {
@@ -246,16 +235,6 @@ psl {
                 push3 "__pul_type" member pul_eval
                 aconcat
                 push0 push4 parentset
-            memberset
-        } cmp
-
-        // copy opMember (if set)
-        push0 "opMember" member null
-        {}
-        {
-            push0 "opMember"
-                push2 "opMember" member pul_eval
-                new combine push0 push4 parentset
             memberset
         } cmp
 
@@ -311,25 +290,24 @@ psl {
         } while pop
     } memberset
 
-    // opCombine is defined below as it depends on duplication
-};
-
-
-psl {
     // opCombine reconciles combined objects
     pul_fcontext "opCombine"
     {
-        // arg: [old1, old2, new]
+        // arg: [old1, old2]
         this "old1" push2 0 index memberset
         this "old2" push2 1 index memberset
-        push0 2 index this "new" push2 memberset
+
+        // do the primitive combine first
+        push0 0 index push1 1 index combine
+
+        // put it in "new" for later
+        this "new" push2 memberset
 
         // object.this = object
         push0 "this" push2 memberset
 
         // objects are function contexts
         push0 "__pul_fc" push2 memberset
-        pop
 
         // their type is based on the parent types (if set)
         this "old1" member "__pul_type" member pul_eval null
@@ -375,15 +353,120 @@ psl {
         } cmp
 
         // reparent all members
-        this "new" member
+        push0
         this "old1" member
         2 array
         this "opReparent" resolve member call pop
-        this "new" member
+
+        push0
         this "old2" member
         2 array
         this "opReparent" resolve member call pop
-
-        2 index
     } memberset
-};
+
+    /* opMember is what really implements the prototype-based object system in
+     * Plof. opMember searches for the $1'th member of object $0, but also
+     * searches through the object's type before searching through its parents.
+     * It returns either null or the found object */
+    this "opMember" {
+        this "obj" push2 0 index pul_eval memberset
+        this "name" push2 1 index pul_eval memberset
+        this "cont" push2 2 index memberset
+
+        // first get the type
+        this "type"
+
+        // obj.__pul_type == null? leaves __pul_type on the stack
+        this "obj" member "__pul_type" member push0 null
+        {
+            // nope, invent a type
+            this "obj" resolve member 1 array
+        }
+        {
+            // keep the type as-is
+        } cmp
+
+        memberset
+
+        // if we have it directly, it'll go here, otherwise this will start as null
+        this "ret"
+                this "obj" member
+                    this "name" member
+                        member
+                    memberset
+
+        // now loop over the type
+        this "index" 1 memberset
+        null
+        {
+            // continue if ret == null
+            this parent "ret" member null
+            {
+                // and index < length
+                this "index" resolve member
+                this "type" resolve member length
+                { global } { null } lt
+            } { null } cmp
+        }
+        {
+            // OK, check if this element of type contains the seeked value
+            this "type" resolve member
+                this "index" resolve member
+                    index
+                this "name" resolve member
+                    member
+
+            push0 null
+            {
+                // nope, keep looking
+            }
+            {
+                // found it! Copy it,
+                new combine
+
+                // reparent it
+                push0
+                    this "type" resolve member
+                        this "index" resolve member
+                            index
+                        parentset
+
+                // and assign it
+                this parent parent "ret" push2 memberset
+            } cmp
+
+            // index++
+            this "index" resolve
+                    push1 push1 member
+                        1 add
+                        memberset
+        } while
+
+        // if we haven't found anything,
+        this "ret" member push0 null
+        {
+            // are we supposed to continue?
+            this "cont" resolve member null
+            {
+                // nope, just let null fall through
+            }
+            {
+                // OK, recurse if it's not null
+                this "obj" resolve member parent
+                push0 null
+                {
+                    // it was null! well, just let the null trickle down
+                }
+                {
+                    this "name" resolve member
+                    global
+                    3 array
+                    this "opMember" resolve member pul_eval call
+                } cmp
+            } cmp
+        }
+        {
+            // oh, we found it, done
+        } cmp
+    } memberset
+}
