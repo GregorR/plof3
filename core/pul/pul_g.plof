@@ -386,7 +386,8 @@ pslbnf {
         } concat
 
         // wrap it up
-        pul_apply_funcwrap
+        // pul_apply_funcwrap FIXME: can't apply_wrap because it pushes too many
+        cwrap { pul_funcwrap } concat
     }
 
     plof_identifier = plof_notkeyword /[A-Za-z_][A-Za-z0-9_]*/ token nnlwhite => {

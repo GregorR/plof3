@@ -22,114 +22,9 @@
  *  IN THE SOFTWARE.
  */
 
-// opMember is not a capital-F Function, as that would be a recursive definition (opMember.opMember.opMember...)
-Object.opMember = psl { {
-    // args: [name, next context]
-    this "name" push2 0 index pul_eval memberset
-    this "next" push2 1 index pul_eval memberset
-
-    // first check if it's in "this"
-    null this "this" resolve member this "name" member member null
-    {
-        // it's not here, try the type
-        this "type" this "__pul_type" resolve member memberset
-        this "index" 1 memberset
-
-        null
-        {
-            {
-                // continue so long as the index is < the length
-                this "index" resolve member
-                this "type" resolve member length
-                { global } { null } lt
-            }
-            {
-                // OK, check if that type has this
-                this "type" resolve member
-                    this "index" resolve member
-                        index
-                
-                    push0 this "name" resolve member member null
-                    {}
-                    {
-                        // found it, get it
-                        push0 this "name" resolve member member 
-
-                        // then duplicate it
-                        1 array
-                        this "opDuplicate" resolve member call
-
-                        // reparent it
-                        push0 this "this" resolve member parentset
-
-                        // and assign it into us
-                        this "this" resolve member this "name" resolve member push2 memberset
-
-                        // now make it a reference
-                        this "this" resolve member this "name" resolve member pul_varwrap
-
-                        // then throw it
-                        new
-                        push0 "__pul_opmember_search" push3 memberset
-                        throw
-                    } cmp
-
-                    pop
-
-                // now increment the index
-                this "index" resolve
-                        this "index" resolve member
-                            1 add
-                            memberset
-            } while pop
-
-            // didn't find it. Check with the next guy
-            this "name" resolve member "opMember"
-            this "next" resolve member
-            push2 push2 2 array resolve
-            4 array
-
-            // now check whether we used opMember or the name
-            push0 1 index
-            push1 3 index
-            {
-                // used opMember, call it
-                push0 0 index
-                push1 2 index parent 2 array
-                push1 2 index "opMember" member pul_eval call
-            }
-            {
-                // no opMember
-                push0 2 index
-                push1 0 index
-                member
-            } cmp
-        }
-        {
-            // is this our response?
-            push0 "__pul_opmember_search" member null
-            {
-                // no, throw it again
-                throw
-            }
-            {
-                // yes, just pass it along
-                "__pul_opmember_search" member
-            } cmp
-        } catch
-    }
-    {
-        // we have it, simple enough
-        this "this" resolve member
-        this "name" resolve member
-        pul_varwrap
-    } cmp
-} };
-psl { this "Object" resolve member push0 "opMember" member push1 parentset pop };
-
 
 // the Function type
-var Function = Object : [];
+var Function = Object : []
 
 
 // FIXME: Should use proper combination
@@ -139,23 +34,23 @@ var opFunction = Function:psl { {
 
     // combine it with Function
     plof { Function:proc } pul_eval
-} };
+} }
 
 
 /// The Plof version of psl{null}
-var Null = Object:[];
+var Null = Object:[]
 
 
 /// Some useful functions
-var selff = (x) { selff };
-var id = (x) { x };
+var selff = (x) { selff }
+var id = (x) { x }
 
 
 /// Standard object initialization
 var new = (type) {
     (type:[]).init
-};
-Object := [init = {this};];
+}
+Object := [init = {this};]
 
 
 /// References
@@ -163,5 +58,5 @@ var Reference = Object : [
     this (readx, writex) {
         this.read = readx;
         this.write = writex;
-    };
-];
+    }
+]
