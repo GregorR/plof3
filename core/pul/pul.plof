@@ -110,7 +110,6 @@ psl {
 
     // create an unevaluated value from a variable
     global "__pul_varwrap" {
-        "VARWRAP" print
         // arg: [context, name]
 
         // put the argument in a var
