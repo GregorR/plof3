@@ -300,8 +300,7 @@ pslbnf {
         pul_apply_funcwrap
     }
     plof_semicolon = plof_semicolon eos => {
-        push0 0 index pul_apply_eval {pop this "Null" resolve member} concat
-        pul_apply_funcwrap
+        push0 0 index
     }
     plof_semicolon = plof_semicolon_next => { push0 0 index }
     plof_semicolon => plof_assign;

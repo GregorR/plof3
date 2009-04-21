@@ -28,7 +28,7 @@ plofbnf {
         psl { $1 1 array $0 pul_eval call }
     }
 
-    plof_group = plof_group "\(" plof_args "\)" => plof {
+    plof_group = plof_group "\("w plof_args "\)" => plof {
         psl { $2 pul_eval $0 pul_eval call }
     }
 
@@ -39,24 +39,24 @@ plofbnf {
 
     plof_args = plof_args_prime => plof { $0 }
 
-    plof_args_prime = plof_args_prime "," plof_args_prime_next => plof {
+    plof_args_prime = plof_args_prime ","w plof_args_prime_next => plof {
         psl { $0 pul_eval $2 pul_eval aconcat }
     }
 
-    plof_args_prime = plof_args_prime_next "," plof_args_prime_next => plof {
+    plof_args_prime = plof_args_prime_next ","w plof_args_prime_next => plof {
         psl { $0 pul_eval $2 pul_eval aconcat }
     }
 
     plof_args_prime => plof_arg;
 
-    plof_arg = plof_semicolon_next => plof {
+    plof_arg = plof_semicolon => plof {
         psl { $0 1 array }
     }
-};
+}
 
 // more advanced function syntax
 plofbnf {
-    plof_group = "\(" plof_params "\)" "\{" plof_funcbody "\}" => {
+    plof_group = "\("w plof_params "\)" "\{"w plof_funcbody "\}" => {
         // get the params for future reference
         null push1 1 index call
 
@@ -137,7 +137,7 @@ plofbnf {
     }
 
 
-    plof_params = plof_params "," plof_params_next => {
+    plof_params = plof_params ","w plof_params_next => {
         null push1 0 index call
             push0 0 index 1 add swrap
             push1 1 index push3 2 index concat cwrap concat
@@ -179,7 +179,7 @@ plofbnf {
 
 
     // deep returns
-    plof_group = "return" plof_group_next => plof {
+    plof_group = "return"w plof_group_next => plof {
         psl {
             new
                 push0 "__pul_ret_fc" pul_fcontext memberset
@@ -188,17 +188,17 @@ plofbnf {
         }
     }
 
-};
+}
 
 plofbnf {
-    plof_group = "\{" plof_funcbody "\}" => plof {
+    plof_group = "\{"w plof_funcbody "\}" => plof {
         () { $1 }
     }
-};
+}
 
 /// Constructors are a somewhat special case of functions
 plofbnf {
-    plof_obj_def = "this" plof_bind_next ";" => {
+    plof_obj_def = "this"w plof_bind_next eos => {
         {
             push0 "init"
             { this "super" }
@@ -214,14 +214,14 @@ plofbnf {
             memberset
         } concat
     }
-};
+}
 
 /// References
 plofbnf {
-    plof_literal = "ref" plof_var => plof {
+    plof_literal = "ref"w plof_var => plof {
         new Reference (
             { $1 },
             (__pul_ref_x) { $1 = __pul_ref_x }
         )
     }
-};
+}
