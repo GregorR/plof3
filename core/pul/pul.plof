@@ -128,6 +128,8 @@ psl {
             3 array
 
             this "opMember" resolve member pul_eval call
+
+            push1 1 index member
         } memberset
 
         // then, __pul_s
@@ -367,7 +369,8 @@ psl {
     /* opMember is what really implements the prototype-based object system in
      * Plof. opMember searches for the $1'th member of object $0, but also
      * searches through the object's type before searching through its parents.
-     * It returns either null or the found object */
+     * It returns either null or the object which ultimately contains the
+     * desired name */
     this "opMember" {
         this "obj" push2 0 index pul_eval memberset
         this "name" push2 1 index pul_eval memberset
@@ -390,10 +393,20 @@ psl {
 
         // if we have it directly, it'll go here, otherwise this will start as null
         this "ret"
-                this "obj" member
-                    this "name" member
-                        member
-                    memberset
+
+        this "obj" member
+            this "name" member
+                member
+        push0 null
+        {
+            // nope, ret = null
+        }
+        {
+            // set ret to this.obj
+            this "obj" resolve member
+        } cmp
+
+        memberset
 
         // now loop over the type
         this "index" 1 memberset
@@ -413,23 +426,43 @@ psl {
             this "type" resolve member
                 this "index" resolve member
                     index
-                this "name" resolve member
-                    member
+                push0
+                    this "name" resolve member
+                        member
+
+            // stack is now: type[index] type[index].name
 
             push0 null
             {
                 // nope, keep looking
             }
             {
-                // found it! Copy it,
-                new combine
+                // found it! Copy it if it's owned by the type
+                push0 this "name" resolve member member
 
-                // reparent it
-                push0
+                // stack: type[index] type[index].name
+                push0 parent
                     this "type" resolve member
                         this "index" resolve member
                             index
-                        parentset
+                {
+                    // yup, it's owned by the type. Duplicate,
+                    new combine
+
+                    // and reparent
+                    push0
+                        this "obj" resolve member
+                            parentset
+                }
+                {} cmp
+
+                // assign it into this object
+                this "obj" resolve member
+                    this "name" resolve member
+                        push2 memberset
+                pop
+
+                // stack: type[index]
 
                 // and assign it
                 this parent parent "ret" push2 memberset

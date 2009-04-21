@@ -373,14 +373,17 @@ pslbnf {
     plof_var => plof_ident;
 
     plof_ident = plof_identifier => {
-        // call the global opMember with the context and name
-        { this }
-        push1 0 integer index concat
+        // call the global opMember with the context and name, which will return a new context
+        push0 0 index
         {
+            this
+            push1
             global /* opMember's third argument specifies whether to continue
                     * searching out of this scope */
             3 array
             this "opMember" resolve member pul_eval call
+
+            push1 pul_varwrap
         } concat
 
         // wrap it up
