@@ -92,10 +92,10 @@ plofbnf {
     }
 
     // strings in plof
-    plof_literal = /"/ pul_str /"/ white => plof {
+    plof_literal = /"/ pul_str /"/ nnlwhite => plof {
         new String($1)
     }
-    plof_literal = /""/ white => plof {
+    plof_literal = /""/ nnlwhite => plof {
         new String(psl { "" })
     }
 }
