@@ -80,7 +80,7 @@ struct ParseResult {
 struct Production *getProduction(const unsigned char *name);
 
 /* remove all productions with the given name */
-void delProductions(const unsigned char *name);
+void delProduction(const unsigned char *name);
 
 /* remove ALL productions */
 void delAllProductions();

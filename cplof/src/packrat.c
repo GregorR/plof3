@@ -2,6 +2,7 @@
  * A Plof-suitable packrat parser (memoized recursive descent parser)
  *
  * Copyright (c) 2009 Gregor Richards
+ * Copyright (c) 2009 Josiah Worcester
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -85,14 +86,18 @@ struct Production *getProduction(const unsigned char *name)
 }
 
 /* remove all productions with the given name */
-void delProductions(const unsigned char *name)
+void delProduction(const unsigned char *name)
 {
     /* find the relevant production */
-    struct Production *curp = getProduction(name);
+    struct Production *curp = getProduction(name),
+	*curp_left = curp->left,
+	*curp_right = curp->right;
 
     /* and blank it */
     memset(curp, 0, sizeof(struct Production));
     curp->name = (unsigned char *) GC_STRDUP((char *) name);
+    curp->left = curp_left;
+    curp->right = curp_right;
 }
 
 /* remove ALL productions */
