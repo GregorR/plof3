@@ -198,7 +198,7 @@ plofbnf {
 
 /// Constructors are a somewhat special case of functions
 plofbnf {
-    plof_obj_def = "this"w plof_bind_next eos => {
+    plof_obj_def = "this"w plof_bind_next => {
         {
             push0 "init"
             { this "super" }

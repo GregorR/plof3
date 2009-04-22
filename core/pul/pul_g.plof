@@ -533,9 +533,12 @@ pslbnf {
         push0 0 index
     }
 
-    plof_obj_defs = plof_obj_defs plof_obj_defs_next => {
+    plof_obj_defs = plof_obj_defs eos plof_obj_defs_next => {
         push0 0 index
-        push1 1 index concat
+        push1 2 index concat
+    }
+    plof_obj_defs = plof_obj_defs eos => {
+        push0 0 index
     }
     plof_obj_defs = plof_obj_defs_next => {
         push0 0 index
@@ -545,10 +548,10 @@ pslbnf {
     }
     plof_obj_defs => plof_obj_def;
 
-    plof_obj_def = plof_identifier "="w plof_bind_next eos => {
+    plof_obj_def = plof_identifier "="w plof_bind_next => {
         {push0}
         push1 0 index concat
         push1 2 index pul_apply_eval concat
         {push0 push4 parentset memberset} concat
     }
-};
+}
