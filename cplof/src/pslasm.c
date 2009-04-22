@@ -38,7 +38,7 @@ int main(int argc, char **argv)
     FILE *pslf;
     unsigned char *apsl, *bnum;
     char *ofname;
-    size_t len, rd, i, bnumsz;
+    size_t len, rd, bnumsz;
     struct UCharBuf parsed;
 
     GC_INIT();

@@ -54,7 +54,7 @@ struct UCharBuf pslParse(unsigned char **apsl)
     }
 
     /* and start receiving tokens */
-    while (pslTok(apsl, token, BUFSTEP)) {
+    while (pslTok(apsl, (unsigned char *) token, BUFSTEP)) {
         /* make sure we have room for at least one more element */
         EXPAND_BUFFER(1);
 

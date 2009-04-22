@@ -43,6 +43,7 @@
 #include <unistd.h>
 #endif
 
+#include "bignum.h"
 #include "jump.h"
 #include "plof.h"
 #include "psl.h"
@@ -92,7 +93,6 @@ struct PlofReturn interpretPSL(
     /* The stack */
     size_t stacklen, stacktop;
     struct PlofObject **stack;
-    register struct PlofObject *s0, *s1, *s2, *s3, *s4, *s5, *s6, *s7;
 
     /* Slots for n-ary ops */
     struct PlofObject *a, *b, *c, *d, *e;
@@ -1530,7 +1530,7 @@ label(interp_psl_include);
         data = NULL;
         for (path = plofIncludePaths; *path; path++) {
             file = GC_MALLOC_ATOMIC(strlen(*path) + rd->length + 2);
-            sprintf(file, "%s/%.*s", *path, rd->length, rd->data);
+            sprintf(file, "%s/%.*s", *path, (int) rd->length, rd->data);
 
             fh = fopen(file, "r");
             if (fh != NULL) {
@@ -1561,7 +1561,7 @@ label(interp_psl_include);
             rd = GC_NEW_Z(struct PlofRawData);
             rd->type = PLOF_DATA_RAW;
             rd->length = bufi;
-            rd->data = data;
+            rd->data = (unsigned char *) data;
 
             a = GC_NEW_Z(struct PlofObject);
             a->parent = context;

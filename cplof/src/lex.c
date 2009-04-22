@@ -100,7 +100,7 @@ unsigned char *pslTok(unsigned char **apslp, unsigned char *intobuf, size_t into
     /* and copy it in */
     tokensz = apsl - token;
     if (tokensz >= intosz) tokensz = intosz - 1;
-    strncpy(intobuf, token, tokensz);
+    strncpy((char *) intobuf, (char *) token, tokensz);
     intobuf[tokensz] = '\0';
     *apslp = apsl;
 
