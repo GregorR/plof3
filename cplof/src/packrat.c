@@ -30,6 +30,12 @@
 
 #include "packrat.h"
 
+#define BUFFER_DEFAULT_SIZE 8
+#include "buffer.h"
+BUFFER(ParseResult, struct ParseResult *);
+BUFFER(Production, struct Production *);
+BUFFER(Production_p, struct Production **);
+
 struct Production *productions = NULL;
 
 /* create a new, empty production with the given name */
@@ -78,23 +84,6 @@ struct Production *getProduction(const char *name)
     }
 }
 
-/* add a production */
-void addProduction(struct Production *production)
-{
-    /* find where to put it */
-    struct Production *curp = getProduction(production->name);
-
-    /* and either overwrite or add it */
-    if (curp->parser) {
-        for (; curp->next; curp = curp->next);
-        curp->next = production;
-
-    } else {
-        memcpy(curp, production, sizeof(struct Production));
-
-    }
-}
-
 /* remove all productions with the given name */
 void delProductions(const char *name)
 {
@@ -118,38 +107,33 @@ static struct ParseResult **packratParsePrime(struct Production *production,
                                               char *file, int line, int col,
                                               unsigned char *input, size_t off)
 {
-    struct ParseResult **ret, **subret;
-    struct Production *curp;
-    size_t retlen, srlen;
-
-    retlen = 0;
-    ret = GC_MALLOC(sizeof(struct ParseResult *));
-    ret[0] = NULL;
+    struct ParseResult **ret;
 
     /* make sure the cache is of the appropriate size */
     if (production->cachesz <= off) {
-        production->cache = GC_REALLOC(production->cache, off + 1);
-        memset(production->cache + production->cachesz, 0, off + 1 - production->cachesz);
+        production->cache = GC_REALLOC(production->cache,
+                                       (off + 1) * sizeof(struct ParseResult **));
+        memset(production->cache + production->cachesz, 0,
+               (off + 1 - production->cachesz) * sizeof(struct ParseResult **));
         production->cachesz = off + 1;
     }
 
     /* then check if this is already cached */
-    if (production->cache[off])
+    if (production->cache[off]) {
+        printf("Cached\n");
         return production->cache[off];
+    }
 
     /* go through each relevant production, collecting results */
-    for (curp = production; curp; curp = curp->next) {
+    ret = NULL;
+    if (production->parser) {
         /* run this production */
-        subret = curp->parser(curp, file, line, col, input, off);
+        ret = production->parser(production, file, line, col, input, off);
+    }
 
-        /* and add it to our list */
-        if (subret) {
-            for (srlen = 0; subret[srlen]; srlen++);
-
-            ret = GC_REALLOC(ret, retlen + srlen + 1);
-            memcpy(ret + retlen, subret, (srlen + 1) * sizeof(struct ParseResult *));
-            retlen += srlen;
-        }
+    if (ret == NULL) {
+        ret = GC_MALLOC(sizeof(struct ParseResult *));
+        ret[0] = NULL;
     }
 
     /* cache it */
@@ -196,69 +180,71 @@ struct ParseResult **packratNonterminal(struct Production *production,
                                         char *file, int line, int col,
                                         unsigned char *input, size_t off)
 {
-    struct ParseResult **curret, **subret, **newret, *genres;
-    int i, j;
-    size_t srlen, nrlen;
+    struct Buffer_ParseResult result, orResult, orResultP;
+    struct Production ***subProductions = (struct Production ***) production->arg;
+    struct Production **orProduction;
+    int ors, thens, i, j;
+    struct ParseResult *pr;
 
-    struct Production *subpr;
-    int subpri;
+    struct ParseResult **subres;
+    size_t srlen;
 
-    /* initialize our current solitary result */
-    curret = GC_MALLOC(2 * sizeof(struct ParseResult *));
-    curret[1] = NULL;
-    curret[0] = GC_MALLOC(sizeof(struct ParseResult));
-    memset(curret[0], 0, sizeof(struct ParseResult));
-    curret[0]->production = production;
-    curret[0]->file = file;
-    curret[0]->sline = line;
-    curret[0]->scol = col;
-    curret[0]->consumedFrom = off;
-    curret[0]->consumedTo = off;
+    INIT_BUFFER(result);
 
-    /* then go through each sub-production, expanding our results */
-    for (subpri = 0; production->sub[subpri]; subpri++) {
-        subpr = production->sub[subpri];
-        newret = NULL;
-        nrlen = 0;
+    /* first loop over the ors */
+    for (ors = 0; subProductions[ors]; ors++) {
+        orProduction = subProductions[ors];
 
-        /* for each of our current states, */
-        for (i = 0; curret[i]; i++) {
+        INIT_BUFFER(orResult);
 
-            /* parse this production at the end of that state, */
-            subret = packratParsePrime(subpr, file, line, col, input, curret[i]->consumedTo);
-            for (srlen = 0; subret[srlen]; srlen++);
+        /* set up a result */
+        pr = GC_NEW(struct ParseResult);
+        memset(pr, 0, sizeof(struct ParseResult));
+        pr->production = production;
+        pr->file = file;
+        pr->sline = line;
+        pr->scol = col;
+        pr->choice = ors;
+        pr->consumedFrom = pr->consumedTo = off;
 
-            /* allocate space */
-            if (srlen)
-                newret = GC_REALLOC(newret, (nrlen + srlen + 1) * sizeof(struct ParseResult *));
+        WRITE_BUFFER(orResult, &pr, 1);
 
-            /* then add a new state for each output state */
-            for (j = 0; subret[j]; j++) {
-                genres = GC_MALLOC(sizeof(struct ParseResult));
-                memcpy(genres, curret[i], sizeof(struct ParseResult));
+        /* then loop over the thens */
+        for (thens = 0; orProduction[thens]; thens++) {
+            INIT_BUFFER(orResultP);
 
-                /* copy in the new subret */
-                genres->subResults = GC_MALLOC((subpri + 2) * sizeof(struct ParseResult *));
-                memcpy(genres->subResults, curret[i]->subResults, subpri * sizeof(struct ParseResults *));
-                genres->subResults[subpri] = subret[j];
-                genres->subResults[subpri+1] = NULL;
+            /* loop over each of the current points */
+            for (i = 0; i < orResult.bufused; i++) {
+                subres = packratParsePrime(orProduction[thens],
+                                           file, line, col,
+                                           input, orResult.buf[i]->consumedTo);
+                for (srlen = 0; subres[srlen]; srlen++);
 
-                /* and set up the consumed properly */
-                genres->consumedTo = subret[j]->consumedTo;
-
-                newret[nrlen + j] = genres;
+                /* and extend them into orResultP */
+                for (j = 0; subres[j]; j++) {
+                    pr = GC_NEW(struct ParseResult);
+                    memcpy(pr, orResult.buf[i], sizeof(struct ParseResult));
+                    pr->subResults = GC_MALLOC((thens + 2) * sizeof(struct ParseResult *));
+                    memcpy(pr->subResults, orResult.buf[i]->subResults, thens * sizeof(struct ParseResult *));
+                    pr->subResults[thens] = subres[j];
+                    pr->subResults[thens+1] = NULL;
+                    pr->consumedTo = subres[j]->consumedTo;
+                    WRITE_BUFFER(orResultP, &pr, 1);
+                }
             }
 
-            nrlen += srlen;
-            newret[nrlen] = NULL;
+            /* then replace orResult */
+            orResult = orResultP;
         }
 
-        /* if we didn't generate any newret, we've failed! */
-        if (newret == NULL) return NULL;
+        /* now that one of the or's has succeeded, we can add it to the overall result */
+        WRITE_BUFFER(result, orResult.buf, orResult.bufused);
     }
 
-    /* the final newret is our result */
-    return newret;
+    pr = NULL;
+    WRITE_BUFFER(result, &pr, 1);
+
+    return result.buf;
 }
 
 /* parse a regex terminal */
@@ -274,6 +260,8 @@ struct ParseResult **packratRegexTerminal(struct Production *production,
      * return an array */
     ret = GC_MALLOC(2 * sizeof(struct ParseResult *));
     ret[1] = NULL;
+    ret[0] = GC_MALLOC(sizeof(struct ParseResult));
+    memset(ret[0], 0, sizeof(struct ParseResult));
     ret[0]->production = production;
     ret[0]->file = file;
     ret[0]->sline = line;
@@ -287,33 +275,48 @@ struct ParseResult **packratRegexTerminal(struct Production *production,
                        ovector, OVECTOR_LEN);
 
     /* if it failed, that's easy enough */
-    if (result <= 0) return NULL;
+    if (result <= 0) {
+        return NULL;
+    }
 
     /* didn't fail, fill in consumedTo */
     if (result >= 2) {
-        ret[0]->consumedTo = ovector[3];
+        ret[0]->consumedTo = off + ovector[3];
     } else {
-        ret[0]->consumedTo = ovector[1];
+        ret[0]->consumedTo = off + ovector[1];
     }
 
     return ret;
 }
 
 /* create a nonterminal given only names */
-struct Production *newPackratNonterminal(char *name, char **sub)
+struct Production *newPackratNonterminal(char *name, char ***sub)
 {
     struct Production *ret = getProduction(name);
-    size_t spcount, i;
+    struct Buffer_Production_p pors;
+    struct Buffer_Production pthens;
+    struct Production *pr;
+    int ors, thens;
 
     ret->parser = packratNonterminal;
 
     /* now fill in the sub-productions */
-    for (spcount = 0; sub[spcount]; spcount++);
-    ret->sub = GC_MALLOC((spcount + 1) * sizeof(struct Production *));
-    for (i = 0; sub[spcount]; i++) {
-        ret->sub[i] = getProduction(sub[i]);
+    INIT_BUFFER(pors);
+    for (ors = 0; sub[ors]; ors++) {
+        INIT_BUFFER(pthens);
+        for (thens = 0; sub[ors][thens]; thens++) {
+            pr = getProduction(sub[ors][thens]);
+            WRITE_BUFFER(pthens, &pr, 1);
+        }
+        pr = NULL;
+        WRITE_BUFFER(pthens, &pr, 1);
+
+        WRITE_BUFFER(pors, &pthens.buf, 1);
     }
-    ret->sub[i] = NULL;
+    pr = NULL;
+    WRITE_BUFFER(pors, (struct Production ***) &pr, 1);
+
+    ret->arg = pors.buf;
 
     return ret;
 }
@@ -325,7 +328,7 @@ struct Production *newPackratRegexTerminal(char *name, char *regex)
     const char *err;
     int erroffset;
 
-    ret->parser = packratNonterminal;
+    ret->parser = packratRegexTerminal;
 
     /* now fill in the arg */
     ret->arg = pcre_compile(regex, PCRE_DOTALL, &err, &erroffset, NULL);

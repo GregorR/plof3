@@ -41,7 +41,7 @@ struct Production {
     char *name;
 
     /* the tree */
-    struct Production *left, *right, *next;
+    struct Production *left, *right;
 
     /* the memoization cache */
     size_t cachesz;
@@ -68,6 +68,9 @@ struct ParseResult {
     int sline, eline;
     int scol, ecol;
 
+    /* the option chosen, for nondeterministic nonterminals */
+    int choice;
+
     /* range consumed by this parse, up to but not including consumedTo */
     size_t consumedFrom, consumedTo;
 };
@@ -75,9 +78,6 @@ struct ParseResult {
 /* get a production matching a particular name. Always returns something, but
  * may have NULL functionality */
 struct Production *getProduction(const char *name);
-
-/* add a production */
-void addProduction(struct Production *);
 
 /* remove all productions with the given name */
 void delProductions(const char *name);
@@ -99,9 +99,8 @@ struct ParseResult **packratRegexTerminal(struct Production *production,
                                           char *file, int line, int col,
                                           unsigned char *input, size_t off);
 
-/* and generaters for them. Note that these do NOT put the production in the
- * tree, they only create them */
-struct Production *newPackratNonterminal(char *name, char **sub);
+/* and generaters for them */
+struct Production *newPackratNonterminal(char *name, char ***sub);
 struct Production *newPackratRegexTerminal(char *name, char *regex);
 
 #endif
