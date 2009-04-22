@@ -64,14 +64,14 @@ Object := [
     opDec = {
         this - 1
     };
-];
+]
 
 
 // Need a divide-by-zero exception f    or numbers
-var DivisionByZeroException = Exception:[];
+var DivisionByZeroException = Exception:[]
 
 // Numbers
-var Number = Object:[];
+var Number = Object:[]
 
 // Native integers are integers as provided by the host, with all the limitations thereof
 var NativeInteger = Number : [
@@ -196,9 +196,9 @@ var NativeInteger = Number : [
             }
         )
     };
-];
+]
 
 // opInteger should return a native number
 opInteger = (x) {
     new NativeInteger(x)
-};
+}

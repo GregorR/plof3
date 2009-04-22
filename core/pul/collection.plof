@@ -27,7 +27,7 @@ Object := [
     opContains = (x) {
         False
     };
-];
+]
 
 /* Note that opArray is used in the core of the language, but is redefined here
  * in terms of the user-defined Array type. This allows arrays such as 'args'
@@ -81,26 +81,26 @@ var Collection = Object : [
     product = {
         fold(1, (x, y) { x * y })
     };
-];
+]
 
 // collection families
 var IndexableCollection = Collection : [
     opIndex = (x as Number) {
         Abstract();
     };
-];
+]
 
 var ConcatableCollection = Collection : [
     opConcat = (x as IndexableCollection) {
         Abstract();
     };
-];
+]
 
 var AppendableCollection = Collection : [
     opAppend = (x as IndexableCollection) {
         Abstract();
     };
-];
+]
 
 // particular collections
 var Array = IndexableCollection : ConcatableCollection : [
@@ -188,7 +188,7 @@ var Array = IndexableCollection : ConcatableCollection : [
             plof{this.__pul_val} pul_eval length
         })
     };
-];
+]
 
 var ListNode = Object : [
     type = Object;
@@ -203,7 +203,7 @@ var ListNode = Object : [
     get = {
         val
     };
-];
+]
 
 var MList = IndexableCollection : ConcatableCollection : AppendableCollection : [
     head = Null;
@@ -310,7 +310,7 @@ var MList = IndexableCollection : ConcatableCollection : AppendableCollection : 
     size = {
         cSize
     };
-];
+]
 
 
 // The fundamental collection type, ListArray
@@ -416,7 +416,7 @@ var ListArray = IndexableCollection : ConcatableCollection : AppendableCollectio
         );
         sz
     };
-];
+]
 
 /// Automatic ranges
 var Range = Collection : [
@@ -437,4 +437,4 @@ var Range = Collection : [
             forceEval(act)
         );
     };
-];
+]

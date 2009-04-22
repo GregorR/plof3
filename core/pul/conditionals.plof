@@ -23,14 +23,14 @@
  */
 
 var if = (cond) {
-    (cond&&True)
-        .ifTrue( return ((then) { then; selff }); )
-        .ifFalse(return ((then) { id }); )
-};
+    (cond&&True).
+        ifTrue( return ((then) { then; selff }); ).
+        ifFalse(return ((then) { id }); )
+}
 
 var else = (then) {
     then
-};
+}
 
 var while = (cond, act) {
     psl {
@@ -48,7 +48,7 @@ var while = (cond, act) {
             plof{act} pul_forceEval
         } while
     }
-};
+}
 
 var for = (init, cond, step, act) {
     init;
@@ -58,4 +58,4 @@ var for = (init, cond, step, act) {
             plof{step} pul_forceEval
         }
     );
-};
+}

@@ -28,12 +28,12 @@ plofbnf {
     // String/collection concatenation
     plof_cmp => plof_concat;
 
-    plof_concat = plof_concat "~" plof_concat_next => plof {
+    plof_concat = plof_concat "~"w plof_concat_next => plof {
         $0.opConcat($2)
     }
     plof_concat = plof_concat_next => plof { $0 }
 
-    plof_assign = plof_assign_next "~=" plof_assign => plof {
+    plof_assign = plof_assign_next "~="w plof_assign => plof {
         $0.opAppend($2)
     }
 
@@ -92,10 +92,10 @@ plofbnf {
     }
 
     // strings in plof
-    plof_literal = /"/ white pul_str /"/ white => plof {
-        new String($2)
+    plof_literal = /"/ pul_str /"/ white => plof {
+        new String($1)
     }
     plof_literal = /""/ white => plof {
         new String(psl { "" })
     }
-};
+}

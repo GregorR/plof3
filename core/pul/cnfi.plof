@@ -38,7 +38,7 @@ pslbnf {
     pslOp = "csset" =>      { 204 byte }
     pslOp = "prepcif" =>    { 205 byte }
     pslOp = "ccall" =>      { 206 byte }
-};
+}
 
 // and their Plof equivalents
 var C = Object : [
@@ -191,7 +191,7 @@ var C = Object : [
     long = opInteger(psl { 31 ctype });
     ulonglong = opInteger(psl { 32 ctype });
     longlong = opInteger(psl { 33 ctype });
-];
+]
 
 
 // the type of pointers from dlopen/dlsym/etc
@@ -208,10 +208,10 @@ var CPointer = Object : [
             return Null;
         );
     };
-];
+]
 var opCPointer = (x) {
     new CPointer(x)
-};
+}
 
 // a pseudotype containing raw data for C
 var CData = Object : [
@@ -236,21 +236,21 @@ var CData = Object : [
             return(psl { null });
         );
     };
-];
+]
 
 // convenient wrappers
-C.calloc_s = C.dlsym(Null, "calloc");
-C.calloc_c = C.prepcif(C.pointer, [[C.pointer, C.pointer]], 0);
+C.calloc_s = C.dlsym(Null, "calloc")
+C.calloc_c = C.prepcif(C.pointer, [[C.pointer, C.pointer]], 0)
 C.calloc = (x as NativeInteger) {
     C.call(C.calloc_c, C.calloc_s, [[x, 1]])
-};
-C.strlen_s = C.dlsym(Null, "strlen");
-C.strlen_c = C.prepcif(C.pointer, [[C.pointer]], 0);
+}
+C.strlen_s = C.dlsym(Null, "strlen")
+C.strlen_c = C.prepcif(C.pointer, [[C.pointer]], 0)
 C.strlen = (x as CPointer) {
     C.call(C.strlen_c, C.strlen_s, [[x]]) as Number
-};
+}
 
 C.getstr = (x as CPointer) {
     var l = C.strlen(x);
     C.get(x, l) as String
-};
+}

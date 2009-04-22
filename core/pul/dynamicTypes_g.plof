@@ -26,21 +26,21 @@
 plofbnf {
     plof_combine => plof_is;
 
-    plof_is = plof_is "is" plof_is_next => plof {
+    plof_is = plof_is "is"w plof_is_next => plof {
         $0.opIs($2)
     }
     plof_is = plof_is_next => plof { $0 }
     plof_is => plof_as;
 
-    plof_as = plof_as "as" plof_as_next => plof {
+    plof_as = plof_as "as"w plof_as_next => plof {
         $0.opAs($2)
     }
     plof_as = plof_as_next => plof { $0 }
-};
+}
 
 plofbnf {
     // specified argument types
-    plof_param = plof_identifier "as" plof_semicolon_next => {
+    plof_param = plof_identifier "as"w plof_semicolon_next => {
         // still get the named param as usual
         {push1}
         push1 0 index concat
@@ -81,4 +81,4 @@ plofbnf {
             1 add
         } concat
     }
-};
+}

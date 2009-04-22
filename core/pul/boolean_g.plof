@@ -41,4 +41,4 @@ plofbnf {
         $1.opNot()
     }
     plof_unop = plof_unop_next => plof { $0 }
-};
+}

@@ -27,17 +27,17 @@ Object := [
     opOr = (x) { True };
     opAnd = (x) { x };
     opNot = { False };
-];
+]
 
 // True and False are both Bools
 var Bool = Object : [
     ifTrue = (x) { this };
     ifFalse = (x) { this };
-];
+]
 
 var True = Bool : [
     ifTrue = (x) { x; this };
-];
+]
 
 var False = Bool : [
     ifFalse = (x) { x; this };
@@ -45,4 +45,4 @@ var False = Bool : [
     opOr = (x) { x };
     opAnd = (x) { False };
     opNot = { True };
-];
+]

@@ -84,4 +84,4 @@ Object := [
     opCastFrom = (obj) {
         Null
     };
-];
+]

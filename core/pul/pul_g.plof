@@ -30,8 +30,8 @@ __grammar_add(nnlwhite,
 
 // End of statement can be either a semicolon or a newline (perhaps with line comments)
 __grammar_add(eos, nnlwhite /;/ white, {});
-//__grammar_add(eos, nnlwhite /((\/\/[^\r\n]*\r?)?\n)/ white, {});
-__grammar_add(eos, nnlwhite /\n/ white, {});
+__grammar_add(eos, nnlwhite /((\/\/[^\r\n]*\r?)?\n)/ white, {});
+//__grammar_add(eos, nnlwhite /\n/ white, {});
 
 // Basic PSL: psl { psl code here };
 __grammar_add(top, psl, push0 0 index);
@@ -194,7 +194,7 @@ __grammar_add(pslbnf_target,
               null push1 1 index call
 
               // get the name of the production
-              "token_" push1 concat swrap
+              "tokenw_" push1 concat swrap
 
               // remove it if it already exists
               {push0 push0 grem} concat

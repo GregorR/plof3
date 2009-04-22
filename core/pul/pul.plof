@@ -431,7 +431,7 @@ psl {
 
             // stack is now: type[index] type[index].name
 
-            push0 null
+            null
             {
                 // nope, keep looking
             }
@@ -441,9 +441,7 @@ psl {
 
                 // stack: type[index] type[index].name
                 push0 parent
-                    this "type" resolve member
-                        this "index" resolve member
-                            index
+                    push2
                 {
                     // yup, it's owned by the type. Duplicate,
                     new combine
@@ -464,7 +462,9 @@ psl {
                 // stack: type[index]
 
                 // and assign it
-                this parent parent "ret" push2 memberset
+                this parent parent "ret"
+                        this "obj" resolve member
+                            memberset
             } cmp
 
             // index++
