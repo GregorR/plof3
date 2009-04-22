@@ -120,7 +120,6 @@ static struct ParseResult **packratParsePrime(struct Production *production,
 
     /* then check if this is already cached */
     if (production->cache[off]) {
-        printf("Cached\n");
         return production->cache[off];
     }
 
@@ -162,7 +161,8 @@ struct ParseResult *packratParse(struct Production *production,
                                  int line, int col,
                                  unsigned char *input)
 {
-    struct ParseResult **pr;
+    struct ParseResult **pr, *longest;
+    int i;
 
     /* first clear out all the caches */
     clearCaches(productions);
@@ -170,9 +170,13 @@ struct ParseResult *packratParse(struct Production *production,
     /* then parse */
     pr = packratParsePrime(production, file, line, col, input, 0);
 
-    /* packratParsePrime always returns a NULL-terminated array, so we can just
-     * accept the first result, which may be NULL */
-    return pr[0];
+    /* choose the longest */
+    longest = pr[0];
+    for (i = 1; pr[i]; i++) {
+        if (pr[i]->consumedTo > longest->consumedTo)
+            longest = pr[i];
+    }
+    return longest;
 }
 
 /* parse a nonterminal (that is, parse some list of child nodes) */
@@ -180,10 +184,10 @@ struct ParseResult **packratNonterminal(struct Production *production,
                                         char *file, int line, int col,
                                         unsigned char *input, size_t off)
 {
-    struct Buffer_ParseResult result, orResult, orResultP;
+    struct Buffer_ParseResult result, lastResult, lastResultP, orResult, orResultP;
     struct Production ***subProductions = (struct Production ***) production->arg;
     struct Production **orProduction;
-    int ors, thens, i, j;
+    int lrec, ors, thens, i, j;
     struct ParseResult *pr;
 
     struct ParseResult **subres;
@@ -191,54 +195,86 @@ struct ParseResult **packratNonterminal(struct Production *production,
 
     INIT_BUFFER(result);
 
-    /* first loop over the ors */
-    for (ors = 0; subProductions[ors]; ors++) {
-        orProduction = subProductions[ors];
 
-        INIT_BUFFER(orResult);
+    /* set up an empty result */
+    INIT_BUFFER(lastResult)
+    pr = GC_NEW(struct ParseResult);
+    memset(pr, 0, sizeof(struct ParseResult));
+    pr->production = production;
+    pr->file = file;
+    pr->sline = line;
+    pr->scol = col;
+    pr->choice = ors;
+    pr->consumedFrom = pr->consumedTo = off;
 
-        /* set up a result */
-        pr = GC_NEW(struct ParseResult);
-        memset(pr, 0, sizeof(struct ParseResult));
-        pr->production = production;
-        pr->file = file;
-        pr->sline = line;
-        pr->scol = col;
-        pr->choice = ors;
-        pr->consumedFrom = pr->consumedTo = off;
+    WRITE_BUFFER(lastResult, &pr, 1);
 
-        WRITE_BUFFER(orResult, &pr, 1);
+    /* loop over left recursions until we get to a fixed point */
+    for (lrec = 0; lastResult.bufused; lrec = 1) {
+        INIT_BUFFER(lastResultP);
 
-        /* then loop over the thens */
-        for (thens = 0; orProduction[thens]; thens++) {
-            INIT_BUFFER(orResultP);
+        /* first loop over the ors */
+        for (ors = 0; subProductions[ors]; ors++) {
+            orProduction = subProductions[ors];
 
-            /* loop over each of the current points */
-            for (i = 0; i < orResult.bufused; i++) {
-                subres = packratParsePrime(orProduction[thens],
-                                           file, line, col,
-                                           input, orResult.buf[i]->consumedTo);
-                for (srlen = 0; subres[srlen]; srlen++);
-
-                /* and extend them into orResultP */
-                for (j = 0; subres[j]; j++) {
-                    pr = GC_NEW(struct ParseResult);
-                    memcpy(pr, orResult.buf[i], sizeof(struct ParseResult));
-                    pr->subResults = GC_MALLOC((thens + 2) * sizeof(struct ParseResult *));
-                    memcpy(pr->subResults, orResult.buf[i]->subResults, thens * sizeof(struct ParseResult *));
-                    pr->subResults[thens] = subres[j];
-                    pr->subResults[thens+1] = NULL;
-                    pr->consumedTo = subres[j]->consumedTo;
-                    WRITE_BUFFER(orResultP, &pr, 1);
-                }
+            /* make sure we only do left recursive when we're supposed to */
+            if (orProduction[0] == production) {
+                if (!lrec) continue;
+            } else {
+                if (lrec) continue;
             }
 
-            /* then replace orResult */
-            orResult = orResultP;
+            INIT_BUFFER(orResult);
+
+            /* start where we left off */
+            WRITE_BUFFER(orResult, lastResult.buf, lastResult.bufused);
+
+            /* then loop over the thens */
+            for (thens = lrec; orProduction[thens]; thens++) {
+
+                INIT_BUFFER(orResultP);
+
+                /* loop over each of the current points */
+                for (i = 0; i < orResult.bufused; i++) {
+                    subres = packratParsePrime(orProduction[thens],
+                                               file, line, col,
+                                               input, orResult.buf[i]->consumedTo);
+                    for (srlen = 0; subres[srlen]; srlen++);
+
+                    /* and extend them into orResultP */
+                    for (j = 0; subres[j]; j++) {
+                        pr = GC_NEW(struct ParseResult);
+                        memcpy(pr, orResult.buf[i], sizeof(struct ParseResult));
+                        pr->subResults = GC_MALLOC((thens + 2) * sizeof(struct ParseResult *));
+                        memcpy(pr->subResults, orResult.buf[i]->subResults, thens * sizeof(struct ParseResult *));
+                        pr->subResults[thens] = subres[j];
+                        pr->subResults[thens+1] = NULL;
+                        pr->consumedTo = subres[j]->consumedTo;
+                        WRITE_BUFFER(orResultP, &pr, 1);
+                    }
+                }
+
+                /* then replace orResult */
+                orResult = orResultP;
+            }
+
+            /* now that one of the or's has succeeded, we can add it to the overall result */
+            WRITE_BUFFER(result, orResult.buf, orResult.bufused);
+
+            /* now package up this result for left recursion */
+            for (i = 0; i < orResult.bufused; i++) {
+                pr = GC_NEW(struct ParseResult);
+                memcpy(pr, orResult.buf[i], sizeof(struct ParseResult));
+                pr->subResults = GC_MALLOC(2 * sizeof(struct ParseResult *));
+                pr->subResults[0] = orResult.buf[i];
+                pr->subResults[1] = NULL;
+                orResult.buf[i] = pr;
+            }
+            WRITE_BUFFER(lastResultP, orResult.buf, orResult.bufused);
+
         }
 
-        /* now that one of the or's has succeeded, we can add it to the overall result */
-        WRITE_BUFFER(result, orResult.buf, orResult.bufused);
+        lastResult = lastResultP;
     }
 
     pr = NULL;
