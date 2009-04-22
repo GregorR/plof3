@@ -40,7 +40,7 @@ struct UCharBuf pslParse(unsigned char **apsl)
     size_t pslsz, psli;
     unsigned char *psl;
     struct UCharBuf ret;
-    char token[BUFSTEP];
+    unsigned char token[BUFSTEP];
 
     /* initialize the buffer */
     pslsz = BUFSTEP;
@@ -60,7 +60,7 @@ struct UCharBuf pslParse(unsigned char **apsl)
 
         /* first all the normal psl ops */
 #define FOREACH(op) \
-        if (!strcmp(token, #op)) { \
+        if (!strcmp((char *) token, #op)) { \
             psl[psli++] = psl_ ## op; \
         } else
 #include "psl_inst.h"
@@ -68,7 +68,7 @@ struct UCharBuf pslParse(unsigned char **apsl)
 
         /* then specials */
         if (token[0] >= '0' && token[0] <= '9') {
-            long val = atol(token);
+            long val = atol((char *) token);
 
             /* a number, push as a 32-bit raw and an 'integer' operation*/
             EXPAND_BUFFER(7);
@@ -86,7 +86,7 @@ struct UCharBuf pslParse(unsigned char **apsl)
 
             psl[psli++] = psl_integer;
 
-        } else if (!strcmp(token, "{") || !strcmp(token, "[")) {
+        } else if (!strcmp((char *) token, "{") || !strcmp((char *) token, "[")) {
             /* nesting structures, do a sub-parse */
             unsigned char op;
             size_t bnsiz;
@@ -108,14 +108,14 @@ struct UCharBuf pslParse(unsigned char **apsl)
             memcpy(psl + psli, subp.ptr, subp.len);
             psli += subp.len;
 
-        } else if (!strcmp(token, "}") || !strcmp(token, "]")) {
+        } else if (!strcmp((char *) token, "}") || !strcmp((char *) token, "]")) {
             /* ending a block */
             break;
 
         } else if (token[0] == '"') {
             /* a raw string (FIXME: escapes) */
             size_t bnsiz, slen;
-            slen = strlen(token);
+            slen = strlen((char *) token);
             slen--;
             if (slen >= 1) slen--;
 

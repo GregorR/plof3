@@ -51,15 +51,15 @@ int main(int argc, char **argv)
 
     /* get our search path */
     if (whereAmI(argv[0], &wdir, &wfil)) {
-        plofIncludePaths = GC_MALLOC(3 * sizeof(char *));
+        plofIncludePaths = GC_MALLOC(3 * sizeof(unsigned char *));
 
         /* /../share/plof_include/ */
         plofIncludePaths[0] = GC_MALLOC_ATOMIC(strlen(wdir) + 24);
-        sprintf(plofIncludePaths[0], "%s/../share/plof_include/", wdir);
+        sprintf((char *) plofIncludePaths[0], "%s/../share/plof_include/", wdir);
 
         /* /../../plof_include/ (for running from src/) */
         plofIncludePaths[1] = GC_MALLOC_ATOMIC(strlen(wdir) + 21);
-        sprintf(plofIncludePaths[1], "%s/../../plof_include/", wdir);
+        sprintf((char *) plofIncludePaths[1], "%s/../../plof_include/", wdir);
 
         plofIncludePaths[2] = NULL;
 

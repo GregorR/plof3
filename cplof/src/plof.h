@@ -36,7 +36,7 @@ struct PlofOHashTable;
 struct PlofData;
 
 /* search path for include, should be a null-terminated array of strings */
-extern char **plofIncludePaths;
+extern unsigned char **plofIncludePaths;
 
 #define PLOF_DATA_RAW 0
 #define PLOF_DATA_ARRAY 1

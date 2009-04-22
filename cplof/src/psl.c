@@ -51,7 +51,7 @@
 
 
 /* Include paths */
-char **plofIncludePaths;
+unsigned char **plofIncludePaths;
 
 
 /* The maximum number of version strings */
@@ -1520,7 +1520,7 @@ label(interp_psl_include);
     UNARY;
 
     if (ISRAW(a)) {
-        char **path, *file, *data;
+        unsigned char **path, *file, *data;
         FILE *fh;
         size_t rdb, bufsz, bufi;
 
@@ -1529,10 +1529,10 @@ label(interp_psl_include);
         /* look for the file in each path */
         data = NULL;
         for (path = plofIncludePaths; *path; path++) {
-            file = GC_MALLOC_ATOMIC(strlen(*path) + rd->length + 2);
-            sprintf(file, "%s/%.*s", *path, (int) rd->length, rd->data);
+            file = GC_MALLOC_ATOMIC(strlen((char *) *path) + rd->length + 2);
+            sprintf((char *) file, "%s/%.*s", (char *) *path, (int) rd->length, (char *) rd->data);
 
-            fh = fopen(file, "r");
+            fh = fopen((char *) file, "r");
             if (fh != NULL) {
                 /* this file exists, use it */
                 bufsz = BUFSZ;
@@ -1625,17 +1625,17 @@ label(interp_psl_dlopen);
     /* the argument can be a string, or NULL */
     {
         void *hnd;
-        char *fname = NULL;
+        unsigned char *fname = NULL;
         if (a != plofNull) {
             if (ISRAW(a)) {
-                fname = (char *) RAW(a)->data;
+                fname = RAW(a)->data;
             } else {
                 BADTYPE("dlopen");
             }
         }
 
         /* OK, try to dlopen it */
-        hnd = dlopen(fname, RTLD_LAZY|RTLD_GLOBAL);
+        hnd = dlopen((char *) fname, RTLD_LAZY|RTLD_GLOBAL);
 
         /* either turn that into a pointer in raw data, or push null */
         if (hnd == NULL) {
@@ -1664,7 +1664,7 @@ label(interp_psl_dlsym);
 
     {
         void *hnd = NULL;
-        char *fname;
+        unsigned char *fname;
         void *fun;
 
         /* the handle may be null */
@@ -1680,9 +1680,9 @@ label(interp_psl_dlsym);
 
         /* the function name can't */
         if (ISRAW(b)) {
-            fname = (char *) RAW(b)->data;
+            fname = RAW(b)->data;
 
-            fun = dlsym(hnd, fname);
+            fun = dlsym(hnd, (char *) fname);
 
             if (fun == NULL) {
                 STACK_PUSH(plofNull);

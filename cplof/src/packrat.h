@@ -30,7 +30,7 @@ struct Production;
 /* The type for the underlying parser functions, returns a NULL-terminated
  * array of (potential) parse results */
 typedef struct ParseResult **(*Parser) (struct Production *production,
-                                        char *file, int line, int col,
+                                        unsigned char *file, int line, int col,
                                         unsigned char *input, size_t off);
 
 /* A production. Could be a terminal or a nonterminal, includes a
@@ -38,7 +38,7 @@ typedef struct ParseResult **(*Parser) (struct Production *production,
  * tree for easy indexing */
 struct Production {
     /* the name of this production */
-    char *name;
+    unsigned char *name;
 
     /* the tree */
     struct Production *left, *right;
@@ -64,7 +64,7 @@ struct ParseResult {
     struct Production *production;
     struct ParseResult **subResults;
 
-    char *file;
+    unsigned char *file;
     int sline, eline;
     int scol, ecol;
 
@@ -77,30 +77,30 @@ struct ParseResult {
 
 /* get a production matching a particular name. Always returns something, but
  * may have NULL functionality */
-struct Production *getProduction(const char *name);
+struct Production *getProduction(const unsigned char *name);
 
 /* remove all productions with the given name */
-void delProductions(const char *name);
+void delProductions(const unsigned char *name);
 
 /* remove ALL productions */
 void delAllProductions();
 
 /* parse using the specified production */
 struct ParseResult *packratParse(struct Production *production,
-                                 char *file,
+                                 unsigned char *file,
                                  int line, int col,
                                  unsigned char *input);
 
 /* built-in parsers */
 struct ParseResult **packratNonterminal(struct Production *production,
-                                        char *file, int line, int col,
+                                        unsigned char *file, int line, int col,
                                         unsigned char *input, size_t off);
 struct ParseResult **packratRegexTerminal(struct Production *production,
-                                          char *file, int line, int col,
+                                          unsigned char *file, int line, int col,
                                           unsigned char *input, size_t off);
 
 /* and generaters for them */
-struct Production *newPackratNonterminal(char *name, char ***sub);
-struct Production *newPackratRegexTerminal(char *name, char *regex);
+struct Production *newPackratNonterminal(unsigned char *name, unsigned char ***sub);
+struct Production *newPackratRegexTerminal(unsigned char *name, unsigned char *regex);
 
 #endif

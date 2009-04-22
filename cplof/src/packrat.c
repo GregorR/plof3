@@ -39,19 +39,19 @@ BUFFER(Production_p, struct Production **);
 struct Production *productions = NULL;
 
 /* create a new, empty production with the given name */
-static struct Production *newProduction(const char *name)
+static struct Production *newProduction(const unsigned char *name)
 {
     struct Production *ret = GC_NEW(struct Production);
     memset(ret, 0, sizeof(struct Production));
 
-    ret->name = GC_STRDUP(name);
+    ret->name = (unsigned char *) GC_STRDUP((char *) name);
 
     return ret;
 }
 
 /* get a production matching a particular name. Always returns something, but
  * may have NULL functionality */
-struct Production *getProduction(const char *name)
+struct Production *getProduction(const unsigned char *name)
 {
     struct Production *curp = productions;
 
@@ -62,7 +62,7 @@ struct Production *getProduction(const char *name)
 
     /* find a place to put it, or where it already is */
     while (1) {
-        int cmp = strcmp(name, curp->name);
+        int cmp = strcmp((char *) name, (char *) curp->name);
         if (cmp < 0) {
             if (curp->left) {
                 curp = curp->left;
@@ -85,14 +85,14 @@ struct Production *getProduction(const char *name)
 }
 
 /* remove all productions with the given name */
-void delProductions(const char *name)
+void delProductions(const unsigned char *name)
 {
     /* find the relevant production */
     struct Production *curp = getProduction(name);
 
     /* and blank it */
     memset(curp, 0, sizeof(struct Production));
-    curp->name = GC_STRDUP(name);
+    curp->name = (unsigned char *) GC_STRDUP((char *) name);
 }
 
 /* remove ALL productions */
@@ -104,7 +104,7 @@ void delAllProductions()
 /* parse using the specified production, not clearing out caches first (assumed
  * caches are good) */
 static struct ParseResult **packratParsePrime(struct Production *production,
-                                              char *file, int line, int col,
+                                              unsigned char *file, int line, int col,
                                               unsigned char *input, size_t off)
 {
     struct ParseResult **ret;
@@ -157,7 +157,7 @@ static void clearCaches(struct Production *production)
 
 /* parse using the specified production */
 struct ParseResult *packratParse(struct Production *production,
-                                 char *file,
+                                 unsigned char *file,
                                  int line, int col,
                                  unsigned char *input)
 {
@@ -181,7 +181,7 @@ struct ParseResult *packratParse(struct Production *production,
 
 /* parse a nonterminal (that is, parse some list of child nodes) */
 struct ParseResult **packratNonterminal(struct Production *production,
-                                        char *file, int line, int col,
+                                        unsigned char *file, int line, int col,
                                         unsigned char *input, size_t off)
 {
     struct Buffer_ParseResult result, lastResult, lastResultP, orResult, orResultP;
@@ -204,7 +204,7 @@ struct ParseResult **packratNonterminal(struct Production *production,
     pr->file = file;
     pr->sline = line;
     pr->scol = col;
-    pr->choice = ors;
+    pr->choice = 0;
     pr->consumedFrom = pr->consumedTo = off;
 
     WRITE_BUFFER(lastResult, &pr, 1);
@@ -249,6 +249,7 @@ struct ParseResult **packratNonterminal(struct Production *production,
                         memcpy(pr->subResults, orResult.buf[i]->subResults, thens * sizeof(struct ParseResult *));
                         pr->subResults[thens] = subres[j];
                         pr->subResults[thens+1] = NULL;
+                        pr->choice = ors;
                         pr->consumedTo = subres[j]->consumedTo;
                         WRITE_BUFFER(orResultP, &pr, 1);
                     }
@@ -286,7 +287,7 @@ struct ParseResult **packratNonterminal(struct Production *production,
 /* parse a regex terminal */
 #define OVECTOR_LEN 30
 struct ParseResult **packratRegexTerminal(struct Production *production,
-                                          char *file, int line, int col,
+                                          unsigned char *file, int line, int col,
                                           unsigned char *input, size_t off)
 {
     struct ParseResult **ret;
@@ -326,7 +327,7 @@ struct ParseResult **packratRegexTerminal(struct Production *production,
 }
 
 /* create a nonterminal given only names */
-struct Production *newPackratNonterminal(char *name, char ***sub)
+struct Production *newPackratNonterminal(unsigned char *name, unsigned char ***sub)
 {
     struct Production *ret = getProduction(name);
     struct Buffer_Production_p pors;
@@ -358,7 +359,7 @@ struct Production *newPackratNonterminal(char *name, char ***sub)
 }
 
 /* create a regex nonterminal */
-struct Production *newPackratRegexTerminal(char *name, char *regex)
+struct Production *newPackratRegexTerminal(unsigned char *name, unsigned char *regex)
 {
     struct Production *ret = getProduction(name);
     const char *err;
@@ -367,7 +368,7 @@ struct Production *newPackratRegexTerminal(char *name, char *regex)
     ret->parser = packratRegexTerminal;
 
     /* now fill in the arg */
-    ret->arg = pcre_compile(regex, PCRE_DOTALL, &err, &erroffset, NULL);
+    ret->arg = pcre_compile((char *) regex, PCRE_DOTALL, &err, &erroffset, NULL);
 
     /* and cry if it's bad */
     if (ret->arg == NULL) {
