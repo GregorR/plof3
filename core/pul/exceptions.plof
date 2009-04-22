@@ -27,7 +27,7 @@ var throw = (x) {
     psl {
         plof{x} pul_eval throw
     }
-};
+}
 
 // as is try/catch
 var try = (x) {
@@ -56,19 +56,19 @@ var try = (x) {
             }
         } cmp
     }
-};
+}
 
 var catchall = (ex, r, f) {
     r.write ex;
     f
-};
+}
 
 
 // Technically anything can be thrown, but the user should only throw Exceptions
-var Exception = Object:[];
+var Exception = Object:[]
 
 // System exceptions
-var AbstractFunctionException = Exception:[];
+var AbstractFunctionException = Exception:[]
 var TypeMismatchException = Exception : [
     init = (obj, type) {
         this.obj = obj;
@@ -78,9 +78,9 @@ var TypeMismatchException = Exception : [
 
     obj = Object;
     type = Object;
-];
+]
 
 // Simple pseudofunction to throw abstract
 var Abstract = {
     throw (new AbstractFunctionException);
-};
+}

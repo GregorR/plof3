@@ -11,9 +11,9 @@ PUL_PSL_SOURCE=base.psl core/pul/pul_g.plof core/pul/pul.plof
 
 # std.psl is the PUL standard library
 STD_PSL_SOURCE=core/pul/object_g.plof core/pul/object.plof \
-               #core/pul/include_g.plof \
+               core/pul/include_g.plof \
                core/pul/exceptions.plof \
-               core/pul/boolean_g.plof core/pul/boolean.plof \
+               #core/pul/boolean_g.plof core/pul/boolean.plof \
                core/pul/conditionals.plof \
                core/pul/dynamicTypes_g.plof core/pul/dynamicTypes.plof \
                core/pul/number_g.plof core/pul/number.plof \

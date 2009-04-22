@@ -86,8 +86,8 @@ gadd
 gadd
 
 "pslOpsX"
-"pslOp"
-1 array
+"pslOp" "white"
+2 array
 {push0 0 index}
 gadd
 
