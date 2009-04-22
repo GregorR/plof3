@@ -60,3 +60,11 @@ var Reference = Object : [
         this.write = writex;
     }
 ]
+
+
+/// The debug object, just used for debug-printing before *NFI can be loaded
+var Debug = Object : [
+    print = (val) {
+        psl { plof{val.__pul_val} pul_eval print }
+    }
+];
