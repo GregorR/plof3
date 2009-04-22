@@ -1,0 +1,67 @@
+#!/usr/bin/expect -f
+
+set timeout -1
+spawn ../cplof/src/psli test.psl
+match_max 100000
+
+expect "Version strings:"
+
+expect 3
+expect GOOD
+expect GOOD
+
+expect "This should come first."
+expect "Then this."
+expect "Then this should come third and last."
+
+expect "This should be printed three times."
+expect "This should be printed three times."
+expect "This should be printed three times."
+expect 3
+
+expect Try
+expect 3
+
+expect Types
+expect GOOD
+expect GOOD
+expect GOOD
+
+expect "Typed functions"
+expect GOOD
+expect GOOD
+
+expect Numbers
+expect 3
+
+expect Arrays
+expect 3
+
+expect Lists
+expect 3
+
+expect ListArrays
+expect 3
+expect 3
+expect 3
+
+expect Strings
+expect GOOD
+expect GOOD
+
+expect Ranges
+expect 0
+expect 2
+expect 4
+expect 6
+expect 8
+
+expect Concatenation
+expect 1
+expect 2
+expect 3
+expect 4
+expect 5
+expect "Hello, world!"
+
+expect eof

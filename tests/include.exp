@@ -1,0 +1,9 @@
+#!/usr/bin/expect -f
+
+set timeout -1
+spawn ../cplof/src/psli include.psl
+match_max 100000
+
+expect "A.bleh called"
+
+expect eof
