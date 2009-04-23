@@ -27,7 +27,7 @@ CNFI_PSL_SOURCE=core/pul/cnfi.plof
 
 all: plof_include/std.psl plof_include/debug/std.psl plof_include/debug/stddebug.psl \
      plof_include/cnfi.psl plof_include/debug/cnfi.psl
-#all: plof_include/std.psl
+#all: plof_include/std.psl plof_include/cnfi.psl
 
 base.psl: $(BASE_PSL_SOURCE) $(PSLASM)
 	$(PSLASM) $(BASE_PSL_SOURCE) base.psl

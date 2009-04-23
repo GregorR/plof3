@@ -323,10 +323,17 @@ pslbnf {
     plof_bind = plof_bind_next => { push0 0 index }
     plof_bind => plof_group;
 
-    plof_group = "forceEval"w "\("w plof_group "\)" => {
+    plof_group = "forceEval"w "\("w plof_identifier "\)" => {
         push0 2 index
-        {pul_forceEval} concat
-        pul_apply_funcwrap
+        {this
+         push1
+         global 3 array this "opMember" resolve member pul_eval call
+
+         push1 member
+
+         pul_forceEval} concat
+        //pul_apply_funcwrap
+        cwrap { pul_funcwrap } concat
     }
 
     plof_group = plof_group "\."w plof_identifier => {

@@ -115,7 +115,7 @@ Debug.print(x)
 // Arrays
 Debug.print("Arrays")
 x = new Array(psl {
-    plof{4} 1 integer array
+    plof{4} 1 array
 })
 x[0] = 3;
 psl { plof{x[0]} pul_eval "__pul_val" member print };

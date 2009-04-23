@@ -42,19 +42,22 @@ psl {
                 // __pul_e is set, call it
                 null push1 "__pul_e" member call
                 global "__pul_eval" member call
+
+                // and cache it
+                push1 "__pul_v" push2 memberset
             } cmp
         }
         {
             // __pul_v is set, use it
             "__pul_v" member
-            global "__pul_eval" member call
+            //global "__pul_eval" member call
         } cmp
     } memberset
 
     // This forces a boxed object to be evaluated, even if it already has been
     global "__pul_forceEval" {
         // is __pul_e set?
-        push0 push0 "__pul_e" member null
+        push0 "__pul_e" member null
         {
             // neither, it's just a value
         }
