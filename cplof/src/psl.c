@@ -36,6 +36,15 @@
 #ifdef WITH_CNFI
 #include <dlfcn.h>
 #include <ffi.h>
+
+/* a cif with some extra info */
+typedef struct _ffi_cif_plus {
+    ffi_cif cif;
+
+    /* since cifs seem to lose the types sometimes */
+    ffi_type *rtype;
+    ffi_type **atypes;
+} ffi_cif_plus;
 #endif
 
 /* For predefs */
@@ -560,7 +569,7 @@ label(interp_psl_member);
         PLOF_READ(a, a, rd->length, name, namehash);
         STACK_PUSH(a);
     } else {
-        BADTYPE("member");
+        /*BADTYPE("member");*/
         STACK_PUSH(plofNull);
     }
     STEP;
@@ -1577,7 +1586,70 @@ label(interp_psl_include);
     }
     STEP;
 
-label(interp_psl_parse); UNIMPL("psl_parse");
+label(interp_psl_parse);
+    DEBUG_CMD("parse");
+    TRINARY;
+
+    if (ISRAW(a) && ISRAW(b) && ISRAW(c)) {
+        int i, stl;
+        size_t slen, stype;
+        struct PlofRawData *retrd;
+
+        rd = RAW(a);
+
+        retrd = GC_NEW_Z(struct PlofRawData);
+        retrd->type = PLOF_DATA_RAW;
+        retrd->data = NULL;
+
+        /* check if it's a PSL file */
+        if (rd->length >= sizeof(PSL_FILE_MAGIC) &&
+            !strncmp(rd->data, PSL_FILE_MAGIC, sizeof(PSL_FILE_MAGIC) - 1)) {
+            
+            /* look for the loadable section */
+            for (i = 8; i < rd->length;) {
+                /* section length and type */
+                i += pslBignumToInt(rd->data + i, (size_t *) &slen);
+                stl = pslBignumToInt(rd->data + i, (size_t *) &stype);
+
+                /* if it's program data, found it */
+                if (stype == 0) {
+                    retrd->length = slen - stl;
+                    retrd->data = rd->data + i + stl;
+                    break;
+
+                } else {
+                    i += slen;
+
+                }
+            }
+
+            /* if we didn't find one, this is bad */
+            if (retrd->data == NULL) {
+                BADTYPE("parse psl");
+                retrd->length = 0;
+                retrd->data = GC_MALLOC_ATOMIC(1);
+            }
+
+        } else {
+            BADTYPE("parse not psl");
+            retrd->length = 0;
+            retrd->data = GC_MALLOC_ATOMIC(1);
+
+        }
+
+        /* and push the resulting data */
+        a = GC_NEW_Z(struct PlofObject);
+        a->parent = context;
+        a->data = (struct PlofData *) retrd;
+        STACK_PUSH(a);
+
+    } else {
+        BADTYPE("parse");
+        STACK_PUSH(plofNull);
+
+    }
+
+    STEP;
 
 label(interp_psl_gadd); DEBUG_CMD("gadd"); STEP;
 label(interp_psl_grem); DEBUG_CMD("grem"); STEP;
@@ -1756,7 +1828,7 @@ label(interp_psl_cset);
     DEBUG_CMD("cset");
     BINARY;
     if (ISPTR(a) && ISRAW(b)) {
-        memcpy(a, RAW(b)->data, RAW(b)->length);
+        memcpy(ASPTR(a), RAW(b)->data, RAW(b)->length);
     } else {
         BADTYPE("cset");
     }
@@ -1876,12 +1948,12 @@ label(interp_psl_csizeof);
 label(interp_psl_csget); UNIMPL("psl_csget");
 label(interp_psl_csset); UNIMPL("psl_csset");
 
-label(interp_psl_prepcif); UNIMPL("psl_prepcif");
+label(interp_psl_prepcif);
     DEBUG_CMD("prepcif");
     TRINARY;
 
     if (ISPTR(a) && ISARRAY(b) && ISINT(c)) {
-        ffi_cif *cif;
+        ffi_cif_plus *cif;
         ffi_type *rettype;
         int abi, i;
         ffi_type **atypes;
@@ -1893,7 +1965,7 @@ label(interp_psl_prepcif); UNIMPL("psl_prepcif");
         abi = ASINT(c);
 
         /* put the argument types in the proper type of array */
-        atypes = GC_MALLOC_ATOMIC(ad->length * sizeof(ffi_type *));
+        atypes = GC_MALLOC(ad->length * sizeof(ffi_type *));
         for (i = 0; i < ad->length; i++) {
             if (ISPTR(ad->data[i])) {
                 atypes[i] = (ffi_type *) ASPTR(ad->data[i]);
@@ -1903,10 +1975,12 @@ label(interp_psl_prepcif); UNIMPL("psl_prepcif");
         }
 
         /* allocate space for the cif itself */
-        cif = GC_MALLOC_ATOMIC(sizeof(ffi_cif));
+        cif = GC_MALLOC(sizeof(ffi_cif_plus));
+        cif->rtype = rettype;
+        cif->atypes = atypes;
 
         /* and call prepcif */
-        pcret = ffi_prep_cif(cif, abi, ad->length, rettype, atypes);
+        pcret = ffi_prep_cif(&cif->cif, abi, ad->length, rettype, atypes);
         if (pcret != FFI_OK) {
             STACK_PUSH(plofNull);
         } else {
@@ -1921,7 +1995,109 @@ label(interp_psl_prepcif); UNIMPL("psl_prepcif");
 
     STEP;
 
-label(interp_psl_ccall); UNIMPL("psl_ccall");
+label(interp_psl_ccall);
+    DEBUG_CMD("ccall");
+    TRINARY;
+
+    /* must be a cif, a function pointer, and an array of arguments */
+    if (ISPTR(a) && ISPTR(b) && ISARRAY(c)) {
+        ffi_cif_plus *cif;
+        void (*func)();
+        void **args, *ret, *arg;
+        int i;
+        size_t sz;
+        ptrdiff_t val;
+
+        cif = (ffi_cif_plus *) ASPTR(a);
+        func = (void(*)()) ASPTR(b);
+        ad = ARRAY(c);
+
+        /* now start preparing the args and return */
+        ret = GC_MALLOC(cif->rtype->size);
+        args = GC_MALLOC(cif->cif.nargs);
+
+        /* go through each argument and copy it in */
+        for (i = 0; i < cif->cif.nargs && i < ad->length; i++) {
+            sz = cif->atypes[i]->size;
+            arg = GC_MALLOC(sz);
+
+            /* copying in the argument is different by type */
+            if (ISINT(ad->data[i])) {
+                val = ASINT(ad->data[i]);
+
+                if (sz == sizeof(ptrdiff_t)) {
+                    *((ptrdiff_t *) arg) = val;
+
+                } else if (sz > sizeof(ptrdiff_t)) {
+                    memset(arg, 0, sz);
+#ifdef WORDS_BIGENDIAN
+                    memcpy((unsigned char *) arg + sz - sizeof(ptrdiff_t), &val, sizeof(ptrdiff_t));
+#else
+                    memcpy(arg, &val, sizeof(ptrdiff_t));
+#endif
+
+                } else { /* sz < sizeof(ptrdiff_t) */
+#ifdef WORDS_BIGENDIAN
+                    memcpy(arg, (unsigned char *) &val + sizeof(ptrdiff_t) - sz, sz);
+#else
+                    memcpy(arg, &val, sz);
+#endif
+
+                }
+
+            } else if (ISRAW(ad->data[i])) {
+                rd = RAW(ad->data[i]);
+
+                if (sz == rd->length) {
+                    memcpy(arg, rd->data, sz);
+
+                } else if (sz > rd->length) {
+                    memset(arg, 0, sz);
+#ifdef WORDS_BIGENDIAN
+                    memcpy((unsigned char *) arg + sz - rd->length, rd->data, rd->length);
+#else
+                    memcpy(arg, rd->data, rd->length);
+#endif
+
+                } else { /* sz < rd->length */
+#ifdef WORDS_BIGENDIAN
+                    memcpy(arg, rd->data + rd->length - sz, sz);
+#else
+                    memcpy(arg, rd->data, sz);
+#endif
+
+                }
+
+            } else {
+                memset(arg, 0, sz);
+                BADTYPE("ccall argument");
+
+            }
+
+            args[i] = arg;
+        }
+
+        /* finally, call the function */
+        ffi_call(&cif->cif, func, ret, args);
+
+        /* and put the return together */
+        rd = GC_NEW_Z(struct PlofRawData);
+        rd->type = PLOF_DATA_RAW;
+        rd->length = cif->rtype->size;
+        rd->data = ret;
+        a = GC_NEW_Z(struct PlofObject);
+        a->parent = context;
+        a->data = (struct PlofData *) rd;
+
+        STACK_PUSH(a);
+
+    } else {
+        BADTYPE("ccall");
+        STACK_PUSH(plofNull);
+
+    }
+
+    STEP;
 
 #endif
 
