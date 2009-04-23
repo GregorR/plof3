@@ -61,8 +61,6 @@ AC_ARG_WITH([free-ints],
 
 if test x$with_boxed_numbers = xyes; then
     AC_DEFINE([PLOF_BOX_NUMBERS], [], [Fully box all numbers])
-elif test x$with_numbers_in_objects = xyes; then
-    AC_DEFINE([PLOF_NUMBERS_IN_OBJECTS], [], [Put numbers directly in objects])
 else
     AC_DEFINE([PLOF_FREE_INTS], [], [Use completely unboxed ints])
 fi
