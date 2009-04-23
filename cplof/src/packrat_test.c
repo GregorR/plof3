@@ -2,6 +2,7 @@
 
 #include "buffer.h"
 #include "packrat.h"
+#include "prp.h"
 
 void printParseResult(struct ParseResult *pr, unsigned char *input, int spcs)
 {
@@ -23,7 +24,7 @@ int main(int argc, char **argv)
     struct ParseResult *result;
 
     char ***mul, ***add, ***term, *inp;
-    char **mul_a, **mul_b, **add_a, **add_b, **term_a;
+    char **mul_a, **mul_b, **add_a, **add_b, **term_a, **top_a;
 
     mul_a = GC_MALLOC(4 * sizeof(unsigned char *));
     mul_a[0] = "mul"; mul_a[1] = "/\\*/"; mul_a[2] = "add"; mul_a[3] = NULL;
@@ -35,7 +36,10 @@ int main(int argc, char **argv)
     add_b[0] = "term"; add_b[1] = NULL;
     term_a = GC_MALLOC(2 * sizeof(unsigned char *));
     term_a[0] = "/[0-9]+/"; term_a[1] = NULL;
+    top_a = GC_MALLOC(2 * sizeof(unsigned char *));
+    top_a[0] = "mul"; top_a[1] = NULL;
 
+    /*
     mul = GC_MALLOC(3 * sizeof(unsigned char **));
     mul[0] = mul_a; mul[1] = mul_b; mul[2] = NULL;
     add = GC_MALLOC(3 * sizeof(unsigned char **));
@@ -46,13 +50,25 @@ int main(int argc, char **argv)
     newPackratNonterminal((unsigned char *) "mul", (unsigned char ***) mul);
     newPackratNonterminal((unsigned char *) "add", (unsigned char ***) add);
     newPackratNonterminal((unsigned char *) "term", (unsigned char ***) term);
-    newPackratRegexTerminal((unsigned char *) "/\\*/", (unsigned char *) "\\*");
+    */ // newPackratRegexTerminal((unsigned char *) "/\\*/", (unsigned char *) "\\*");
+    /*
     newPackratRegexTerminal((unsigned char *) "/\\+/", (unsigned char *) "\\+");
     newPackratRegexTerminal((unsigned char *) "/[0-9]+/", (unsigned char *) "[0-9]+");
+    */
 
     inp = "1+2*3+4";
-    result = packratParse(getProduction((unsigned char *) "mul"), (unsigned char *) "INPUT", 0, 0, (unsigned char *) inp);
+    gadd((unsigned char *)"mul", (unsigned char **)mul_a, (unsigned char *)"mul = mul /\\*/ add -> mul * add\n");
+    gadd((unsigned char *)"mul", (unsigned char **)mul_b, (unsigned char *)"mul = add -> add\n");
+    gadd((unsigned char *)"add", (unsigned char **)add_a, (unsigned char *)"add = add /\\+/ term -> add + term\n");
+    gadd((unsigned char *)"add", (unsigned char **)add_b, (unsigned char *)"add = term -> term\n");
+    gadd((unsigned char *)"term", (unsigned char **)term_a, (unsigned char *)"term = /[0-9]+/ -> [0-9]+\n");
+    gadd((unsigned char *)"top", (unsigned char **)top_a, (unsigned char *)"top = mul -> mul\n");
+    gcommit();
+
+    result = packratParse(getProduction((unsigned char *) "top"), (unsigned char *) "INPUT", 0, 0, (unsigned char *) inp);
     printParseResult(result, (unsigned char *) inp, 0);
+
+    printf((char *)parse((unsigned char *)inp, (unsigned char *)"top", (unsigned char *)"packrat_test.c", 0, 0));
 
     return 0;
 }
