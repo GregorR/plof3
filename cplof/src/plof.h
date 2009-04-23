@@ -133,12 +133,6 @@ typedef struct PlofReturn (*PlofFunction)(struct PlofObject *, struct PlofObject
  * itable: immediate table, for objects with known members */
 struct PlofObject {
     struct PlofObject *parent;
-#ifdef PLOF_NUMBERS_IN_OBJECTS
-    union {
-        ptrdiff_t int_data;
-        double float_data;
-    } direct_data;
-#endif
     struct PlofData *data;
     struct PlofOHashTable *hashTable;
     struct PlofObject *itable[1];
