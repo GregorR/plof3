@@ -1,7 +1,7 @@
 /*
  * PSL interpreter
  *
- * Copyright (c) 2007, 2008, 2009 Gregor Richards
+ * Copyright (c) 2007, 2008, 2009 Gregor Richards and Elliott Hird
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -80,6 +80,8 @@ enum jumplabel {
 
 /* Implementation of 'replace' */
 struct PlofRawData *pslReplace(struct PlofRawData *in, struct PlofArrayData *with);
+
+struct PlofObject *plofRead(struct PlofObject *obj, size_t namehash);
 
 /* The main PSL interpreter */
 #ifdef __GNUC__
@@ -553,7 +555,7 @@ label(interp_psl_member);
         name = rd->data;
         HASHOF(namehash, rd);
 
-        PLOF_READ(a, a, rd->length, name, namehash);
+        a = plofRead(a, namehash);
         STACK_PUSH(a);
     } else {
         /*BADTYPE("member");*/
@@ -802,7 +804,7 @@ label(interp_psl_resolve);
         while (a && a != plofNull) {
             for (i = 0; i < ad->length; i++) {
                 rd = RAW(ad->data[i]);
-                PLOF_READ(b, a, rd->length, rd->data, hashes[i]);
+                b = plofRead(a, hashes[i]);
                 if (b != plofNull) {
                     /* done */
                     STACK_PUSH(a);
@@ -2095,6 +2097,25 @@ label(interp_psl_done);
     return ret;
 
     jumptail;
+}
+
+/* Retrieve a value from an object's hash table */
+struct PlofObject *plofRead(struct PlofObject *obj, size_t namehash)
+{
+    /* TODO: make this something other than the shittiest "hash table" ever */
+    struct PlofObject *res = plofNull;
+    struct PlofOHashTable *cur = obj->hashTable;
+    while (cur) { \
+        if (namehash < cur->hashedName) {
+            cur = cur->left;
+        } else if (namehash > cur->hashedName) {
+            cur = cur->right;
+        } else { \
+            res = cur->value;
+            cur = NULL;
+        }
+    }
+    return res;
 }
 
 /* Hash function */

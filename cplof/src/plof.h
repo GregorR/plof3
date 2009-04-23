@@ -48,30 +48,6 @@ extern unsigned char **plofIncludePaths;
 #define GC_NEW_Z(t) memset(GC_NEW(t), 0, sizeof(t))
 #endif
 
-/* "Function" for getting a value from the hash table in an object */
-#define PLOF_READ(into, obj, namelen, name, namehash) \
-{ \
-    struct PlofObject *_obj = (obj); \
-    size_t _namehash = (namehash); \
-    struct PlofObject *_res = plofNull; \
-    struct PlofOHashTable *_cur = _obj->hashTable; \
-    while (_cur) { \
-        if (_namehash < _cur->hashedName) { \
-            _cur = _cur->left; \
-        } else if (_namehash > _cur->hashedName) { \
-            _cur = _cur->right; \
-        } else { \
-            /*if (((size_t) _cur->value) & 1) {*/ \
-                /*_res = _obj->itable[((size_t) _cur->value)>>1];*/ \
-            /*} else {*/ \
-                _res = _cur->value; \
-            /*}*/ \
-            _cur = NULL; \
-        } \
-    } \
-    into = _res; \
-}
-
 /* "Function" for creating a new hashTable object */
 #define PLOF_HASHTABLE_NEW(into, snamelen, sname, snamehash, svalue) \
 { \
