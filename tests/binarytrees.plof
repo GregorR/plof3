@@ -47,12 +47,7 @@ var stretch_depth = max_depth + 1
 Debug.print("stretch tree of depth ")
 Debug.print(stretch_depth)
 Debug.print("\t check:")
-try (
-    var check = check_tree(make_tree(0, stretch_depth))
-    Debug.print(check)
-) catchall (ref c) (
-    psl { plof{c is TypeMismatchException} pul_eval print plof{True} pul_eval print plof{False} pul_eval print }
-)
+check_tree(make_tree(0, stretch_depth))
 
 /*
 long_lived_tree = make_tree(0, max_depth)
