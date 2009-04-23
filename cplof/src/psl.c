@@ -327,6 +327,12 @@ struct PlofReturn interpretPSL(
 #if defined(PLOF_BOX_NUMBERS)
 #define PUSHINT(val) PUSHPTR(val)
 
+#elif defined(PLOF_FREE_INTS)
+#define PUSHINT(val) \
+    { \
+        STACK_PUSH((void *) (((ptrdiff_t)(val)<<1) | 1)); \
+    }
+
 #endif
 
     /* "Functions" for integer ops */
