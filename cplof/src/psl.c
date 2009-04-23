@@ -1603,7 +1603,7 @@ label(interp_psl_parse);
 
         /* check if it's a PSL file */
         if (rd->length >= sizeof(PSL_FILE_MAGIC) &&
-            !strncmp(rd->data, PSL_FILE_MAGIC, sizeof(PSL_FILE_MAGIC) - 1)) {
+            !strncmp((char *) rd->data, PSL_FILE_MAGIC, sizeof(PSL_FILE_MAGIC) - 1)) {
             
             /* look for the loadable section */
             for (i = 8; i < rd->length;) {
