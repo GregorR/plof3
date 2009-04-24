@@ -2,7 +2,7 @@
  * This header has generally accessible structs and functions, e.g. the
  * functions in psl.c
  *
- * Copyright (c) 2007, 2008, 2009 Gregor Richards
+ * Copyright (c) 2007, 2008, 2009 Gregor Richards and Elliott Hird
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,9 +30,7 @@
 
 #include <gc/gc.h>
 
-typedef struct Plof Plof;
-
-struct Plof;
+typedef struct PlofObject PlofObject;
 struct PlofHashTable;
 struct PlofRawData;
 struct PlofArrayData;
@@ -103,7 +101,7 @@ extern unsigned char **plofIncludePaths;
 typedef struct PlofReturn (*PlofFunction)(Plof *, Plof *);
 
 /* Plof is just zis structure, you know? */
-struct Plof {
+struct PlofObject {
     Plof *parent;
 
     /* TODO: make this an ACTUAL HASH TABLE */
