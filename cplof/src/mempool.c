@@ -56,7 +56,7 @@ struct PlofMemPool *plofMakeMemPool(void)
         return NULL;
     }
     pool->allocations[0].start = (void *)-1;
-    pool->allocations[0].end = pool->data;
+    pool->allocations[0].end = (void *)-1;
     return pool;
 }
 
@@ -70,19 +70,59 @@ void *plofPoolAlloc(struct PlofMemPool *pool, enum PlofTag tag,
      */
     void *pos = pool->data;
     struct PlofAllocation *record = pool->allocations;
-    while (
-        (record->start != (void *)-1) &&
-        (pos < record->end && (pos+1) >= (record+1)->start)
-    ) {
+    struct PlofAllocation *next;
+    size_t size;
+    for (;;) {
+        if (record->start == (void *)-1) {
+            break;
+        }
+
+        if (pos >= record->end) {
+            /*
+             * we don't step on the toes of this one -- yay
+             * but do we step on the head of the next one?
+             */
+            next = record + 1;
+            if (pos < next->start) {
+                /* kerching! */
+                record++;
+                break;
+            }
+        }
+
         pos = record->end;
         record++;
     }
-    if (record->start != (void *)-1) {
-        record++;
+    switch (tag) {
+        case PLOF_TAG_OBJECT:
+            size = sizeof(PlofObject);
+            break;
+        case PLOF_TAG_HASHTABLE:
+            size = sizeof(struct PlofHashTable);
+            break;
+        default:
+            return NULL;
     }
+    switch (dataTag) {
+        case PLOF_NO_DATA:
+            if (dataSize != 0) {
+                return NULL;
+            }
+            break;
+        case PLOF_RAW_DATA: case PLOF_ARRAY_DATA:
+            ((PlofObject *)pos)->dataTag = dataTag;
+            size += dataSize - 1;
+            break;
+        default:
+            return NULL;        
+    }
+    *((enum PlofTag *)pos) = tag;
     record->start = pos;
-    record->end = pos+1;
-    printf("%p (%p)\n", pos, pos - pool->data);
+    record->end = pos + size;
+    record++;
+    record->start = (void *)-1;
+    record->end = (void *)-1;
+    enum PlofTag { PLOF_TAG_OBJECT, PLOF_TAG_HASHTABLE };
     return pos;
 }
 
@@ -99,8 +139,12 @@ int main(void)
         return 1;
     }
     test = plofPoolAlloc(pool, PLOF_TAG_OBJECT, PLOF_NO_DATA, 0);
+    printf("%p\n", test);
     test = plofPoolAlloc(pool, PLOF_TAG_OBJECT, PLOF_NO_DATA, 0);
+    printf("%p\n", test);
     test = plofPoolAlloc(pool, PLOF_TAG_OBJECT, PLOF_NO_DATA, 0);
+    printf("%p\n", test);
     test = plofPoolAlloc(pool, PLOF_TAG_OBJECT, PLOF_NO_DATA, 0);
+    printf("%p\n", test);
     return 0;
 }

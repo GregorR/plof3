@@ -115,10 +115,10 @@ struct PlofObject {
         size_t nameLength;
         PlofObject *value;
         struct PlofHashTable *left, *right;
-    } hashTable;
+    } *hashTable;
 
     /* This shit be optional yo */
-    enum PlofDataTag { PLOF_NO_DATA, PLOF_RAW_DATA, PLOF_ARRAY_DATA } dataType;
+    enum PlofDataTag { PLOF_NO_DATA, PLOF_RAW_DATA, PLOF_ARRAY_DATA } dataTag;
     union {
         struct PlofRawData {
             size_t length;

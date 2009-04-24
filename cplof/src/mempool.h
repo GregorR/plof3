@@ -22,6 +22,9 @@
  * THE SOFTWARE.
  */
 
+#ifndef MEMPOOL_H
+#define MEMPOOL_H
+
 #include "plof.h"
 
 struct PlofMemPool {
@@ -49,8 +52,10 @@ struct PlofMemPool *plofMakeMemPool(void);
  * 
  * Allocates enough for one instance of the type specified.
  * If and only if the tag is PLOF_TAG_OBJECT, you can supply
- * a PlofDataTag and it'll set ->dataType for you, and give
+ * a PlofDataTag and it'll set ->dataTag for you, and give
  * you an appropriate amount of data for the [1] elements.
+ *
+ * If you give it invalid input, returns NULL.
  */
 void *plofPoolAlloc(
     struct PlofMemPool *pool,
@@ -59,3 +64,5 @@ void *plofPoolAlloc(
     enum PlofDataTag dataTag,
     size_t dataSize
 );
+
+#endif
