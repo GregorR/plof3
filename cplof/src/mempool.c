@@ -122,7 +122,6 @@ void *plofPoolAlloc(struct PlofMemPool *pool, enum PlofTag tag,
     record++;
     record->start = (void *)-1;
     record->end = (void *)-1;
-    enum PlofTag { PLOF_TAG_OBJECT, PLOF_TAG_HASHTABLE };
     return pos;
 }
 
