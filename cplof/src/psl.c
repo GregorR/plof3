@@ -2117,8 +2117,7 @@ void plofObjCopyPrime(struct PlofObject *to, struct PlofOHashTable *from)
     if (from == NULL) return;
 
     plofWrite(to, from->namelen, from->name, from->hashedName, from->value);
-    plofObjCopyPrime(to, from->left);
-    plofObjCopyPrime(to, from->right);
+    plofObjCopyPrime(to, from->next);
 }
 
 /* Copy the content of one object into another */
@@ -2140,7 +2139,7 @@ struct PlofObjects {
 /* Internal function used by plofMembers */
 struct PlofObjects plofMembersSub(struct PlofOHashTable *of)
 {
-    struct PlofObjects left, right, ret;
+    struct PlofObjects next, ret;
     struct PlofObject *obj;
     struct PlofRawData *rd;
 
@@ -2151,11 +2150,10 @@ struct PlofObjects plofMembersSub(struct PlofOHashTable *of)
     }
 
     /* get the left and right members */
-    left = plofMembersSub(of->left);
-    right = plofMembersSub(of->right);
+    next = plofMembersSub(of->next);
 
     /* prepare ours */
-    ret.length = left.length + right.length + 1;
+    ret.length = next.length + 1;
     ret.data = (struct PlofObject **) GC_MALLOC(ret.length * sizeof(struct PlofObject *));
 
     /* and the object */
@@ -2168,9 +2166,10 @@ struct PlofObjects plofMembersSub(struct PlofOHashTable *of)
     obj->data = (struct PlofData *) rd;
 
     /* then copy */
-    memcpy(ret.data, left.data, left.length * sizeof(struct PlofObject *));
-    ret.data[left.length] = obj;
-    memcpy(ret.data + left.length + 1, right.data, right.length * sizeof(struct PlofObject *));
+    ret.data[0] = obj;
+    memcpy(ret.data + 1, next.data, next.length * sizeof(struct PlofObject *));
+
+    /* FIXME: this is all horrendously inefficient for a list, but then again these lists are meant to be quite short */
 
     return ret;
 }
@@ -2308,14 +2307,12 @@ struct PlofObject *plofRead(struct PlofObject *obj, size_t namelen, unsigned cha
     struct PlofObject *res = plofNull;
     struct PlofOHashTable *cur = obj->hashTable[namehash & PLOF_HASHTABLE_MASK];
     while (cur) {
-        if (namehash < cur->hashedName) {
-            cur = cur->left;
-        } else if (namehash > cur->hashedName) {
-            cur = cur->right;
-        } else {
+        if (namehash == cur->hashedName) {
             /* FIXME: collisions, name check */
             res = cur->value;
             cur = NULL;
+        } else {
+            cur = cur->next;
         }
     }
     return res;
@@ -2332,25 +2329,18 @@ void plofWrite(struct PlofObject *obj, size_t namelen, unsigned char *name, size
     } else {
         cur = obj->hashTable[subhash];
         while (cur) {
-            if (namehash < cur->hashedName) {
-                if (cur->left) {
-                    cur = cur->left;
-                } else {
-                    cur->left = plofHashtableNew(namelen, name, namehash, value);
-                    cur = NULL;
-                }
-               
-            } else if (namehash > cur->hashedName) {
-                if (cur->right) {
-                    cur = cur->right;
-                } else {
-                    cur->right = plofHashtableNew(namelen, name, namehash, value);
-                    cur = NULL;
-                }
-               
-            } else {
+            if (namehash == cur->hashedName) {
                 cur->value = value; /* FIXME, collisions */
                 cur = NULL;
+
+            } else {
+                if (cur->next) {
+                    cur = cur->next;
+                } else {
+                    cur->next = plofHashtableNew(namelen, name, namehash, value);
+                    cur = NULL;
+                }
+               
             }
         }
     }

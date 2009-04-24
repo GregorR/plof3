@@ -93,7 +93,7 @@ struct PlofOHashTable {
     size_t namelen;
     unsigned char *name;
     struct PlofObject *value;
-    struct PlofOHashTable *left, *right;
+    struct PlofOHashTable *next;
 };
 
 /* "Superclass" for Plof data
