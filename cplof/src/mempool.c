@@ -2,6 +2,7 @@
  * Memory pool
  *
  * Copyright (c) 2009 Elliott Hird
+ * Copyright (c) 2009 Josiah Worcester
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +36,7 @@ struct PlofMemPool *plofMakeMemPool(void)
      */
     struct PlofMemPool *pool = malloc(
         sizeof(struct PlofMemPool) +
-        (16777216 * sizeof(struct PlofAllocation))
+        (0x020000000 * sizeof(struct PlofAllocation))
     );
     if (!pool) {
         return NULL;
@@ -43,7 +44,7 @@ struct PlofMemPool *plofMakeMemPool(void)
     pool->data = mmap(
         NULL,
         /* 2 gig on 32 bit systems, 4 on 64 bit systems */
-        (sizeof(void *) / 2) * 1073741824,
+        (sizeof(void *) / 2) * 0x40000000,
         PROT_EXEC | PROT_READ | PROT_WRITE,
         MAP_ANON | MAP_PRIVATE | MAP_NORESERVE,
         -1,

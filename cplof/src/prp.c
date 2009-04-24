@@ -104,13 +104,13 @@ unsigned char *parse(unsigned char *code, unsigned char *top, unsigned char *fil
     return psl.buf;
 }
 
-struct Buffer_bytes parse_helper(struct ParseResult *pr, struct Buffer_bytes psl)
+struct PlofObject *parse_helper(struct ParseResult *pr, struct PlofObject *po, unsigned char *code)
 {
     if (!pr->subResults) // We're done here.
-	return psl;
+	return po;
 
     for (int i = 0; pr->subResults[i]; i++)
-	psl = parse_helper(pr->subResults[i], psl);
+	po = parse_helper(pr->subResults[i], po, code);
 
     if (pr->production->userarg) { // Non-terminal, has code
 	size_t len = strlen((char *)((unsigned char **)pr->production->userarg)[pr->choice]);
@@ -119,9 +119,12 @@ struct Buffer_bytes parse_helper(struct ParseResult *pr, struct Buffer_bytes psl
 		     len);
 	
 	// printf("%i: %s", pr->choice, ((unsigned char **)pr->production->userarg)[pr->choice]);
+    } else {
+	// Create a raw Plof object, storing the code in it
+	
     }
 
-    return psl;
+    return po;
 }
 
 
