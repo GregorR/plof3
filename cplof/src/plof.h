@@ -115,7 +115,7 @@ struct Plof {
     } hashTable;
 
     /* This shit be optional yo */
-    enum { PLOF_RAW_DATA, PLOF_ARRAY_DATA } type; 
+    enum { PLOF_NO_DATA, PLOF_RAW_DATA, PLOF_ARRAY_DATA } type; 
     union {
         struct PlofRawData {
             size_t length;
