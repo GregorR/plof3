@@ -40,7 +40,7 @@ PlofMemPool plofMakeMemPool(void)
         /* 2 gig on 32 bit systems, 4 on 64 bit systems */
         (sizeof(void *) / 2) * 1073741824,
         PROT_EXEC | PROT_READ | PROT_WRITE,
-        MAP_ANON | MAP_PRIVATE,
+        MAP_ANON | MAP_PRIVATE | MAP_NORESERVE,
         -1,
         0
     );
