@@ -22,9 +22,11 @@
  * THE SOFTWARE.
  */
 
+#include "plof.h"
+
 struct PlofMemPool {
     void *data;
-    size_t allocations_size;
+    size_t allocationsSize;
     struct PlofAllocation {
         void *start;
         void *end;
@@ -38,3 +40,22 @@ struct PlofMemPool {
  * Returns NULL on failure and sets errno (see `man malloc` and `man mmap`).
  */
 struct PlofMemPool *plofMakeMemPool(void);
+
+/*
+ * Get yourself a chunk of memory from the pool.
+ * 
+ * There are no protections, but please don't mess with other
+ * objects' memory. It's not nice.
+ * 
+ * Allocates enough for one instance of the type specified.
+ * If and only if the tag is PLOF_TAG_OBJECT, you can supply
+ * a PlofDataTag and it'll set ->dataType for you, and give
+ * you an appropriate amount of data for the [1] elements.
+ */
+void *plofPoolAlloc(
+    struct PlofMemPool *pool,
+    enum PlofTag tag,
+    /* PLOF_TAG_OBJECT only: */
+    enum PlofDataTag dataTag,
+    size_t dataSize
+);

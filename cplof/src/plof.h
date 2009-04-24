@@ -28,7 +28,7 @@
 
 #include <stddef.h>
 
-#include <gc/gc.h>
+/*#include <gc/gc.h>*/
 
 typedef struct PlofObject PlofObject;
 struct PlofHashTable;
@@ -41,9 +41,9 @@ extern unsigned char **plofIncludePaths;
 #define PSL_FILE_MAGIC "\x9E\x50\x53\x4C\x17\xF2\x58\x8C"
 
 /* GC_NEW with 0s */
-#ifndef GC_NEW_Z
+/*#ifndef GC_NEW_Z
 #define GC_NEW_Z(t) memset(GC_NEW(t), 0, sizeof(t))
-#endif
+#endif*/
 
 /* "Function" for creating a new hashTable object */
 #define PLOF_HASHTABLE_NEW(into, snamelen, sname, snamehash, svalue) \
@@ -98,10 +98,10 @@ extern unsigned char **plofIncludePaths;
 
 /* All functions accessible directly from Plof should be of this form
  * args: context, arg */
-typedef struct PlofReturn (*PlofFunction)(Plof *, Plof *);
+typedef struct PlofReturn (*PlofFunction)(PlofObject *, PlofObject *);
 
 /* For the GC. */
-enum { PLOF_TAG_OBJECT, PLOF_TAG_HASHTABLE } PlofTag;
+enum PlofTag { PLOF_TAG_OBJECT, PLOF_TAG_HASHTABLE };
 
 /* Plof is just zis structure, you know? */
 struct PlofObject {
@@ -118,7 +118,7 @@ struct PlofObject {
     } hashTable;
 
     /* This shit be optional yo */
-    enum { PLOF_NO_DATA, PLOF_RAW_DATA, PLOF_ARRAY_DATA } type; 
+    enum PlofDataTag { PLOF_NO_DATA, PLOF_RAW_DATA, PLOF_ARRAY_DATA } dataType;
     union {
         struct PlofRawData {
             size_t length;
@@ -131,7 +131,7 @@ struct PlofObject {
             PlofObject *elems[1];
         } array;
     } data;
-}
+};
 
 struct PlofReturn {
     PlofObject *value;
@@ -143,9 +143,9 @@ extern PlofObject *plofNull, *plofGlobal;
 
 /* The standard PSL interpreter */
 struct PlofReturn interpretPSL(
-        Plof *context,
-        Plof *arg,
-        Plof *pslraw,
+        PlofObject *context,
+        PlofObject *arg,
+        PlofObject *pslraw,
         size_t pslaltlen,
         unsigned char *pslalt,
         int generateContext,
@@ -155,9 +155,9 @@ struct PlofReturn interpretPSL(
 size_t plofHash(size_t slen, unsigned char *str);
 
 /* Copy the content of one object into another (for 'combine') */
-void plofObjCopy(Plof *to, Plof *from);
+void plofObjCopy(PlofObject *to, PlofObject *from);
 
 /* Make an array of the list of members of an object (for 'members') */
-Plof *plofMembers(Plof *of);
+PlofObject *plofMembers(PlofObject *of);
 
 #endif
