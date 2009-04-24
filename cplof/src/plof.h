@@ -100,12 +100,17 @@ extern unsigned char **plofIncludePaths;
  * args: context, arg */
 typedef struct PlofReturn (*PlofFunction)(Plof *, Plof *);
 
+/* For the GC. */
+enum { PLOF_TAG_OBJECT, PLOF_TAG_HASHTABLE } PlofTag;
+
 /* Plof is just zis structure, you know? */
 struct PlofObject {
+    enum PlofTag tag; /* always PLOF_TAG_OBJECT */
     Plof *parent;
 
     /* TODO: make this an ACTUAL HASH TABLE */
     struct PlofHashTable {
+        enum PlofTag tag; /* always PLOF_TAG_HASHTABLE */
         size_t hashedName;
         size_t nameLength;
         Plof *value;
@@ -118,12 +123,12 @@ struct PlofObject {
         struct PlofRawData {
             size_t length;
             size_t hash;
-            unsigned char *data;
+            unsigned char data[1];
         } raw;
 
         struct PlofArrayData {
             size_t length;
-            Plof **elems;
+            Plof *elems[1];
         } array;
     } data;
 }
@@ -134,7 +139,7 @@ struct PlofReturn {
 };
 
 /* Major Plof constants */
-extern Plof *plofNull, *plofGlobal;
+extern PlofObject *plofNull, *plofGlobal;
 
 /* The standard PSL interpreter */
 struct PlofReturn interpretPSL(
