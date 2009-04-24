@@ -58,8 +58,11 @@ void plofWrite(struct PlofObject *obj, size_t namelen, unsigned char *name, size
 struct PlofOHashTable *plofHashtableNew(size_t namelen, unsigned char *name, size_t namehash, struct PlofObject *value);
 
 /* Default length of the hash table buckets, in terms of bits represented by buckets */
+#ifndef PLOF_HASHTABLE_BITS
 #define PLOF_HASHTABLE_BITS 4
+#endif
 #define PLOF_HASHTABLE_SIZE (1<<PLOF_HASHTABLE_BITS)
+#define PLOF_HASHTABLE_MASK ((size_t) -1 >> (sizeof(size_t)*8 - PLOF_HASHTABLE_BITS))
 
 /* All functions accessible directly from Plof should be of this form
  * args: context, arg */
@@ -71,7 +74,7 @@ typedef struct PlofReturn (*PlofFunction)(struct PlofObject *, struct PlofObject
 struct PlofObject {
     struct PlofObject *parent;
     struct PlofData *data;
-    struct PlofOHashTable *hashTable;
+    struct PlofOHashTable *hashTable[PLOF_HASHTABLE_SIZE];
 };
 
 /* The return type from Plof functions, which specifies whether a value is
@@ -141,7 +144,7 @@ struct PlofReturn interpretPSL(
 size_t plofHash(size_t slen, unsigned char *str);
 
 /* Copy the content of one object into another (for 'combine') */
-void plofObjCopy(struct PlofObject *to, struct PlofOHashTable *from);
+void plofObjCopy(struct PlofObject *to, struct PlofObject *from);
 
 /* Make an array of the list of members of an object (for 'members') */
 struct PlofArrayData *plofMembers(struct PlofObject *of);
