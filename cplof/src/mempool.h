@@ -22,12 +22,19 @@
  * THE SOFTWARE.
  */
 
-typedef void *PlofMemPool;
+struct PlofMemPool {
+    void *data;
+    size_t allocations_size;
+    struct PlofAllocation {
+        void *start;
+        void *end;
+    } allocations[1];
+};
 
 /*
  * Allocates enough memory for everyone. I see a world market
  * for about 2GB.
  * 
- * Returns -1 on failure and sets errno (see `man mmap`).
+ * Returns NULL on failure and sets errno (see `man malloc` and `man mmap`).
  */
-PlofMemPool plofMakeMemPool(void);
+struct PlofMemPool *plofMakeMemPool(void);

@@ -23,19 +23,24 @@
  */
 
 #include <sys/mman.h>
-#include <limits.h>
-#include <stdio.h>
-#include <unistd.h>
+#include <stdlib.h>
 #include "mempool.h"
 
-PlofMemPool plofMakeMemPool(void)
+struct PlofMemPool *plofMakeMemPool(void)
 {
     /*
      * The basic idea here is to mmap a large amount of memory and
      * rely on the operating system to overcommit. This works in
      * most cases.
      */
-    return mmap(
+    struct PlofMemPool *pool = malloc(
+        sizeof(struct PlofMemPool) +
+        (16777216 * sizeof(struct PlofAllocation))
+    );
+    if (!pool) {
+        return NULL;
+    }
+    pool->data = mmap(
         NULL,
         /* 2 gig on 32 bit systems, 4 on 64 bit systems */
         (sizeof(void *) / 2) * 1073741824,
@@ -44,27 +49,24 @@ PlofMemPool plofMakeMemPool(void)
         -1,
         0
     );
+    if (pool->data == (void *)-1) {
+        return NULL;
+    }
+    pool->allocations[0].start = (void *)-1;
+    return pool;
 }
+
+#include <stdio.h>
+#include <unistd.h>
 
 /* TODO: Remove this when the other code compiles */
 int main(void)
 {
-    int *pool = (int *)plofMakeMemPool();
-    if (pool == (PlofMemPool)-1) {
+    struct PlofMemPool *pool = plofMakeMemPool();
+    if (!pool) {
         perror("mmap");
         return 1;
     }
-    printf("Pool created, check memory usage\n");
-    sleep(7);
-    pool[0] = 42;
-    printf("This should be 42: %i, check memory usage\n", pool[0]);
-    sleep(7);
-    pool[42] = 23;
-    printf("This should be 23: %i, check memory usage\n", pool[42]);
-    sleep(7);
-    pool[4194304] = 1234;
-    printf("This should be 1234: %i, check memory usage\n", pool[4194304]);
-    sleep(7);
-    printf("Bye\n");
+    sleep(10);
     return 0;
 }
