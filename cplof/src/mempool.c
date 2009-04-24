@@ -118,7 +118,7 @@ void *plofPoolAlloc(struct PlofMemPool *pool, enum PlofTag tag,
     }
     *((enum PlofTag *)pos) = tag;
     record->start = pos;
-    record->end = pos + size;
+    record->end = ((char *)pos) + size;
     record++;
     record->start = (void *)-1;
     record->end = (void *)-1;
