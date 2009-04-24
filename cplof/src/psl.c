@@ -2302,7 +2302,7 @@ void plofWrite(struct PlofObject *obj, unsigned char *name, size_t namehash, str
 {
     struct PlofOHashTable *cur;
     if (obj->hashTable == NULL) {
-        PLOF_HASHTABLE_NEW(obj->hashTable, name, namehash, value);
+        obj->hashTable = plofHashtableNew(name, namehash, value);
        
     } else {
         cur = obj->hashTable;
@@ -2311,7 +2311,7 @@ void plofWrite(struct PlofObject *obj, unsigned char *name, size_t namehash, str
                 if (cur->left) {
                     cur = cur->left;
                 } else {
-                    PLOF_HASHTABLE_NEW(cur->left, name, namehash, value);
+                    cur->left = plofHashtableNew(name, namehash, value);
                     cur = NULL;
                 }
                
@@ -2319,7 +2319,7 @@ void plofWrite(struct PlofObject *obj, unsigned char *name, size_t namehash, str
                 if (cur->right) {
                     cur = cur->right;
                 } else {
-                    PLOF_HASHTABLE_NEW(cur->right, name, namehash, value);
+                    cur->right = plofHashtableNew(name, namehash, value);
                     cur = NULL;
                 }
                
@@ -2329,6 +2329,16 @@ void plofWrite(struct PlofObject *obj, unsigned char *name, size_t namehash, str
             }
         }
     }
+}
+
+/* Function for creating a new hashTable object */
+struct PlofOHashTable *plofHashtableNew(unsigned char *name, size_t namehash, struct PlofObject *value)
+{
+    struct PlofOHashTable *nht = GC_NEW_Z(struct PlofOHashTable);
+    nht->hashedName = namehash;
+    nht->name = (unsigned char *) GC_STRDUP((char *) name);
+    nht->value = value;
+    return nht;
 }
 
 
