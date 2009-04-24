@@ -128,13 +128,13 @@ struct PlofObject {
 
         struct PlofArrayData {
             size_t length;
-            Plof *elems[1];
+            PlofObject *elems[1];
         } array;
     } data;
 }
 
 struct PlofReturn {
-    Plof *value;
+    PlofObject *value;
     unsigned char isThrown;
 };
 
