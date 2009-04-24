@@ -132,7 +132,7 @@ struct Plof {
         struct PlofArrayData {
             size_t length;
             Plof **elems;
-        };
+        } arrayData;
     } data;
 }
 
