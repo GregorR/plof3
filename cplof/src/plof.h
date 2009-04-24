@@ -137,7 +137,7 @@ struct Plof {
 }
 
 struct PlofReturn {
-    struct PlofObject *value;
+    Plof *value;
     unsigned char isThrown;
 };
 
