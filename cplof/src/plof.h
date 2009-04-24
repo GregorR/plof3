@@ -49,20 +49,21 @@ extern unsigned char **plofIncludePaths;
 #endif
 
 /* Function for getting a value from the hash table in an object */
-struct PlofObject *plofRead(struct PlofObject *obj, unsigned char *name, size_t namehash);
+struct PlofObject *plofRead(struct PlofObject *obj, size_t namelen, unsigned char *name, size_t namehash);
 
 /* "Function" for creating a new hashTable object */
-#define PLOF_HASHTABLE_NEW(into, sname, snamehash, svalue) \
+#define PLOF_HASHTABLE_NEW(into, snamelen, sname, snamehash, svalue) \
 { \
     struct PlofOHashTable *_nht = GC_NEW_Z(struct PlofOHashTable); \
     _nht->hashedName = (snamehash); \
+    _nht->namelen = (snamelen); \
     _nht->name = (unsigned char *) GC_STRDUP((char *) (sname)); \
     _nht->value = (svalue); \
     into = _nht; \
 }
 
 /* Function for writing a value into an object */
-void plofWrite(struct PlofObject *obj, unsigned char *name, size_t namehash, struct PlofObject *value);
+void plofWrite(struct PlofObject *obj, size_t namelen, unsigned char *name, size_t namehash, struct PlofObject *value);
 
 /* All functions accessible directly from Plof should be of this form
  * args: context, arg */
@@ -92,6 +93,7 @@ struct PlofReturn {
  * value */
 struct PlofOHashTable {
     size_t hashedName;
+    size_t namelen;
     unsigned char *name;
     struct PlofObject *value;
     struct PlofOHashTable *left, *right;

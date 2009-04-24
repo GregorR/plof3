@@ -133,7 +133,7 @@ struct PlofReturn interpretPSL(
         if (procedureHash == 0) {
             procedureHash = plofHash(10, (unsigned char *) "+procedure");
         }
-        plofWrite(context, (unsigned char *) "+procedure", procedureHash, pslraw);
+        plofWrite(context, 10, (unsigned char *) "+procedure", procedureHash, pslraw);
     }
 
     /* Start the stack at size 8 */
@@ -553,7 +553,7 @@ label(interp_psl_member);
         name = rd->data;
         HASHOF(namehash, rd);
 
-        a = plofRead(a, name, namehash);
+        a = plofRead(a, rd->length, name, namehash);
         STACK_PUSH(a);
     } else {
         /*BADTYPE("member");*/
@@ -571,7 +571,7 @@ label(interp_psl_memberset);
         name = rd->data;
         HASHOF(namehash, rd);
 
-        plofWrite(a, name, namehash, c);
+        plofWrite(a, rd->length, name, namehash, c);
     } else {
         BADTYPE("memberset");
     }
@@ -802,7 +802,7 @@ label(interp_psl_resolve);
         while (a && a != plofNull) {
             for (i = 0; i < ad->length; i++) {
                 rd = RAW(ad->data[i]);
-                b = plofRead(a, rd->data, hashes[i]);
+                b = plofRead(a, rd->length, rd->data, hashes[i]);
                 if (b != plofNull) {
                     /* done */
                     STACK_PUSH(a);
@@ -2116,7 +2116,7 @@ void plofObjCopy(struct PlofObject *to, struct PlofOHashTable *from)
 {
     if (from == NULL) return;
 
-    plofWrite(to, from->name, from->hashedName, from->value);
+    plofWrite(to, from->namelen, from->name, from->hashedName, from->value);
     plofObjCopy(to, from->left);
     plofObjCopy(to, from->right);
 }
@@ -2151,7 +2151,7 @@ struct PlofObjects plofMembersSub(struct PlofOHashTable *of)
     /* and the object */
     rd = GC_NEW_Z(struct PlofRawData);
     rd->type = PLOF_DATA_RAW;
-    rd->length = strlen((char *) of->name);
+    rd->length = of->namelen;
     rd->data = of->name;
     obj = GC_NEW_Z(struct PlofObject);
     obj->parent = plofNull; /* FIXME */
@@ -2280,7 +2280,7 @@ struct PlofRawData *pslReplace(struct PlofRawData *in, struct PlofArrayData *wit
 }
 
 /* Function for getting a value from the hash table in an object */
-struct PlofObject *plofRead(struct PlofObject *obj, unsigned char *name, size_t namehash)
+struct PlofObject *plofRead(struct PlofObject *obj, size_t namelen, unsigned char *name, size_t namehash)
 {
     struct PlofObject *res = plofNull;
     struct PlofOHashTable *cur = obj->hashTable;
@@ -2290,6 +2290,7 @@ struct PlofObject *plofRead(struct PlofObject *obj, unsigned char *name, size_t 
         } else if (namehash > cur->hashedName) {
             cur = cur->right;
         } else {
+            /* FIXME: collisions, name check */
             res = cur->value;
             cur = NULL;
         }
@@ -2298,11 +2299,11 @@ struct PlofObject *plofRead(struct PlofObject *obj, unsigned char *name, size_t 
 }
 
 /* Function for writing a value into an object */
-void plofWrite(struct PlofObject *obj, unsigned char *name, size_t namehash, struct PlofObject *value)
+void plofWrite(struct PlofObject *obj, size_t namelen, unsigned char *name, size_t namehash, struct PlofObject *value)
 {
     struct PlofOHashTable *cur;
     if (obj->hashTable == NULL) {
-        PLOF_HASHTABLE_NEW(obj->hashTable, name, namehash, value);
+        PLOF_HASHTABLE_NEW(obj->hashTable, namelen, name, namehash, value);
        
     } else {
         cur = obj->hashTable;
@@ -2311,7 +2312,7 @@ void plofWrite(struct PlofObject *obj, unsigned char *name, size_t namehash, str
                 if (cur->left) {
                     cur = cur->left;
                 } else {
-                    PLOF_HASHTABLE_NEW(cur->left, name, namehash, value);
+                    PLOF_HASHTABLE_NEW(cur->left, namelen, name, namehash, value);
                     cur = NULL;
                 }
                
@@ -2319,7 +2320,7 @@ void plofWrite(struct PlofObject *obj, unsigned char *name, size_t namehash, str
                 if (cur->right) {
                     cur = cur->right;
                 } else {
-                    PLOF_HASHTABLE_NEW(cur->right, name, namehash, value);
+                    PLOF_HASHTABLE_NEW(cur->right, namelen, name, namehash, value);
                     cur = NULL;
                 }
                
