@@ -30,16 +30,9 @@
 
 #include <gc/gc.h>
 
-enum {
-    PLOF_OBJECT,
-    PLOF_RAW_DATA,
-    PLOF_ARRAY_DATA
-} PlofType;
-
 typedef struct Plof Plof;
 
 struct Plof;
-struct PlofObject;
 struct PlofHashTable;
 struct PlofRawData;
 struct PlofArrayData;
@@ -111,28 +104,29 @@ typedef struct PlofReturn (*PlofFunction)(Plof *, Plof *);
 
 /* Plof is just zis structure, you know? */
 struct Plof {
-    enum PlofType type; 
-    union {
-        struct PlofObject {
-            Plof *parent;
-            struct PlofHashTable {
-                size_t hashedName;
-                size_t nameLength;
-                Plof *value;
-                struct PlofHashTable *left, *right;
-            } hashTable;
-        } object;
+    Plof *parent;
 
+    /* TODO: make this an ACTUAL HASH TABLE */
+    struct PlofHashTable {
+        size_t hashedName;
+        size_t nameLength;
+        Plof *value;
+        struct PlofHashTable *left, *right;
+    } hashTable;
+
+    /* This shit be optional yo */
+    enum { PLOF_RAW_DATA, PLOF_ARRAY_DATA } type; 
+    union {
         struct PlofRawData {
             size_t length;
             size_t hash;
             unsigned char *data;
-        } rawData;
+        } raw;
 
         struct PlofArrayData {
             size_t length;
             Plof **elems;
-        } arrayData;
+        } array;
     } data;
 }
 
