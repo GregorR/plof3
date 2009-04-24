@@ -51,19 +51,15 @@ extern unsigned char **plofIncludePaths;
 /* Function for getting a value from the hash table in an object */
 struct PlofObject *plofRead(struct PlofObject *obj, size_t namelen, unsigned char *name, size_t namehash);
 
-/* "Function" for creating a new hashTable object */
-#define PLOF_HASHTABLE_NEW(into, snamelen, sname, snamehash, svalue) \
-{ \
-    struct PlofOHashTable *_nht = GC_NEW_Z(struct PlofOHashTable); \
-    _nht->hashedName = (snamehash); \
-    _nht->namelen = (snamelen); \
-    _nht->name = (unsigned char *) GC_STRDUP((char *) (sname)); \
-    _nht->value = (svalue); \
-    into = _nht; \
-}
-
 /* Function for writing a value into an object */
 void plofWrite(struct PlofObject *obj, size_t namelen, unsigned char *name, size_t namehash, struct PlofObject *value);
+
+/* Function for creating a new hashTable object */
+struct PlofOHashTable *plofHashtableNew(size_t namelen, unsigned char *name, size_t namehash, struct PlofObject *value);
+
+/* Default length of the hash table buckets, in terms of bits represented by buckets */
+#define PLOF_HASHTABLE_BITS 4
+#define PLOF_HASHTABLE_SIZE (1<<PLOF_HASHTABLE_BITS)
 
 /* All functions accessible directly from Plof should be of this form
  * args: context, arg */
@@ -71,13 +67,11 @@ typedef struct PlofReturn (*PlofFunction)(struct PlofObject *, struct PlofObject
 
 /* A Plof object
  * data: raw or array data associated with the object
- * hashTable: hash table of name->value associations
- * itable: immediate table, for objects with known members */
+ * hashTable: hash table of name->value associations */
 struct PlofObject {
     struct PlofObject *parent;
     struct PlofData *data;
     struct PlofOHashTable *hashTable;
-    struct PlofObject *itable[1];
 };
 
 /* The return type from Plof functions, which specifies whether a value is
