@@ -106,14 +106,14 @@ enum { PLOF_TAG_OBJECT, PLOF_TAG_HASHTABLE } PlofTag;
 /* Plof is just zis structure, you know? */
 struct PlofObject {
     enum PlofTag tag; /* always PLOF_TAG_OBJECT */
-    Plof *parent;
+    PlofObject *parent;
 
     /* TODO: make this an ACTUAL HASH TABLE */
     struct PlofHashTable {
         enum PlofTag tag; /* always PLOF_TAG_HASHTABLE */
         size_t hashedName;
         size_t nameLength;
-        Plof *value;
+        PlofObject *value;
         struct PlofHashTable *left, *right;
     } hashTable;
 
