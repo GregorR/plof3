@@ -40,10 +40,6 @@ runtest() {
     fi
 }
 
-# Kill any currently-running suite (not the ideal way to do this, but good enough for automation)
-kill -9 `cat /tmp/ploftestpid` >& /dev/null
-echo $$ > /tmp/ploftestpid
-
 rm -f $LOG_DIR/LOG*
 
 # now run the tests
@@ -64,5 +60,3 @@ done
     fi
     echo
 ) > $LOG_DIR/LOG
-
-rm -f /tmp/ploftestpid
