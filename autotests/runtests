@@ -1,0 +1,68 @@
+#!/bin/bash
+
+cd "`dirname $0`"/..
+
+# Pass in the current revision to make the output be more informative
+if [ "$1" ]
+then
+    REVISION="$1"
+else
+    REVISION="current"
+fi
+
+# The directory to log to
+if [ "$2" ]
+then
+    LOG_DIR="$2"
+else
+    LOG_DIR="$PWD/autotests/logs"
+fi
+mkdir -p $LOG_DIR
+
+TESTS_RUN=0
+TESTS_PASSED=0
+TESTS_FAILED=0
+TESTS_FLIST=""
+runtest() {
+    CUR_TEST="$1"
+    shift
+    TESTS_RUN=$((TESTS_RUN + 1))
+    (
+        echo "$@"
+        "$@"
+    ) < /dev/null >& $LOG_DIR/LOG-"$CUR_TEST"
+    if [ "$?" != "0" ]
+    then
+        TESTS_FAILED=$((TESTS_FAILED + 1))
+        TESTS_FLIST="$TESTS_FLIST $CUR_TEST"
+    else
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+    fi
+}
+
+# Kill any currently-running suite (not the ideal way to do this, but good enough for automation)
+kill -9 `cat /tmp/ploftestpid` >& /dev/null
+echo $$ > /tmp/ploftestpid
+
+rm -f $LOG_DIR/LOG*
+
+# now run the tests
+pwd
+for i in autotests/*.test
+do
+    pushd .
+    . $i
+    popd
+done
+
+# and log
+(
+    echo -n 'Test results for revision '"$REVISION"': '$((TESTS_PASSED))'/'$((TESTS_RUN))' passed'
+    if [ "$TESTS_FAILED" != "0" ]
+    then
+        echo -n ' [ failed:'"$TESTS_FLIST"' ]'
+    fi
+    echo
+) > $LOG_DIR/LOG
+
+rm -f /tmp/ploftestpid
