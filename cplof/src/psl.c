@@ -81,8 +81,6 @@ enum jumplabel {
 /* Implementation of 'replace' */
 struct PlofRawData *pslReplace(struct PlofRawData *in, struct PlofArrayData *with);
 
-struct PlofObject *plofRead(struct PlofObject *obj, size_t namehash);
-
 /* The main PSL interpreter */
 #ifdef __GNUC__
 __attribute__((__noinline__))
@@ -135,7 +133,7 @@ struct PlofReturn interpretPSL(
         if (procedureHash == 0) {
             procedureHash = plofHash(10, (unsigned char *) "+procedure");
         }
-        PLOF_WRITE(context, 10, (unsigned char *) "+procedure", procedureHash, pslraw);
+        plofWrite(context, 10, (unsigned char *) "+procedure", procedureHash, pslraw);
     }
 
     /* Start the stack at size 8 */
@@ -555,7 +553,7 @@ label(interp_psl_member);
         name = rd->data;
         HASHOF(namehash, rd);
 
-        a = plofRead(a, namehash);
+        a = plofRead(a, rd->length, name, namehash);
         STACK_PUSH(a);
     } else {
         /*BADTYPE("member");*/
@@ -573,7 +571,7 @@ label(interp_psl_memberset);
         name = rd->data;
         HASHOF(namehash, rd);
 
-        PLOF_WRITE(a, rd->length, name, namehash, c);
+        plofWrite(a, rd->length, name, namehash, c);
     } else {
         BADTYPE("memberset");
     }
@@ -804,7 +802,7 @@ label(interp_psl_resolve);
         while (a && a != plofNull) {
             for (i = 0; i < ad->length; i++) {
                 rd = RAW(ad->data[i]);
-                b = plofRead(a, hashes[i]);
+                b = plofRead(a, rd->length, rd->data, hashes[i]);
                 if (b != plofNull) {
                     /* done */
                     STACK_PUSH(a);
@@ -2099,25 +2097,6 @@ label(interp_psl_done);
     jumptail;
 }
 
-/* Retrieve a value from an object's hash table */
-struct PlofObject *plofRead(struct PlofObject *obj, size_t namehash)
-{
-    /* TODO: make this something other than the shittiest "hash table" ever */
-    struct PlofObject *res = plofNull;
-    struct PlofOHashTable *cur = obj->hashTable;
-    while (cur) { \
-        if (namehash < cur->hashedName) {
-            cur = cur->left;
-        } else if (namehash > cur->hashedName) {
-            cur = cur->right;
-        } else { \
-            res = cur->value;
-            cur = NULL;
-        }
-    }
-    return res;
-}
-
 /* Hash function */
 size_t plofHash(size_t slen, unsigned char *str)
 {
@@ -2137,12 +2116,7 @@ void plofObjCopy(struct PlofObject *to, struct PlofOHashTable *from)
 {
     if (from == NULL) return;
 
-    /*if ((ptrdiff_t) from->value & 1) {
-        PLOF_WRITE(to, from->namelen, from->name, from->hashedName, from->itable[(ptrdiff_t) from->value>>1]);
-    } else {*/
-    /* FIXME */
-        PLOF_WRITE(to, from->namelen, from->name, from->hashedName, from->value);
-    /*}*/
+    plofWrite(to, from->namelen, from->name, from->hashedName, from->value);
     plofObjCopy(to, from->left);
     plofObjCopy(to, from->right);
 }
@@ -2304,6 +2278,68 @@ struct PlofRawData *pslReplace(struct PlofRawData *in, struct PlofArrayData *wit
 
     return ret;
 }
+
+/* Function for getting a value from the hash table in an object */
+struct PlofObject *plofRead(struct PlofObject *obj, size_t namelen, unsigned char *name, size_t namehash)
+{
+    struct PlofObject *res = plofNull;
+    struct PlofOHashTable *cur = obj->hashTable;
+    while (cur) {
+        if (namehash == cur->hashedName) {
+            /* FIXME: collisions, name check */
+            res = cur->value;
+            cur = NULL;
+        } else {
+            cur = cur->next;
+        }
+    }
+    return res;
+}
+
+/* Function for writing a value into an object */
+void plofWrite(struct PlofObject *obj, size_t namelen, unsigned char *name, size_t namehash, struct PlofObject *value)
+{
+    struct PlofOHashTable *cur;
+    if (obj->hashTable == NULL) {
+        obj->hashTable = plofHashtableNew(namelen, name, namehash, value);
+       
+    } else {
+        cur = obj->hashTable;
+        while (cur) {
+            if (namehash == cur->hashedName) {
+                cur->value = value; /* FIXME, collisions */
+                cur = NULL;
+
+            } else {
+                if (cur->next) {
+                    cur = cur->next;
+                } else {
+                    cur->next = plofHashtableNew(namelen, name, namehash, value);
+                    cur = NULL;
+                }
+               
+            }
+        }
+    }
+}
+
+/* Function for creating a new hashTable object */
+struct PlofOHashTable *plofHashtableNew(size_t namelen, unsigned char *name, size_t namehash, struct PlofObject *value)
+{
+    unsigned char *namedup;
+    struct PlofOHashTable *nht = GC_NEW_Z(struct PlofOHashTable);
+    nht->hashedName = namehash;
+    nht->namelen = namelen;
+
+    namedup = GC_MALLOC_ATOMIC(namelen + 1);
+    memcpy(namedup, name, namelen);
+    namedup[namelen] = '\0';
+
+    nht->name = namedup;
+    nht->value = value;
+    return nht;
+}
+
 
 /* GC on DJGPP is screwy */
 #ifdef __DJGPP__

@@ -45,56 +45,14 @@ extern unsigned char **plofIncludePaths;
 #define GC_NEW_Z(t) memset(GC_NEW(t), 0, sizeof(t))
 #endif*/
 
-/* "Function" for creating a new hashTable object */
-#define PLOF_HASHTABLE_NEW(into, snamelen, sname, snamehash, svalue) \
-{ \
-    struct PlofOHashTable *_nht = GC_NEW_Z(struct PlofOHashTable); \
-    _nht->hashedName = (snamehash); \
-    _nht->namelen = snamelen; \
-    _nht->name = (unsigned char *) GC_STRDUP((char *) (sname)); \
-    _nht->value = (svalue); \
-    into = _nht; \
-}
+/* Function for getting a value from the hash table in an object */
+struct PlofObject *plofRead(struct PlofObject *obj, size_t namelen, unsigned char *name, size_t namehash);
 
-/* "Function" for writing a value into an object */
-#define PLOF_WRITE(obj, snamelen, sname, snamehash, svalue) \
-{ \
-    struct PlofObject *_obj = (obj); \
-    size_t _namehash = (snamehash); \
-    struct PlofOHashTable *_cur; \
-    if (_obj->hashTable == NULL) { \
-        PLOF_HASHTABLE_NEW(_obj->hashTable, (snamelen), (sname), _namehash, (svalue)); \
-        \
-    } else { \
-        _cur = _obj->hashTable; \
-        while (_cur) { \
-            if (_namehash < _cur->hashedName) { \
-                if (_cur->left) { \
-                    _cur = _cur->left; \
-                } else { \
-                    PLOF_HASHTABLE_NEW(_cur->left, (snamelen), (sname), _namehash, (svalue)); \
-                    _cur = NULL; \
-                } \
-                \
-            } else if (_namehash > _cur->hashedName) { \
-                if (_cur->right) { \
-                    _cur = _cur->right; \
-                } else { \
-                    PLOF_HASHTABLE_NEW(_cur->right, (snamelen), (sname), _namehash, (svalue)); \
-                    _cur = NULL; \
-                } \
-                \
-            } else { \
-                /*if ((size_t) _cur->value & 1) {*/ \
-                    /*_obj->itable[((size_t) _cur->value)>>1] = (svalue);*/ \
-                /*} else {*/ \
-                    _cur->value = (svalue); /* FIXME, collisions */ \
-                /*}*/ \
-                _cur = NULL; \
-            } \
-        } \
-    } \
-}
+/* Function for writing a value into an object */
+void plofWrite(struct PlofObject *obj, size_t namelen, unsigned char *name, size_t namehash, struct PlofObject *value);
+
+/* Function for creating a new hashTable object */
+struct PlofOHashTable *plofHashtableNew(size_t namelen, unsigned char *name, size_t namehash, struct PlofObject *value);
 
 /* All functions accessible directly from Plof should be of this form
  * args: context, arg */
