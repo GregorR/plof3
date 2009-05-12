@@ -10,8 +10,8 @@ LFLAGS=system dos4g
 
 LIB=wlib
 
-PLOF_LIB_OBJS=src\psl.obj
-PSLI_OBJS=src\psli.obj
+PLOF_LIB_OBJS=src/psl.o
+PSLI_OBJS=src/psli.o
 PSLI_LIBS=library plof library gc
 
 all: plof.lib psli.exe
@@ -20,10 +20,10 @@ plof.lib: $(PLOF_LIB_OBJS)
 	$(LIB) -n plof.lib $(PLOF_LIB_OBJS)
 
 psli.exe: plof.lib $(PSLI_OBJS)
-	$(LINK) $(LFLAGS) $(PSLI_LIBS) option stack=10485760 file psli
+	$(LINK) $(LFLAGS) $(PSLI_LIBS) option stack=10485760 file src/psli
 
-.c.obj:
-	$(CC) $(CFLAGS) $<
+.c.o:
+	$(CC) $(CFLAGS) $< -fo=$@
 
 clean:
 	del plof.lib $(PLOF_LIB_OBJS)
