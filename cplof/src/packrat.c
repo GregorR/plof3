@@ -128,11 +128,17 @@ static struct ParseResult **packratParsePrime(struct Production *production,
         return production->cache[off];
     }
 
+#ifdef DEBUG
+    fprintf(stderr, "Parsing %s at %d:%d\n", production->name, line, col);
+#endif
+
     /* go through each relevant production, collecting results */
     ret = NULL;
     if (production->parser) {
         /* run this production */
         ret = production->parser(production, file, line, col, input, off);
+    } else {
+        fprintf(stderr, "Production %s has no parser!\n", production->name);
     }
 
     if (ret == NULL) {

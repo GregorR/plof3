@@ -56,6 +56,9 @@ typedef struct _ffi_cif_plus {
 #include "jump.h"
 #include "plof.h"
 #include "psl.h"
+#ifndef PLOF_NO_PARSER
+#include "prp.h"
+#endif
 
 
 
@@ -193,8 +196,9 @@ struct PlofReturn interpretPSL(
                 }
 
                 /* copy it in */
-                raw->data = (unsigned char *) GC_MALLOC_ATOMIC(raw->length);
+                raw->data = (unsigned char *) GC_MALLOC_ATOMIC(raw->length + 1);
                 memcpy(raw->data, psl + psli, raw->length);
+                raw->data[raw->length] = '\0';
                 psli += raw->length - 1;
 
                 cpsl[cpsli + 1] = raw;
@@ -285,6 +289,13 @@ struct PlofReturn interpretPSL(
                       (obj)->data->type == PLOF_DATA_ARRAY)
 #define RAW(obj) ((struct PlofRawData *) (obj)->data)
 #define ARRAY(obj) ((struct PlofArrayData *) (obj)->data)
+#define RAWSTRDUP(type, into, _rd) \
+    { \
+        unsigned char *_into = (unsigned char *) GC_MALLOC((_rd)->length + 1); \
+        memcpy(_into, (_rd)->data, (_rd)->length); \
+        _into[(_rd)->length] = '\0'; \
+        (into) = (type *) _into; \
+    }
 
 #define HASHOF(into, rd) \
     if ((rd)->hash) { \
@@ -1618,9 +1629,15 @@ label(interp_psl_parse);
             }
 
         } else {
+#ifdef PLOF_NO_PARSER
             BADTYPE("parse not psl");
             retrd->length = 0;
             retrd->data = GC_MALLOC_ATOMIC(1);
+#else
+            BADTYPE("womp womp");
+            retrd->length = 0;
+            retrd->data = GC_MALLOC_ATOMIC(1);
+#endif
 
         }
 
@@ -1638,9 +1655,62 @@ label(interp_psl_parse);
 
     STEP;
 
+#ifdef PLOF_NO_PARSER
 label(interp_psl_gadd); DEBUG_CMD("gadd"); STEP;
 label(interp_psl_grem); DEBUG_CMD("grem"); STEP;
 label(interp_psl_gcommit); DEBUG_CMD("gcommit"); STEP;
+#else
+
+label(interp_psl_gadd);
+    DEBUG_CMD("gadd");
+    TRINARY;
+
+    if (ISRAW(a) && ISARRAY(b) && ISRAW(c)) {
+        unsigned char *name, **target;
+        int i;
+
+        RAWSTRDUP(unsigned char, name, RAW(a));
+        
+        /* convert the array (b) into targets */
+        ad = ARRAY(b);
+        target = (unsigned char **) GC_MALLOC((ad->length + 1) * sizeof(unsigned char *));
+        for (i = 0; i < ad->length; i++) {
+            if (ISRAW(ad->data[i])) {
+                unsigned char *etarg;
+                rd = RAW(ad->data[i]);
+                RAWSTRDUP(unsigned char, etarg, rd);
+                target[i] = etarg;
+
+            } else {
+                target[i] = NULL;
+
+            }
+        }
+        target[i] = NULL;
+
+        /* now call gadd */
+        rd = RAW(c);
+        gadd(name, target, rd->length, rd->data);
+
+    } else {
+        BADTYPE("gadd");
+
+    }
+
+    STEP;
+
+label(interp_psl_grem);
+    DEBUG_CMD("grem");
+    UNIMPL("grem");
+    STEP;
+
+label(interp_psl_gcommit);
+    DEBUG_CMD("gcommit");
+    gcommit();
+    STEP;
+
+#endif
+
 label(interp_psl_marker); DEBUG_CMD("marker"); STEP;
 
 label(interp_psl_immediate);

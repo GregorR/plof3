@@ -25,13 +25,28 @@
 #ifndef PRP_H
 #define PRP_H
 
-void gadd(unsigned char *name, unsigned char **target, unsigned char *psl);
+#include "buffer.h"
+#include "plof.h"
 
-void grem(char *name);
+BUFFER(psl, unsigned char);
 
+/* Parsing returns Buffer_psl (the resultant code), and a pointer to the remainder of the code */
+struct PRPResult {
+    struct Buffer_psl code;
+    unsigned char *remainder;
+    unsigned int rline, rcol;
+};
+
+/* These correspond directly to underlying PSL instructions */
+void gadd(unsigned char *name, unsigned char **target, size_t psllen, unsigned char *psl);
+void grem(unsigned char *name);
 void gcommit(void);
 
-unsigned char *parse(unsigned char *code, unsigned char *top, unsigned char *file,
-		     unsigned int line, unsigned int column);
+/* Parse some part of PSL code */
+struct PRPResult parseOne(unsigned char *code, unsigned char *top, unsigned char *file,
+                          unsigned int line, unsigned int column);
+
+/* Parse the entirety of PSL code. Note that this will interpret immediates, whereas parseOne will not. */
+struct Buffer_psl parseAll(unsigned char *code, unsigned char *top, unsigned char *file);
 
 #endif

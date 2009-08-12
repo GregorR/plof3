@@ -82,4 +82,16 @@ BUFFER(int, int);
     STEP_BUFFER(buffer, _len); \
 }
 
+/* read a file into a buffer */
+#define READ_FILE_BUFFER(buffer, fh) \
+{ \
+    size_t _rd; \
+    while ((_rd = fread(BUFFER_END(buffer), 1, BUFFER_SPACE(buffer), (fh))) > 0) { \
+        STEP_BUFFER(buffer, _rd); \
+        if (BUFFER_SPACE(buffer) <= 0) { \
+            EXPAND_BUFFER(buffer); \
+        } \
+    } \
+}
+
 #endif

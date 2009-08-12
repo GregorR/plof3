@@ -20,7 +20,6 @@ AM_CONDITIONAL([GCC], [test x$GCC = xyes])
 AC_SEARCH_LIBS([GC_malloc], [gc])
 
 # Need libdl and libffi for CNFI
-
 have_dl=no
 AC_CHECK_LIB([dl], [dlopen], [
     AC_CHECK_HEADER([dlfcn.h], [
@@ -34,6 +33,10 @@ AC_CHECK_LIB([ffi], [ffi_call], [
         have_ffi=yes
     ], [])
 ], [])
+
+
+# Need PCRE for parsing
+AC_CHECK_LIB([pcre], [pcre_compile])
 
 
 # Checks for header files.
