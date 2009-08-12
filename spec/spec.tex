@@ -1,0 +1,848 @@
+\setlength{\pdfpageheight}{\paperheight}
+\setlength{\pdfpagewidth}{\paperwidth}
+
+
+\begin{document}
+\ifdefined\specdocheader
+    \specdocheader
+\else\fi
+
+\begin{titlepage}
+\begin{center}
+
+\Huge{\textsf{Plof Language Specification}}
+
+\Large{\textsf{Version 0.21}}
+
+\large{\today}
+
+\end{center}
+\end{titlepage}
+
+\tableofcontents
+
+\part{Overview}
+
+Plof is composed of a user-visible language which is parsed and compiled dynamically to a bytecode. An implementation of Plof must only support the bytecode and the flexible parsing framework; the user language is built entirely out of Plof code.
+
+The virtual machine runs a simple bytecode stack language, called the Plof Stack Language, or PSL, and code in the user language (the Plof User Language or simply Plof) is compiled using a runtime-defined grammar into PSL code. This specification will cover the details of PSL first. PSL is intended to be low-level, highly generatable, but also analyzable and optimizable.
+
+The intermediary layer between these two is the Plof Runtime Parser (PRP), which is a flexible parsing and compiling framework, allowing the grammar being parsed and output code to be changed dynamically, at runtime. This allows Plof to be an extremely flexible language, with new features added to the language proper by libraries.
+
+Plof, or the Plof User Language (PUL), is a minimalistic prototype-based object-oriented general-purpose programming language. Its syntax is inspired by C, Java, Tcl, Haskell and JavaScript, but its semantics are unique, although resembling JavaScript in some ways. Although an implementor of Plof must understand this entire document, the average user of Plof needs no knowledge of PSL or the PRP.
+
+
+
+\part{Plof Stack Language}
+
+The Plof Stack Language is a simple bytecode. That is, every byte is a single operation, with two exceptions (\textit{raw} and \textit{immediate}) which will be covered below. PSL features dynamic objects and first-class procedures.
+
+
+
+\section{PSL Stack}
+
+The PSL stack contains an infinite number of \textit{null}s (see below), followed by anything that has been pushed by the user. Any reasonable implementation will of course generate the infinite \textit{null}s on-demand.
+
+
+
+\section{PSL Objects}
+
+Everything is an object in PSL, including both execution contexts and procedures. PSL's object system is fairly simple. Objects are all by-reference, empty objects can be created with the \textit{new} operation, and objects can be combined with the \textit{combine} operation. When combining objects, object members of the right-hand object override object members of the left-hand object. Object members can be accessed with the \textit{member} and \textit{memberset} operations, and their names are completely arbitrary: They can be anything representable as a string of bytes. The object \textit{null }is used as a marker in various situations, but it is otherwise just a normal object. All objects have a parent setting, which usually refers to the context in which the object was created, and can also be \textit{null}. \textit{this} is the name for the object representing the current context of execution at all times, and \textit{global} is a globally-accessible object meant for the (highly-discouraged) use of global data when necessary. \textit{null} is the parent of both \textit{global} and \textit{null} itself.
+
+PSL implementations should garbage collect. They may use whatever form of garbage collector is suitable; this specification does not cover the details of the GC.
+
+
+
+\subsection{PSL Raw Data}
+
+PSL can hold raw binary data in objects, to support simple and intrinsic data types. There are no limitations on the data that can be stored in a raw data object.
+
+
+
+\subsection{PSL Procedures}
+
+Since PSL is bytecode, PSL instructions are representable within a PSL raw data object. Raw data objects are callable, to allow for procedures. The \textit{call} operation runs a procedure in a new context; the exact details are discussed later.
+
+
+
+\subsection{PSL Exceptions}
+
+PSL supports very simple exceptions. An object can be thrown with the \textit{throw} operation, and caught with the \textit{catch} operation. Because PSL is typeless, \textit{catch} will catch any object thrown. It is up to the programmer to determine whether the caught object can be handled properly.
+
+
+
+\subsection{PSL Arrays}
+
+Object in PSL which do not contain raw data can be arrays. The result of using raw data as an array or an array as raw data is undefined. Arrays are solely for the sake of efficiency, as anything that can be done with arrays can be done with objects. Arrays have a \textit{length}, which can be set, and elements within the array default to \textit{null}. Elements can be accessed with \textit{index} and set with \textit{indexset}. The lowest valid index is 0, and the highest valid index is \textit{length} - 1.
+
+
+
+\section{PSL Operations}
+
+This is the list of all PSL operations. The column “Stack Behavior” indicates how many elements are popped from the stack and how many elements are pushed (in that order). In various operations, the function is described such as “pops A and B.” This means that A and B will be on the stack in that order; that is, A was pushed first, then B.
+
+
+
+\noindent
+\rowcolors{1}{white}{llgray}
+\LTXtable{\linewidth}{operations.tex}
+%\begin{supertabular}{\linewidth}{|l|l|l|X|}
+%\hline
+%\input{plof3_table1.html}
+%\input{plof3_table2.html}
+%\end{supertabular}
+
+\subsection{PSL Bignums}
+
+The \textit{raw} operation requires a bignum, an integer of arbitrary size. The bignum can be any number of bytes, and the most significant bit of every byte signifies whether another byte follows. If the most significant bit of a byte is 1, another byte follows, and the most significant bit is 0 for the last byte. The remaining bits form the number, in big endian format. So, for example, the number 12,345 (b11110001001000000) is:
+
+\noindent\texttt{10000111 11000100 01000000}
+
+The maximum size supported by an implementation of PSL is intentionally undefined, but must be at least $2^{28}-1$ (28 bits + 4 marker bits = 32 bits = 4 bytes).
+
+
+
+\subsection{PSL File Format}
+
+Although it is not generally necessary to create .psl files, the file format is defined. A .psl file starts with an 8-byte magic number. In hex, the magic number is:
+
+\noindent\texttt{9E50534C17F2588C}
+
+After the magic number, any number of sections follow. Each section contains:
+
+\begin{enumerate}
+\item A bignum representing the length of the section, not including itself but including the next bignum (2).
+\item A bignum of the numerical type of the section. Only two section types are defined: 0 is program data (there can only be one program data section in a .psl file), 1 is comment data. All types greater than or equal to 128 (all types requiring more than one byte to describe) may be defined by users, types lower than 128 should only be defined by this specification, and future versions of it.
+\item The data contained in the section.
+\end{enumerate}
+
+
+
+\part{Plof Runtime Parser}
+
+To be expounded upon.
+
+
+\begin{comment}
+\subsection{Runtime Grammar Definitions}
+
+There are several PSL operations which can only be run while in an \textit{immediate} block, and affect the runtime parser itself. They are:
+
+
+
+<table border="0" cellspacing="0" cellpadding="0" class="Table2"><colgroup><col width="49"/><col width="115"/><col width="604"/></colgroup><tr><td style="text-align:left;width:0.4444in; " class="Table2_A1"><p class="P22">Hex
+
+</td><td style="text-align:left;width:1.0354in; " class="Table2_B1"><p class="P22">Name
+
+</td><td style="text-align:left;width:5.4451in; " class="Table2_B1"><p class="P22">Function
+
+</td></tr><tr><td style="text-align:left;width:0.4444in; " class="Table2_A2"><p class="P21">
+
+</td><td style="text-align:left;width:1.0354in; " class="Table2_B2"><p class="P21">
+
+</td><td style="text-align:left;width:5.4451in; " class="Table2_B2"><p class="P21">Operations F0-F5 do not affect the grammar immediately, the changes must be committed with \textit{gcommit}.
+
+</td></tr><tr><td style="text-align:left;width:0.4444in; " class="Table2_A1"><p class="P21">F0
+
+</td><td style="text-align:left;width:1.0354in; " class="Table2_B1"><p class="P21">gadd
+
+</td><td style="text-align:left;width:5.4451in; " class="Table2_B1"><p class="P21">Add a production to the grammar. Pops the production name, the production itself, and the associated PSL code. The production itself is an array of strings (as raw data), each of which is either:
+
+<ul><li><p class="P32" style="margin-left:0.635cm;"><span class="Bullet_20_Symbols" style="display:block;float:left;min-width:0.635cm;">•.</span>The name of another production, or<span class="odfLiEnd"/>
+
+</li><li><p class="P32" style="margin-left:0.635cm;"><span class="Bullet_20_Symbols" style="display:block;float:left;min-width:0.635cm;">•.</span>a regex, surrounded by /'s.<span class="odfLiEnd"/>
+
+</li></ul><p class="P23">The name and associated code are both raw data.
+
+</td></tr><tr><td style="text-align:left;width:0.4444in; " class="Table2_A1"><p class="P21">F1
+
+</td><td style="text-align:left;width:1.0354in; " class="Table2_B1"><p class="P21">grem
+
+</td><td style="text-align:left;width:5.4451in; " class="Table2_B1"><p class="P21">Remove a production from the grammar. Pops the production name and removes it.
+
+</td></tr><tr><td style="text-align:left;width:0.4444in; " class="Table2_A1"><p class="P21">FD
+
+</td><td style="text-align:left;width:1.0354in; " class="Table2_B1"><p class="P21">gcommit
+
+</td><td style="text-align:left;width:5.4451in; " class="Table2_B1"><p class="P21">Commit grammar changes.
+
+</td></tr></table><p class="P1">
+\end{comment}
+
+
+
+\part{Plof User Language}
+
+The Plof User Language (called simply Plof, or PUL to differentiate it from the rest of the Plof environment) is the language that programmers most commonly see, and is implemented as a PRP runtime grammar, compiling to PSL code.
+
+
+
+\section{PUL ABI}
+
+Because PUL has some advanced features unsupported in PSL, many fundamental PUL operations compile to several PSL operations or procedures, and some constructs are represented in abstract ways.
+
+
+
+\subsection{Indirection Objects}
+
+PUL is a lazy language. As such, values in PUL can be represented by special objects providing indirect access to a procedure to evaluate the value. These are called indirection objects. Indirection objects have three significant members: \_\_pul\_e, \_\_pul\_s and \_\_pul\_v.
+
+\_\_pul\_e is the procedure to evaluate the value. It does not expect anything on the stack, and it pushes the value. It may return the ultimate value, or it may return another indirection object. For that reason, it shouldn't be used directly, but through the \_\_pul\_eval procedure (which will be discussed later).
+
+\_\_pul\_s, which is only set when applicable, is the procedure to set the value. It pops the new value, and pushes nothing. The value being assigned must be fully evaluated; that is, it must not be an indirection object.
+
+\_\_pul\_v is the cached value if it has already been evaluated. If it has not been evaluated, \_\_pul\_v is unset.
+
+
+
+\subsection{Helper Procedures}
+
+There are several global procedures in the Plof environment to aid with the use of indirection objects.
+
+The global \_\_pul\_eval procedure expects an object on the stack, pops it, and pushes the fully-evaluated form. If the object is not an indirection object, it is left intact. Otherwise, the fully-evaluated form is pushed.
+
+When an identifier is encountered in PUL, it evaluates at any depth, not just the within current function context. To enable this, there is a global procedure, \_\_pul\_var, which recurses through the parents of the current object until one containing the desired member is found. It's used after the object and member name have been pushed, but before the \textit{member} operation, e.g.
+
+\begin{verbatim}
+this “foo” global “\_\_pul\_var” member call member
+\end{verbatim}
+
+Finally, there are several global functions to automatically convert functions and values to indirect objects. They are documented in pul.plof.
+
+
+
+\subsection{Calling Convention}
+
+The arguments to a function are pushed onto the stack as an array. The function is expected to pop all of its local variables and the arguments, and push its return value. If it doesn't return a value, it should still push something, usually a null.
+
+
+
+\section{Language}
+
+PUL is an extremely dynamic impure functional language with support for the imperative paradigm supported by a special operator, ';'. Although imperative programming is well-supported, the language is lazy. The laziness, however, is diminished by the presence of statements and immediate assignment.
+
+The object system of PUL is prototype-based, but with additional properties allowing it to be used more statically. This will be discussed in a later section.
+
+
+
+\subsection{Grammar}
+
+The following is the grammar of PUL, roughly in BNF form. The 'white' keyword which parses whitespace in the master grammar has been removed; suffice to say that the grammar parses whitespace before every token, as in C. Whitespace elements in PUL are space, tab, carriage return, line feed and C-style and C++-style comments.
+
+
+
+\begin{comment}
+<p class="P27">  plof_statements = plof_statements_sub
+
+<p class="P27">  plof_statements = white
+
+
+
+<p class="P27">  plof_statements_sub = plof_statement
+
+<p class="P27">  plof_statements_sub = plof_statements_sub plof_statement
+
+
+
+<p class="P27">  plof_statement = plof_comma /;/
+
+<p class="P27">  plof_statement = pslbnf // pslbnf is a method of encoding Plof grammars
+
+
+
+<p class="P27">  plof_semicolon = plof_statements
+
+<p class="P27">  plof_semicolon = plof_comma
+
+<p class="P27">  plof_semicolon = plof_statements plof_comma
+
+
+
+<p class="P27">  plof_comma = plof_assign
+
+<p class="P27">  plof_comma = plof_comma /,/ plof_assign
+
+
+
+<p class="P27">  plof_assign = plof_or
+
+<p class="P27">  plof_assign = plof_or /=/ plof_or
+
+
+
+
+
+<p class="P27">  plof_or = plof_and
+
+<p class="P27">  plof_or = plof_or /\|\|/ plof_and
+
+
+
+<p class="P27">  plof_and = plof_equal
+
+<p class="P27">  plof_and = plof_and /\&amp;\&amp;/ plof_equal
+
+
+
+<p class="P27">  plof_equal = plof_cmp
+
+<p class="P27">  plof_equal = plof_equal /==/ plof_cmp
+
+<p class="P27">  plof_equal = plof_equal /\!=/ plof_cmp
+
+
+
+<p class="P27">  plof_cmp = plof_combine
+
+<p class="P27">  plof_cmp = plof_cmp /&lt;/ plof_combine
+
+<p class="P27">  plof_cmp = plof_cmp /&lt;=/ plof_combine
+
+<p class="P27">  plof_cmp = plof_cmp /&gt;/ plof_combine
+
+<p class="P27">  plof_cmp = plof_cmp /&gt;=/ plof_combine
+
+
+
+<p class="P27">  plof_combine = plof_add
+
+<p class="P27">  plof_combine = plof_combine /:/ plof_add
+
+<p class="P27">  plof_combine = plof_combine /:/ /\[/ plof_obj /\]/
+
+
+
+<p class="P27">  plof_add = plof_mul
+
+<p class="P27">  plof_add = plof_add /\+/ plof_mul
+
+<p class="P27">  plof_add = plof_add /-/ plof_mul
+
+
+
+<p class="P27">  plof_mul = plof_inc
+
+<p class="P27">  plof_mul = plof_mul /\*/ plof_inc
+
+<p class="P27">  plof_mul = plof_mul /\// plof_inc
+
+<p class="P27">  plof_mul = plof_mul /%/ plof_inc
+
+
+
+<p class="P27">  plof_inc = plof_not
+
+<p class="P27">  plof_inc = plof_inc /\+\+/
+
+<p class="P27">  plof_inc = plof_inc /--/
+
+
+
+<p class="P27">  plof_not = plof_type
+
+<p class="P27">  plof_not = /!/ plof_not
+
+
+
+<p class="P27">  plof_type = plof_group
+
+<p class="P27">  plof_type = plof_type /(as)[^A-Za-z0-9_]/ plof_group
+
+<p class="P27">  plof_type = plof_type /(is)[^A-Za-z0-9_]/ plof_group
+
+<p class="P27">  plof_type = plof_type /in/ token plof_group
+
+
+
+<p class="P27">  plof_group = plof_var
+
+<p class="P27">  plof_group = /\(/ plof_params /\)/ /\{/ plof_function /\}/
+
+<p class="P27">  plof_group = /\{/ plof_function /\}/
+
+<p class="P27">  plof_group = /\(/ plof_semicolon /\)/
+
+<p class="P27">  plof_group = plof_group /\./ plof_identifier
+
+<p class="P27">  plof_group = plof_group /\./ /parent/ token
+
+<p class="P27">  plof_group = plof_group /\(/ /\)/
+
+<p class="P27">  plof_group = plof_group /\(/ plof_args /\)/
+
+<p class="P27">  plof_group = /return/ /\(/ plof_semicolon /\)/
+
+<p class="P27">  plof_group = plof_group /\[/ plof_semicolon /\]/
+
+
+
+<p class="P27">  plof_var = plof_literal
+
+<p class="P27">  plof_var = /var/ token plof_identifier
+
+
+
+<p class="P27">  plof_literal = plof_identifier
+
+<p class="P27">  plof_literal = /psl/ token /\{/ pslOps /\}/
+
+
+
+<p class="P27">  plof_params = plof_params_sub // _sub here is due to how PUL is implemented
+
+
+
+<p class="P27">  plof_params_sub = plof_param
+
+<p class="P27">  plof_params_sub = plof_params_sub /,/ plof_param
+
+<p class="P27">  plof_param = plof_identifier
+
+<p class="P27">  plof_param = plof_identifer /as/ plof_identifier
+
+
+
+<p class="P27">  plof_args = plof_arg
+
+<p class="P27">  plof_args = plof_args /,/ plof_arg
+
+<p class="P27">  plof_arg = plof_assign
+
+
+
+<p class="P27">  plof_function = plof_statements
+
+<p class="P27">  plof_function = plof_comma
+
+
+
+<p class="P27">  plof_obj = plof_obj_assigns
+
+<p class="P27">  plof_obj = 
+
+
+
+<p class="P27">  plof_obj_assigns = plof_obj_assign
+
+<p class="P27">  plof_obj_assigns = plof_obj_assigns plof_obj_assign
+
+
+
+<p class="P27">  plof_obj_assign = plof_identifier /;/
+
+<p class="P27">  plof_obj_assign = plof_identifier /=/ plof_or /;/
+
+
+
+<p class="P27">  plof_identifier = white /[A-Za-z_][A-Za-z0-9_]*/ token
+\end{comment}
+
+
+
+\subsection{Basic Syntax}
+
+PUL's statements and expressions resemble those in most C-style languages. Statements are terminated by ';', and of course any number of statements may be listed consecutively. The precedence of all of the operators is described in the above grammar. Statements are implemented in a functional style; that is, semicolon-separated statements really just form an expression, and evaluation of that expression will result in evaluation of the left and right sides in order, evaluating to the value of the right side.
+
+Because PUL is lazy, several constructs have special meanings to allow eager evaluation. Statements are always evaluated eagerly, although the resultant value is not used. Note however that this does \textit{not} mean that every value used in the statement is evaluated. Whatever is necessary to attain a final value of the expression is evaluated, and that final value is discarded. The right-hand side of an assignment expression is also evaluated eagerly. All other cases are evaluated lazily, including notably arguments to functions.
+
+
+
+\subsection{Variables}
+
+Variables may declared within any context with the \texttt{var} keyword. When first defined, a variable will have the value \textit{null}, so a \texttt{var} expression may be used as an l-value or an r-value. Variables may not be used without being declared. Variable assignment uses the '=' operator as in C-family languages, but '=' returns void, so chains like \texttt{a = b = c} do not function as they do in most C-family languages.
+
+
+
+\subsection{Objects}
+
+PUL's objects are always derived from other objects, with the exception of the object named “Object”, which is the top of the object hierarchy and is defined in PSL. As well as being the top of the hierarchy, Object defines all of the basic operators. All operators on Object throw exceptions (described in a later section), with the exception of '==' and '!=', which simply compare object references if not overloaded.
+
+
+
+\subsection{Operator Overloading}
+
+Most operators in Plof are defined to call functions on their objects (the only exceptions are '.', '=', ',' and ';'), and so can be overloaded with user code. The following table describes operators and the equivalent function call.
+
+
+
+\begin{comment}
+<table border="0" cellspacing="0" cellpadding="0" class="Table5"><colgroup><col width="384"/><col width="384"/></colgroup><tr><td style="text-align:left;width:3.4625in; " class="Table5_A1"><p class="P25">Operator
+
+</td><td style="text-align:left;width:3.4625in; " class="Table5_B1"><p class="P25">Function Call
+
+</td></tr><tr><td style="text-align:left;width:3.4625in; " class="Table5_A2"><p class="P24">x || y
+
+</td><td style="text-align:left;width:3.4625in; " class="Table5_B2"><p class="P24">x.opOr(y)
+
+</td></tr><tr><td style="text-align:left;width:3.4625in; " class="Table5_A3"><p class="P24">x &amp;&amp; y
+
+</td><td style="text-align:left;width:3.4625in; " class="Table5_B3"><p class="P24">x.opAnd(y)
+
+</td></tr><tr><td style="text-align:left;width:3.4625in; " class="Table5_A3"><p class="P24">x == y
+
+</td><td style="text-align:left;width:3.4625in; " class="Table5_B3"><p class="P24">x.opEqual(y)
+
+</td></tr><tr><td style="text-align:left;width:3.4625in; " class="Table5_A3"><p class="P24">x != y
+
+</td><td style="text-align:left;width:3.4625in; " class="Table5_B3"><p class="P24">x.opNotEqual(y)
+
+</td></tr><tr><td style="text-align:left;width:3.4625in; " class="Table5_A3"><p class="P24">x &lt; y
+
+</td><td style="text-align:left;width:3.4625in; " class="Table5_B3"><p class="P24">x.opLess(y)
+
+</td></tr><tr><td style="text-align:left;width:3.4625in; " class="Table5_A3"><p class="P24">x &lt;= y
+
+</td><td style="text-align:left;width:3.4625in; " class="Table5_B3"><p class="P24">x.opLessEqual(y)
+
+</td></tr><tr><td style="text-align:left;width:3.4625in; " class="Table5_A3"><p class="P24">x &gt; y
+
+</td><td style="text-align:left;width:3.4625in; " class="Table5_B3"><p class="P24">x.opGreater(y)
+
+</td></tr><tr><td style="text-align:left;width:3.4625in; " class="Table5_A3"><p class="P24">x &gt;= y
+
+</td><td style="text-align:left;width:3.4625in; " class="Table5_B3"><p class="P24">x.opGreaterEqual(y)
+
+</td></tr><tr><td style="text-align:left;width:3.4625in; " class="Table5_A3"><p class="P24">x + y
+
+</td><td style="text-align:left;width:3.4625in; " class="Table5_B3"><p class="P24">x.opAdd(y)
+
+</td></tr><tr><td style="text-align:left;width:3.4625in; " class="Table5_A3"><p class="P24">x - y
+
+</td><td style="text-align:left;width:3.4625in; " class="Table5_B3"><p class="P24">x.opSub(y)
+
+</td></tr><tr><td style="text-align:left;width:3.4625in; " class="Table5_A3"><p class="P24">x * y
+
+</td><td style="text-align:left;width:3.4625in; " class="Table5_B3"><p class="P24">x.opMul(y)
+
+</td></tr><tr><td style="text-align:left;width:3.4625in; " class="Table5_A3"><p class="P24">x / y
+
+</td><td style="text-align:left;width:3.4625in; " class="Table5_B3"><p class="P24">x.opDiv(y)
+
+</td></tr><tr><td style="text-align:left;width:3.4625in; " class="Table5_A3"><p class="P24">x % y
+
+</td><td style="text-align:left;width:3.4625in; " class="Table5_B3"><p class="P24">x.opMod(y)
+
+</td></tr><tr><td style="text-align:left;width:3.4625in; " class="Table5_A3"><p class="P24">!x
+
+</td><td style="text-align:left;width:3.4625in; " class="Table5_B3"><p class="P24">x.opNot()
+
+</td></tr><tr><td style="text-align:left;width:3.4625in; " class="Table5_A3"><p class="P24">x as y
+
+</td><td style="text-align:left;width:3.4625in; " class="Table5_B3"><p class="P24">x.opAs(y)
+
+</td></tr><tr><td style="text-align:left;width:3.4625in; " class="Table5_A3"><p class="P24">x is y
+
+</td><td style="text-align:left;width:3.4625in; " class="Table5_B3"><p class="P24">x.opIs(y)
+
+</td></tr><tr><td style="text-align:left;width:3.4625in; " class="Table5_A3"><p class="P24">x in y
+
+</td><td style="text-align:left;width:3.4625in; " class="Table5_B3"><p class="P24">y.opContains(x)<span class="T6"></span>(note the reversed<br/><span class="T6"><span style="margin-left:;"/><span style="margin-left:;"/><span style="margin-left:;"/></span>direction)
+
+</td></tr><tr><td style="text-align:left;width:3.4625in; " class="Table5_A3"><p class="P24">x[y]
+
+</td><td style="text-align:left;width:3.4625in; " class="Table5_B3"><p class="P24">x.opIndex(y)
+
+</td></tr></table><p class="P5">
+\end{comment}
+
+Several operators have default implementations which use auxiliary functions, to allow users to implement many operators with only one function. These default implementations are all part of Object, and the auxiliary functions throw exceptions as with all default operator definitions. The equivalences are:
+
+
+
+\begin{comment}
+<table border="0" cellspacing="0" cellpadding="0" class="Table6"><colgroup><col width="384"/><col width="384"/></colgroup><tr><td style="text-align:left;width:3.4625in; " class="Table6_A1"><p class="P25">Operator
+
+</td><td style="text-align:left;width:3.4625in; " class="Table6_B1"><p class="P25">Equivalence
+
+</td></tr><tr><td style="text-align:left;width:3.4625in; " class="Table6_A2"><p class="P24">x &lt; y
+
+</td><td style="text-align:left;width:3.4625in; " class="Table6_B2"><p class="P24">x.opCmp(y) &lt; 0
+
+</td></tr><tr><td style="text-align:left;width:3.4625in; " class="Table6_A3"><p class="P24">x &lt;= y
+
+</td><td style="text-align:left;width:3.4625in; " class="Table6_B3"><p class="P24">x.opCmp(y) &lt;= 0
+
+</td></tr><tr><td style="text-align:left;width:3.4625in; " class="Table6_A3"><p class="P24">x &gt; y
+
+</td><td style="text-align:left;width:3.4625in; " class="Table6_B3"><p class="P24">x.opCmp(y) &gt; 0
+
+</td></tr><tr><td style="text-align:left;width:3.4625in; " class="Table6_A3"><p class="P24">x &gt;= y
+
+</td><td style="text-align:left;width:3.4625in; " class="Table6_B3"><p class="P24">x.opCmp(y) &gt;= 0
+
+</td></tr><tr><td style="text-align:left;width:3.4625in; " class="Table6_A3"><p class="P24">x as y
+
+</td><td style="text-align:left;width:3.4625in; " class="Table6_B3"><p class="P24">Multiple steps:
+
+<p class="P24">1) If x is derived from y (determined by
+
+<p class="P24"><span class="T6">  </span>opIs), returns x.
+
+<p class="P24">2) x.opCastTo(y)
+
+<p class="P24">3) if opCastTo returned null,<br/>  y.opCastFrom(x)
+
+<p class="P24">4) if opCastFrom returned null, null
+
+</td></tr></table><p class="P5">
+\end{comment}
+
+All operator functions are defined in Object, so all objects have defined operators, but most of them are defined in Object simply to throw an exception (the exception mechanism will be discussed later).
+
+\begin{comment}
+<p class="P5"><span class="T10">opEqual</span> and <span class="T10">opNotEqual</span> check object identity in Object, but should be overloaded in any code with a well-defined equality operation. <span class="T10">opIs</span> implements type-checking, which will be described further in the next section.
+\end{comment}
+
+
+
+\subsection{Object Syntax}
+
+Objects are defined by the syntax \texttt{Super : [...]}, where 'Super' is the parent type (which must always be specified, even if it is Object), and '...' is the content of the object. Any fields given in the object definition will override those defined by the parent. Fields are specified by semicolon-separated assignment statements, e.g.:
+
+\begin{comment}
+<p class="P20">var O = Object : [
+
+<p class="P20"><span style="margin-left:;"/>x = 3;
+
+<p class="P20"><span style="margin-left:;"/>y = 4;
+
+<p class="P20">];
+\end{comment}
+
+
+
+Fields may be functions (the syntax of which is defined later), creating methods, but methods are in no other way different from other fields. Field definitions may refer to previous fields but not later ones, as the fields will be evaluated in the order that they appear.
+
+>Every object contains a special field, \texttt{\_\_pul\_type}, which contains an array of objects which this object is derived from, then itself. The ordering of \texttt{\_\_pul\_type} is well-defined, as an object definition will always simply append one element to the \texttt{\_\_pul\_type} of the parent. \texttt{opIs} implements type-checking by simply comparing its parameter with every element in \texttt{\_\_pul\_type}. If any match, the type-check succeeds.
+
+
+
+\subsection{Multiple Inheritance}
+
+As well as defining new objects, it is also possible to combine existing objects. The syntax is the same, with the exception that \texttt{[...]} is replaced by the second object. Important to note is that operators defined by Object will usually not be handled well by multiple inheritance: If for example the left object implements opAnd but not opAdd, and the right object implements opAdd but not opAnd, the resultant object will implement opAdd but not opAnd, as it will inherent the right-hand object's default opAnd.
+
+
+
+\subsection{Field Ownership}
+
+Every object has a parent object, as defined by PSL. Fields of objects may point to children of the object, or any other object. These cases are treated differently when objects are combined. If a field contains a child object, that object will be duplicated in the process of duplicating the parent object, and the resultant child object's parent will be the resultant parent object (the result of combination). If a field contains a non-child object (an object with a parent of any other object), it is not duplicated, but the appropriate field in the new object is simply set as another reference to the same object.
+
+
+
+\subsection{Prototypes}
+
+\begin{comment}
+<p class="P5">PUL has no inherent way to distinguish prototype objects (objects intended only to be derived from into other objects) and instance objects (objects meant to be used in program logic). However, to make the distinction convenient for users, a <span class="T10">new</span> function is provided by the core library. <span class="T10">new</span> takes an object assumed to be a prototype, duplicates it (<span class="T10">o : []</span>), and calls an optional 'init' function on the resultant object.
+
+
+
+<p class="P15">Functions
+
+<p class="P5">Functions in PUL are first-class, and are in fact objects (the Function object is derived from Object, and all functions are derived from Function). The fundamental PSL procedure associated with a function is simply the raw data that the object contains, so calling a function is, at the PSL level, just a primitive <span class="T10">call</span>. The context of functions is the parent of the function object, which results generally in lexical scoping (functions declared in a scope will have that scope as their parent), but is modifiable to allow any form of dynamic scoping.
+
+
+
+<p class="P17">Function Syntax
+
+<p class="P5">In the simplest form, functions in PUL are in the form <span class="T10">{...}</span> , with '...' being the expression defining the function. All functions are defined in this way, there is no distinction between lambda functions and named functions. That is, a named function is just a lambda function applied to a variable:
+
+<p class="P5"><span class="T9">var evalToOne = { 1 };</span>
+
+
+
+<p class="P17">Parameters
+
+<p class="P5">Functions may have parameters, specified by a comma-separated list of variable names all within parenthesis ('(' and ')') preceding the function:
+
+<p class="P5"><span class="T9">var addOne = (x) { x + 1 };</span>
+
+
+
+<p class="P5">Parameters may be type-checked by using 'as':
+
+<p class="P5"><span class="T10">var addOne = (x as Integer) { x + 1 };</span>
+
+<p class="P5">This is implemented with <span class="T11">opAs</span> , and an exception is thrown if opAs fails.
+
+
+
+<p class="P15">Provided Objects
+
+<p class="P5">The PUL runtime environment provides a large number of builtin objects, serving as prototypes for classes such as <span class="T7">Integer</span> and <span class="T10">Boolean</span> . The runtime environment and provided objects will be described in a later version of this specification, as they have not yet been completely defined.
+
+<p class="P28">Appendix A
+
+<p class="P9">Primitive Types
+
+<p class="P5">To allow for a fast implementation, primitive data (integers and floats) may not be represented as an object in the same way as all other PSL objects. As such, most of the properties of primitive types are undefined, with the exceptions being those cases in which the spec explicitly states that integers or floats are used.
+
+
+
+<p class="P5">Primitive data does not need to have a parent or support for members, nor does it need to be usable as raw data. Primitive data must be able to be a member of a true object. Because primitive data may not have a parent or members, the \textit{parent} and \textit{member} operations may return \textit{null}, the \textit{parentset} and \textit{memberset} operations may do nothing, and the result of the \textit{members}, \textit{combine} and \textit{resolve} operations are undefined when they would need to reference the members of primitive data.
+
+<p class="P28">Appendix B
+
+<p class="P9">Unsupported Operations and Trap
+
+<p class="P5">A compliant PSL implementation may choose not to implement the following operations:
+
+<p class="P5">\textit{parse}\textit{<span class="Footnote_20_anchor" title="Footnote: All conforming implementations must implement parse when the input is a PSL file. If the input is not a PSL file, they may call an emulation procedure."><a href="#ftn1" id="body_ftn1">1</a>}</span>, \textit{gadd}, \textit{grem}, \textit{gcommit}
+
+
+
+<p class="P5">On such interpreters, these instructions will be trapped.
+
+
+
+<p class="P5">The purpose of the \textit{trap} instruction is to allow these more complicated parts of PSL to be implemented in PSL or Plof. It pops a raw data argument and a procedure. The first argument is one byte long, the instruction to be trapped. The second argument will be called the “emulation procedure” in this appendix.
+
+
+
+<p class="P5">From the point of the \textit{trap} instruction on, the instruction in the first argument \textit{may} be trapped. It will only be trapped if it is unsupported by the PSL interpreter. When the instruction is encountered by the PSL interpreter, if it is unsupported by the interpreter, it will call the emulation procedure instead of failing. The argument to the emulation procedure is an array, containing the arguments to the instruction (as defined in this specification). If the instruction pushes a result, the return from the procedure is that result; if not, the return from the procedure is ignored. When the emulating procedure finishes, execution continues normally.
+
+
+
+<p class="P5">An implementation that fully supports all of the listed instructions will implement \textit{trap} as a no-op. As such, the user must assume that the emulation procedure may not actually be used. It is an error to call any unsupported operation before an associated \textit{trap} instruction.
+
+<p class="P28">Appendix C
+
+<p class="P9">Version Specifiers
+
+<p class="P5">Implementations should use whatever version specifiers are appropriate. This is merely a list of suggestions.
+
+
+
+<p class="P5">Architecture specifiers: ARM, MIPS, PowerPC, x86, x86_64
+
+
+
+<p class="P5">Kernel specifiers: Darwin, <span class="T6">FreeBSD, HURD, </span>Linux, NetBSD, OpenBSD, Solaris, Windows9x, WindowsNT
+
+
+
+<p class="P5">Standard library specifiers: BSD, glibc, Mac OS X, Windows
+
+<p class="P28">Appendix D
+
+<p class="P9">C Native Function Interface
+
+<p class="P4">Implementations written in C or languages compatible with C may provide the interface described in this appendix. If it is provided, the version specifier “CNFI” should be active. This interface is based on libffi, as provided with the GNU Compiler Collection, but may be implementable with other systems.
+
+
+
+<p class="P4">To call a function with the Plof CNFI, you need its address, and you need a call interface specification, or 'cif', which is defined at runtime. The address of a function can be found using an interface similar to POSIX's dlfcn.h.
+
+
+
+<p class="P4">CNFI also includes several new types of data which may be contained in Plof objects: pointers, C types and cifs. Exactly how they are implemented is intentionally unspecified, and user code must not rely on their organization. CNFI also includes pointers, but pointers are merely integers.
+
+
+
+<p class="P4">The operations that CNFI provides:
+
+
+
+<table border="0" cellspacing="0" cellpadding="0" class="Table4"><colgroup><col width="49"/><col width="115"/><col width="604"/></colgroup><tr><td style="text-align:left;width:0.4444in; " class="Table4_A1"><p class="P22">Hex
+
+</td><td style="text-align:left;width:1.0354in; " class="Table4_B1"><p class="P22">Name
+
+</td><td style="text-align:left;width:5.4451in; " class="Table4_B1"><p class="P22">Function
+
+</td></tr><tr><td style="text-align:left;width:0.4444in; " class="Table4_A2"><p class="P21">C1
+
+</td><td style="text-align:left;width:1.0354in; " class="Table4_B2"><p class="P21">dlopen
+
+</td><td style="text-align:left;width:5.4451in; " class="Table4_B2"><p class="P21">Open a shared library. Pops a raw data object containing the name of the shared library and pushes a shared library handle, which is a pointer. If an error occurs, \textit{null} is pushed instead of a handle.
+
+</td></tr><tr><td style="text-align:left;width:0.4444in; " class="Table4_A1"><p class="P21">C2
+
+</td><td style="text-align:left;width:1.0354in; " class="Table4_B1"><p class="P21">dlclose
+
+</td><td style="text-align:left;width:5.4451in; " class="Table4_B1"><p class="P23">Close a shared library. Pops a shared library handle, does not report errors.
+
+</td></tr><tr><td style="text-align:left;width:0.4444in; " class="Table4_A1"><p class="P21">C3
+
+</td><td style="text-align:left;width:1.0354in; " class="Table4_B1"><p class="P21">dlsym
+
+</td><td style="text-align:left;width:5.4451in; " class="Table4_B1"><p class="P23">Resolves a symbol, optionally in a specific shared library. Pops a shared library handle and a raw data object containing the name of the symbol. The handle may be \textit{null}, in which case the symbol will be searched for in any loaded library.
+
+</td></tr><tr><td style="text-align:left;width:0.4444in; " class="Table4_A1"><p class="P21">C4
+
+</td><td style="text-align:left;width:1.0354in; " class="Table4_B1"><p class="P21">cmalloc
+
+</td><td style="text-align:left;width:5.4451in; " class="Table4_B1"><p class="P23">Direct access to C's 'malloc' function. Pops an integer argument and pushes a pointer. If allocation fails, \textit{null} is pushed.
+
+</td></tr><tr><td style="text-align:left;width:0.4444in; " class="Table4_A1"><p class="P21">C5
+
+</td><td style="text-align:left;width:1.0354in; " class="Table4_B1"><p class="P21">cfree
+
+</td><td style="text-align:left;width:5.4451in; " class="Table4_B1"><p class="P23">Direct access to C's 'free' function. Pops a pointer.
+
+</td></tr><tr><td style="text-align:left;width:0.4444in; " class="Table4_A1"><p class="P21">C6
+
+</td><td style="text-align:left;width:1.0354in; " class="Table4_B1"><p class="P21">cget
+
+</td><td style="text-align:left;width:5.4451in; " class="Table4_B1"><p class="P23">Get the given amount of data from the given address. Pops a pointer and an integer number of bytes, pushes the data.
+
+</td></tr><tr><td style="text-align:left;width:0.4444in; " class="Table4_A1"><p class="P21">C7
+
+</td><td style="text-align:left;width:1.0354in; " class="Table4_B1"><p class="P21">cset
+
+</td><td style="text-align:left;width:5.4451in; " class="Table4_B1"><p class="P23">Put the given data at the given address. Pops the address and the raw data, pushes nothing. Note that it is not necessary to push a size specifier, as the raw data object has a length implicitly.
+
+</td></tr><tr><td style="text-align:left;width:0.4444in; " class="Table4_A1"><p class="P21">C8
+
+</td><td style="text-align:left;width:1.0354in; " class="Table4_B1"><p class="P21">ctype
+
+</td><td style="text-align:left;width:5.4451in; " class="Table4_B1"><p class="P23">Creates a representation of a basic C type. Pops an integer, pushes the type. The correlation:
+
+0<span style="margin-left:;"/>void (useful for return types)
+
+1<span style="margin-left:;"/>int<br/><span style="margin-left:;"/>2<span style="margin-left:;"/>float<br/><span style="margin-left:;"/>3<span style="margin-left:;"/>double<br/><span style="margin-left:;"/>4<span style="margin-left:;"/>long double<br/><span style="margin-left:;"/>5<span style="margin-left:;"/>unsigned 8-bit int<br/><span style="margin-left:;"/>6<span style="margin-left:;"/>signed 8-bit int<br/><span style="margin-left:;"/>7<span style="margin-left:;"/>unsigned 16-bit int<br/><span style="margin-left:;"/>8<span style="margin-left:;"/>signed 16-bit int<br/><span style="margin-left:;"/>9<span style="margin-left:;"/>unsigned 32-bit int<br/><span style="margin-left:;"/>10<span style="margin-left:;"/>signed 32-bit int<br/><span style="margin-left:;"/>11<span style="margin-left:;"/>unsigned 64-bit int<br/><span style="margin-left:;"/>12<span style="margin-left:;"/>signed 64-bit int
+
+14<span style="margin-left:;"/>pointer (any type)<br/><span style="margin-left:;"/>24<span style="margin-left:;"/>unsigned char<br/><span style="margin-left:;"/>25<span style="margin-left:;"/>signed char<br/><span style="margin-left:;"/>26<span style="margin-left:;"/>unsigned short int<br/><span style="margin-left:;"/>27<span style="margin-left:;"/>signed short int<br/><span style="margin-left:;"/>28<span style="margin-left:;"/>unsigned int<br/><span style="margin-left:;"/>29<span style="margin-left:;"/>signed int<br/><span style="margin-left:;"/>30<span style="margin-left:;"/>unsigned long int<br/><span style="margin-left:;"/>31<span style="margin-left:;"/>signed long int<br/><span style="margin-left:;"/>32<span style="margin-left:;"/>unsigned long long int<br/><span style="margin-left:;"/>33<span style="margin-left:;"/>signed long long int
+
+</td></tr><tr><td style="text-align:left;width:0.4444in; " class="Table4_A1"><p class="P21">C9
+
+</td><td style="text-align:left;width:1.0354in; " class="Table4_B1"><p class="P21">cstruct
+
+</td><td style="text-align:left;width:5.4451in; " class="Table4_B1"><p class="P23">Create an aggregate (struct) type. Pops an array of types, pushes the resultant type.
+
+</td></tr><tr><td style="text-align:left;width:0.4444in; " class="Table4_A1"><p class="P21">CA
+
+</td><td style="text-align:left;width:1.0354in; " class="Table4_B1"><p class="P21">csizeof
+
+</td><td style="text-align:left;width:5.4451in; " class="Table4_B1"><p class="P23">Get the size in bytes of the provided type. Pops a type and pushes an integer.
+
+</td></tr><tr><td style="text-align:left;width:0.4444in; " class="Table4_A1"><p class="P21">CB
+
+</td><td style="text-align:left;width:1.0354in; " class="Table4_B1"><p class="P21">csget
+
+</td><td style="text-align:left;width:5.4451in; " class="Table4_B1"><p class="P23">Struct-get. Pops a struct type (created by cstruct), a structure (as raw data) and an integer component index, and pushes the element.
+
+</td></tr><tr><td style="text-align:left;width:0.4444in; " class="Table4_A1"><p class="P21">CC
+
+</td><td style="text-align:left;width:1.0354in; " class="Table4_B1"><p class="P21">csset
+
+</td><td style="text-align:left;width:5.4451in; " class="Table4_B1"><p class="P23">Struct-set. Pops a struct type, a structure, an integer index and a new value, and pushes the newly-modified struct.
+
+</td></tr><tr><td style="text-align:left;width:0.4444in; " class="Table4_A1"><p class="P21">CD
+
+</td><td style="text-align:left;width:1.0354in; " class="Table4_B1"><p class="P21">prepcif
+
+</td><td style="text-align:left;width:5.4451in; " class="Table4_B1"><p class="P23">Pops a return type, an array of argument types (which may be 0-length) and an integer ABI specifier (which may be 0 to use the default ABI, and is otherwise implementation-specific), and pushes a cif.
+
+</td></tr><tr><td style="text-align:left;width:0.4444in; " class="Table4_A1"><p class="P21">CE
+
+</td><td style="text-align:left;width:1.0354in; " class="Table4_B1"><p class="P21">ccall
+
+</td><td style="text-align:left;width:5.4451in; " class="Table4_B1"><p class="P23">Pops a cif, a pointer and an array of arguments, and pushes a return value. The arguments must all be raw data of the correct size, and the return will also be raw data.
+
+</td></tr></table><p class="Standard">
+
+<p class="Footnote"><span class="footnodeNumber"><a class="Footnote_20_Symbol" id="ftn1" href="#body_ftn1">1</a></span>All conforming implementations must implement \textit{parse} when the input is a PSL file. If the input is not a PSL file, they may call an emulation procedure.
+
+</body></html>
+\end{comment}
+
+\end{document}
