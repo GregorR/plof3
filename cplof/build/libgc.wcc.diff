@@ -1,0 +1,44 @@
+diff -r 6ea7cdf04c66 WCC_MAKEFILE
+--- a/WCC_MAKEFILE	Tue Aug 11 17:49:26 2009 -0400
++++ b/WCC_MAKEFILE	Tue Aug 11 17:56:43 2009 -0400
+@@ -2,8 +2,8 @@
+ # May work with Watcom 10.0.
+ 
+ # Uncoment one of the lines below for cross compilation.
+-SYSTEM=MSWIN32
+-#SYSTEM=DOS4GW
++#SYSTEM=MSWIN32
++SYSTEM=DOS4GW
+ #SYSTEM=OS2
+ 
+ # The collector can be built either as dynamic or as static library.
+@@ -67,7 +67,7 @@
+ CXX=wpp386
+ 
+ # -DUSE_GENERIC is required !
+-CFLAGS=-$(CPU)$(CALLING) $(OPTIM) -zp4 -zc $(SYSFLAG) $(DLLFLAG) -DGC_BUILD -DUSE_GENERIC $(DEFS)
++CFLAGS=-$(CPU)$(CALLING) $(OPTIM) -zp4 -zc $(SYSFLAG) $(DLLFLAG) -DGC_BUILD -DUSE_GENERIC -iinclude $(DEFS)
+ CXXFLAGS= $(CFLAGS)
+ TEST_CFLAGS=-$(CPU)$(CALLING) $(OPTIM) -zp4 -zc $(SYSFLAG) $(TEST_DLLFLAG) $(DEFS)
+ TEST_CXXFLAGS= $(TEST_CFLAGS)
+@@ -109,10 +109,10 @@
+ !endif
+         *wlink @$*.lnk
+ !else
+-gc.lib: $(OBJS) gc_cpp.obj
++gc.lib: $(OBJS)
+         @%create $*.lb1
+         @for %i in ($(OBJS)) do @%append $*.lb1 +'%i'
+-      @%append $*.lb1 +'gc_cpp.obj'
++      @%append $*.lb1
+         *wlib -b -c -n -p=512 $@ @$*.lb1
+ 
+ !endif
+@@ -177,6 +177,7 @@
+ 
+ .c.obj: .AUTODEPEND
+         $(CC) $(CFLAGS) $*.c
++        @mv $*.o $*.obj
+ 
+ .cc.obj: .AUTODEPEND
+         $(CXX) $(CXXFLAGS) $*.cc

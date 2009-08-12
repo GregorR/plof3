@@ -10,17 +10,22 @@ LFLAGS=system dos4g
 
 LIB=wlib
 
-PLOF_LIB_OBJS=src/psl.o
-PSLI_OBJS=src/psli.o
+PLOF_LIB_OBJS=src/psl.o src/bignum.o
+PSLI_OBJS=src/psli.o src/whereami.o
 PSLI_LIBS=library plof library gc
+PSLASM_OBJS=src/bignum.o src/lex.o src/parse.o src/pslasm.o
+PSLASM_LIBS=library gc
 
-all: plof.lib psli.exe
+all: plof.lib psli.exe pslasm.exe
 
 plof.lib: $(PLOF_LIB_OBJS)
 	$(LIB) -n plof.lib $(PLOF_LIB_OBJS)
 
 psli.exe: plof.lib $(PSLI_OBJS)
-	$(LINK) $(LFLAGS) $(PSLI_LIBS) option stack=10485760 file src/psli
+	$(LINK) $(LFLAGS) $(PSLI_LIBS) option stack=10485760 file src/psli file src/whereami
+
+pslasm.exe: $(PSLASM_OBJS)
+	$(LINK) $(LFLAGS) $(PSLASM_LIBS) option stack=10485760 file src/bignum file src/lex file src/parse file src/pslasm
 
 .c.o:
 	$(CC) $(CFLAGS) $< -fo=$@
@@ -28,3 +33,4 @@ psli.exe: plof.lib $(PSLI_OBJS)
 clean:
 	del plof.lib $(PLOF_LIB_OBJS)
 	del psli.exe $(PSLI_OBJS)
+	del pslasm.exe $(PSLASM_OBJS)

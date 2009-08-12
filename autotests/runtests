@@ -25,6 +25,7 @@ TESTS_FAILED=0
 TESTS_FLIST=""
 runtest() {
     CUR_TEST="$1"
+    echo 'Running test '$1
     shift
     TESTS_RUN=$((TESTS_RUN + 1))
     (
