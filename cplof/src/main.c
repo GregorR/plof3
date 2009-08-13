@@ -187,7 +187,7 @@ int main(int argc, char **argv)
 
         } else {
             struct Buffer_psl psl = parseAll(file.buf, (unsigned char *) "top", (unsigned char *) files[fn]);
-            fprintf(stderr, "%d\n", psl.bufused);
+            fprintf(stderr, "%d\n", (int) psl.bufused);
 
         }
     }

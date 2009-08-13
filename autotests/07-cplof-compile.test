@@ -8,6 +8,6 @@ runtest configure ./configure
 runtest make_Wall make -k CFLAGS="-ansi -Wall -Werror -D_BSD_SOURCE"
 make clean
 runtest make make -k
-make distclean
+#make distclean # don't clean, we want cplof to run tests
 
 cd ..
