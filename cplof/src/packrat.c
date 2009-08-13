@@ -129,7 +129,7 @@ static struct ParseResult **packratParsePrime(struct Production *production,
     }
 
 #ifdef DEBUG
-    fprintf(stderr, "Parsing %s at %d\n", production->name, off);
+    fprintf(stderr, "Parsing %s at %d (%.5s)\n", production->name, off, input + off);
 #endif
 
     /* go through each relevant production, collecting results */
@@ -305,7 +305,6 @@ struct ParseResult **packratRegexTerminal(struct Production *production,
 {
     struct ParseResult **ret;
     int ovector[OVECTOR_LEN], result;
-    fprintf(stderr, "%s\n", production->name);
 
     /* even though we can only actually return one result, the standard is to
      * return an array */
@@ -329,7 +328,6 @@ struct ParseResult **packratRegexTerminal(struct Production *production,
     if (result <= 0) {
         return NULL;
     }
-    fprintf(stderr, "Got %s\n", production->name);
 
     /* didn't fail, fill in consumedTo */
     if (result >= 2) {

@@ -98,7 +98,7 @@ int main(int argc, char **argv)
             return 1;
 
         } else {
-            files[fn++] = argv[++i];
+            files[fn++] = argv[argn];
             if (fn >= MAX_FILES) {
                 fprintf(stderr, "Too many files!\n");
                 return 1;
@@ -130,6 +130,7 @@ int main(int argc, char **argv)
     /* load in the files */
     for (fn = 0; fn == 0 || files[fn]; fn++) {
         size_t slen, stype, stl;
+        struct Buffer_psl psl;
 
         if (!files[fn]) continue;
 
@@ -174,21 +175,26 @@ int main(int argc, char **argv)
                 fprintf(stderr, "No program data!\n");
                 return 1;
             }
-    
-            /* Now interp */
-            interpretPSL(context, plofNull, NULL, slen - stl, file.buf + i, 0, 1);
-            if (compileOnly) {
-                if (fn > 0) {
-                    WRITE_BUFFER(compileBuf, file.buf + i, slen - stl);
-                }
-            } else {
-                interpretPSL(context, plofNull, NULL, slen - stl, file.buf + i, 0, 0);
-            }
 
+            psl.buf = file.buf + i;
+            psl.bufused = slen - stl;
+            psl.bufsz = psl.bufused;
+
+            /* run immediates */
+            interpretPSL(context, plofNull, NULL, psl.bufused, psl.buf, 0, 1);
+   
         } else {
-            struct Buffer_psl psl = parseAll(file.buf, (unsigned char *) "top", (unsigned char *) files[fn]);
-            fprintf(stderr, "%d\n", (int) psl.bufused);
+            psl = parseAll(file.buf, (unsigned char *) "top", (unsigned char *) files[fn]);
 
+        }
+
+        /* Now interp */
+        if (compileOnly) {
+            if (fn > 0) {
+                WRITE_BUFFER(compileBuf, psl.buf, psl.bufused);
+            }
+        } else {
+            interpretPSL(context, plofNull, NULL, psl.bufused, psl.buf, 0, 0);
         }
     }
 
@@ -201,5 +207,7 @@ void usage()
             "Use: cplof [options] <files>\n"
             "Options:\n"
             "  --no-std|-N:\n"
-            "\tDon't load std.psl\n");
+            "\tDon't load std.psl\n"
+            "  --compile|-c:\n"
+            "\tCompile only, don't run.\n");
 }

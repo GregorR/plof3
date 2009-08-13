@@ -1,6 +1,7 @@
 #!/bin/bash
 
 cd "`dirname $0`"/..
+export PATH="`pwd`/cplof/src:$PATH"
 
 # Pass in the current revision to make the output be more informative
 if [ "$1" ]

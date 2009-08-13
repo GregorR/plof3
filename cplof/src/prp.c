@@ -101,7 +101,7 @@ struct PRPResult parseOne(unsigned char *code, unsigned char *top, unsigned char
     struct Production *top_prod = getProduction((unsigned char *)"top");
     struct ParseResult *res = packratParse(top_prod, file, line,
                                            column, code);
-    fprintf(stderr, "A %p\n", res);
+    memset(&ret, 0, sizeof(struct PRPResult));
     if (res == NULL) /* bail out */
         return ret;
 
@@ -112,7 +112,6 @@ struct PRPResult parseOne(unsigned char *code, unsigned char *top, unsigned char
 
     /* get the resultant object */
     pobj = parseHelper(code, res);
-    fprintf(stderr, "B %p\n", pobj);
 
     /* make sure it has raw data */
     if (pobj->data && pobj->data->type == PLOF_DATA_RAW) {
@@ -207,6 +206,9 @@ struct PlofObject *parseHelper(unsigned char *code, struct ParseResult *pr)
             EXPAND_BUFFER(psl);
         pslIntToBignum(BUFFER_END(psl), parsedsz, bignumsz);
         psl.bufused += bignumsz;
+
+        /* and the data itself */
+        WRITE_BUFFER(psl, code + pr->consumedFrom, pr->consumedTo - pr->consumedFrom);
 
         /* and put it in an object */
         rd = GC_NEW_Z(struct PlofRawData);

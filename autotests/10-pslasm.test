@@ -1,0 +1,12 @@
+#!/bin/bash
+for i in autotests/pslasm/*
+do
+    pushd $i
+    for j in *.apsl
+    do
+        runtest pslasm_${j}_asm ../../../cplof/src/pslasm $j ${j/.apsl}.psl
+        runtest pslasm_${j}_cmp cmp ${j/.apsl}.psl ${j/.apsl}.correct.psl
+        rm -f ${j/.apsl}.psl
+    done
+    popd
+done
