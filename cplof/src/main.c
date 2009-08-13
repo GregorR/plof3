@@ -113,9 +113,8 @@ int main(int argc, char **argv)
         usage();
         return 1;
     }
-    if (compileOnly) {
-        INIT_BUFFER(compileBuf);
-    }
+    /* FIXME: should be in if (compileOnly), but -Wall complains */
+    INIT_BUFFER(compileBuf);
     
     /* Initialize null and global */
     plofNull = GC_NEW_Z(struct PlofObject);
