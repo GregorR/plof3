@@ -129,7 +129,7 @@ static struct ParseResult **packratParsePrime(struct Production *production,
     }
 
 #ifdef DEBUG
-    fprintf(stderr, "Parsing %s at %d:%d\n", production->name, line, col);
+    fprintf(stderr, "Parsing %s at %d\n", production->name, off);
 #endif
 
     /* go through each relevant production, collecting results */
@@ -213,8 +213,8 @@ struct ParseResult **packratNonterminal(struct Production *production,
     memset(pr, 0, sizeof(struct ParseResult));
     pr->production = production;
     pr->file = file;
-    pr->sline = line;
-    pr->scol = col;
+    pr->sline = pr->eline = line;
+    pr->scol = pr->ecol = col;
     pr->choice = 0;
     pr->consumedFrom = pr->consumedTo = off;
 
@@ -248,7 +248,7 @@ struct ParseResult **packratNonterminal(struct Production *production,
                 /* loop over each of the current points */
                 for (i = 0; i < orResult.bufused; i++) {
                     subres = packratParsePrime(orProduction[thens],
-                                               file, line, col,
+                                               file, orResult.buf[i]->eline, orResult.buf[i]->ecol,
                                                input, orResult.buf[i]->consumedTo);
                     for (srlen = 0; subres[srlen]; srlen++);
 
@@ -260,6 +260,8 @@ struct ParseResult **packratNonterminal(struct Production *production,
                         memcpy(pr->subResults, orResult.buf[i]->subResults, thens * sizeof(struct ParseResult *));
                         pr->subResults[thens] = subres[j];
                         pr->subResults[thens+1] = NULL;
+                        pr->eline = subres[j]->eline;
+                        pr->ecol = subres[j]->ecol;
                         pr->choice = ors;
                         pr->consumedTo = subres[j]->consumedTo;
                         WRITE_BUFFER(orResultP, &pr, 1);
@@ -327,6 +329,7 @@ struct ParseResult **packratRegexTerminal(struct Production *production,
     if (result <= 0) {
         return NULL;
     }
+    fprintf(stderr, "Got %s\n", production->name);
 
     /* didn't fail, fill in consumedTo */
     if (result >= 2) {

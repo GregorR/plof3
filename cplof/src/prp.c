@@ -47,7 +47,7 @@ struct UProduction {
     struct UProduction *right, *left;
 };
 
-struct PlofObject *parse_helper(unsigned char *code, struct ParseResult *pr);
+struct PlofObject *parseHelper(unsigned char *code, struct ParseResult *pr);
 
 static struct UProduction *getUProduction(unsigned char *name);
 
@@ -101,7 +101,7 @@ struct PRPResult parseOne(unsigned char *code, unsigned char *top, unsigned char
     struct Production *top_prod = getProduction((unsigned char *)"top");
     struct ParseResult *res = packratParse(top_prod, file, line,
                                            column, code);
-    memset(&ret, 0, sizeof(struct PRPResult));
+    fprintf(stderr, "A %p\n", res);
     if (res == NULL) /* bail out */
         return ret;
 
@@ -111,7 +111,8 @@ struct PRPResult parseOne(unsigned char *code, unsigned char *top, unsigned char
     ret.rcol = res->ecol;
 
     /* get the resultant object */
-    pobj = parse_helper(code, res);
+    pobj = parseHelper(code, res);
+    fprintf(stderr, "B %p\n", pobj);
 
     /* make sure it has raw data */
     if (pobj->data && pobj->data->type == PLOF_DATA_RAW) {
@@ -157,26 +158,20 @@ struct Buffer_psl parseAll(unsigned char *code, unsigned char *top, unsigned cha
     return res;
 }
 
-struct PlofObject *parse_helper(unsigned char *code, struct ParseResult *pr)
+struct PlofObject *parseHelper(unsigned char *code, struct ParseResult *pr)
 {
     int i;
     struct PlofRawData *rd;
     struct PlofArrayData *ad;
     struct PlofObject *obj, *ret;
 
-    if (!pr->subResults) {
-        /* we're done here */
-        /* FIXME: return the right thing */
-        return plofNull;
-    }
-
     /* produce an array from the sub-results */
     ad = GC_NEW_Z(struct PlofArrayData);
     ad->type = PLOF_DATA_ARRAY;
-    for (ad->length = 0; pr->subResults[ad->length]; ad->length++);
+    for (ad->length = 0; pr->subResults && pr->subResults[ad->length]; ad->length++);
     ad->data = (struct PlofObject **) GC_MALLOC(ad->length * sizeof(struct PlofObject *));
-    for (i = 0; pr->subResults[i]; i++) {
-        ad->data[i] = parse_helper(code, pr->subResults[i]);
+    for (i = 0; i < ad->length; i++) {
+        ad->data[i] = parseHelper(code, pr->subResults[i]);
     }
 
     /* put the array in an object */
