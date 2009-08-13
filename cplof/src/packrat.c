@@ -303,6 +303,7 @@ struct ParseResult **packratRegexTerminal(struct Production *production,
 {
     struct ParseResult **ret;
     int ovector[OVECTOR_LEN], result;
+    fprintf(stderr, "%s\n", production->name);
 
     /* even though we can only actually return one result, the standard is to
      * return an array */

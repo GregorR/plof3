@@ -140,6 +140,10 @@ struct Buffer_psl parseAll(unsigned char *code, unsigned char *top, unsigned cha
             fprintf(stderr, "%s\n", code);
 #endif
             exit(1);
+#ifdef DEBUG
+        } else {
+            fprintf(stderr, "Parsed %.*s\n", prpr.remainder - code, code);
+#endif
         }
         code = prpr.remainder;
 
@@ -160,8 +164,11 @@ struct PlofObject *parse_helper(unsigned char *code, struct ParseResult *pr)
     struct PlofArrayData *ad;
     struct PlofObject *obj, *ret;
 
-    /*if (!pr->subResults) // We're done here.
-        return psl;*/
+    if (!pr->subResults) {
+        /* we're done here */
+        /* FIXME: return the right thing */
+        return plofNull;
+    }
 
     /* produce an array from the sub-results */
     ad = GC_NEW_Z(struct PlofArrayData);
@@ -263,14 +270,22 @@ static void gcommitRecurse(struct UProduction *curp)
 {
     int i, j;
 
-    for (i = 0; curp->target.buf[i]; i++)
-        for (j = 0; curp->target.buf[i][j]; j++)
-                if (curp->target.buf[i][j][0] == '/') {
-                        newPackratRegexTerminal(curp->target.buf[i][j],
-                                                curp->target.buf[i][j])->userarg = NULL;
-                }
+    for (i = 0; curp->target.buf[i]; i++) {
+        for (j = 0; curp->target.buf[i][j]; j++) {
+            if (curp->target.buf[i][j][0] == '/') {
+               unsigned char *name = curp->target.buf[i][j];
+               size_t regexlen = strlen((char *) name)-2;
+               unsigned char *regex = (unsigned char *) GC_MALLOC(regexlen+1);
+               memcpy(regex, name+1, regexlen);
+               regex[regexlen] = '\0';
+
+               newPackratRegexTerminal(name, regex)->userarg = NULL;
+            }
+        }
+    }
+
     newPackratNonterminal(curp->name, curp->target.buf)->userarg
-            = curp->psl.buf;
+        = curp->psl.buf;
 
     if (curp->left)
         gcommitRecurse(curp->left);
