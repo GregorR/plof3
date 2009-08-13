@@ -34,24 +34,24 @@
 #define BUFSTEP 1024
 #define MAX_FILES 32
 
+#define ARG(LONG, SHORT) if(!strcmp(argv[argn], "--" LONG) || !strcmp(argv[argn], "-" SHORT))
+void usage();
+
 int main(int argc, char **argv)
 {
     FILE *fh;
     char *wdir, *wfil;
     struct Buffer_psl file;
 
-    char *files[MAX_FILES];
+    char *files[MAX_FILES+1];
 
     struct PlofObject *context;
 
-    int i, fn;
+    int i, fn, argn, compileOnly;
+
+    struct Buffer_psl compileBuf;
 
     GC_INIT();
-
-    if (argc != 2) {
-        fprintf(stderr, "Use: cplof <file>\n");
-        return 1;
-    }
 
     /* get our search path */
     if (whereAmI(argv[0], &wdir, &wfil)) {
@@ -74,12 +74,49 @@ int main(int argc, char **argv)
         return 1;
 
     }
-    
-    /* FIXME: take files as parameters better */
-    files[0] = "std.psl";
-    files[1] = argv[1];
-    files[2] = NULL;
 
+    /* load std.psl by default */
+    files[0] = "std.psl";
+    fn = 1;
+    compileOnly = 0;
+
+    /* handle args */
+    for (argn = 1; argn < argc; argn++) {
+        ARG("no-std", "N") {
+            files[0] = NULL;
+
+        } else ARG("compile", "c") {
+            compileOnly = 1;
+
+        } else ARG("help", "h") {
+            usage();
+            return 0;
+
+        } else if (argv[argn][0] == '-') {
+            fprintf(stderr, "Unrecognized option '%s'!\n\n", argv[argn]);
+            usage();
+            return 1;
+
+        } else {
+            files[fn++] = argv[++i];
+            if (fn >= MAX_FILES) {
+                fprintf(stderr, "Too many files!\n");
+                return 1;
+            }
+
+        }
+    }
+    files[fn] = NULL;
+
+    /* complain if there aren't any files */
+    if (fn == 1) {
+        usage();
+        return 1;
+    }
+    if (compileOnly) {
+        INIT_BUFFER(compileBuf);
+    }
+    
     /* Initialize null and global */
     plofNull = GC_NEW_Z(struct PlofObject);
     plofNull->parent = plofNull;
@@ -91,8 +128,10 @@ int main(int argc, char **argv)
     context->parent = plofNull;
 
     /* load in the files */
-    for (fn = 0; files[fn]; fn++) {
+    for (fn = 0; fn == 0 || files[fn]; fn++) {
         size_t slen, stype, stl;
+
+        if (!files[fn]) continue;
 
         INIT_BUFFER(file);
         
@@ -138,7 +177,13 @@ int main(int argc, char **argv)
     
             /* Now interp */
             interpretPSL(context, plofNull, NULL, slen - stl, file.buf + i, 0, 1);
-            interpretPSL(context, plofNull, NULL, slen - stl, file.buf + i, 0, 0);
+            if (compileOnly) {
+                if (fn > 0) {
+                    WRITE_BUFFER(compileBuf, file.buf + i, slen - stl);
+                }
+            } else {
+                interpretPSL(context, plofNull, NULL, slen - stl, file.buf + i, 0, 0);
+            }
 
         } else {
             struct Buffer_psl psl = parseAll(file.buf, (unsigned char *) "top", (unsigned char *) files[fn]);
@@ -147,20 +192,14 @@ int main(int argc, char **argv)
         }
     }
 
-#if 0
-    /* And the context */
-    context = GC_NEW_Z(struct PlofObject);
-    context->parent = plofNull;
-
-    /* Now interp */
-    interpretPSL(context, plofNull, NULL, slen - stl, psl + i, 0, 1);
-    ret = interpretPSL(context, plofNull, NULL, slen - stl, psl + i, 0, 0);
-
-    if (ret.isThrown) {
-        fprintf(stderr, "PSL threw up!\n");
-        return 1;
-    }
-#endif
-
     return 0;
+}
+
+void usage()
+{
+    fprintf(stderr,
+            "Use: cplof [options] <files>\n"
+            "Options:\n"
+            "  --no-std|-N:\n"
+            "\tDon't load std.psl\n");
 }
