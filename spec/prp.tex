@@ -1,0 +1,50 @@
+\chapter{Plof Runtime Parser}
+
+To be expounded upon.
+
+
+\begin{comment}
+\subsection{Runtime Grammar Definitions}
+
+There are several PSL operations which can only be run while in an \textit{immediate} block, and affect the runtime parser itself. They are:
+
+
+
+<table border="0" cellspacing="0" cellpadding="0" class="Table2"><colgroup><col width="49"/><col width="115"/><col width="604"/></colgroup><tr><td style="text-align:left;width:0.4444in; " class="Table2_A1"><p class="P22">Hex
+
+</td><td style="text-align:left;width:1.0354in; " class="Table2_B1"><p class="P22">Name
+
+</td><td style="text-align:left;width:5.4451in; " class="Table2_B1"><p class="P22">Function
+
+</td></tr><tr><td style="text-align:left;width:0.4444in; " class="Table2_A2"><p class="P21">
+
+</td><td style="text-align:left;width:1.0354in; " class="Table2_B2"><p class="P21">
+
+</td><td style="text-align:left;width:5.4451in; " class="Table2_B2"><p class="P21">Operations F0-F5 do not affect the grammar immediately, the changes must be committed with \textit{gcommit}.
+
+</td></tr><tr><td style="text-align:left;width:0.4444in; " class="Table2_A1"><p class="P21">F0
+
+</td><td style="text-align:left;width:1.0354in; " class="Table2_B1"><p class="P21">gadd
+
+</td><td style="text-align:left;width:5.4451in; " class="Table2_B1"><p class="P21">Add a production to the grammar. Pops the production name, the production itself, and the associated PSL code. The production itself is an array of strings (as raw data), each of which is either:
+
+<ul><li><p class="P32" style="margin-left:0.635cm;"><span class="Bullet_20_Symbols" style="display:block;float:left;min-width:0.635cm;">•.</span>The name of another production, or<span class="odfLiEnd"/>
+
+</li><li><p class="P32" style="margin-left:0.635cm;"><span class="Bullet_20_Symbols" style="display:block;float:left;min-width:0.635cm;">•.</span>a regex, surrounded by /'s.<span class="odfLiEnd"/>
+
+</li></ul><p class="P23">The name and associated code are both raw data.
+
+</td></tr><tr><td style="text-align:left;width:0.4444in; " class="Table2_A1"><p class="P21">F1
+
+</td><td style="text-align:left;width:1.0354in; " class="Table2_B1"><p class="P21">grem
+
+</td><td style="text-align:left;width:5.4451in; " class="Table2_B1"><p class="P21">Remove a production from the grammar. Pops the production name and removes it.
+
+</td></tr><tr><td style="text-align:left;width:0.4444in; " class="Table2_A1"><p class="P21">FD
+
+</td><td style="text-align:left;width:1.0354in; " class="Table2_B1"><p class="P21">gcommit
+
+</td><td style="text-align:left;width:5.4451in; " class="Table2_B1"><p class="P21">Commit grammar changes.
+
+</td></tr></table><p class="P1">
+\end{comment}
