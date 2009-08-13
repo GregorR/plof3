@@ -1701,7 +1701,15 @@ label(interp_psl_gadd);
 
 label(interp_psl_grem);
     DEBUG_CMD("grem");
-    UNIMPL("grem");
+    UNARY;
+
+    if (ISRAW(a)) {
+        unsigned char *name;
+        RAWSTRDUP(unsigned char, name, RAW(a));
+        grem(name);
+    } else {
+        BADTYPE("grem");
+    }
     STEP;
 
 label(interp_psl_gcommit);
