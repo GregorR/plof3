@@ -24,21 +24,21 @@
 
 // the psl operations
 pslbnf {
-    pslOp = "dlopen" =>     { 193 integer byte }
-    pslOp = "dlclose" =>    { 194 integer byte }
-    pslOp = "dlsym" =>      { 195 integer byte }
-    pslOp = "cmalloc" =>    { 196 integer byte }
-    pslOp = "cfree" =>      { 197 integer byte }
-    pslOp = "cget" =>       { 198 integer byte }
-    pslOp = "cset" =>       { 199 integer byte }
-    pslOp = "ctype" =>      { 200 integer byte }
-    pslOp = "cstruct" =>    { 201 integer byte }
-    pslOp = "csizeof" =>    { 202 integer byte }
-    pslOp = "csget" =>      { 203 integer byte }
-    pslOp = "csset" =>      { 204 integer byte }
-    pslOp = "prepcif" =>    { 205 integer byte }
-    pslOp = "ccall" =>      { 206 integer byte }
-};
+    pslOp = "dlopen" =>     { 193 byte }
+    pslOp = "dlclose" =>    { 194 byte }
+    pslOp = "dlsym" =>      { 195 byte }
+    pslOp = "cmalloc" =>    { 196 byte }
+    pslOp = "cfree" =>      { 197 byte }
+    pslOp = "cget" =>       { 198 byte }
+    pslOp = "cset" =>       { 199 byte }
+    pslOp = "ctype" =>      { 200 byte }
+    pslOp = "cstruct" =>    { 201 byte }
+    pslOp = "csizeof" =>    { 202 byte }
+    pslOp = "csget" =>      { 203 byte }
+    pslOp = "csset" =>      { 204 byte }
+    pslOp = "prepcif" =>    { 205 byte }
+    pslOp = "ccall" =>      { 206 byte }
+}
 
 // and their Plof equivalents
 var C = Object : [
@@ -49,7 +49,7 @@ var C = Object : [
             push0 null
             { plof{Null} }
             {
-                1 integer array
+                1 array
                 plof{opCPointer} pul_eval call
             } cmp
         }
@@ -70,7 +70,7 @@ var C = Object : [
             push0 null
             { plof{Null} }
             {
-                1 integer array
+                1 array
                 plof{opCPointer} pul_eval call
             } cmp
         }
@@ -117,13 +117,13 @@ var C = Object : [
 
     prepcif = (rtype as NativeInteger, atypes as Array, abi as NativeInteger) {
         // extract the values out of the types array
-        var nat = psl { 0 integer array };
+        var nat = psl { 0 array };
         var elem;
         atypes.each (ref elem) (
             nat = psl {
                 plof{nat} pul_eval
                 plof{elem.__pul_val} pul_eval
-                1 integer array aconcat
+                1 array aconcat
             };
         );
 
@@ -138,7 +138,7 @@ var C = Object : [
 
     call = (cif as CPointer, fn as CPointer, cargs as Array) {
         // extract the values out of the args array
-        var nargs = psl { 0 integer array };
+        var nargs = psl { 0 array };
         var elem;
         cargs.each (ref elem) (
             nargs = psl {
@@ -146,13 +146,13 @@ var C = Object : [
 
                 // elem as CData
                 /* FIXME
-                this "CData" pul_var member pul_eval 1 integer array
+                this "CData" pul_var member pul_eval 1 array
                 this "elem"  pul_var member pul_eval "opAs" member call
                 "__pul_val" member */
                 plof{elem.__pul_val} pul_eval
 
                 // combine them
-                1 integer array aconcat
+                1 array aconcat
             };
         );
 
@@ -168,30 +168,30 @@ var C = Object : [
     };
 
     // types
-    void = opInteger(psl { 0 integer ctype });
-    int = opInteger(psl { 1 integer ctype });
-    float = opInteger(psl { 2 integer ctype });
-    double = opInteger(psl { 3 integer ctype });
-    longdouble = opInteger(psl { 4 integer ctype });
-    uint8 = opInteger(psl { 5 integer ctype });
-    int8 = opInteger(psl { 6 integer ctype });
-    uint16 = opInteger(psl { 7 integer ctype });
-    int16 = opInteger(psl { 8 integer ctype });
-    uint32 = opInteger(psl { 9 integer ctype });
-    int32 = opInteger(psl { 10 integer ctype });
-    uint64 = opInteger(psl { 11 integer ctype });
-    int64 = opInteger(psl { 12 integer ctype });
-    pointer = opInteger(psl { 14 integer ctype });
-    uchar = opInteger(psl { 24 integer ctype });
-    schar = opInteger(psl { 25 integer ctype });
-    ushort = opInteger(psl { 26 integer ctype });
-    short = opInteger(psl { 27 integer ctype });
-    uint = opInteger(psl { 28 integer ctype });
-    ulong = opInteger(psl { 30 integer ctype });
-    long = opInteger(psl { 31 integer ctype });
-    ulonglong = opInteger(psl { 32 integer ctype });
-    longlong = opInteger(psl { 33 integer ctype });
-];
+    void = opInteger(psl { 0 ctype });
+    int = opInteger(psl { 1 ctype });
+    float = opInteger(psl { 2 ctype });
+    double = opInteger(psl { 3 ctype });
+    longdouble = opInteger(psl { 4 ctype });
+    uint8 = opInteger(psl { 5 ctype });
+    int8 = opInteger(psl { 6 ctype });
+    uint16 = opInteger(psl { 7 ctype });
+    int16 = opInteger(psl { 8 ctype });
+    uint32 = opInteger(psl { 9 ctype });
+    int32 = opInteger(psl { 10 ctype });
+    uint64 = opInteger(psl { 11 ctype });
+    int64 = opInteger(psl { 12 ctype });
+    pointer = opInteger(psl { 14 ctype });
+    uchar = opInteger(psl { 24 ctype });
+    schar = opInteger(psl { 25 ctype });
+    ushort = opInteger(psl { 26 ctype });
+    short = opInteger(psl { 27 ctype });
+    uint = opInteger(psl { 28 ctype });
+    ulong = opInteger(psl { 30 ctype });
+    long = opInteger(psl { 31 ctype });
+    ulonglong = opInteger(psl { 32 ctype });
+    longlong = opInteger(psl { 33 ctype });
+]
 
 
 // the type of pointers from dlopen/dlsym/etc
@@ -208,10 +208,10 @@ var CPointer = Object : [
             return Null;
         );
     };
-];
+]
 var opCPointer = (x) {
     new CPointer(x)
-};
+}
 
 // a pseudotype containing raw data for C
 var CData = Object : [
@@ -236,21 +236,21 @@ var CData = Object : [
             return(psl { null });
         );
     };
-];
+]
 
 // convenient wrappers
-C.calloc_s = C.dlsym(Null, "calloc");
-C.calloc_c = C.prepcif(C.pointer, [[C.pointer, C.pointer]], 0);
+C.calloc_s = C.dlsym(Null, "calloc")
+C.calloc_c = C.prepcif(C.pointer, [[C.pointer, C.pointer]], 0)
 C.calloc = (x as NativeInteger) {
     C.call(C.calloc_c, C.calloc_s, [[x, 1]])
-};
-C.strlen_s = C.dlsym(Null, "strlen");
-C.strlen_c = C.prepcif(C.pointer, [[C.pointer]], 0);
+}
+C.strlen_s = C.dlsym(Null, "strlen")
+C.strlen_c = C.prepcif(C.pointer, [[C.pointer]], 0)
 C.strlen = (x as CPointer) {
     C.call(C.strlen_c, C.strlen_s, [[x]]) as Number
-};
+}
 
 C.getstr = (x as CPointer) {
     var l = C.strlen(x);
     C.get(x, l) as String
-};
+}

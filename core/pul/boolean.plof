@@ -22,43 +22,22 @@
  *  IN THE SOFTWARE.
  */
 
-plofbnf {
-    plof_bind => plof_or;
-
-    plof_or = plof_or "\|\|" plof_or_next => plof {
-        $0.opOr($2)
-    }
-    plof_or = plof_or_next => plof { $0 }
-    plof_or => plof_and;
-
-    plof_and = plof_and "&&" plof_and_next => plof {
-        $0.opAnd($2)
-    }
-    plof_and = plof_and_next => plof { $0 }
-    plof_and => plof_unop;
-
-    plof_unop = "\!" plof_unop => plof {
-        $1.opNot()
-    }
-    plof_unop = plof_unop_next => plof { $0 }
-};
-
 // Object is true for logic unless it's False
 Object := [
     opOr = (x) { True };
     opAnd = (x) { x };
     opNot = { False };
-];
+]
 
 // True and False are both Bools
 var Bool = Object : [
     ifTrue = (x) { this };
     ifFalse = (x) { this };
-];
+]
 
 var True = Bool : [
     ifTrue = (x) { x; this };
-];
+]
 
 var False = Bool : [
     ifFalse = (x) { x; this };
@@ -66,4 +45,4 @@ var False = Bool : [
     opOr = (x) { x };
     opAnd = (x) { False };
     opNot = { True };
-];
+]

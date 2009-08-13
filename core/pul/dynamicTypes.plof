@@ -22,22 +22,6 @@
  *  IN THE SOFTWARE.
  */
 
-// typechecking operators
-plofbnf {
-    plof_combine => plof_is;
-
-    plof_is = plof_is "is" plof_is_next => plof {
-        $0.opIs($2)
-    }
-    plof_is = plof_is_next => plof { $0 }
-    plof_is => plof_as;
-
-    plof_as = plof_as "as" plof_as_next => plof {
-        $0.opAs($2)
-    }
-    plof_as = plof_as_next => plof { $0 }
-};
-
 // typechecking in Object
 Object := [
     opIs = (type) {
@@ -45,7 +29,7 @@ Object := [
             this "mytype"
             plof{this} pul_eval "__pul_type" member
             memberset
-            this "index" 0 integer memberset
+            this "index" 0 memberset
 
             // go through each element
             null
@@ -71,7 +55,7 @@ Object := [
                 // increment the index
                 this "index" resolve
                         this "index" resolve member
-                            1 integer add
+                            1 add
                             memberset
             } while pop
 
@@ -100,49 +84,4 @@ Object := [
     opCastFrom = (obj) {
         Null
     };
-];
-
-plofbnf {
-    // specified argument types
-    plof_param = plof_identifier "as" plof_semicolon_next => {
-        // still get the named param as usual
-        {push1}
-        push1 0 integer index concat
-
-        // store the astype for later
-        push1 2 integer index concat
-        {
-            this "astype" push2 memberset
-        } concat
-
-        {
-            pul_eval
-            1 integer array
-
-            // stack: args fcontext index fcontext ident astype
-            push5 push4 index
-
-            // stack: args fcontext index fcontext ident astype arg
-            this "arg" push2 memberset
-
-            // now run typechecking/coersion
-            pul_eval "opAs" pul_varwrap pul_eval call pul_eval
-
-            // stack: args fcontext index fcontex ident arg?
-
-            // check if it's null (failed to coerce)
-            push0 plof{Null} pul_eval
-            {
-                // whoops, type mismatch
-                plof {
-                    throw (new TypeMismatchException(arg, astype));
-                } pul_eval
-            }
-            {} cmp
-
-            // otherwise, set as usual
-            memberset
-            1 integer add
-        } concat
-    }
-};
+]

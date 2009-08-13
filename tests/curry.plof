@@ -1,9 +1,7 @@
 var print2 = (a as String, b as String) {
-    psl {
-        plof{a.__pul_val} pul_eval print
-        plof{b.__pul_val} pul_eval print
-    };
-};
+    Debug.print(a)
+    Debug.print(b)
+}
 
 print2("Foobar", "world");
 var c = print2("Hello");

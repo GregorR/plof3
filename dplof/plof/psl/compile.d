@@ -56,14 +56,15 @@ ubyte[] pslCompile(char[] asmtxt)
             ret ~= cast(ubyte[]) "\xFF" ~ pslBignum(op.length - 2) ~ cast(ubyte[]) op[1..$-1];
 
         } else if (op[0] >= '0' && op[0] <= '9') {
-            // a number, push it as a 4-byte integer
+            // a number, push it as a 4-byte integer and an 'integer' operation
             int val = toInt(op);
 
             ret ~= cast(ubyte[]) "\xFF\x04" ~
                    [cast(ubyte) (val >> 24),
                     cast(ubyte) ((val & 0xFF0000) >> 16),
                     cast(ubyte) ((val & 0xFF00) >> 8),
-                    cast(ubyte) val];
+                    cast(ubyte) val] ~
+                   cast(ubyte) psl_integer;
 
         } else {
             // otherwise, just compile it

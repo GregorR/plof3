@@ -1,0 +1,84 @@
+/*
+ * Dynamic type annotations for Plof
+ *
+ *  Copyright (c) 2007, 2008  Gregor Richards
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to
+ *  deal in the Software without restriction, including without limitation the
+ *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *  sell copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *  IN THE SOFTWARE.
+ */
+
+// typechecking operators
+plofbnf {
+    plof_combine => plof_is;
+
+    plof_is = plof_is "is"w plof_is_next => plof {
+        $0.opIs($2)
+    }
+    plof_is = plof_is_next => plof { $0 }
+    plof_is => plof_as;
+
+    plof_as = plof_as "as"w plof_as_next => plof {
+        $0.opAs($2)
+    }
+    plof_as = plof_as_next => plof { $0 }
+}
+
+plofbnf {
+    // specified argument types
+    plof_param = plof_identifier "as"w plof_semicolon_next => {
+        // still get the named param as usual
+        {push1}
+        push1 0 index concat
+
+        // store the astype for later
+        push1 2 index concat
+        {
+            this "astype" push2 memberset
+        } concat
+
+        {
+            pul_eval
+            1 array
+
+            // stack: args fcontext index fcontext ident astype
+            push5 push4 index
+
+            // stack: args fcontext index fcontext ident astype arg
+            this "arg" push2 memberset
+
+            // now run typechecking/coersion
+            pul_eval "opAs" pul_varwrap pul_eval call pul_eval
+
+            // stack: args fcontext index fcontex ident arg?
+
+            // check if it's null (failed to coerce)
+            push0 plof{Null} pul_eval
+            {
+                // whoops, type mismatch
+                plof {
+                    throw (new TypeMismatchException(arg, astype));
+                } pul_eval
+            }
+            {} cmp
+
+            // otherwise, set as usual
+            memberset
+            1 add
+        } concat
+    }
+}

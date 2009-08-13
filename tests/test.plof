@@ -1,139 +1,135 @@
-psl { "Version strings:" print };
-var x;
+Debug.print("Version strings:")
+var x
 versions.each (ref x) (
-    psl { plof{x.__pul_val} pul_eval print }
-);
+    Debug.print(x)
+)
 
-psl { "Integer value 3 is always good." print };
+Debug.print("Integer value 3 is always good.")
 
 // Prototypes test
-var a = Object : [];
-var b = a : [];
-a.a = 3;
-psl {
-    plof{b.a} pul_eval "__pul_val" member print
-};
+var a = Object : []
+var b = a : []
+a.a = 3
+Debug.print(b.a)
 
 
 // Simple true/false test
-True.ifTrue(psl { "GOOD " print });
-False.ifTrue(psl { "BAD" print });
+True.ifTrue(Debug.print("GOOD"))
+False.ifTrue(Debug.print("BAD"))
 
 
 // If "statements"
 if (True) (
-    psl { "GOOD " print }
+    Debug.print("GOOD")
 ) else (
-    psl { "BAD" print }
+    Debug.print("BAD")
 );
 
 
 // Currying
 var curryish = (a, b, c) {
-    psl {
-        plof{a} pul_eval print
-        plof{b} pul_eval print
-        plof{c} pul_eval print
-    };
+    Debug.print(a)
+    Debug.print(b)
+    Debug.print(c)
 };
-curryish psl{"This should come first."} psl{"Then this."} psl{"Then this should come third and last."};
+curryish "This should come first." "Then this." "Then this should come third and last."
 
 
 // While "statement"
-var a = True;
-var b = True;
-var c = True;
-var d = False;
+var a = True
+var b = True
+var c = True
+var d = False
 while (a) (
-    psl { "This should be printed three times." print };
-    a = b;
-    b = c;
-    c = d;
-);
+    Debug.print("This should be printed three times.")
+    a = b
+    b = c
+    c = d
+)
 
 
 // Constructors
 var Foo = Object : [
     this (n) {
-        this.n = n;
-    };
-];
-var foo = new Foo(3);
-psl { plof{foo.n} pul_eval "__pul_val" member print };
+        this.n = n
+    }
+]
+var foo = new Foo(3)
+Debug.print(foo.n)
 
 
 // Try/catch
-psl { "Try" print };
-var x = Object;
+Debug.print("Try")
+var x = Object
 try (
-    throw (psl { 3 integer })
+    throw (psl { 3 })
 ) catchall (ref x) (
     psl { plof{x} pul_eval print }
-);
+)
 
 
 // Object types
-psl { "Types" print };
+Debug.print("Types")
 if (Foo is Foo) (
-    psl { "GOOD " print };
+    Debug.print("GOOD")
 ) else (
-    psl { "BAD" print };
+    Debug.print("BAD")
 );
 if (Foo is Object) (
-    psl { "GOOD " print };
+    Debug.print("GOOD")
 ) else (
-    psl { "BAD" print };
+    Debug.print("BAD")
 );
 if (Object is Foo) (
-    psl { "BAD" print };
+    Debug.print("BAD")
 ) else (
-    psl { "GOOD " print };
+    Debug.print("GOOD")
 );
 
 
 // Typed functions
-psl { "Typed functions" print };
+Debug.print("Typed functions")
 var foo = (x as Foo) {
     x
-};
+}
 try (
     foo(Foo);
-    psl { "GOOD " print };
+    Debug.print("GOOD")
 ) catchall (ref x) (
-    psl { "BAD" print };
-);
+    Debug.print("BAD")
+)
 try (
     foo(Object);
-    psl { "BAD" print };
+    Debug.print("BAD")
 ) catchall (ref x) (
-    psl { "GOOD " print };
-);
+    Debug.print("GOOD")
+)
 
 
 // Numbers
-psl { "Numbers" print };
+Debug.print("Numbers")
 x = 27 - 6 * 4;
-psl { plof{x} pul_eval "__pul_val" member print };
+Debug.print(x)
 
 
 // Arrays
-psl { "Arrays" print };
+Debug.print("Arrays")
 x = new Array(psl {
-    plof{4} 1 integer array
-});
+    plof{4} 1 array
+})
 x[0] = 3;
 psl { plof{x[0]} pul_eval "__pul_val" member print };
 
 
 // Lists
-psl { "Lists" print };
+Debug.print("Lists")
 x = new MList(Object);
 x[1] = 3;
 psl { plof{x[1]} pul_eval "__pul_val" member print };
 
 
 // ListArrays
-psl { "ListArrays" print };
+Debug.print("ListArrays")
 x = [[ 0, 1, 2, 3, 4, 5 ]];
 psl { plof{x[3]} pul_eval "__pul_val" member print };
 x ~= [[ 4, 3, 2, 1, 0 ]];
@@ -144,35 +140,35 @@ psl { plof{x[14]} pul_eval "__pul_val" member print };
 
 
 // Strings
-psl { "Strings" print };
+Debug.print("Strings")
 x = "Hello, ";
 if (x == "Hello, ") (
-    psl { "GOOD " print };
+    Debug.print("GOOD")
 ) else (
-    psl { "BAD" print };
+    Debug.print("BAD")
 );
 if (x == "world!") (
-    psl { "BAD" print };
+    Debug.print("BAD")
 ) else (
-    psl { "GOOD " print };
+    Debug.print("GOOD")
 );
 
 
 // Ranges
-psl { "Ranges" print };
-psl { "This test should print all the numbers from 0 to 9 which are divisible by 2" print };
+Debug.print("Ranges")
+Debug.print("This test should print all the numbers from 0 to 9 which are divisible by 2")
 (0 to 10 by 2).each (ref x) (
-    psl { plof{x.__pul_val} pul_eval print }
-);
+    Debug.print(x)
+)
 
 
 // Concatenation
-var y;
-psl { "Concatenation" print };
-psl { "This should print the numbers from 1 to 5, then Hello, world!" print };
+var y
+Debug.print("Concatenation")
+Debug.print("This should print the numbers from 1 to 5, then Hello, world!")
 x = [[ 1, 2, 3 ]] ~ [[ 4, 5 ]];
 x.each (ref y) (
-    psl { plof{y.__pul_val} pul_eval print };
+    Debug.print(y)
 );
 x = "Hello, " ~ "world!";
-psl { plof{x.__pul_val} pul_eval print };
+Debug.print(x)

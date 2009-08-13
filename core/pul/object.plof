@@ -22,337 +22,35 @@
  *  IN THE SOFTWARE.
  */
 
-// trivial plof function calls
-plofbnf {
-    plof_group = plof_group plof_group_next => plof {
-        psl { $1 1 integer array $0 pul_eval call }
-    }
-
-    plof_group = plof_group "\(" plof_args "\)" => plof {
-        psl { $2 pul_eval $0 pul_eval call }
-    }
-
-
-    plof_args = white => plof {
-        psl { 0 integer array }
-    }
-
-    plof_args = plof_args_prime => plof { $0 }
-
-    plof_args_prime = plof_args_prime "," plof_args_prime_next => plof {
-        psl { $0 pul_eval $2 pul_eval aconcat }
-    }
-
-    plof_args_prime = plof_args_prime_next "," plof_args_prime_next => plof {
-        psl { $0 pul_eval $2 pul_eval aconcat }
-    }
-
-    plof_args_prime => plof_arg;
-
-    plof_arg = plof_semicolon_next => plof {
-        psl { $0 1 integer array }
-    }
-};
-
-
-// opMember is not a capital-F Function, as that would be a recursive definition (opMember.opMember.opMember...)
-Object.opMember = psl { {
-    // args: [name, next context]
-    this "name" push2 0 integer index pul_eval memberset
-    this "next" push2 1 integer index pul_eval memberset
-
-    // first check if it's in "this"
-    null this "this" resolve member this "name" member member null
-    {
-        // it's not here, try the type
-        this "type" this "__pul_type" resolve member memberset
-        this "index" 1 integer memberset
-
-        null
-        {
-            {
-                // continue so long as the index is < the length
-                this "index" resolve member
-                this "type" resolve member length
-                { global } { null } lt
-            }
-            {
-                // OK, check if that type has this
-                this "type" resolve member
-                    this "index" resolve member
-                        index
-                
-                    push0 this "name" resolve member member null
-                    {}
-                    {
-                        // found it, get it
-                        push0 this "name" resolve member member 
-
-                        // then duplicate it
-                        1 integer array
-                        this "opDuplicate" resolve member call
-
-                        // reparent it
-                        push0 this "this" resolve member parentset
-
-                        // and assign it into us
-                        this "this" resolve member this "name" resolve member push2 memberset
-
-                        // now make it a reference
-                        this "this" resolve member this "name" resolve member pul_varwrap
-
-                        // then throw it
-                        new
-                        push0 "__pul_opmember_search" push3 memberset
-                        throw
-                    } cmp
-
-                    pop
-
-                // now increment the index
-                this "index" resolve
-                        this "index" resolve member
-                            1 integer add
-                            memberset
-            } while pop
-
-            // didn't find it. Check with the next guy
-            this "name" resolve member "opMember"
-            this "next" resolve member
-            push2 push2 2 integer array resolve
-            4 integer array
-
-            // now check whether we used opMember or the name
-            push0 1 integer index
-            push1 3 integer index
-            {
-                // used opMember, call it
-                push0 0 integer index
-                push1 2 integer index parent 2 integer array
-                push1 2 integer index "opMember" member pul_eval call
-            }
-            {
-                // no opMember
-                push0 2 integer index
-                push1 0 integer index
-                member
-            } cmp
-        }
-        {
-            // is this our response?
-            push0 "__pul_opmember_search" member null
-            {
-                // no, throw it again
-                throw
-            }
-            {
-                // yes, just pass it along
-                "__pul_opmember_search" member
-            } cmp
-        } catch
-    }
-    {
-        // we have it, simple enough
-        this "this" resolve member
-        this "name" resolve member
-        pul_varwrap
-    } cmp
-} };
-psl { this "Object" resolve member push0 "opMember" member push1 parentset pop };
-
 
 // the Function type
-var Function = Object : [];
+var Function = Object : []
 
 
 // FIXME: Should use proper combination
 var opFunction = Function:psl { {
     // get the procedure
-    this "proc" push2 0 integer index pul_eval memberset
+    this "proc" push2 0 index pul_eval memberset
 
     // combine it with Function
     plof { Function:proc } pul_eval
-} };
-
-
-
-// more advanced function syntax
-plofbnf {
-    plof_group = "\(" plof_params "\)" "\{" plof_funcbody "\}" => {
-        // get the params for future reference
-        null push1 1 integer index call
-
-        // keep track of the length
-        push0 0 integer index
-
-        // make this a function context
-        {
-            this "__pul_fc" this memberset
-            this "__pul_proc" this "+procedure" member memberset
-            this "__pul_args" push2 memberset
-
-            // curry if necessary
-            push0 length }
-            
-            // make the length an int
-            push1 24 integer sr byte
-            push2 16 integer sr byte concat
-            push2 8 integer sr byte concat
-            push2 byte concat swrap concat
-            
-            { integer
-            {
-                // currying is necessary
-                {
-                    this "__pul_args" resolve member
-                    push1 aconcat
-                    this "__pul_proc" resolve member call
-                } 1 integer array this "opFunction" resolve member call
-            }
-        } concat
-
-        // everything from here on is in the not-currying case
-
-        // set up the args
-        {pul_fcontext 0 integer}
-        push3 1 integer index concat
-        {
-            pop pop pop
-        } concat
-        
-        // then run the function itself
-        push4 4 integer index concat
-
-        // and make sure it's evaluated
-        {pul_eval} concat
-
-        // wrap it up for deep returns
-        cwrap
-        {
-            {
-                // is this our deep return?
-                push0 "__pul_ret_fc" member pul_fcontext
-                {
-                    // yes, return it
-                    "__pul_ret_val" member
-                }
-                {
-                    // no, throw it along
-                    throw
-                } cmp
-            } catch
-        } concat
-
-        // wrap it up in the lt case
-        cwrap concat { lt } concat
-
-        // wrap it up with opFunction
-        cwrap {1 integer array this "opFunction" resolve member call} concat
-
-        // then wrap the whole thing up
-        cwrap {pul_funcwrap} concat
-    }
-
-    
-    plof_params = white => {
-        {0 integer {} 2 integer array}
-    }
-
-
-    plof_params = plof_params "," plof_params_next => {
-        null push1 0 integer index call
-            push0 0 integer index 1 integer add swrap
-            push1 1 integer index push3 2 integer index concat cwrap concat
-            {2 integer array} concat
-    }
-
-    plof_params = plof_params_next => {
-        {1 integer}
-        push1 0 integer index cwrap concat
-        {2 integer array} concat
-    }
-
-    plof_params => plof_param;
-
-
-    // type annotations to come later
-    plof_param = plof_identifier => {
-        // this.name ...
-        {push1}
-        push1 0 integer index concat
-
-        // inner stack: args fcontext index fcontext name
-
-        // = the val
-        {
-            push4 push3 index memberset
-        
-            // and increment
-            1 integer add
-        } concat
-    }
-
-
-    plof_funcbody = white => { {} }
-    plof_funcbody = plof_funcbody_next => plof { $0 }
-    plof_funcbody => plof_funcbody_prime;
-
-    plof_funcbody_prime = plof_semicolon => plof { $0 }
-
-
-    // deep returns
-    plof_group = "return" plof_group_next => plof {
-        psl {
-            new
-                push0 "__pul_ret_fc" pul_fcontext memberset
-                push0 "__pul_ret_val" $1 memberset
-            throw
-        }
-    }
-
-};
-
-plofbnf {
-    plof_group = "\{" plof_funcbody "\}" => plof {
-        () { $1 }
-    }
-};
+} }
 
 
 /// The Plof version of psl{null}
-var Null = Object:[];
+var Null = Object:[]
 
 
 /// Some useful functions
-var selff = (x) { selff };
-var id = (x) { x };
+var selff = (x) { selff }
+var id = (x) { x }
 
-
-/// Constructors are a somewhat special case of functions
-plofbnf {
-    plof_obj_def = "this" plof_bind_next ";" => {
-        {
-            push0 "init"
-            { this "super" }
-            plof{this.init} pul_eval cwrap concat
-            { memberset } concat
-        }
-        push1 1 integer index concat
-        {
-            pul_eval concat
-            {plof{this}} concat
-            1 integer array this "opFunction" resolve member call
-            push0 push3 parentset
-            memberset
-        } concat
-    }
-};
 
 /// Standard object initialization
 var new = (type) {
     (type:[]).init
-};
-Object := [init = {this};];
+}
+Object := [init = {this};]
 
 
 /// References
@@ -360,14 +58,13 @@ var Reference = Object : [
     this (readx, writex) {
         this.read = readx;
         this.write = writex;
-    };
-];
-
-plofbnf {
-    plof_literal = "ref" plof_var => plof {
-        new Reference (
-            { $1 },
-            (__pul_ref_x) { $1 = __pul_ref_x }
-        )
     }
-};
+]
+
+
+/// The debug object, just used for debug-printing before *NFI can be loaded
+var Debug = Object : [
+    print = (val) {
+        psl { plof{val.__pul_val} pul_eval print }
+    }
+];

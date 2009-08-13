@@ -1,0 +1,16 @@
+#!/bin/bash
+
+cd "`dirname $0`"/..
+
+runtest() {
+    echo 'Running test '$1
+    shift
+    echo "$@"
+    "$@"
+    echo 'Result: '$?
+}
+
+for i in "$@"
+do
+    . autotests/"$i"
+done

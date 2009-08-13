@@ -1,8 +1,13 @@
 #!/bin/bash
 cd cplof
+
+# autoconf-based tests
 runtest autoreconf autoreconf
 runtest configure ./configure
+# build with -Wall and without
 runtest make_Wall make -k CFLAGS="-ansi -Wall -Werror -D_BSD_SOURCE"
 make clean
 runtest make make -k
+make distclean
+
 cd ..

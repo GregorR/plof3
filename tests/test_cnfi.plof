@@ -1,8 +1,8 @@
-var libc = C.dlopen("libc.so.6");
-var puts_sym = C.dlsym(libc, "puts");
-var puts_cif = C.prepcif(C.int, [[C.pointer]], 0);
+var libc = C.dlopen("libc.so.6")
+var puts_sym = C.dlsym(libc, "puts")
+var puts_cif = C.prepcif(C.int, [[C.pointer]], 0)
 
-var strbuf = C.malloc(15);
-C.set(strbuf, "Hello, world!\0");
+var strbuf = C.malloc(15)
+C.set(strbuf, "Hello, world!\0")
 
-C.call(puts_cif, puts_sym, [[strbuf]]);
+C.call(puts_cif, puts_sym, [[strbuf]])

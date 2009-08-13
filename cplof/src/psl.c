@@ -1,4 +1,6 @@
 /*
+ * PSL interpreter
+ *
  * Copyright (c) 2007, 2008, 2009 Gregor Richards
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -34,6 +36,15 @@
 #ifdef WITH_CNFI
 #include <dlfcn.h>
 #include <ffi.h>
+
+/* a cif with some extra info */
+typedef struct _ffi_cif_plus {
+    ffi_cif cif;
+
+    /* since cifs seem to lose the types sometimes */
+    ffi_type *rtype;
+    ffi_type **atypes;
+} ffi_cif_plus;
 #endif
 
 /* For predefs */
@@ -41,10 +52,18 @@
 #include <unistd.h>
 #endif
 
+#include "bignum.h"
 #include "jump.h"
 #include "plof.h"
 #include "psl.h"
+#ifndef PLOF_NO_PARSER
+#include "prp.h"
+#endif
 
+
+
+/* Include paths */
+unsigned char **plofIncludePaths;
 
 
 /* The maximum number of version strings */
@@ -55,16 +74,12 @@
 #ifdef jumpenum
 enum jumplabel {
     interp_psl_nop,
-#define FOREACH(inst) interp_ ## inst,
+#define FOREACH(inst) interp_psl_ ## inst,
 #include "psl_inst.h"
 #undef FOREACH
     interp_psl_done
 };
 #endif
-
-/* Internal functions for handling PSL bignums */
-size_t pslBignumLength(size_t val);
-void pslIntToBignum(unsigned char *buf, size_t val, size_t len);
 
 /* Implementation of 'replace' */
 struct PlofRawData *pslReplace(struct PlofRawData *in, struct PlofArrayData *with);
@@ -121,7 +136,7 @@ struct PlofReturn interpretPSL(
         if (procedureHash == 0) {
             procedureHash = plofHash(10, (unsigned char *) "+procedure");
         }
-        PLOF_WRITE(context, 10, (unsigned char *) "+procedure", procedureHash, pslraw);
+        plofWrite(context, 10, (unsigned char *) "+procedure", procedureHash, pslraw);
     }
 
     /* Start the stack at size 8 */
@@ -181,8 +196,9 @@ struct PlofReturn interpretPSL(
                 }
 
                 /* copy it in */
-                raw->data = (unsigned char *) GC_MALLOC_ATOMIC(raw->length);
+                raw->data = (unsigned char *) GC_MALLOC_ATOMIC(raw->length + 1);
                 memcpy(raw->data, psl + psli, raw->length);
+                raw->data[raw->length] = '\0';
                 psli += raw->length - 1;
 
                 cpsl[cpsli + 1] = raw;
@@ -200,8 +216,8 @@ struct PlofReturn interpretPSL(
             } else {
                 switch (cmd) {
 #define FOREACH(inst) \
-                    case inst: \
-                        cpsl[cpsli] = addressof(interp_ ## inst); \
+                    case psl_ ## inst: \
+                        cpsl[cpsli] = addressof(interp_psl_ ## inst); \
                         break;
 #include "psl_inst.h"
 #undef FOREACH
@@ -259,7 +275,7 @@ struct PlofReturn interpretPSL(
 #define BADTYPE(cmd)
 #endif
 
-#if defined(PLOF_BOX_NUMBERS) || defined(PLOF_NUMBERS_IN_OBJECTS)
+#if defined(PLOF_BOX_NUMBERS)
 #define ISOBJ(obj) 1
 #elif defined(PLOF_FREE_INTS)
 #define ISOBJ(obj) (((size_t) (obj) & 1) == 0)
@@ -273,6 +289,13 @@ struct PlofReturn interpretPSL(
                       (obj)->data->type == PLOF_DATA_ARRAY)
 #define RAW(obj) ((struct PlofRawData *) (obj)->data)
 #define ARRAY(obj) ((struct PlofArrayData *) (obj)->data)
+#define RAWSTRDUP(type, into, _rd) \
+    { \
+        unsigned char *_into = (unsigned char *) GC_MALLOC((_rd)->length + 1); \
+        memcpy(_into, (_rd)->data, (_rd)->length); \
+        _into[(_rd)->length] = '\0'; \
+        (into) = (type *) _into; \
+    }
 
 #define HASHOF(into, rd) \
     if ((rd)->hash) { \
@@ -288,10 +311,6 @@ struct PlofReturn interpretPSL(
 #if defined(PLOF_BOX_NUMBERS)
 #define ISINT(obj) (ISRAW(obj) && RAW(obj)->length == sizeof(ptrdiff_t))
 #define ASINT(obj) (*((ptrdiff_t *) RAW(obj)->data))
-#define SETINT(obj, val) ASINT(obj) = (val)
-#elif defined(PLOF_NUMBERS_IN_OBJECTS)
-#define ISINT(obj) 1
-#define ASINT(obj) ((obj)->direct_data.int_data)
 #define SETINT(obj, val) ASINT(obj) = (val)
 #elif defined(PLOF_FREE_INTS)
 #define ISINT(obj) ((size_t)(obj)&1)
@@ -319,21 +338,12 @@ struct PlofReturn interpretPSL(
 #if defined(PLOF_BOX_NUMBERS)
 #define PUSHINT(val) PUSHPTR(val)
 
-#elif defined(PLOF_NUMBERS_IN_OBJECTS)
-#define PUSHINT(val) \
-    { \
-        ptrdiff_t _val = (val); \
-        \
-        a = GC_NEW_Z(struct PlofObject); \
-        a->parent = context; \
-        a->direct_data.int_data = (ptrdiff_t) _val; \
-        STACK_PUSH(a); \
-    }
 #elif defined(PLOF_FREE_INTS)
 #define PUSHINT(val) \
     { \
         STACK_PUSH((void *) (((ptrdiff_t)(val)<<1) | 1)); \
     }
+
 #endif
 
     /* "Functions" for integer ops */
@@ -461,10 +471,10 @@ label(interp_psl_combine);
     c->parent = b->parent;
 
     /* duplicate the left object */
-    plofObjCopy(c, a->hashTable);
+    plofObjCopy(c, a);
 
     /* then the right */
-    plofObjCopy(c, b->hashTable);
+    plofObjCopy(c, b);
 
     /* now get any data */
     if (ISRAW(a)) {
@@ -554,10 +564,10 @@ label(interp_psl_member);
         name = rd->data;
         HASHOF(namehash, rd);
 
-        PLOF_READ(a, a, rd->length, name, namehash);
+        a = plofRead(a, rd->length, name, namehash);
         STACK_PUSH(a);
     } else {
-        BADTYPE("member");
+        /*BADTYPE("member");*/
         STACK_PUSH(plofNull);
     }
     STEP;
@@ -572,7 +582,7 @@ label(interp_psl_memberset);
         name = rd->data;
         HASHOF(namehash, rd);
 
-        PLOF_WRITE(a, rd->length, name, namehash, c);
+        plofWrite(a, rd->length, name, namehash, c);
     } else {
         BADTYPE("memberset");
     }
@@ -803,7 +813,7 @@ label(interp_psl_resolve);
         while (a && a != plofNull) {
             for (i = 0; i < ad->length; i++) {
                 rd = RAW(ad->data[i]);
-                PLOF_READ(b, a, rd->length, rd->data, hashes[i]);
+                b = plofRead(a, rd->length, rd->data, hashes[i]);
                 if (b != plofNull) {
                     /* done */
                     STACK_PUSH(a);
@@ -1227,7 +1237,7 @@ label(interp_psl_integer);
 
 label(interp_psl_intwidth);
     DEBUG_CMD("intwidth");
-#if defined(PLOF_BOX_NUMBERS) || defined(PLOF_NUMBERS_IN_OBJECTS)
+#if defined(PLOF_BOX_NUMBERS)
     PUSHINT(sizeof(ptrdiff_t)*8);
 #elif defined(PLOF_FREE_INTS)
     PUSHINT(sizeof(ptrdiff_t)*8-1);
@@ -1510,12 +1520,197 @@ label(interp_psl_debug);
     STEP;
 
 label(interp_psl_trap); UNIMPL("psl_trap");
-label(interp_psl_include); UNIMPL("psl_include");
-label(interp_psl_parse); UNIMPL("psl_parse");
 
+label(interp_psl_include);
+#define BUFSZ 1024
+    DEBUG_CMD("include");
+    UNARY;
+
+    if (ISRAW(a)) {
+        unsigned char **path, *file, *data;
+        FILE *fh;
+        size_t rdb, bufsz, bufi;
+
+        rd = RAW(a);
+
+        /* look for the file in each path */
+        data = NULL;
+        for (path = plofIncludePaths; *path; path++) {
+            file = GC_MALLOC_ATOMIC(strlen((char *) *path) + rd->length + 2);
+            sprintf((char *) file, "%s/%.*s", (char *) *path, (int) rd->length, (char *) rd->data);
+
+            fh = fopen((char *) file, "r");
+            if (fh != NULL) {
+                /* this file exists, use it */
+                bufsz = BUFSZ;
+                bufi = 0;
+                data = GC_MALLOC_ATOMIC(BUFSZ);
+
+                while ((rdb = fread(data + bufi, 1, bufsz - bufi, fh)) > 0) {
+                    bufi += rdb;
+                    if (bufi == bufsz) {
+                        bufsz *= 2;
+                        data = GC_REALLOC(data, bufsz);
+                    }
+                }
+
+                fclose(fh);
+
+                break;
+            }
+        }
+
+        /* if we didn't find it, push NULL, otherwise push the rd */
+        if (data == NULL) {
+            STACK_PUSH(plofNull);
+
+        } else {
+            rd = GC_NEW_Z(struct PlofRawData);
+            rd->type = PLOF_DATA_RAW;
+            rd->length = bufi;
+            rd->data = (unsigned char *) data;
+
+            a = GC_NEW_Z(struct PlofObject);
+            a->parent = context;
+            a->data = (struct PlofData *) rd;
+
+            STACK_PUSH(a);
+        }
+
+    } else {
+        BADTYPE("include");
+        STACK_PUSH(plofNull);
+
+    }
+    STEP;
+
+label(interp_psl_parse);
+    DEBUG_CMD("parse");
+    TRINARY;
+
+    if (ISRAW(a) && ISRAW(b) && ISRAW(c)) {
+        int i, stl;
+        size_t slen, stype;
+        struct PlofRawData *retrd;
+
+        rd = RAW(a);
+
+        retrd = GC_NEW_Z(struct PlofRawData);
+        retrd->type = PLOF_DATA_RAW;
+        retrd->data = NULL;
+
+        /* check if it's a PSL file */
+        if (rd->length >= sizeof(PSL_FILE_MAGIC) &&
+            !strncmp((char *) rd->data, PSL_FILE_MAGIC, sizeof(PSL_FILE_MAGIC) - 1)) {
+            
+            /* look for the loadable section */
+            for (i = 8; i < rd->length;) {
+                /* section length and type */
+                i += pslBignumToInt(rd->data + i, (size_t *) &slen);
+                stl = pslBignumToInt(rd->data + i, (size_t *) &stype);
+
+                /* if it's program data, found it */
+                if (stype == 0) {
+                    retrd->length = slen - stl;
+                    retrd->data = rd->data + i + stl;
+                    break;
+
+                } else {
+                    i += slen;
+
+                }
+            }
+
+            /* if we didn't find one, this is bad */
+            if (retrd->data == NULL) {
+                BADTYPE("parse psl");
+                retrd->length = 0;
+                retrd->data = GC_MALLOC_ATOMIC(1);
+            }
+
+        } else {
+#ifdef PLOF_NO_PARSER
+            BADTYPE("parse not psl");
+            retrd->length = 0;
+            retrd->data = GC_MALLOC_ATOMIC(1);
+#else
+            BADTYPE("womp womp");
+            retrd->length = 0;
+            retrd->data = GC_MALLOC_ATOMIC(1);
+#endif
+
+        }
+
+        /* and push the resulting data */
+        a = GC_NEW_Z(struct PlofObject);
+        a->parent = context;
+        a->data = (struct PlofData *) retrd;
+        STACK_PUSH(a);
+
+    } else {
+        BADTYPE("parse");
+        STACK_PUSH(plofNull);
+
+    }
+
+    STEP;
+
+#ifdef PLOF_NO_PARSER
 label(interp_psl_gadd); DEBUG_CMD("gadd"); STEP;
 label(interp_psl_grem); DEBUG_CMD("grem"); STEP;
 label(interp_psl_gcommit); DEBUG_CMD("gcommit"); STEP;
+#else
+
+label(interp_psl_gadd);
+    DEBUG_CMD("gadd");
+    TRINARY;
+
+    if (ISRAW(a) && ISARRAY(b) && ISRAW(c)) {
+        unsigned char *name, **target;
+        int i;
+
+        RAWSTRDUP(unsigned char, name, RAW(a));
+        
+        /* convert the array (b) into targets */
+        ad = ARRAY(b);
+        target = (unsigned char **) GC_MALLOC((ad->length + 1) * sizeof(unsigned char *));
+        for (i = 0; i < ad->length; i++) {
+            if (ISRAW(ad->data[i])) {
+                unsigned char *etarg;
+                rd = RAW(ad->data[i]);
+                RAWSTRDUP(unsigned char, etarg, rd);
+                target[i] = etarg;
+
+            } else {
+                target[i] = NULL;
+
+            }
+        }
+        target[i] = NULL;
+
+        /* now call gadd */
+        rd = RAW(c);
+        gadd(name, target, rd->length, rd->data);
+
+    } else {
+        BADTYPE("gadd");
+
+    }
+
+    STEP;
+
+label(interp_psl_grem);
+    DEBUG_CMD("grem");
+    UNIMPL("grem");
+    STEP;
+
+label(interp_psl_gcommit);
+    DEBUG_CMD("gcommit");
+    gcommit();
+    STEP;
+
+#endif
+
 label(interp_psl_marker); DEBUG_CMD("marker"); STEP;
 
 label(interp_psl_immediate);
@@ -1559,17 +1754,17 @@ label(interp_psl_dlopen);
     /* the argument can be a string, or NULL */
     {
         void *hnd;
-        char *fname = NULL;
+        unsigned char *fname = NULL;
         if (a != plofNull) {
             if (ISRAW(a)) {
-                fname = (char *) RAW(a)->data;
+                fname = RAW(a)->data;
             } else {
                 BADTYPE("dlopen");
             }
         }
 
         /* OK, try to dlopen it */
-        hnd = dlopen(fname, RTLD_LAZY|RTLD_GLOBAL);
+        hnd = dlopen((char *) fname, RTLD_LAZY|RTLD_GLOBAL);
 
         /* either turn that into a pointer in raw data, or push null */
         if (hnd == NULL) {
@@ -1598,7 +1793,7 @@ label(interp_psl_dlsym);
 
     {
         void *hnd = NULL;
-        char *fname;
+        unsigned char *fname;
         void *fun;
 
         /* the handle may be null */
@@ -1614,9 +1809,9 @@ label(interp_psl_dlsym);
 
         /* the function name can't */
         if (ISRAW(b)) {
-            fname = (char *) RAW(b)->data;
+            fname = RAW(b)->data;
 
-            fun = dlsym(hnd, fname);
+            fun = dlsym(hnd, (char *) fname);
 
             if (fun == NULL) {
                 STACK_PUSH(plofNull);
@@ -1690,7 +1885,7 @@ label(interp_psl_cset);
     DEBUG_CMD("cset");
     BINARY;
     if (ISPTR(a) && ISRAW(b)) {
-        memcpy(a, RAW(b)->data, RAW(b)->length);
+        memcpy(ASPTR(a), RAW(b)->data, RAW(b)->length);
     } else {
         BADTYPE("cset");
     }
@@ -1810,12 +2005,12 @@ label(interp_psl_csizeof);
 label(interp_psl_csget); UNIMPL("psl_csget");
 label(interp_psl_csset); UNIMPL("psl_csset");
 
-label(interp_psl_prepcif); UNIMPL("psl_prepcif");
+label(interp_psl_prepcif);
     DEBUG_CMD("prepcif");
     TRINARY;
 
     if (ISPTR(a) && ISARRAY(b) && ISINT(c)) {
-        ffi_cif *cif;
+        ffi_cif_plus *cif;
         ffi_type *rettype;
         int abi, i;
         ffi_type **atypes;
@@ -1827,7 +2022,7 @@ label(interp_psl_prepcif); UNIMPL("psl_prepcif");
         abi = ASINT(c);
 
         /* put the argument types in the proper type of array */
-        atypes = GC_MALLOC_ATOMIC(ad->length * sizeof(ffi_type *));
+        atypes = GC_MALLOC(ad->length * sizeof(ffi_type *));
         for (i = 0; i < ad->length; i++) {
             if (ISPTR(ad->data[i])) {
                 atypes[i] = (ffi_type *) ASPTR(ad->data[i]);
@@ -1837,10 +2032,12 @@ label(interp_psl_prepcif); UNIMPL("psl_prepcif");
         }
 
         /* allocate space for the cif itself */
-        cif = GC_MALLOC_ATOMIC(sizeof(ffi_cif));
+        cif = GC_MALLOC(sizeof(ffi_cif_plus));
+        cif->rtype = rettype;
+        cif->atypes = atypes;
 
         /* and call prepcif */
-        pcret = ffi_prep_cif(cif, abi, ad->length, rettype, atypes);
+        pcret = ffi_prep_cif(&cif->cif, abi, ad->length, rettype, atypes);
         if (pcret != FFI_OK) {
             STACK_PUSH(plofNull);
         } else {
@@ -1855,7 +2052,109 @@ label(interp_psl_prepcif); UNIMPL("psl_prepcif");
 
     STEP;
 
-label(interp_psl_ccall); UNIMPL("psl_ccall");
+label(interp_psl_ccall);
+    DEBUG_CMD("ccall");
+    TRINARY;
+
+    /* must be a cif, a function pointer, and an array of arguments */
+    if (ISPTR(a) && ISPTR(b) && ISARRAY(c)) {
+        ffi_cif_plus *cif;
+        void (*func)();
+        void **args, *ret, *arg;
+        int i;
+        size_t sz;
+        ptrdiff_t val;
+
+        cif = (ffi_cif_plus *) ASPTR(a);
+        func = (void(*)()) ASPTR(b);
+        ad = ARRAY(c);
+
+        /* now start preparing the args and return */
+        ret = GC_MALLOC(cif->rtype->size);
+        args = GC_MALLOC(cif->cif.nargs);
+
+        /* go through each argument and copy it in */
+        for (i = 0; i < cif->cif.nargs && i < ad->length; i++) {
+            sz = cif->atypes[i]->size;
+            arg = GC_MALLOC(sz);
+
+            /* copying in the argument is different by type */
+            if (ISINT(ad->data[i])) {
+                val = ASINT(ad->data[i]);
+
+                if (sz == sizeof(ptrdiff_t)) {
+                    *((ptrdiff_t *) arg) = val;
+
+                } else if (sz > sizeof(ptrdiff_t)) {
+                    memset(arg, 0, sz);
+#ifdef WORDS_BIGENDIAN
+                    memcpy((unsigned char *) arg + sz - sizeof(ptrdiff_t), &val, sizeof(ptrdiff_t));
+#else
+                    memcpy(arg, &val, sizeof(ptrdiff_t));
+#endif
+
+                } else { /* sz < sizeof(ptrdiff_t) */
+#ifdef WORDS_BIGENDIAN
+                    memcpy(arg, (unsigned char *) &val + sizeof(ptrdiff_t) - sz, sz);
+#else
+                    memcpy(arg, &val, sz);
+#endif
+
+                }
+
+            } else if (ISRAW(ad->data[i])) {
+                rd = RAW(ad->data[i]);
+
+                if (sz == rd->length) {
+                    memcpy(arg, rd->data, sz);
+
+                } else if (sz > rd->length) {
+                    memset(arg, 0, sz);
+#ifdef WORDS_BIGENDIAN
+                    memcpy((unsigned char *) arg + sz - rd->length, rd->data, rd->length);
+#else
+                    memcpy(arg, rd->data, rd->length);
+#endif
+
+                } else { /* sz < rd->length */
+#ifdef WORDS_BIGENDIAN
+                    memcpy(arg, rd->data + rd->length - sz, sz);
+#else
+                    memcpy(arg, rd->data, sz);
+#endif
+
+                }
+
+            } else {
+                memset(arg, 0, sz);
+                BADTYPE("ccall argument");
+
+            }
+
+            args[i] = arg;
+        }
+
+        /* finally, call the function */
+        ffi_call(&cif->cif, func, ret, args);
+
+        /* and put the return together */
+        rd = GC_NEW_Z(struct PlofRawData);
+        rd->type = PLOF_DATA_RAW;
+        rd->length = cif->rtype->size;
+        rd->data = ret;
+        a = GC_NEW_Z(struct PlofObject);
+        a->parent = context;
+        a->data = (struct PlofData *) rd;
+
+        STACK_PUSH(a);
+
+    } else {
+        BADTYPE("ccall");
+        STACK_PUSH(plofNull);
+
+    }
+
+    STEP;
 
 #endif
 
@@ -1866,72 +2165,6 @@ label(interp_psl_done);
     return ret;
 
     jumptail;
-}
-
-/* Convert a PSL bignum to an int */
-int pslBignumToInt(unsigned char *bignum, size_t *into)
-{
-    size_t ret = 0;
-    unsigned c = 0;
-
-    for (;; bignum++) {
-        c++;
-        ret <<= 7;
-        ret |= ((*bignum) & 0x7F);
-        if ((*bignum) < 128) break;
-    }
-
-    *into = ret;
-
-    return c;
-}
-
-/* Determine the number of bytes a bignum of a particular number will take */
-size_t pslBignumLength(size_t val)
-{
-    if (val < ((size_t) 1<<7)) {
-        return 1;
-    } else if (val < ((size_t) 1<<14)) {
-        return 2;
-#if SIZEOF_VOID_P <= 2
-    } else {
-        return 3;
-#else
-    } else if (val < ((size_t) 1<<21)) {
-        return 3;
-    } else if (val < ((size_t) 1<<28)) {
-        return 4;
-#if SIZEOF_VOID_P <= 4
-    } else {
-        return 5;
-#else
-    } else if (val < ((size_t) 1<<35)) {
-        return 5;
-    } else if (val < ((size_t) 1<<42)) {
-        return 6;
-    } else if (val < ((size_t) 1<<49)) {
-        return 7;
-    } else if (val < ((size_t) 1<<56)) {
-        return 8;
-    } else if (val < ((size_t) 1<<63)) {
-        return 9;
-    } else {
-        return 10;
-#endif /* 32 */
-#endif /* 16 */
-    }
-}
-
-/* Write a bignum into a buffer */
-void pslIntToBignum(unsigned char *buf, size_t val, size_t len)
-{
-    buf[--len] = val & 0x7F;
-    val >>= 7;
-
-    for (len--; len != (size_t) -1; len--) {
-        buf[len] = (val & 0x7F) | 0x80;
-        val >>= 7;
-    }
 }
 
 /* Hash function */
@@ -1948,19 +2181,23 @@ size_t plofHash(size_t slen, unsigned char *str)
     return hash;
 }
 
-/* Copy the content of one object into another */
-void plofObjCopy(struct PlofObject *to, struct PlofOHashTable *from)
+/* Copy the content of a PlofOHashTable into an object */
+void plofObjCopyPrime(struct PlofObject *to, struct PlofOHashTable *from)
 {
     if (from == NULL) return;
 
-    /*if ((ptrdiff_t) from->value & 1) {
-        PLOF_WRITE(to, from->namelen, from->name, from->hashedName, from->itable[(ptrdiff_t) from->value>>1]);
-    } else {*/
-    /* FIXME */
-        PLOF_WRITE(to, from->namelen, from->name, from->hashedName, from->value);
-    /*}*/
-    plofObjCopy(to, from->left);
-    plofObjCopy(to, from->right);
+    plofWrite(to, from->namelen, from->name, from->hashedName, from->value);
+    plofObjCopyPrime(to, from->next);
+}
+
+/* Copy the content of one object into another */
+void plofObjCopy(struct PlofObject *to, struct PlofObject *from)
+{
+    int i;
+
+    for (i = 0; i < PLOF_HASHTABLE_SIZE; i++) {
+        plofObjCopyPrime(to, from->hashTable[i]);
+    }
 }
 
 
@@ -1972,7 +2209,7 @@ struct PlofObjects {
 /* Internal function used by plofMembers */
 struct PlofObjects plofMembersSub(struct PlofOHashTable *of)
 {
-    struct PlofObjects left, right, ret;
+    struct PlofObjects next, ret;
     struct PlofObject *obj;
     struct PlofRawData *rd;
 
@@ -1983,11 +2220,10 @@ struct PlofObjects plofMembersSub(struct PlofOHashTable *of)
     }
 
     /* get the left and right members */
-    left = plofMembersSub(of->left);
-    right = plofMembersSub(of->right);
+    next = plofMembersSub(of->next);
 
     /* prepare ours */
-    ret.length = left.length + right.length + 1;
+    ret.length = next.length + 1;
     ret.data = (struct PlofObject **) GC_MALLOC(ret.length * sizeof(struct PlofObject *));
 
     /* and the object */
@@ -2000,9 +2236,10 @@ struct PlofObjects plofMembersSub(struct PlofOHashTable *of)
     obj->data = (struct PlofData *) rd;
 
     /* then copy */
-    memcpy(ret.data, left.data, left.length * sizeof(struct PlofObject *));
-    ret.data[left.length] = obj;
-    memcpy(ret.data + left.length + 1, right.data, right.length * sizeof(struct PlofObject *));
+    ret.data[0] = obj;
+    memcpy(ret.data + 1, next.data, next.length * sizeof(struct PlofObject *));
+
+    /* FIXME: this is all horrendously inefficient for a list, but then again these lists are meant to be quite short */
 
     return ret;
 }
@@ -2011,15 +2248,28 @@ struct PlofObjects plofMembersSub(struct PlofOHashTable *of)
 struct PlofArrayData *plofMembers(struct PlofObject *of)
 {
     struct PlofArrayData *ad;
+    int i, off;
+    struct PlofObjects eachobjs[PLOF_HASHTABLE_SIZE];
 
     /* get out the members */
-    struct PlofObjects objs = plofMembersSub(of->hashTable);
+    for (i = 0; i < PLOF_HASHTABLE_SIZE; i++) {
+        eachobjs[i] = plofMembersSub(of->hashTable[i]);
+    }
 
-    /* then make it into a PlofArrayData and an object */
+    /* and combine them into the output */
     ad = GC_NEW_Z(struct PlofArrayData);
     ad->type = PLOF_DATA_ARRAY;
-    ad->length = objs.length;
-    ad->data = objs.data;
+    ad->length = 0;
+    for (i = 0; i < PLOF_HASHTABLE_SIZE; i++) ad->length += eachobjs[i].length;
+    ad->data = (struct PlofObject **) GC_MALLOC(ad->length * sizeof(struct PlofObject *));
+
+    off = 0;
+    for (i = 0; i < PLOF_HASHTABLE_SIZE; i++) {
+        if (eachobjs[i].length) {
+            memcpy(ad->data + off, eachobjs[i].data, eachobjs[i].length * sizeof(struct PlofObject *));
+            off += eachobjs[i].length;
+        }
+    }
 
     return ad;
 }
@@ -2120,6 +2370,69 @@ struct PlofRawData *pslReplace(struct PlofRawData *in, struct PlofArrayData *wit
 
     return ret;
 }
+
+/* Function for getting a value from the hash table in an object */
+struct PlofObject *plofRead(struct PlofObject *obj, size_t namelen, unsigned char *name, size_t namehash)
+{
+    struct PlofObject *res = plofNull;
+    struct PlofOHashTable *cur = obj->hashTable[namehash & PLOF_HASHTABLE_MASK];
+    while (cur) {
+        if (namehash == cur->hashedName) {
+            /* FIXME: collisions, name check */
+            res = cur->value;
+            cur = NULL;
+        } else {
+            cur = cur->next;
+        }
+    }
+    return res;
+}
+
+/* Function for writing a value into an object */
+void plofWrite(struct PlofObject *obj, size_t namelen, unsigned char *name, size_t namehash, struct PlofObject *value)
+{
+    struct PlofOHashTable *cur;
+    size_t subhash = namehash & PLOF_HASHTABLE_MASK;
+    if (obj->hashTable[subhash] == NULL) {
+        obj->hashTable[subhash] = plofHashtableNew(namelen, name, namehash, value);
+       
+    } else {
+        cur = obj->hashTable[subhash];
+        while (cur) {
+            if (namehash == cur->hashedName) {
+                cur->value = value; /* FIXME, collisions */
+                cur = NULL;
+
+            } else {
+                if (cur->next) {
+                    cur = cur->next;
+                } else {
+                    cur->next = plofHashtableNew(namelen, name, namehash, value);
+                    cur = NULL;
+                }
+               
+            }
+        }
+    }
+}
+
+/* Function for creating a new hashTable object */
+struct PlofOHashTable *plofHashtableNew(size_t namelen, unsigned char *name, size_t namehash, struct PlofObject *value)
+{
+    unsigned char *namedup;
+    struct PlofOHashTable *nht = GC_NEW_Z(struct PlofOHashTable);
+    nht->hashedName = namehash;
+    nht->namelen = namelen;
+
+    namedup = GC_MALLOC_ATOMIC(namelen + 1);
+    memcpy(namedup, name, namelen);
+    namedup[namelen] = '\0';
+
+    nht->name = namedup;
+    nht->value = value;
+    return nht;
+}
+
 
 /* GC on DJGPP is screwy */
 #ifdef __DJGPP__

@@ -1,5 +1,5 @@
 var A = Object : [
     bleh = {
-        psl { "A.bleh called" print };
-    };
-];
+        Debug.print("A.bleh called")
+    }
+]

@@ -1,0 +1,7 @@
+Run a section of code repeatedly. Pops an argument object and two procedures. The first procedure represents the condition, the second procedure represents the code to be repeated. The loop is run like so:
+
+\begin{itemize}
+\item The condition is run, with null as an argument.
+\item If the condition returned null, the code is not run and the argument object is returned to the stack.
+\item If the condition returned any other value, the code is run with the argument object as an argument, and its return replaces the argument object. The loop then repeats from running the condition, as above.
+\end{itemize}

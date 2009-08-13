@@ -1,4 +1,6 @@
 /*
+ * psli, the frontend to the PSL interpreter for simple PSL (non-Plof) files
+ *
  * Copyright (c) 2007, 2008, 2009 Gregor Richards
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,8 +25,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "bignum.h"
 #include "plof.h"
 #include "psl.h"
+#include "whereami.h"
 
 #define BUFSTEP 1024
 
@@ -36,12 +40,35 @@ int main(int argc, char **argv)
     size_t slen, stype, stl;
     struct PlofObject *context;
     struct PlofReturn ret;
+    char *wdir, *wfil;
 
     GC_INIT();
 
     if (argc != 2) {
         fprintf(stderr, "Use: psli <file>\n");
         return 1;
+    }
+
+    /* get our search path */
+    if (whereAmI(argv[0], &wdir, &wfil)) {
+        plofIncludePaths = GC_MALLOC(3 * sizeof(unsigned char *));
+
+        /* /../share/plof_include/ */
+        plofIncludePaths[0] = GC_MALLOC_ATOMIC(strlen(wdir) + 24);
+        sprintf((char *) plofIncludePaths[0], "%s/../share/plof_include/", wdir);
+
+        /* /../../plof_include/ (for running from src/) */
+        plofIncludePaths[1] = GC_MALLOC_ATOMIC(strlen(wdir) + 21);
+        sprintf((char *) plofIncludePaths[1], "%s/../../plof_include/", wdir);
+
+        plofIncludePaths[2] = NULL;
+
+        /* FIXME: should support -I eventually */
+
+    } else {
+        fprintf(stderr, "Could not deterine include paths!\n");
+        return 1;
+
     }
 
     /* open the file */

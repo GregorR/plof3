@@ -1,4 +1,7 @@
 /*
+ * This header has generally accessible structs and functions, e.g. the
+ * functions in psl.c
+ *
  * Copyright (c) 2007, 2008, 2009 Gregor Richards
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -32,88 +35,34 @@ struct PlofReturn;
 struct PlofOHashTable;
 struct PlofData;
 
+/* search path for include, should be a null-terminated array of strings */
+extern unsigned char **plofIncludePaths;
+
 #define PLOF_DATA_RAW 0
 #define PLOF_DATA_ARRAY 1
+
+#define PSL_FILE_MAGIC "\x9E\x50\x53\x4C\x17\xF2\x58\x8C"
 
 /* GC_NEW with 0s */
 #ifndef GC_NEW_Z
 #define GC_NEW_Z(t) memset(GC_NEW(t), 0, sizeof(t))
 #endif
 
-/* "Function" for getting a value from the hash table in an object */
-#define PLOF_READ(into, obj, namelen, name, namehash) \
-{ \
-    struct PlofObject *_obj = (obj); \
-    size_t _namehash = (namehash); \
-    struct PlofObject *_res = plofNull; \
-    struct PlofOHashTable *_cur = _obj->hashTable; \
-    while (_cur) { \
-        if (_namehash < _cur->hashedName) { \
-            _cur = _cur->left; \
-        } else if (_namehash > _cur->hashedName) { \
-            _cur = _cur->right; \
-        } else { \
-            /*if (((size_t) _cur->value) & 1) {*/ \
-                /*_res = _obj->itable[((size_t) _cur->value)>>1];*/ \
-            /*} else {*/ \
-                _res = _cur->value; \
-            /*}*/ \
-            _cur = NULL; \
-        } \
-    } \
-    into = _res; \
-}
+/* Function for getting a value from the hash table in an object */
+struct PlofObject *plofRead(struct PlofObject *obj, size_t namelen, unsigned char *name, size_t namehash);
 
-/* "Function" for creating a new hashTable object */
-#define PLOF_HASHTABLE_NEW(into, snamelen, sname, snamehash, svalue) \
-{ \
-    struct PlofOHashTable *_nht = GC_NEW_Z(struct PlofOHashTable); \
-    _nht->hashedName = (snamehash); \
-    _nht->namelen = snamelen; \
-    _nht->name = (unsigned char *) GC_STRDUP((char *) (sname)); \
-    _nht->value = (svalue); \
-    into = _nht; \
-}
+/* Function for writing a value into an object */
+void plofWrite(struct PlofObject *obj, size_t namelen, unsigned char *name, size_t namehash, struct PlofObject *value);
 
-/* "Function" for writing a value into an object */
-#define PLOF_WRITE(obj, snamelen, sname, snamehash, svalue) \
-{ \
-    struct PlofObject *_obj = (obj); \
-    size_t _namehash = (snamehash); \
-    struct PlofOHashTable *_cur; \
-    if (_obj->hashTable == NULL) { \
-        PLOF_HASHTABLE_NEW(_obj->hashTable, (snamelen), (sname), _namehash, (svalue)); \
-        \
-    } else { \
-        _cur = _obj->hashTable; \
-        while (_cur) { \
-            if (_namehash < _cur->hashedName) { \
-                if (_cur->left) { \
-                    _cur = _cur->left; \
-                } else { \
-                    PLOF_HASHTABLE_NEW(_cur->left, (snamelen), (sname), _namehash, (svalue)); \
-                    _cur = NULL; \
-                } \
-                \
-            } else if (_namehash > _cur->hashedName) { \
-                if (_cur->right) { \
-                    _cur = _cur->right; \
-                } else { \
-                    PLOF_HASHTABLE_NEW(_cur->right, (snamelen), (sname), _namehash, (svalue)); \
-                    _cur = NULL; \
-                } \
-                \
-            } else { \
-                /*if ((size_t) _cur->value & 1) {*/ \
-                    /*_obj->itable[((size_t) _cur->value)>>1] = (svalue);*/ \
-                /*} else {*/ \
-                    _cur->value = (svalue); /* FIXME, collisions */ \
-                /*}*/ \
-                _cur = NULL; \
-            } \
-        } \
-    } \
-}
+/* Function for creating a new hashTable object */
+struct PlofOHashTable *plofHashtableNew(size_t namelen, unsigned char *name, size_t namehash, struct PlofObject *value);
+
+/* Default length of the hash table buckets, in terms of bits represented by buckets */
+#ifndef PLOF_HASHTABLE_BITS
+#define PLOF_HASHTABLE_BITS 4
+#endif
+#define PLOF_HASHTABLE_SIZE (1<<PLOF_HASHTABLE_BITS)
+#define PLOF_HASHTABLE_MASK ((size_t) -1 >> (sizeof(size_t)*8 - PLOF_HASHTABLE_BITS))
 
 /* All functions accessible directly from Plof should be of this form
  * args: context, arg */
@@ -121,19 +70,11 @@ typedef struct PlofReturn (*PlofFunction)(struct PlofObject *, struct PlofObject
 
 /* A Plof object
  * data: raw or array data associated with the object
- * hashTable: hash table of name->value associations
- * itable: immediate table, for objects with known members */
+ * hashTable: hash table of name->value associations */
 struct PlofObject {
     struct PlofObject *parent;
-#ifdef PLOF_NUMBERS_IN_OBJECTS
-    union {
-        ptrdiff_t int_data;
-        double float_data;
-    } direct_data;
-#endif
     struct PlofData *data;
-    struct PlofOHashTable *hashTable;
-    struct PlofObject *itable[1];
+    struct PlofOHashTable *hashTable[PLOF_HASHTABLE_SIZE];
 };
 
 /* The return type from Plof functions, which specifies whether a value is
@@ -152,7 +93,7 @@ struct PlofOHashTable {
     size_t namelen;
     unsigned char *name;
     struct PlofObject *value;
-    struct PlofOHashTable *left, *right;
+    struct PlofOHashTable *next;
 };
 
 /* "Superclass" for Plof data
@@ -199,14 +140,11 @@ struct PlofReturn interpretPSL(
         int generateContext,
         int immediate);
 
-/* Convert a PSL bignum to an int */
-int pslBignumToInt(unsigned char *bignum, size_t *into);
-
 /* Hash function */
 size_t plofHash(size_t slen, unsigned char *str);
 
 /* Copy the content of one object into another (for 'combine') */
-void plofObjCopy(struct PlofObject *to, struct PlofOHashTable *from);
+void plofObjCopy(struct PlofObject *to, struct PlofObject *from);
 
 /* Make an array of the list of members of an object (for 'members') */
 struct PlofArrayData *plofMembers(struct PlofObject *of);

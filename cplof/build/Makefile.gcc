@@ -1,11 +1,12 @@
 CC=gcc
 ECLFAGS=
-CFLAGS=-O3 -fno-crossjumping -fno-gcse -g $(ECFLAGS)
+CFLAGS=-O3 -fno-crossjumping -fno-gcse -g -DPLOF_NO_PARSER $(ECFLAGS)
 
 LD=$(CC)
 LDFLAGS=
-LIBFLAGS=-DHAVE_LIBFFI
-LIBS=-lffi -ldl -lgc -pthread
+LIBS=-lgc -pthread
+FFIFLAGS=-DWITH_FFI
+FFI=-lffi -ldl
 
 AR=ar
 ARFLAGS=rc
@@ -15,18 +16,22 @@ RANLIB=ranlib
 EXEEXT=
 
 
-LIBPLOF_A_OBJS=src/psl.o
-PSLI_OBJS=src/psli.o libplof.a
+LIBPLOF_A_OBJS=src/psl.o src/bignum.o
+PSLI_OBJS=src/psli.o src/whereami.o libplof.a
+PSLASM_OBJS=src/bignum.o src/lex.o src/parse.o src/pslasm.o
 
 
-all: libplof.a psli$(EXEEXT)
+all: libplof.a psli$(EXEEXT) pslasm$(EXEEXT)
 
 libplof.a: $(LIBPLOF_A_OBJS)
 	$(AR) $(ARFLAGS) libplof.a $(LIBPLOF_A_OBJS)
 	$(RANLIB) libplof.a
 
 psli$(EXEEXT): $(PSLI_OBJS)
-	$(CC) $(CFLAGS) $(LIBFLAGS) $(LDFLAGS) $(PSLI_OBJS) $(LIBS) -o psli$(EXEEXT)
+	$(CC) $(CFLAGS) $(FFIFLAGS) $(LDFLAGS) $(PSLI_OBJS) $(FFI) $(LIBS) -o psli$(EXEEXT)
+
+pslasm$(EXEEXT): $(PSLASM_OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(PSLASM_OBJS) $(LIBS) -o pslasm$(EXEEXT)
 
 .SUFFIXES: c o
 
@@ -36,6 +41,7 @@ psli$(EXEEXT): $(PSLI_OBJS)
 clean:
 	rm -f libplof.a $(LIBPLOF_A_OBJS)
 	rm -f psli$(EXEEXT) $(PSLI_OBJS)
+	rm -f pslasm$(EXEEXT) $(PSLASM_OBJS)
 
 deps:
 	$(CC) $(CFLAGS) -MM src/*.c > deps

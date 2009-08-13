@@ -4,7 +4,7 @@
 /* Try to guess some of the things that configure would have otherwise found */
 
 /* Choose a good method of boxing */
-#if !defined(PLOF_BOX_NUMBERS) && !defined(PLOF_NUMBERS_IN_OBJECTS) && !defined(PLOF_FREE_INTS)
+#if !defined(PLOF_BOX_NUMBERS) && !defined(PLOF_FREE_INTS)
 #define PLOF_FREE_INTS
 #endif
 

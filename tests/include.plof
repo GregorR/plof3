@@ -1,4 +1,4 @@
-include(included);
+include(included)
 
-var a = new A();
-a.bleh();
+var a = new A()
+a.bleh()

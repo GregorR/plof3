@@ -1,0 +1,66 @@
+var Tree = Object : [
+    this (item, l, r) {
+        this.item = item
+        this.left = l
+        this.right = r
+    }
+
+    item = Null
+    left = Null
+    right = Null
+]
+
+var make_tree = (item, depth) {
+    if (depth == 0) (
+        return (new Tree(item, Null, Null));
+    )
+
+    var item2 = item + item
+    depth = depth - 1
+
+    return (new Tree(item, make_tree(item2 - 1, depth), make_tree(item2, depth)))
+}
+
+var check_tree = (t) {
+    if (Null == t.left) (
+        return (t.item)
+    )
+
+    //return (t.item + check_tree(t.left) - check_tree(t.right))
+    return (t.item + check_tree(t.left) - check_tree(t.right))
+}
+
+var print_tree = (t) {
+    Debug.print(t.item)
+
+    if (Null != t.left) (
+        print_tree(t.left)
+        print_tree(t.right)
+    )
+}
+
+var min_depth = 4
+//var max_depth = max(min_depth + 2, int(sys.argv[1]))
+var max_depth = 6
+var stretch_depth = max_depth + 1
+
+Debug.print("stretch tree of depth ")
+Debug.print(stretch_depth)
+Debug.print("\t check:")
+check_tree(make_tree(0, stretch_depth))
+
+/*
+long_lived_tree = make_tree(0, max_depth)
+
+iterations = 2**max_depth
+for depth in xrange(min_depth, stretch_depth, 2):
+
+    check = 0
+    for i in xrange(1, iterations + 1):
+        check += check_tree(make_tree(i, depth)) + check_tree(make_tree(-i, depth))
+
+    print "%d\t trees of depth %d\t check:" % (iterations * 2, depth), check
+    iterations /= 4
+
+print "long lived tree of depth %d\t check:" % max_depth, check_tree(long_lived_tree)
+*/

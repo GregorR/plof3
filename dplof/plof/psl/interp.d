@@ -1442,12 +1442,15 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
 
                 case psl_dlsym:
                     use2((PSLObject a, PSLObject b) {
-                        if ((!b.isArray && b.raw !is null) {
+                        if (!b.isArray && b.raw !is null) {
                             void* handle = null; // RTLD_DEFAULT is usually null
 
                             if (a !is pslNull && !a.isArray && a.raw !is null &&
                                 a.raw.data.length == ptrdiff_t.sizeof) {
                                 handle = *(cast(void**) a.raw.data.ptr);
+
+                            } else if (a is pslNull) {
+                                handle = null;
 
                             } else {
                                 throw new InterpreterFailure(

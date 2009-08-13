@@ -22,36 +22,12 @@
  *  IN THE SOFTWARE.
  */
 
-// indexing and similar in the grammar
-plofbnf {
-    plof_group = plof_group "\[" plof_semicolon "\]" => plof {
-        $0.opIndex($2)
-    }
-
-    plof_as => plof_in;
-
-    plof_in = plof_in_next "in" plof_in_next => plof {
-        $2.opContains($0)
-    }
-    plof_in = plof_in_next => plof { $0 }
-
-    plof_mul => plof_range;
-
-    plof_range = plof_range "to" plof_range_next => plof {
-        new Range($0, $2, 1)
-    }
-    plof_range = plof_range "to" plof_range_next "by" plof_range_next => plof {
-        new Range($0, $2, $4)
-    }
-    plof_range = plof_range_next => plof { $0 }
-};
-
 // Default implementations
 Object := [
     opContains = (x) {
         False
     };
-];
+]
 
 /* Note that opArray is used in the core of the language, but is redefined here
  * in terms of the user-defined Array type. This allows arrays such as 'args'
@@ -105,26 +81,26 @@ var Collection = Object : [
     product = {
         fold(1, (x, y) { x * y })
     };
-];
+]
 
 // collection families
 var IndexableCollection = Collection : [
     opIndex = (x as Number) {
         Abstract();
     };
-];
+]
 
 var ConcatableCollection = Collection : [
     opConcat = (x as IndexableCollection) {
         Abstract();
     };
-];
+]
 
 var AppendableCollection = Collection : [
     opAppend = (x as IndexableCollection) {
         Abstract();
     };
-];
+]
 
 // particular collections
 var Array = IndexableCollection : ConcatableCollection : [
@@ -134,14 +110,14 @@ var Array = IndexableCollection : ConcatableCollection : [
 
     opCastFrom = (x) {
         if (x is Collection) (
-            var arr = new Array(psl { 0 integer array });
+            var arr = new Array(psl { 0 array });
             var y;
 
             // now add element-by-element
             x.each (ref y) (
                 arr.__pul_val = psl {
                    plof{arr.__pul_val} pul_eval
-                   plof{y} pul_eval 1 integer array
+                   plof{y} pul_eval 1 array
                    aconcat
                 }
             );
@@ -195,7 +171,7 @@ var Array = IndexableCollection : ConcatableCollection : [
         new Array(
             psl {
                 plof{this.__pul_val} pul_eval
-                0 integer array aconcat
+                0 array aconcat
             }
         )
     };
@@ -212,7 +188,7 @@ var Array = IndexableCollection : ConcatableCollection : [
             plof{this.__pul_val} pul_eval length
         })
     };
-];
+]
 
 var ListNode = Object : [
     type = Object;
@@ -227,7 +203,7 @@ var ListNode = Object : [
     get = {
         val
     };
-];
+]
 
 var MList = IndexableCollection : ConcatableCollection : AppendableCollection : [
     head = Null;
@@ -334,7 +310,7 @@ var MList = IndexableCollection : ConcatableCollection : AppendableCollection : 
     size = {
         cSize
     };
-];
+]
 
 
 // The fundamental collection type, ListArray
@@ -347,7 +323,7 @@ var ListArray = IndexableCollection : ConcatableCollection : AppendableCollectio
 
     opCastTo = (x) {
         if (x is Array) (
-            var retarr = psl { 0 integer array };
+            var retarr = psl { 0 array };
             var x;
 
             // we can do this faster by going over the arrays directly
@@ -440,7 +416,7 @@ var ListArray = IndexableCollection : ConcatableCollection : AppendableCollectio
         );
         sz
     };
-];
+]
 
 /// Automatic ranges
 var Range = Collection : [
@@ -461,35 +437,4 @@ var Range = Collection : [
             forceEval(act)
         );
     };
-];
-
-// the grammar for ListArrays
-plofbnf {
-    plof_literal = "\[\[" plof_arr_elems "\]\]" => plof {
-        new ListArray() ~= new Array($1)
-    }
-
-    plof_arr_elems = white => plof {
-        psl {
-            0 integer array
-        }
-    }
-    plof_arr_elems = plof_arr_elems_next => plof { $0 }
-    plof_arr_elems => plof_arr_elems_prime;
-
-    plof_arr_elems_prime = plof_arr_elems_prime "," plof_arr_elems_prime_next => plof {
-        psl {
-            $0 pul_eval
-            $2 1 integer array
-            aconcat
-        }
-    }
-    plof_arr_elems_prime = plof_arr_elems_prime_next => plof {
-        psl {
-            $0 1 integer array
-        }
-    }
-    plof_arr_elems_prime => plof_arr_elem;
-
-    plof_arr_elem = plof_semicolon_next => plof { $0 }
-};
+]

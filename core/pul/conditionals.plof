@@ -23,14 +23,14 @@
  */
 
 var if = (cond) {
-    (cond&&True)
-        .ifTrue( return ((then) { then; selff }); )
-        .ifFalse(return ((then) { id }); )
-};
+    (cond&&True).
+        ifTrue( return ((then) { then; selff }); ).
+        ifFalse(return ((then) { id }); )
+}
 
 var else = (then) {
     then
-};
+}
 
 var while = (cond, act) {
     psl {
@@ -38,24 +38,22 @@ var while = (cond, act) {
         { global } // while true
         {
             // check the condition
-            this "cc" plof{cond} pul_forceEval memberset
+            this "cc" plof{forceEval(cond)} pul_eval memberset
 
             plof {
                 (cc&&True).ifFalse(return(True););
             } pul_eval
 
             // perform the action
-            plof{act} pul_forceEval
+            plof{forceEval(act)} pul_eval
         } while
     }
-};
+}
 
 var for = (init, cond, step, act) {
     init;
-    while (psl { plof{cond} pul_forceEval }) (
-        psl {
-            plof{act} pul_forceEval
-            plof{step} pul_forceEval
-        }
+    while (forceEval(cond)) (
+        forceEval(act)
+        forceEval(step)
     );
-};
+}

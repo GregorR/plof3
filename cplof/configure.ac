@@ -20,7 +20,6 @@ AM_CONDITIONAL([GCC], [test x$GCC = xyes])
 AC_SEARCH_LIBS([GC_malloc], [gc])
 
 # Need libdl and libffi for CNFI
-
 have_dl=no
 AC_CHECK_LIB([dl], [dlopen], [
     AC_CHECK_HEADER([dlfcn.h], [
@@ -36,6 +35,10 @@ AC_CHECK_LIB([ffi], [ffi_call], [
 ], [])
 
 
+# Need PCRE for parsing
+AC_CHECK_LIB([pcre], [pcre_compile])
+
+
 # Checks for header files.
 #AC_HEADER_STDC
 #AC_CHECK_HEADERS([stddef.h string.h unistd.h])
@@ -46,6 +49,7 @@ AC_CHECK_HEADERS([unistd.h gc/gc.h])
 #AC_C_VOLATILE
 #AC_CHECK_TYPES([ptrdiff_t])
 AC_COMPILE_CHECK_SIZEOF([void *])
+AC_C_BIGENDIAN()
 
 # Checks for library functions.
 #AC_FUNC_MEMCMP
@@ -60,8 +64,6 @@ AC_ARG_WITH([free-ints],
 
 if test x$with_boxed_numbers = xyes; then
     AC_DEFINE([PLOF_BOX_NUMBERS], [], [Fully box all numbers])
-elif test x$with_numbers_in_objects = xyes; then
-    AC_DEFINE([PLOF_NUMBERS_IN_OBJECTS], [], [Put numbers directly in objects])
 else
     AC_DEFINE([PLOF_FREE_INTS], [], [Use completely unboxed ints])
 fi
