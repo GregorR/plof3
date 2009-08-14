@@ -92,6 +92,7 @@ int main(int argc, char **argv)
             compileOnly = 1;
 
         } else ARG("output", "o") {
+            compileOnly = 1;
             compileFile = argv[++argn];
 
         } else ARG("help", "h") {
@@ -137,6 +138,11 @@ int main(int argc, char **argv)
         struct Buffer_psl psl;
 
         if (!files[fn]) continue;
+
+        /* if we're only compiling, list the files */
+        if (compileOnly) {
+            fprintf(stderr, "Compiling %s\n", files[fn]);
+        }
 
         INIT_BUFFER(file);
         
@@ -205,5 +211,5 @@ void usage()
             "  --compile|-c:\n"
             "\tCompile only, don't run.\n"
             "  --output|-o <file>:\n"
-            "\tOutput filename (when -c is used).\n");
+            "\tOutput filename (implies -c).\n");
 }

@@ -135,7 +135,7 @@ struct Buffer_psl parseAll(unsigned char *code, unsigned char *top, unsigned cha
     while (*code) {
         struct PRPResult prpr = parseOne(code, top, file, line, column);
         if (prpr.code.buf == NULL) {
-            fprintf(stderr, "Parse error somewhere! (FIXME: better error message)\n");
+            fprintf(stderr, "Parse error in file %s near '%.10s'\n", file, code);
 #ifdef DEBUG
             fprintf(stderr, "%s\n", code);
 #endif

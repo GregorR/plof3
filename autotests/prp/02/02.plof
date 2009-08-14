@@ -1,0 +1,3 @@
+__grammar_add(top, white /hello/ white, push0 1 index {print} concat);
+__grammar_commit();
+hello hello
