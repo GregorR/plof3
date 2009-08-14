@@ -1,5 +1,5 @@
 lib_LIBRARIES=libplof.a libplof_noparser.a
-bin_PROGRAMS=cplof psli pslasm
+bin_PROGRAMS=cplof psli pslasm psldasm
 
 AM_CFLAGS=-DHAVE_CONFIG_H
 
@@ -23,3 +23,4 @@ psli_CFLAGS=-DPLOF_NO_PARSER
 psli_LDADD=libplof_noparser.a @CNFI_LIBS@
 
 pslasm_SOURCES=bignum.c lex.c parse.c pslasm.c pslfile.c
+psldasm_SOURCES=bignum.c psldasm.c pslfile.c

@@ -4,13 +4,13 @@ The Plof Stack Language is a simple bytecode. That is, every byte is a single op
 
 
 
-\section{PSL Stack}
+\section{Stack}
 
 The PSL stack contains an infinite number of \textit{null}s (see below), followed by anything that has been pushed by the user. Any reasonable implementation will of course generate the infinite \textit{null}s on-demand.
 
 
 
-\section{PSL Objects}
+\section{Objects}
 
 Everything is an object in PSL, including both execution contexts and procedures. PSL's object system is fairly simple. Objects are all by-reference, empty objects can be created with the \textit{new} operation, and objects can be combined with the \textit{combine} operation. When combining objects, object members of the right-hand object override object members of the left-hand object. Object members can be accessed with the \textit{member} and \textit{memberset} operations, and their names are completely arbitrary: They can be anything representable as a string of bytes. The object \textit{null }is used as a marker in various situations, but it is otherwise just a normal object. All objects have a parent setting, which usually refers to the context in which the object was created, and can also be \textit{null}. \textit{this} is the name for the object representing the current context of execution at all times, and \textit{global} is a globally-accessible object meant for the (highly-discouraged) use of global data when necessary. \textit{null} is the parent of both \textit{global} and \textit{null} itself.
 
@@ -18,31 +18,31 @@ PSL implementations should garbage collect. They may use whatever form of garbag
 
 
 
-\subsection{PSL Raw Data}
+\subsection{Raw Data}
 
 PSL can hold raw binary data in objects, to support simple and intrinsic data types. There are no limitations on the data that can be stored in a raw data object.
 
 
 
-\subsection{PSL Procedures}
+\subsection{Procedures}
 
 Since PSL is bytecode, PSL instructions are representable within a PSL raw data object. Raw data objects are callable, to allow for procedures. The \textit{call} operation runs a procedure in a new context; the exact details are discussed later.
 
 
 
-\subsection{PSL Exceptions}
+\subsection{Exceptions}
 
 PSL supports very simple exceptions. An object can be thrown with the \textit{throw} operation, and caught with the \textit{catch} operation. Because PSL is typeless, \textit{catch} will catch any object thrown. It is up to the programmer to determine whether the caught object can be handled properly.
 
 
 
-\subsection{PSL Arrays}
+\subsection{Arrays}
 
 Object in PSL which do not contain raw data can be arrays. The result of using raw data as an array or an array as raw data is undefined. Arrays are solely for the sake of efficiency, as anything that can be done with arrays can be done with objects. Arrays have a \textit{length}, which can be set, and elements within the array default to \textit{null}. Elements can be accessed with \textit{index} and set with \textit{indexset}. The lowest valid index is 0, and the highest valid index is \textit{length} - 1.
 
 
 
-\section{PSL Operations}
+\section{Operations}
 
 This is the list of all PSL operations. The column “Stack Behavior” indicates how many elements are popped from the stack and how many elements are pushed (in that order). In various operations, the function is described such as “pops A and B.” This means that A and B will be on the stack in that order; that is, A was pushed first, then B.
 
@@ -51,13 +51,8 @@ This is the list of all PSL operations. The column “Stack Behavior” indicate
 \noindent
 \rowcolors{1}{white}{llgray}
 \LTXtable{\linewidth}{operations.tex}
-%\begin{supertabular}{\linewidth}{|l|l|l|X|}
-%\hline
-%\input{plof3_table1.html}
-%\input{plof3_table2.html}
-%\end{supertabular}
 
-\subsection{PSL Bignums}
+\subsection{Bignums}
 
 The \textit{raw} operation requires a bignum, an integer of arbitrary size. The bignum can be any number of bytes, and the most significant bit of every byte signifies whether another byte follows. If the most significant bit of a byte is 1, another byte follows, and the most significant bit is 0 for the last byte. The remaining bits form the number, in big endian format. So, for example, the number 12,345 (b11110001001000000) is:
 
@@ -67,7 +62,7 @@ The maximum size supported by an implementation of PSL is intentionally undefine
 
 
 
-\subsection{PSL File Format}
+\subsection{File Format}
 
 Although it is not generally necessary to create .psl files, the file format is defined. A .psl file starts with an 8-byte magic number. In hex, the magic number is:
 
@@ -80,3 +75,13 @@ After the magic number, any number of sections follow. Each section contains:
 \item A bignum of the numerical type of the section. Only two section types are defined: 0 is program data (there can only be one program data section in a .psl file), 1 is comment data. All types greater than or equal to 128 (all types requiring more than one byte to describe) may be defined by users, types lower than 128 should only be defined by this specification, and future versions of it.
 \item The data contained in the section.
 \end{enumerate}
+
+
+
+\subsection{ASCII PSL}
+
+For bootstrapping and debugging purposes, PSL has a defined ASCII syntax, compilable into bytecode. ASCII PSL is very simple: every alphanumeric sequence is a command (which must correspond to a name as given above), and the following grouping operations are supported:
+
+\LTXtable{\linewidth}{asciipslgroups.tex}
+
+Numbers in ASCII PSL should produce a \textit{raw} command which pushes the specified number as 32-bit big-endian, then the \textit{integer} operation.

@@ -15,8 +15,10 @@ PSLI_OBJS=src/psli.o src/whereami.o
 PSLI_LIBS=library plof library gc
 PSLASM_OBJS=src/bignum.o src/lex.o src/parse.o src/pslasm.o src/pslfile.o
 PSLASM_LIBS=library gc
+PSLDASM_OBJS=src/bignum.o src/psldasm.o src/pslfile.o
+PSLDASM_LIBS=library gc
 
-all: plof.lib psli.exe pslasm.exe
+all: plof.lib psli.exe pslasm.exe psldasm.exe
 
 plof.lib: $(PLOF_LIB_OBJS)
 	$(LIB) -n plof.lib $(PLOF_LIB_OBJS)
@@ -32,6 +34,12 @@ pslasm.exe: $(PSLASM_OBJS)
 	    file src/pslasm \
 	    file src/pslfile
 
+psldasm.exe: $(PSLDASM_OBJS)
+	$(LINK) $(LFLAGS) $(PSLASM_LIBS) option stack=10485760 \
+	    file src/bignum \
+	    file src/psldasm \
+	    file src/pslfile
+
 .c.o:
 	$(CC) $(CFLAGS) $< -fo=$@
 
@@ -39,3 +47,4 @@ clean:
 	del plof.lib $(PLOF_LIB_OBJS)
 	del psli.exe $(PSLI_OBJS)
 	del pslasm.exe $(PSLASM_OBJS)
+	del psldasm.exe $(PSLDASM_OBJS)
