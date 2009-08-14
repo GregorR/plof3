@@ -35,7 +35,7 @@ cplof$(EXEEXT): $(CPLOF_OBJS)
 pslasm$(EXEEXT): $(PSLASM_OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(PSLASM_OBJS) $(LIBS) -o pslasm$(EXEEXT)
 
-psldasm$(EXEEXT): $(PSLASM_OBJS)
+psldasm$(EXEEXT): $(PSLDASM_OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(PSLDASM_OBJS) $(LIBS) -o psldasm$(EXEEXT)
 
 .SUFFIXES: c o

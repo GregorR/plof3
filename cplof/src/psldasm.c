@@ -41,8 +41,6 @@ int main(int argc, char **argv)
 {
     FILE *pslf;
     struct Buffer_psl psl;
-    size_t len, rd;
-    struct UCharBuf parsed;
 
     GC_INIT();
 
@@ -98,11 +96,10 @@ void outIndent(int level, FILE *out)
 
 void psldasm(int indent, size_t sz, unsigned char *psl, FILE *out)
 {
-    int psli, i;
+    int psli;
 
     for (psli = 0; psli < sz; psli++) {
         unsigned char cmd = psl[psli], ncmd;
-        int hasraw = 0;
         size_t rawsz = 0;
         unsigned char *raw;
         outIndent(indent, out);
