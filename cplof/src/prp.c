@@ -242,7 +242,7 @@ struct PlofObject *parseHelper(unsigned char *code, struct ParseResult *pr)
             /* first the filename */
             while (BUFFER_SPACE(psl) < 1) EXPAND_BUFFER(psl);
             psl.buf[psl.bufused++] = psl_raw;
-            filenmsz = strlen(pr->file);
+            filenmsz = strlen((char *) pr->file);
             bignumsz = pslBignumLength(filenmsz);
             while (BUFFER_SPACE(psl) < bignumsz) EXPAND_BUFFER(psl);
             pslIntToBignum(psl.buf + psl.bufused, filenmsz, bignumsz);
