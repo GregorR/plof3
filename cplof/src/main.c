@@ -95,6 +95,9 @@ int main(int argc, char **argv)
             compileOnly = 1;
             compileFile = argv[++argn];
 
+        } else ARG("debug", "g") {
+            prpDebug = 1;
+
         } else ARG("help", "h") {
             usage();
             return 0;
@@ -211,5 +214,7 @@ void usage()
             "  --compile|-c:\n"
             "\tCompile only, don't run.\n"
             "  --output|-o <file>:\n"
-            "\tOutput filename (implies -c).\n");
+            "\tOutput filename (implies -c).\n"
+            "  --debug|-g:\n"
+            "\tCause the parser to produce debuggable output.\n");
 }

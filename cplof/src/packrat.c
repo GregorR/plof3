@@ -304,7 +304,7 @@ struct ParseResult **packratRegexTerminal(struct Production *production,
                                           unsigned char *input, size_t off)
 {
     struct ParseResult **ret;
-    int ovector[OVECTOR_LEN], result;
+    int ovector[OVECTOR_LEN], result, i;
 
     /* even though we can only actually return one result, the standard is to
      * return an array */
@@ -334,6 +334,21 @@ struct ParseResult **packratRegexTerminal(struct Production *production,
         ret[0]->consumedTo = off + ovector[3];
     } else {
         ret[0]->consumedTo = off + ovector[1];
+    }
+
+    /* and the line/col numbers */
+    ret[0]->eline = line;
+    ret[0]->ecol = col;
+    for (i = off; i < ret[0]->consumedTo; i++) {
+        switch (input[i]) {
+            case '\n':
+                ret[0]->eline++;
+                ret[0]->ecol = 0;
+                break;
+
+            default:
+                ret[0]->ecol++;
+        }
     }
 
     return ret;

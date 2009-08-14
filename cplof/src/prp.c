@@ -57,6 +57,8 @@ static void gcommitRecurse(struct UProduction *curup);
 
 static struct UProduction *new_grammar = NULL;
 
+int prpDebug = 0;
+
 void gadd(unsigned char *name, unsigned char **target, size_t psllen, unsigned char *psl)
 {
     struct UProduction *curp = getUProduction(name);
@@ -146,6 +148,8 @@ struct Buffer_psl parseAll(unsigned char *code, unsigned char *top, unsigned cha
 #endif
         }
         code = prpr.remainder;
+        line = prpr.rline;
+        column = prpr.rcol;
 
         /* run immediates */
         interpretPSL(plofNull, plofNull, NULL, prpr.code.bufused, prpr.code.buf, 1, 1);
@@ -221,6 +225,68 @@ struct PlofObject *parseHelper(unsigned char *code, struct ParseResult *pr)
 
     }
 
+    /* perhaps add debugging info */
+    if (prpDebug) {
+        if (((size_t) ret & 0x1) == 0x0 &&
+            ret->data &&
+            ret->data->type == PLOF_DATA_RAW &&
+            ((struct PlofRawData *) ret->data)->length > sizeof(size_t)) {
+            struct PlofRawData *rd = (struct PlofRawData *) ret->data;
+            struct Buffer_psl psl;
+            size_t bignumsz, filenmsz;
+            struct PlofObject *obj;
+
+            /* now add the debug info */
+            INIT_BUFFER(psl);
+
+            /* first the filename */
+            while (BUFFER_SPACE(psl) < 1) EXPAND_BUFFER(psl);
+            psl.buf[psl.bufused++] = psl_raw;
+            filenmsz = strlen(pr->file);
+            bignumsz = pslBignumLength(filenmsz);
+            while (BUFFER_SPACE(psl) < bignumsz) EXPAND_BUFFER(psl);
+            pslIntToBignum(psl.buf + psl.bufused, filenmsz, bignumsz);
+            psl.bufused += bignumsz;
+            WRITE_BUFFER(psl, pr->file, filenmsz);
+            while (BUFFER_SPACE(psl) < 1) EXPAND_BUFFER(psl);
+            psl.buf[psl.bufused++] = psl_dsrcfile;
+
+            /* then the line number */
+            while (BUFFER_SPACE(psl) < 8) EXPAND_BUFFER(psl);
+            psl.buf[psl.bufused++] = psl_raw;
+            psl.buf[psl.bufused++] = 4;
+            psl.buf[psl.bufused++] = (pr->sline) >> 24;
+            psl.buf[psl.bufused++] = (pr->sline) >> 16;
+            psl.buf[psl.bufused++] = (pr->sline) >> 8;
+            psl.buf[psl.bufused++] = (pr->sline);
+            psl.buf[psl.bufused++] = psl_integer;
+            psl.buf[psl.bufused++] = psl_dsrcline;
+
+            /* then the column */
+            while (BUFFER_SPACE(psl) < 8) EXPAND_BUFFER(psl);
+            psl.buf[psl.bufused++] = psl_raw;
+            psl.buf[psl.bufused++] = 4;
+            psl.buf[psl.bufused++] = (pr->scol) >> 24;
+            psl.buf[psl.bufused++] = (pr->scol) >> 16;
+            psl.buf[psl.bufused++] = (pr->scol) >> 8;
+            psl.buf[psl.bufused++] = (pr->scol);
+            psl.buf[psl.bufused++] = psl_integer;
+            psl.buf[psl.bufused++] = psl_dsrccol;
+
+            /* then the original source */
+            WRITE_BUFFER(psl, rd->data, rd->length);
+
+            /* now recreate the data */
+            rd = GC_NEW_Z(struct PlofRawData);
+            rd->type = PLOF_DATA_RAW;
+            rd->length = psl.bufused;
+            rd->data = psl.buf;
+            obj = GC_NEW_Z(struct PlofObject);
+            obj->parent = ret->parent;
+            obj->data = (struct PlofData *) rd;
+            ret = obj;
+        }
+    }
 
     return ret;
 }

@@ -1491,9 +1491,21 @@ label(interp_psl_version);
     STEP;
 
 
-label(interp_psl_dsrcfile); UNIMPL("psl_dsrcfile");
-label(interp_psl_dsrcline); UNIMPL("psl_dsrcline");
-label(interp_psl_dsrccol); UNIMPL("psl_dsrccol");
+label(interp_psl_dsrcfile);
+    DEBUG_CMD("dsrcfile");
+    /* FIXME: nothing */
+    UNARY;
+    STEP;
+
+label(interp_psl_dsrcline);
+    DEBUG_CMD("dsrcline");
+    UNARY;
+    STEP;
+
+label(interp_psl_dsrccol);
+    DEBUG_CMD("dsrccol");
+    UNARY;
+    STEP;
 
 label(interp_psl_print);
     DEBUG_CMD("print");

@@ -119,10 +119,11 @@ void psldasm(int indent, size_t sz, unsigned char *psl, FILE *out)
             /* if this is 'raw' followed by an integer, just write the number */
             if (cmd == psl_raw && rawsz == 4 && ncmd == psl_integer) {
                 fprintf(out, "%d\n",
-                        (raw[0] << 24) &
-                        (raw[1] << 16) &
-                        (raw[2] << 8) &
+                        (raw[0] << 24) |
+                        (raw[1] << 16) |
+                        (raw[2] << 8) |
                         (raw[3]));
+                psli++;
 
             } else {
                 /* output the raw */

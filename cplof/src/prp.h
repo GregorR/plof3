@@ -47,4 +47,7 @@ struct PRPResult parseOne(unsigned char *code, unsigned char *top, unsigned char
 /* Parse the entirety of PSL code. Note that this will interpret immediates, whereas parseOne will not. */
 struct Buffer_psl parseAll(unsigned char *code, unsigned char *top, unsigned char *file);
 
+/* Should PRP produce debugging data? */
+extern int prpDebug;
+
 #endif
