@@ -1,7 +1,7 @@
 /*
- * Ratpack parser wrappers
+ * PSL file exporter/importer
  *
- * Copyright (c) 2009 Josiah Worcester
+ * Copyright (c) 2009 Gregor Richards
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,29 +22,22 @@
  * THE SOFTWARE.
  */
 
-#ifndef PRP_H
-#define PRP_H
+#ifndef PSLFILE_H
+#define PSLFILE_H
 
-#include "buffer.h"
+#include <stdio.h>
+
 #include "plof.h"
 
-/* Parsing returns Buffer_psl (the resultant code), and a pointer to the remainder of the code */
-struct PRPResult {
-    struct Buffer_psl code;
-    unsigned char *remainder;
-    unsigned int rline, rcol;
-};
+#define PSL_FILE_MAGIC "\x9E\x50\x53\x4C\x17\xF2\x58\x8C"
 
-/* These correspond directly to underlying PSL instructions */
-void gadd(unsigned char *name, unsigned char **target, size_t psllen, unsigned char *psl);
-void grem(unsigned char *name);
-void gcommit(void);
+/* return true if this buffer points to a PSL file */
+int isPSLFile(size_t sz, unsigned char *buf);
 
-/* Parse some part of PSL code */
-struct PRPResult parseOne(unsigned char *code, unsigned char *top, unsigned char *file,
-                          unsigned int line, unsigned int column);
+/* read in the PSL from a PSL file */
+struct Buffer_psl readPSLFile(size_t sz, unsigned char *buf);
 
-/* Parse the entirety of PSL code. Note that this will interpret immediates, whereas parseOne will not. */
-struct Buffer_psl parseAll(unsigned char *code, unsigned char *top, unsigned char *file);
+/* write out PSL to a file */
+void writePSLFile(FILE *to, size_t sz, unsigned char *buf);
 
 #endif

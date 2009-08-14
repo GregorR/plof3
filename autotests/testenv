@@ -1,0 +1,5 @@
+export PATH="`pwd`/cplof/src:$PATH"
+
+ulimit -c unlimited
+ulimit -t 60
+ulimit -v $(( 128 * 1024 ))

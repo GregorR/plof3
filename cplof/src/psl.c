@@ -56,6 +56,7 @@ typedef struct _ffi_cif_plus {
 #include "jump.h"
 #include "plof.h"
 #include "psl.h"
+#include "pslfile.h"
 #ifndef PLOF_NO_PARSER
 #include "prp.h"
 #endif
@@ -1589,8 +1590,6 @@ label(interp_psl_parse);
     TRINARY;
 
     if (ISRAW(a) && ISRAW(b) && ISRAW(c)) {
-        int i, stl;
-        size_t slen, stype;
         struct PlofRawData *retrd;
 
         rd = RAW(a);
@@ -1600,32 +1599,17 @@ label(interp_psl_parse);
         retrd->data = NULL;
 
         /* check if it's a PSL file */
-        if (rd->length >= sizeof(PSL_FILE_MAGIC) &&
-            !strncmp((char *) rd->data, PSL_FILE_MAGIC, sizeof(PSL_FILE_MAGIC) - 1)) {
-            
-            /* look for the loadable section */
-            for (i = 8; i < rd->length;) {
-                /* section length and type */
-                i += pslBignumToInt(rd->data + i, (size_t *) &slen);
-                stl = pslBignumToInt(rd->data + i, (size_t *) &stype);
-
-                /* if it's program data, found it */
-                if (stype == 0) {
-                    retrd->length = slen - stl;
-                    retrd->data = rd->data + i + stl;
-                    break;
-
-                } else {
-                    i += slen;
-
-                }
-            }
+        if (isPSLFile(rd->length, rd->data)) {
+            struct Buffer_psl psl = readPSLFile(rd->length, rd->data);
 
             /* if we didn't find one, this is bad */
-            if (retrd->data == NULL) {
+            if (psl.buf == NULL) {
                 BADTYPE("parse psl");
                 retrd->length = 0;
                 retrd->data = GC_MALLOC_ATOMIC(1);
+            } else {
+                retrd->length = psl.bufused;
+                retrd->data = psl.buf;
             }
 
         } else {

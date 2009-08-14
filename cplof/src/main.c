@@ -29,6 +29,7 @@
 #include "plof.h"
 #include "prp.h"
 #include "psl.h"
+#include "pslfile.h"
 #include "whereami.h"
 
 #define BUFSTEP 1024
@@ -47,9 +48,10 @@ int main(int argc, char **argv)
 
     struct PlofObject *context;
 
-    int i, fn, argn, compileOnly;
+    int fn, argn, compileOnly;
 
     struct Buffer_psl compileBuf;
+    char *compileFile;
 
     GC_INIT();
 
@@ -79,6 +81,7 @@ int main(int argc, char **argv)
     files[0] = "std.psl";
     fn = 1;
     compileOnly = 0;
+    compileFile = "a.psl";
 
     /* handle args */
     for (argn = 1; argn < argc; argn++) {
@@ -87,6 +90,9 @@ int main(int argc, char **argv)
 
         } else ARG("compile", "c") {
             compileOnly = 1;
+
+        } else ARG("output", "o") {
+            compileFile = argv[++argn];
 
         } else ARG("help", "h") {
             usage();
@@ -128,7 +134,6 @@ int main(int argc, char **argv)
 
     /* load in the files */
     for (fn = 0; fn == 0 || files[fn]; fn++) {
-        size_t slen, stype, stl;
         struct Buffer_psl psl;
 
         if (!files[fn]) continue;
@@ -149,40 +154,14 @@ int main(int argc, char **argv)
         /* FIXME: bounds checking */
 
         /* check what type of file it is */
-        if (!memcmp(file.buf, PSL_FILE_MAGIC, sizeof(PSL_FILE_MAGIC)-1)) {
-            /* Go section-by-section */
-            for (i = 8; i < file.bufused;) {
-                /* section length */
-                i += pslBignumToInt(file.buf + i, (size_t *) &slen);
-        
-                /* section type */
-                stl = pslBignumToInt(file.buf + i, (size_t *) &stype);
-        
-                /* if it's program data, we found it */
-                if (stype == 0) {
-                    i += stl;
-                    break;
-        
-                } else {
-                    /* skip this section */
-                    i += slen;
-                }
-            }
-        
-            /* make sure we found it */
-            if (i >= file.bufused) {
-                fprintf(stderr, "No program data!\n");
-                return 1;
-            }
-
-            psl.buf = file.buf + i;
-            psl.bufused = slen - stl;
-            psl.bufsz = psl.bufused;
+        if (isPSLFile(file.bufused, file.buf)) {
+            psl = readPSLFile(file.bufused, file.buf);
 
             /* run immediates */
             interpretPSL(context, plofNull, NULL, psl.bufused, psl.buf, 0, 1);
    
         } else {
+            /* parse it */
             psl = parseAll(file.buf, (unsigned char *) "top", (unsigned char *) files[fn]);
 
         }
@@ -197,6 +176,22 @@ int main(int argc, char **argv)
         }
     }
 
+    if (compileOnly) {
+        FILE *pslf;
+
+        /* then write it out */
+        pslf = fopen(compileFile, "wb");
+        if (pslf == NULL) {
+            perror(compileFile);
+            return 1;
+        }
+    
+        writePSLFile(pslf, compileBuf.bufused, compileBuf.buf);
+    
+        fclose(pslf);
+    }
+
+
     return 0;
 }
 
@@ -208,5 +203,7 @@ void usage()
             "  --no-std|-N:\n"
             "\tDon't load std.psl\n"
             "  --compile|-c:\n"
-            "\tCompile only, don't run.\n");
+            "\tCompile only, don't run.\n"
+            "  --output|-o <file>:\n"
+            "\tOutput filename (when -c is used).\n");
 }

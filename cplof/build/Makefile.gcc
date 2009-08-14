@@ -17,9 +17,9 @@ RANLIB=ranlib
 EXEEXT=
 
 
-LIBPLOF_A_OBJS=src/psl.o src/bignum.o
+LIBPLOF_A_OBJS=src/bignum.o src/psl.o src/pslfile.o
 CPLOF_OBJS=src/main.o src/packrat.o src/prp.o src/whereami.o libplof.a
-PSLASM_OBJS=src/bignum.o src/lex.o src/parse.o src/pslasm.o
+PSLASM_OBJS=src/bignum.o src/lex.o src/parse.o src/pslasm.o src/pslfile.o
 
 
 all: libplof.a cplof$(EXEEXT) pslasm$(EXEEXT)

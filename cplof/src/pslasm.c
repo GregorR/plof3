@@ -30,15 +30,16 @@
 #include "bignum.h"
 #include "parse.h"
 #include "plof.h"
+#include "pslfile.h"
 
 #define BUFSTEP 1024
 
 int main(int argc, char **argv)
 {
     FILE *pslf;
-    unsigned char *apsl, *bnum;
+    unsigned char *apsl;
     char *ofname;
-    size_t len, rd, bnumsz;
+    size_t len, rd;
     struct UCharBuf parsed;
 
     GC_INIT();
@@ -97,18 +98,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    /* the header */
-    fwrite(PSL_FILE_MAGIC, 1, sizeof(PSL_FILE_MAGIC)-1, pslf);
-
-    /* the section header */
-    bnumsz = pslBignumLength(parsed.len + 1);
-    bnum = GC_MALLOC_ATOMIC(bnumsz);
-    pslIntToBignum(bnum, parsed.len + 1, bnumsz);
-    fwrite(bnum, 1, bnumsz, pslf);
-    fwrite("\x00", 1, 1, pslf);
-
-    /* and the content */
-    fwrite(parsed.ptr, 1, parsed.len, pslf);
+    writePSLFile(pslf, parsed.len, parsed.ptr);
 
     fclose(pslf);
 
