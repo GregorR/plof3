@@ -254,3 +254,10 @@ C.getstr = (x as CPointer) {
     var l = C.strlen(x);
     C.get(x, l) as String
 }
+
+// things that need CNFI
+C.exit_s = C.dlsym(Null, "exit")
+C.exit_c = C.prepcif(C.pointer, [[]], 0)
+var exit = () {
+    C.call(C.exit_c, C.exit_s, [[]])
+}

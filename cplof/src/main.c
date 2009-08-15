@@ -49,7 +49,7 @@ int main(int argc, char **argv)
 
     struct PlofObject *context;
 
-    int fn, argn, compileOnly;
+    int fn, argn, compileOnly, interactive;
 
     struct Buffer_psl compileBuf;
     char *compileFile;
@@ -83,6 +83,7 @@ int main(int argc, char **argv)
     fn = 1;
     compileOnly = 0;
     compileFile = "a.psl";
+    interactive = 0;
 
     /* handle args */
     for (argn = 1; argn < argc; argn++) {
@@ -98,6 +99,9 @@ int main(int argc, char **argv)
 
         } else ARG("debug", "g") {
             prpDebug = 1;
+
+        } else ARG("interactive", "i") {
+            interactive = 1;
 
         } else ARG("help", "h") {
             usage();
@@ -120,7 +124,7 @@ int main(int argc, char **argv)
     files[fn] = NULL;
 
     /* complain if there aren't any files */
-    if (fn == 1) {
+    if (fn == 1 && !interactive) {
         usage();
         return 1;
     }
@@ -193,6 +197,59 @@ int main(int argc, char **argv)
         }
     }
 
+    /* perhaps go into interactive mode */
+    if (interactive) {
+        struct Buffer_char input;
+        struct PRPResult prpr;
+        struct Buffer_psl psl;
+
+        INIT_BUFFER(input);
+
+        /* read stuff */
+        while (1) {
+            if (input.bufused == 0) {
+                printf("> ");
+            } else {
+                printf("# ");
+            }
+            fflush(stdout);
+
+            /* get this line */
+            while (BUFFER_SPACE(input) < 1024) EXPAND_BUFFER(input);
+            if (fgets(input.buf + input.bufused, 1024, stdin)) {
+                size_t newsz = strlen(input.buf);
+                if (newsz == input.bufused + 1) {
+                    input.bufused = 0;
+                    input.buf[0] = '\0';
+                    continue;
+                }
+                input.bufused = newsz;
+            } else {
+                break;
+            }
+
+            /* try to parse it */
+            psl = parseOne((unsigned char *) input.buf, "top", "<stdin>", 0, 0).code;
+            if (psl.buf == NULL) {
+                /* didn't parse */
+                continue;
+            }
+
+            /* get rid ouf our input */
+            input.bufused = 0;
+            input.buf[0] = '\0';
+
+            /* then run it */
+            interpretPSL(context, plofNull, NULL, psl.bufused, psl.buf, 0, 1);
+            if (compileOnly) {
+                WRITE_BUFFER(compileBuf, psl.buf, psl.bufused);
+            } else {
+                interpretPSL(context, plofNull, NULL, psl.bufused, psl.buf, 0, 0);
+            }
+        }
+    }
+
+
     if (compileOnly) {
         FILE *pslf;
 
@@ -224,5 +281,7 @@ void usage()
             "  --output|-o <file>:\n"
             "\tOutput filename (implies -c).\n"
             "  --debug|-g:\n"
-            "\tCause the parser to produce debuggable output.\n");
+            "\tCause the parser to produce debuggable output.\n"
+            "  --interactive|-i:\n"
+            "\tInteractive (read-execute-loop) mode.\n");
 }

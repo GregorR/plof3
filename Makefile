@@ -1,6 +1,8 @@
+PREFIX=/usr
+
 PSLASM=./cplof/src/pslasm
 PLOF=./cplof/src/cplof
-PLOF_REQ=./cplof/src/cplof
+PLOF_REQ=cplof/src/cplof
 #PLOF_FLAGS=--debug
 
 # base.psl contains the base grammar
@@ -25,7 +27,8 @@ STD_PSL_SOURCE=core/pul/object.plof \
 # cnfi.psl is the C NFI, loaded by nfi.plof if CNFI is set
 CNFI_PSL_SOURCE=core/pul/cnfi.plof
 
-all: plof_include/std.psl plof_include/debug/std.psl plof_include/debug/stddebug.psl \
+all: cplof/src/cplof \
+     plof_include/std.psl plof_include/debug/std.psl plof_include/debug/stddebug.psl \
      plof_include/cnfi.psl plof_include/debug/cnfi.psl
 #all: plof_include/std.psl plof_include/cnfi.psl
 
@@ -57,12 +60,23 @@ plof_include/debug/cnfi.psl: $(CNFI_PSL_SOURCE) plof_include/debug/std.psl $(PLO
 	$(PLOF) --debug $(PLOF_FLAGS) $(CNFI_PSL_SOURCE) -o plof_include/debug/cnfi.psl
 
 
-cplof/src/pslasm:
-	cd cplof ; ./configure ; $(MAKE)
+cplof/src/pslasm: cplof/src/cplof
+	true
+
+cplof/src/cplof:
+	cd cplof ; ./configure --prefix="$(PREFIX)" ; $(MAKE)
+
+
+
+install: all
+	-cd cplof ; make install
+	mkdir -p $(PREFIX)/share/plof_include
+	cp -dRf plof_include/* $(PREFIX)/share/plof_include
 
 
 
 clean:
+	-cd cplof ; make distclean
 	rm -f base.psl pul.psl puldebug.psl \
 	    plof_include/std.psl plof_include/debug/std.psl \
 	    plof_include/debug/stddebug.psl \
