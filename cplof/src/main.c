@@ -200,7 +200,6 @@ int main(int argc, char **argv)
     /* perhaps go into interactive mode */
     if (interactive) {
         struct Buffer_char input;
-        struct PRPResult prpr;
         struct Buffer_psl psl;
 
         INIT_BUFFER(input);
@@ -229,7 +228,8 @@ int main(int argc, char **argv)
             }
 
             /* try to parse it */
-            psl = parseOne((unsigned char *) input.buf, "top", "<stdin>", 0, 0).code;
+            psl = parseOne((unsigned char *) input.buf, (unsigned char *) "top",
+                           (unsigned char *) "<stdin>", 0, 0).code;
             if (psl.buf == NULL) {
                 /* didn't parse */
                 continue;
