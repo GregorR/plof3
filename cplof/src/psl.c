@@ -314,7 +314,7 @@ struct PlofReturn interpretPSL(
 #define ARRAY(obj) ((struct PlofArrayData *) (obj)->data)
 #define RAWSTRDUP(type, into, _rd) \
     { \
-        unsigned char *_into = (unsigned char *) GC_MALLOC((_rd)->length + 1); \
+        unsigned char *_into = (unsigned char *) GC_MALLOC_ATOMIC((_rd)->length + 1); \
         memcpy(_into, (_rd)->data, (_rd)->length); \
         _into[(_rd)->length] = '\0'; \
         (into) = (type *) _into; \

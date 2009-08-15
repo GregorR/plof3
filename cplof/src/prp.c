@@ -338,7 +338,7 @@ static void gcommitRecurse(struct UProduction *curp)
             if (curp->target.buf[i][j][0] == '/') {
                unsigned char *name = curp->target.buf[i][j];
                size_t regexlen = strlen((char *) name)-2;
-               unsigned char *regex = (unsigned char *) GC_MALLOC(regexlen+1);
+               unsigned char *regex = (unsigned char *) GC_MALLOC_ATOMIC(regexlen+1);
                memcpy(regex, name+1, regexlen);
                regex[regexlen] = '\0';
 
