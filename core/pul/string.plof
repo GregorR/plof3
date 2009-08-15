@@ -27,7 +27,7 @@
 var String = Object : [
     this (intstring) {
         this.__pul_val = intstring;
-    };
+    }
 
     opEquals = (x) {
         var xs = x as String;
@@ -36,23 +36,30 @@ var String = Object : [
                     plof{this.__pul_val} pul_eval
                     plof{xs.__pul_val} pul_eval
                     rawcmp
-                }) == 0);
-        );
-        return False;
-    };
+                }) == 0)
+        )
+        return False
+    }
 
     opConcat = (x as String) {
         return (new String(psl {
             plof{this.__pul_val} pul_eval
             plof{x.__pul_val} pul_eval
             concat
-        }));
-    };
+        }))
+    }
 
     length = {
         opInteger(psl {
             plof{this.__pul_val} pul_eval
             length
         })
-    };
+    }
+
+    print = {
+        psl {
+            plof{this.__pul_val} pul_eval
+            print
+        }
+    }
 ]
