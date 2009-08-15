@@ -156,7 +156,6 @@ int main(int argc, char **argv)
             for (path = plofIncludePaths; !fh && *path; path++) {
                 char *file = GC_MALLOC_ATOMIC(strlen((char *) *path) + strlen(files[fn]) + 1);
                 sprintf(file, "%s%s", (char *) *path, files[fn]);
-                fprintf(stderr, "%s\n", file);
                 fh = fopen(file, "rb");
             }
         }

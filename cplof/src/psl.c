@@ -609,7 +609,7 @@ label(interp_psl_parent);
     if (ISOBJ(a)) {
         STACK_PUSH(a->parent);
     } else {
-        BADTYPE("parent");
+        DBADTYPE("parent");
         STACK_PUSH(plofNull);
     }
     STEP;
