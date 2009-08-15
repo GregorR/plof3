@@ -51,10 +51,10 @@ plof_include/debug/stddebug.psl: puldebug.psl $(STD_PSL_SOURCE) $(PLOF_REQ)
 
 
 plof_include/cnfi.psl: $(CNFI_PSL_SOURCE) plof_include/std.psl $(PLOF_REQ)
-	$(PLOF) -N $(PLOF_FLAGS) $(CNFI_PSL_SOURCE) -o plof_include/cnfi.psl
+	$(PLOF) $(PLOF_FLAGS) $(CNFI_PSL_SOURCE) -o plof_include/cnfi.psl
 
 plof_include/debug/cnfi.psl: $(CNFI_PSL_SOURCE) plof_include/debug/std.psl $(PLOF_REQ)
-	$(PLOF) -N --debug $(PLOF_FLAGS) $(CNFI_PSL_SOURCE) -o plof_include/debug/cnfi.psl
+	$(PLOF) --debug $(PLOF_FLAGS) $(CNFI_PSL_SOURCE) -o plof_include/debug/cnfi.psl
 
 
 cplof/src/pslasm:

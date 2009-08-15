@@ -42,6 +42,7 @@ int main(int argc, char **argv)
 {
     FILE *fh;
     char *wdir, *wfil;
+    unsigned char **path;
     struct Buffer_psl file;
 
     char *files[MAX_FILES+1];
@@ -149,8 +150,16 @@ int main(int argc, char **argv)
 
         INIT_BUFFER(file);
         
-        /* open the file */
+        /* find the file */
         fh = fopen(files[fn], "rb");
+        if (fh == NULL) {
+            for (path = plofIncludePaths; !fh && *path; path++) {
+                char *file = GC_MALLOC_ATOMIC(strlen((char *) *path) + strlen(files[fn]) + 1);
+                sprintf(file, "%s%s", (char *) *path, files[fn]);
+                fprintf(stderr, "%s\n", file);
+                fh = fopen(file, "rb");
+            }
+        }
         if (fh == NULL) {
             perror(files[fn]);
             return 1;
