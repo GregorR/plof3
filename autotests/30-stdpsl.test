@@ -1,0 +1,2 @@
+#!/bin/bash
+runtest build_std make -f Makefile.pslcode.cplof

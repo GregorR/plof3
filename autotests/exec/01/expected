@@ -1,0 +1,48 @@
+Integer value 3 is always good.
+3
+GOOD
+GOOD
+This should come first.
+Then this.
+Then this should come third and last.
+This should be printed three times.
+This should be printed three times.
+This should be printed three times.
+3
+Try
+3
+Types
+GOOD
+GOOD
+GOOD
+Typed functions
+GOOD
+GOOD
+Numbers
+3
+Arrays
+3
+Lists
+3
+ListArrays
+3
+3
+3
+Strings
+GOOD
+GOOD
+Ranges
+This test should print all the numbers from 0 to 9 which are divisible by 2
+0
+2
+4
+6
+8
+Concatenation
+This should print the numbers from 1 to 5, then Hello, world!
+1
+2
+3
+4
+5
+Hello, world!
