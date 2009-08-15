@@ -2334,9 +2334,8 @@ struct PlofRawData *pslReplace(struct PlofRawData *in, struct PlofArrayData *wit
             /* what's the marker #? */
             size_t mval = (size_t) -1;
             if (data->length == 1) {
-                mval = *((unsigned char *) data->data);
+                mval = *data->data;
             }
-            fprintf(stderr, "Replacing marker %d.\n", mval);
 
             /* maybe replace it */
             if (mval < with->length) {
