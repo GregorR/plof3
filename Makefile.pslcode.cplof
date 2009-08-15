@@ -63,4 +63,7 @@ cplof/src/pslasm:
 
 
 clean:
-	rm -f base.psl pul.psl plof_include/std.psl plof_include/debug/std.psl
+	rm -f base.psl pul.psl puldebug.psl \
+	    plof_include/std.psl plof_include/debug/std.psl \
+	    plof_include/debug/stddebug.psl \
+	    plof_include/cnfi.psl plof_include/debug/cnfi.psl
