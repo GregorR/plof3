@@ -1715,7 +1715,10 @@ label(interp_psl_gcommit);
 
 #endif
 
-label(interp_psl_marker); DEBUG_CMD("marker"); STEP;
+label(interp_psl_marker);
+    DEBUG_CMD("marker");
+    fprintf(stderr, "WARNING: Marker in executed code.\n");
+    STEP;
 
 label(interp_psl_immediate);
     DEBUG_CMD("immediate");
@@ -2331,8 +2334,9 @@ struct PlofRawData *pslReplace(struct PlofRawData *in, struct PlofArrayData *wit
             /* what's the marker #? */
             size_t mval = (size_t) -1;
             if (data->length == 1) {
-                mval = *((unsigned char *) data);
+                mval = *((unsigned char *) data->data);
             }
+            fprintf(stderr, "Replacing marker %d.\n", mval);
 
             /* maybe replace it */
             if (mval < with->length) {
