@@ -66,8 +66,7 @@ int main(int argc, char **argv)
         /* FIXME: should support -I eventually */
 
     } else {
-        fprintf(stderr, "Could not deterine include paths!\n");
-        return 1;
+        plofIncludePaths[0] = NULL;
 
     }
 

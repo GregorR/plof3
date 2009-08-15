@@ -32,6 +32,10 @@
 #include "basicconfig.h"
 #endif
 
+#ifdef DEBUG_TIMING
+#include <time.h>
+#endif
+
 /* For CNFI */
 #ifdef WITH_CNFI
 #include <dlfcn.h>
@@ -128,6 +132,12 @@ struct PlofReturn interpretPSL(
     /* The current file/line/col (for debugging) */
     unsigned char *dfile = NULL;
     ptrdiff_t dline = -1, dcol = -1;
+
+    /* timing info */
+#ifdef DEBUG_TIMING
+    char *tiName;
+    struct timespec stspec, etspec;
+#endif
 
     /* Perhaps generate the context */
     if (generateContext) {
@@ -408,13 +418,31 @@ struct PlofReturn interpretPSL(
         } \
     }
 
-#define STEP pc += 2; jump(*pc)
 #define UNIMPL(cmd) fprintf(stderr, "UNIMPLEMENTED: " cmd "\n"); STEP
 
+#ifdef DEBUG_TIMING
+#define DEBUG_CMD(cmd) tiName = cmd; clock_gettime(CLOCK_THREAD_CPUTIME_ID, &stspec)
+#else
 #ifdef DEBUG
 #define DEBUG_CMD(cmd) fprintf(stderr, "DEBUG: " cmd "\n")
 #else
 #define DEBUG_CMD(cmd)
+#endif
+#endif
+
+#ifdef DEBUG_TIMING
+#define STEP \
+    { \
+        clock_gettime(CLOCK_THREAD_CPUTIME_ID, &etspec); \
+        printf("\"%s\",%d\n", \
+               tiName, \
+               (etspec.tv_sec - stspec.tv_sec) * 1000000000 + \
+               (etspec.tv_nsec - stspec.tv_nsec)); \
+        pc += 2; \
+        jump(*pc); \
+    }
+#else
+#define STEP pc += 2; jump(*pc)
 #endif
 
 

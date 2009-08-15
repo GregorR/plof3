@@ -81,6 +81,14 @@ else
 fi
 AC_SUBST([CNFI_LIBS], [$cnfi_libs])
 
+# Timing debugging
+DEBUG_TIMING=no
+AC_ARG_WITH([debug-timing],
+            [AC_HELP_STRING([--with-debug-timing], [Output timing debugger info])])
+if test "x$with_debug_timing" = "xyes"; then
+    AC_DEFINE([DEBUG_TIMING], [], [Enable timer debugging])
+    AC_CHECK_LIB([rt], [clock_gettime])
+fi
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile])
