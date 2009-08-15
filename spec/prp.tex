@@ -1,50 +1,20 @@
 \chapter{Plof Runtime Parser}
 
-To be expounded upon.
+Plof code is parsed and compiled by productions created at runtime. A production is a name, an array of targets, and PSL code to run when the production is parsed. Targets may be nonterminals (productions) or regular expressions. The PSL code should produce a raw data object, itself containing PSL code (the compiled result of the production), and is run with the results of each of the targets in an array as the argument.
 
+Multiple productions may be created with the same name, which indicates that the nonterminal corresponds to a choice of any of the productions.
 
-\begin{comment}
-\subsection{Runtime Grammar Definitions}
+The following example productions correspond to a simple arithmetic language:
 
-There are several PSL operations which can only be run while in an \textit{immediate} block, and affect the runtime parser itself. They are:
+\begin{verbatim}
+mul = mul /\*/ add => { push0 0 index push1 2 index concat {mul} concat }
+mul = add => { push0 0 index }
+add = add /\+/ digit => { push0 0 index push1 2 index concat {add} concat }
+add = digit => { push0 0 index }
+\end{verbatim}
 
+The parser must support self-referencing left-recursive productions such as \texttt{A = A /b/}, but not more complex left-recursive productions such as \texttt{A = B /b/ ; B = A /a/}.
 
+Regular expression targets will parse greedily. If they contain any parenthesized parts, they will consume only up to the end of the first parenthesized part, otherwise the entire matching substring is consumed. The result of a regular expression, returned to the production using it, is PSL code to parse the consumed string as a raw data object.
 
-<table border="0" cellspacing="0" cellpadding="0" class="Table2"><colgroup><col width="49"/><col width="115"/><col width="604"/></colgroup><tr><td style="text-align:left;width:0.4444in; " class="Table2_A1"><p class="P22">Hex
-
-</td><td style="text-align:left;width:1.0354in; " class="Table2_B1"><p class="P22">Name
-
-</td><td style="text-align:left;width:5.4451in; " class="Table2_B1"><p class="P22">Function
-
-</td></tr><tr><td style="text-align:left;width:0.4444in; " class="Table2_A2"><p class="P21">
-
-</td><td style="text-align:left;width:1.0354in; " class="Table2_B2"><p class="P21">
-
-</td><td style="text-align:left;width:5.4451in; " class="Table2_B2"><p class="P21">Operations F0-F5 do not affect the grammar immediately, the changes must be committed with \textit{gcommit}.
-
-</td></tr><tr><td style="text-align:left;width:0.4444in; " class="Table2_A1"><p class="P21">F0
-
-</td><td style="text-align:left;width:1.0354in; " class="Table2_B1"><p class="P21">gadd
-
-</td><td style="text-align:left;width:5.4451in; " class="Table2_B1"><p class="P21">Add a production to the grammar. Pops the production name, the production itself, and the associated PSL code. The production itself is an array of strings (as raw data), each of which is either:
-
-<ul><li><p class="P32" style="margin-left:0.635cm;"><span class="Bullet_20_Symbols" style="display:block;float:left;min-width:0.635cm;">•.</span>The name of another production, or<span class="odfLiEnd"/>
-
-</li><li><p class="P32" style="margin-left:0.635cm;"><span class="Bullet_20_Symbols" style="display:block;float:left;min-width:0.635cm;">•.</span>a regex, surrounded by /'s.<span class="odfLiEnd"/>
-
-</li></ul><p class="P23">The name and associated code are both raw data.
-
-</td></tr><tr><td style="text-align:left;width:0.4444in; " class="Table2_A1"><p class="P21">F1
-
-</td><td style="text-align:left;width:1.0354in; " class="Table2_B1"><p class="P21">grem
-
-</td><td style="text-align:left;width:5.4451in; " class="Table2_B1"><p class="P21">Remove a production from the grammar. Pops the production name and removes it.
-
-</td></tr><tr><td style="text-align:left;width:0.4444in; " class="Table2_A1"><p class="P21">FD
-
-</td><td style="text-align:left;width:1.0354in; " class="Table2_B1"><p class="P21">gcommit
-
-</td><td style="text-align:left;width:5.4451in; " class="Table2_B1"><p class="P21">Commit grammar changes.
-
-</td></tr></table><p class="P1">
-\end{comment}
+The Plof interpreter parses code by repeatedly applying the production named ``top'' to the remaining input code. As such, the ``top'' production should parse one top-level statement or declaration of the target language. The interpreter's grammar should contain no productions at startup, so precompiled PSL code is required to initialize the parser.
