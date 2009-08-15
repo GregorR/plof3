@@ -125,6 +125,10 @@ struct PlofReturn interpretPSL(
     /* The eventual return */
     struct PlofReturn ret;
 
+    /* The current file/line/col (for debugging) */
+    unsigned char *dfile = NULL;
+    ptrdiff_t dline = -1, dcol = -1;
+
     /* Perhaps generate the context */
     if (generateContext) {
         a = GC_NEW_Z(struct PlofObject);
@@ -270,10 +274,18 @@ struct PlofReturn interpretPSL(
 #define QUINARY STACK_POP(e) STACK_POP(d) STACK_POP(c) STACK_POP(b) STACK_POP(a)
 
     /* Basic type-checks */
+#define BADTYPE(cmd) \
+    { \
+        fprintf(stderr, "Type error in " cmd); \
+        if (dfile) { \
+            fprintf(stderr, " at %s, line %d col %d", dfile, (int) dline+1, (int) dcol+1); \
+        } \
+        fprintf(stderr, "\n"); \
+    }
 #ifdef DEBUG
-#define BADTYPE(cmd) fprintf(stderr, "Type error in " cmd "\n")
+#define DBADTYPE BADTYPE
 #else
-#define BADTYPE(cmd)
+#define DBADTYPE(cmd) ;
 #endif
 
 #if defined(PLOF_BOX_NUMBERS)
@@ -348,7 +360,7 @@ struct PlofReturn interpretPSL(
 #endif
 
     /* "Functions" for integer ops */
-#define INTBINOP(op) \
+#define INTBINOP(op, opname) \
     BINARY; \
     { \
         ptrdiff_t res = 0; \
@@ -360,6 +372,8 @@ struct PlofReturn interpretPSL(
             ia = ASINT(a); \
             ib = ASINT(b); \
             res = ia op ib; \
+        } else { \
+            BADTYPE(opname); \
         } \
         \
         PUSHINT(res); \
@@ -767,7 +781,7 @@ label(interp_psl_wrap);
         STACK_PUSH(a);
 
     } else {
-        BADTYPE("raw");
+        BADTYPE("wrap");
         STACK_PUSH(plofNull);
 
     }
@@ -1247,27 +1261,27 @@ label(interp_psl_intwidth);
 
 label(interp_psl_mul);
     DEBUG_CMD("mul");
-    INTBINOP(*);
+    INTBINOP(*, "mul");
     STEP;
 
 label(interp_psl_div);
     DEBUG_CMD("div");
-    INTBINOP(/);
+    INTBINOP(/, "div");
     STEP;
 
 label(interp_psl_mod);
     DEBUG_CMD("mod");
-    INTBINOP(%);
+    INTBINOP(%, "mod");
     STEP;
 
 label(interp_psl_add);
     DEBUG_CMD("add");
-    INTBINOP(+);
+    INTBINOP(+, "add");
     STEP;
 
 label(interp_psl_sub);
     DEBUG_CMD("sub");
-    INTBINOP(-);
+    INTBINOP(-, "sub");
     STEP;
 
 label(interp_psl_lt);
@@ -1302,47 +1316,47 @@ label(interp_psl_gte);
 
 label(interp_psl_sl);
     DEBUG_CMD("sl");
-    INTBINOP(<<);
+    INTBINOP(<<, "sl");
     STEP;
 
 label(interp_psl_sr);
     DEBUG_CMD("sr");
-    INTBINOP(>>);
+    INTBINOP(>>, "sr");
     STEP;
 
 label(interp_psl_or);
     DEBUG_CMD("or");
-    INTBINOP(|);
+    INTBINOP(|, "or");
     STEP;
 
 label(interp_psl_nor);
     DEBUG_CMD("nor");
     /* or it, then not it */
-    INTBINOP(|);
+    INTBINOP(|, "nor");
     /*ASINT(stack[stacktop]) = ~ASINT(stack[stacktop]);*/
     SETINT(stack[stacktop], ~ASINT(stack[stacktop]));
     STEP;
 
 label(interp_psl_xor);
     DEBUG_CMD("xor");
-    INTBINOP(^);
+    INTBINOP(^, "xor");
     STEP;
 
 label(interp_psl_nxor);
     DEBUG_CMD("nxor");
-    INTBINOP(^);
+    INTBINOP(^, "nxor");
     /*ASINT(stack[stacktop]) = ~ASINT(stack[stacktop]);*/
     SETINT(stack[stacktop], ~ASINT(stack[stacktop]));
     STEP;
 
 label(interp_psl_and);
     DEBUG_CMD("and");
-    INTBINOP(&);
+    INTBINOP(&, "ant");
     STEP;
 
 label(interp_psl_nand);
     DEBUG_CMD("nand");
-    INTBINOP(&);
+    INTBINOP(&, "nand");
     /*ASINT(stack[stacktop]) = ~ASINT(stack[stacktop]);*/
     SETINT(stack[stacktop], ~ASINT(stack[stacktop]));
     STEP;
@@ -1493,18 +1507,38 @@ label(interp_psl_version);
 
 label(interp_psl_dsrcfile);
     DEBUG_CMD("dsrcfile");
-    /* FIXME: nothing */
     UNARY;
+    if (ISRAW(a)) {
+        if (dfile == NULL) {
+            dfile = RAW(a)->data;
+        }
+    } else {
+        BADTYPE("dsrcfile");
+    }
     STEP;
 
 label(interp_psl_dsrcline);
     DEBUG_CMD("dsrcline");
     UNARY;
+    if (ISINT(a)) {
+        if (dline == -1) {
+            dline = ASINT(a);
+        }
+    } else {
+        BADTYPE("dsrcline");
+    }
     STEP;
 
 label(interp_psl_dsrccol);
     DEBUG_CMD("dsrccol");
     UNARY;
+    if (ISINT(a)) {
+        if (dcol == -1) {
+            dcol = ASINT(a);
+        }
+    } else {
+        BADTYPE("dsrccol");
+    }
     STEP;
 
 label(interp_psl_print);

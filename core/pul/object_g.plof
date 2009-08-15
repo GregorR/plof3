@@ -139,7 +139,7 @@ plofbnf {
 
     plof_params = plof_params ","w plof_params_next => {
         null push1 0 index call
-            push0 0 index 1 add swrap
+            push0 0 index 1 add byte swrap {integer} concat
             push1 1 index push3 2 index concat cwrap concat
             {2 array} concat
     }
