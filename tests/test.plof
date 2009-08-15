@@ -23,7 +23,7 @@ if (True) (
     Debug.print("GOOD")
 ) else (
     Debug.print("BAD")
-);
+)
 
 
 // Currying
@@ -31,7 +31,7 @@ var curryish = (a, b, c) {
     Debug.print(a)
     Debug.print(b)
     Debug.print(c)
-};
+}
 curryish "This should come first." "Then this." "Then this should come third and last."
 
 
@@ -74,17 +74,17 @@ if (Foo is Foo) (
     Debug.print("GOOD")
 ) else (
     Debug.print("BAD")
-);
+)
 if (Foo is Object) (
     Debug.print("GOOD")
 ) else (
     Debug.print("BAD")
-);
+)
 if (Object is Foo) (
     Debug.print("BAD")
 ) else (
     Debug.print("GOOD")
-);
+)
 
 
 // Typed functions
@@ -93,13 +93,13 @@ var foo = (x as Foo) {
     x
 }
 try (
-    foo(Foo);
+    foo(Foo)
     Debug.print("GOOD")
 ) catchall (ref x) (
     Debug.print("BAD")
 )
 try (
-    foo(Object);
+    foo(Object)
     Debug.print("BAD")
 ) catchall (ref x) (
     Debug.print("GOOD")
@@ -108,7 +108,7 @@ try (
 
 // Numbers
 Debug.print("Numbers")
-x = 27 - 6 * 4;
+x = 27 - 6 * 4
 Debug.print(x)
 
 
@@ -117,41 +117,41 @@ Debug.print("Arrays")
 x = new Array(psl {
     plof{4} 1 array
 })
-x[0] = 3;
-psl { plof{x[0]} pul_eval "__pul_val" member print };
+x[0] = 3
+psl { plof{x[0]} pul_eval "__pul_val" member print }
 
 
 // Lists
 Debug.print("Lists")
-x = new MList(Object);
-x[1] = 3;
-psl { plof{x[1]} pul_eval "__pul_val" member print };
+x = new MList(Object)
+x[1] = 3
+psl { plof{x[1]} pul_eval "__pul_val" member print }
 
 
 // ListArrays
 Debug.print("ListArrays")
-x = [[ 0, 1, 2, 3, 4, 5 ]];
-psl { plof{x[3]} pul_eval "__pul_val" member print };
-x ~= [[ 4, 3, 2, 1, 0 ]];
-psl { plof{x[7]} pul_eval "__pul_val" member print };
+x = [[ 0, 1, 2, 3, 4, 5 ]]
+psl { plof{x[3]} pul_eval "__pul_val" member print }
+x ~= [[ 4, 3, 2, 1, 0 ]]
+psl { plof{x[7]} pul_eval "__pul_val" member print }
 
-x ~= x;
-psl { plof{x[14]} pul_eval "__pul_val" member print };
+x ~= x
+psl { plof{x[14]} pul_eval "__pul_val" member print }
 
 
 // Strings
 Debug.print("Strings")
-x = "Hello, ";
+x = "Hello, "
 if (x == "Hello, ") (
     Debug.print("GOOD")
 ) else (
     Debug.print("BAD")
-);
+)
 if (x == "world!") (
     Debug.print("BAD")
 ) else (
     Debug.print("GOOD")
-);
+)
 
 
 // Ranges
@@ -166,9 +166,9 @@ Debug.print("This test should print all the numbers from 0 to 9 which are divisi
 var y
 Debug.print("Concatenation")
 Debug.print("This should print the numbers from 1 to 5, then Hello, world!")
-x = [[ 1, 2, 3 ]] ~ [[ 4, 5 ]];
+x = [[ 1, 2, 3 ]] ~ [[ 4, 5 ]]
 x.each (ref y) (
     Debug.print(y)
-);
-x = "Hello, " ~ "world!";
+)
+x = "Hello, " ~ "world!"
 Debug.print(x)
