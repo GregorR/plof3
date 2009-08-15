@@ -28,14 +28,14 @@ plofbnf {
         $0.opIndex($2)
     }
 
-    plof_as => plof_in;
+    plof_as => plof_in
 
     plof_in = plof_in_next "in"w plof_in_next => plof {
         $2.opContains($0)
     }
     plof_in = plof_in_next => plof { $0 }
 
-    plof_mul => plof_range;
+    plof_mul => plof_range
 
     plof_range = plof_range "to"w plof_range_next => plof {
         new Range($0, $2, 1)
@@ -58,7 +58,7 @@ plofbnf {
         }
     }
     plof_arr_elems = plof_arr_elems_next => plof { $0 }
-    plof_arr_elems => plof_arr_elems_prime;
+    plof_arr_elems => plof_arr_elems_prime
 
     plof_arr_elems_prime = plof_arr_elems_prime ","w plof_arr_elems_prime_next => plof {
         psl {
@@ -72,7 +72,7 @@ plofbnf {
             $0 1 array
         }
     }
-    plof_arr_elems_prime => plof_arr_elem;
+    plof_arr_elems_prime => plof_arr_elem
 
     plof_arr_elem = plof_semicolon_next => plof { $0 }
 }

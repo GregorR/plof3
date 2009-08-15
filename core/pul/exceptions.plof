@@ -59,7 +59,7 @@ var try = (x) {
 }
 
 var catchall = (ex, r, f) {
-    r.write ex;
+    r.write ex
     f
 }
 
@@ -71,16 +71,16 @@ var Exception = Object:[]
 var AbstractFunctionException = Exception:[]
 var TypeMismatchException = Exception : [
     init = (obj, type) {
-        this.obj = obj;
-        this.type = type;
-        return this;
-    };
+        this.obj = obj
+        this.type = type
+        return this
+    }
 
-    obj = Object;
-    type = Object;
+    obj = Object
+    type = Object
 ]
 
 // Simple pseudofunction to throw abstract
 var Abstract = {
-    throw (new AbstractFunctionException);
+    throw (new AbstractFunctionException)
 }

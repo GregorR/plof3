@@ -41,7 +41,7 @@ var while = (cond, act) {
             this "cc" plof{forceEval(cond)} pul_eval memberset
 
             plof {
-                (cc&&True).ifFalse(return(True););
+                (cc&&True).ifFalse(return(True);)
             } pul_eval
 
             // perform the action
@@ -51,9 +51,9 @@ var while = (cond, act) {
 }
 
 var for = (init, cond, step, act) {
-    init;
+    init
     while (forceEval(cond)) (
         forceEval(act)
         forceEval(step)
-    );
+    )
 }

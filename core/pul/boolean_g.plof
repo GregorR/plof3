@@ -23,19 +23,19 @@
  */
 
 plofbnf {
-    plof_bind => plof_or;
+    plof_bind => plof_or
 
     plof_or = plof_or "\|\|" plof_or_next => plof {
         $0.opOr($2)
     }
     plof_or = plof_or_next => plof { $0 }
-    plof_or => plof_and;
+    plof_or => plof_and
 
     plof_and = plof_and "&&" plof_and_next => plof {
         $0.opAnd($2)
     }
     plof_and = plof_and_next => plof { $0 }
-    plof_and => plof_unop;
+    plof_and => plof_unop
 
     plof_unop = "\!" plof_unop => plof {
         $1.opNot()

@@ -24,13 +24,13 @@
 
 // typechecking operators
 plofbnf {
-    plof_combine => plof_is;
+    plof_combine => plof_is
 
     plof_is = plof_is "is"w plof_is_next => plof {
         $0.opIs($2)
     }
     plof_is = plof_is_next => plof { $0 }
-    plof_is => plof_as;
+    plof_is => plof_as
 
     plof_as = plof_as "as"w plof_as_next => plof {
         $0.opAs($2)
@@ -71,7 +71,7 @@ plofbnf {
             {
                 // whoops, type mismatch
                 plof {
-                    throw (new TypeMismatchException(arg, astype));
+                    throw (new TypeMismatchException(arg, astype))
                 } pul_eval
             }
             {} cmp

@@ -26,7 +26,7 @@
 Object := [
     opContains = (x) {
         False
-    };
+    }
 ]
 
 /* Note that opArray is used in the core of the language, but is redefined here
@@ -34,84 +34,84 @@ Object := [
  * in functions to be Arrays. */
 
 var Collection = Object : [
-    NilElement = Object:[];
+    NilElement = Object:[]
 
     opContains = (x) {
-        var y;
+        var y
         each (ref y) (
             if (y == x) (
-                return True;
-            );
-        );
-        return False;
-    };
+                return True
+            )
+        )
+        return False
+    }
 
     each = (r, act) {
-        Abstract();
-    };
+        Abstract()
+    }
 
-    dup = Abstract;
+    dup = Abstract
 
     apply = (x as Function) {
-        Abstract();
-    };
+        Abstract()
+    }
 
     map = (x as Function) {
         dup().apply x
-    };
+    }
 
     size = {
-        var i = 0;
-        var x;
-        each (ref x) (i++);
+        var i = 0
+        var x
+        each (ref x) (i++)
         i
-    };
+    }
 
     fold = (init, f as Function) {
-        var ret = init;
-        var x;
-        each (ref x) (ret = f(ret, x));
+        var ret = init
+        var x
+        each (ref x) (ret = f(ret, x))
         ret
-    };
+    }
 
     sum = {
         fold(0, (x, y) { x + y })
-    };
+    }
 
     product = {
         fold(1, (x, y) { x * y })
-    };
+    }
 ]
 
 // collection families
 var IndexableCollection = Collection : [
     opIndex = (x as Number) {
-        Abstract();
-    };
+        Abstract()
+    }
 ]
 
 var ConcatableCollection = Collection : [
     opConcat = (x as IndexableCollection) {
-        Abstract();
-    };
+        Abstract()
+    }
 ]
 
 var AppendableCollection = Collection : [
     opAppend = (x as IndexableCollection) {
-        Abstract();
-    };
+        Abstract()
+    }
 ]
 
 // particular collections
 var Array = IndexableCollection : ConcatableCollection : [
     this (intarr) {
-        this.__pul_val = intarr;
-    };
+        this.__pul_val = intarr
+    }
 
     opCastFrom = (x) {
         if (x is Collection) (
-            var arr = new Array(psl { 0 array });
-            var y;
+            var arr = new Array(psl { 0 array })
+            var y
 
             // now add element-by-element
             x.each (ref y) (
@@ -120,13 +120,13 @@ var Array = IndexableCollection : ConcatableCollection : [
                    plof{y} pul_eval 1 array
                    aconcat
                 }
-            );
+            )
 
-            return arr;
+            return arr
         ) else (
-            return Null;
-        );
-    };
+            return Null
+        )
+    }
 
     opIndex = (x as NativeInteger) {
         return(psl {
@@ -147,8 +147,8 @@ var Array = IndexableCollection : ConcatableCollection : [
                 push2
                 indexset
             } memberset
-        });
-    };
+        })
+    }
 
     opConcat = (x as Array) {
         new Array(psl {
@@ -157,15 +157,15 @@ var Array = IndexableCollection : ConcatableCollection : [
             plof{x.__pul_val} pul_eval
             aconcat
         })
-    };
+    }
 
     each = (r, act) {
         for (var i = 0) (i < size()) (i++) (
-            r.write (this[i]);
+            r.write (this[i])
             forceEval(act)
-        );
+        )
         this
-    };
+    }
 
     dup = {
         new Array(
@@ -174,267 +174,267 @@ var Array = IndexableCollection : ConcatableCollection : [
                 0 array aconcat
             }
         )
-    };
+    }
 
     apply = (x as Function) {
         for (var i = 0) (i < size()) (i++) (
             this[i] = x(this[i])
-        );
+        )
         this
-    };
+    }
 
     size = {
         opInteger(psl {
             plof{this.__pul_val} pul_eval length
         })
-    };
+    }
 ]
 
 var ListNode = Object : [
-    type = Object;
+    type = Object
 
-    val = Null;
-    next = Null;
+    val = Null
+    next = Null
 
     set = (x as type) {
-        val = x;
-    };
+        val = x
+    }
 
     get = {
         val
-    };
+    }
 ]
 
 var MList = IndexableCollection : ConcatableCollection : AppendableCollection : [
-    head = Null;
-    tail = Null;
-    cSize = 0;
+    head = Null
+    tail = Null
+    cSize = 0
 
     opIndex = (x as Number) {
         if (Null == head) (
-            head = new ListNode();
-        );
+            head = new ListNode()
+        )
 
         // find the right one
-        var cur = head;
+        var cur = head
         for (x) (x > 0) (x--) (
             if (Null == cur.next) (
-                cur.next = new ListNode();
-                tail = cur.next;
-            );
+                cur.next = new ListNode()
+                tail = cur.next
+            )
 
-            cur = cur.next;
-        );
+            cur = cur.next
+        )
 
         // done (must return instead of just evaling since returns can be byref)
-        return(cur.val);
-    };
+        return(cur.val)
+    }
 
     opConcat = (x as IndexableCollection) {
-        var newlist = new MList();
+        var newlist = new MList()
 
-        var y;
+        var y
         each (ref y) (
             newlist.snoc(y)
-        );
+        )
         x.each (ref y) (
             newlist.snoc(y)
-        );
+        )
 
         newlist
-    };
+    }
 
     opAppend = (x as IndexableCollection) {
-        var y;
+        var y
         x.each (ref y) (
             snoc(y)
-        );
+        )
         this
-    };
+    }
 
     each = (r, act) {
         for (var cur = head) (Null != cur) (cur = cur.next) (
-            r.write (cur.val);
+            r.write (cur.val)
             forceEval(act)
-        );
+        )
         this
-    };
+    }
 
     cons = (x) {
-        var add = new ListNode();
-        add.val = x;
+        var add = new ListNode()
+        add.val = x
         
         if (Null == head) (
-            tail = add;
+            tail = add
         ) else (
-            add.next = head;
-        );
-        head = add;
+            add.next = head
+        )
+        head = add
 
-        cSize++;
-    };
+        cSize++
+    }
 
     snoc = (x) {
-        var add = new ListNode();
-        add.val = x;
+        var add = new ListNode()
+        add.val = x
 
         if (Null == tail) (
-            head = add;
+            head = add
         ) else (
-            tail.next = add;
-        );
-        tail = add;
+            tail.next = add
+        )
+        tail = add
 
-        cSize++;
-    };
+        cSize++
+    }
 
     dup = {
-        var res = new MList();
-        var x;
+        var res = new MList()
+        var x
 
         // just snoc
         each (ref x) (
             res.snoc(x)
-        );
+        )
 
         res
-    };
+    }
 
     apply = (x as Function) {
         for (var cur = head) (Null != cur) (cur = cur.next) (
             cur.val = x(cur.val)
-        );
+        )
         this
-    };
+    }
 
     size = {
         cSize
-    };
+    }
 ]
 
 
 // The fundamental collection type, ListArray
 var ListArray = IndexableCollection : ConcatableCollection : AppendableCollection : [
-    mlist = Null;
+    mlist = Null
 
     this {
-        mlist = new MList();
-    };
+        mlist = new MList()
+    }
 
     opCastTo = (x) {
         if (x is Array) (
-            var retarr = psl { 0 array };
-            var x;
+            var retarr = psl { 0 array }
+            var x
 
             // we can do this faster by going over the arrays directly
             mlist.each (ref x) (
-                retarr = psl { plof{retarr} pul_eval plof{x.__pul_val} pul_eval aconcat };
-            );
+                retarr = psl { plof{retarr} pul_eval plof{x.__pul_val} pul_eval aconcat }
+            )
 
             // then make the result
-            return (new Array(retarr));
+            return (new Array(retarr))
         ) else (
-            return Null;
-        );
-    };
+            return Null
+        )
+    }
 
     opIndex = (x as Number) {
-        var ret;
-        var retx;
-        var y;
+        var ret
+        var retx
+        var y
 
         // find the right list
         mlist.each (ref y) (
-            var sz = y.size();
+            var sz = y.size()
             if (x >= 0 && sz > x) (
-                ret = y;
-                retx = x;
-            );
-            x = x - sz;
-        );
+                ret = y
+                retx = x
+            )
+            x = x - sz
+        )
 
         // perhaps fail
         if (Null == ret) (
             // FIXME: better error
-            return Null;
-        );
+            return Null
+        )
 
         // then return the right element
-        return (ret[retx]);
-    };
+        return (ret[retx])
+    }
 
     opConcat = (x as IndexableCollection) {
         // start by duplicating myself
-        var ret = dup();
+        var ret = dup()
 
         // then just append the other one
         if (x is ListArray) (
             // do it the fast way
-            ret.mlist.snoc(x as Array);
+            ret.mlist.snoc(x as Array)
         ) else (
-            ret ~= x.dup();
-        );
+            ret ~= x.dup()
+        )
 
         ret
-    };
+    }
 
     opAppend = (x as IndexableCollection) {
         if (x is ListArray) (
-            mlist.snoc(x as Array);
+            mlist.snoc(x as Array)
         ) else (
-            mlist.snoc((x as Array).dup());
-        );
+            mlist.snoc((x as Array).dup())
+        )
         this
-    };
+    }
 
     each = (r, act) {
-        var y;
+        var y
         mlist.each (ref y) (
             y.each r (forceEval(act))
-        );
+        )
         this
-    };
+    }
 
     dup = {
-        var res = new ListArray();
-        res ~= this;
+        var res = new ListArray()
+        res ~= this
         res
-    };
+    }
 
     apply = (x as Function) {
         mlist.apply((y) {
             y.apply(x)
-        });
+        })
         this
-    };
+    }
 
     size = {
-        var sz = 0;
-        var x;
+        var sz = 0
+        var x
         mlist.each (ref x) (
             sz = sz + x.size()
-        );
+        )
         sz
-    };
+    }
 ]
 
 /// Automatic ranges
 var Range = Collection : [
-    start = Null;
-    end = Null;
-    step = Null;
+    start = Null
+    end = Null
+    step = Null
 
     this (start, end, step) {
-        this.start = start;
-        this.end = end;
-        this.step = step;
-    };
+        this.start = start
+        this.end = end
+        this.step = step
+    }
 
     each = (r, act) {
-        var x;
+        var x
         for (x = start) (x < end) (x = x + step) (
-            r.write x;
+            r.write x
             forceEval(act)
-        );
-    };
+        )
+    }
 ]

@@ -36,34 +36,34 @@ Object := [
                 plof{False}
             } cmp
         }
-    };
+    }
 
     // Just do a not-equals for nequals
     opNEquals = (x) {
         !(this == x)
-    };
+    }
 
     // All the comparisons use opCmp by default
     opLess = (x) {
         this.opCmp(x) < 0
-    };
+    }
     opLessEqual = (x) {
         this.opCmp(x) <= 0
-    };
+    }
     opGreater = (x) {
         this.opCmp(x) > 0
-    };
+    }
     opGreaterEqual = (x) {
         this.opCmp(x) >= 0
-    };
+    }
 
     // Inc/dec just add/subtract 1 by default
     opInc = {
         this + 1
-    };
+    }
     opDec = {
         this - 1
-    };
+    }
 ]
 
 
@@ -76,8 +76,8 @@ var Number = Object:[]
 // Native integers are integers as provided by the host, with all the limitations thereof
 var NativeInteger = Number : [
     this (val) {
-        this.__pul_val = val;
-    };
+        this.__pul_val = val
+    }
 
     opEquals = (x as NativeInteger) {
         psl {
@@ -90,7 +90,7 @@ var NativeInteger = Number : [
                 plof{False}
             } eq
         }
-    };
+    }
 
 
     // these comparisons can't use opCmp, since opCmp depends on NativeIntegers
@@ -105,7 +105,7 @@ var NativeInteger = Number : [
                 plof{False}
             } lt
         }
-    };
+    }
 
     opLessEqual = (x as NativeInteger) {
         psl {
@@ -118,7 +118,7 @@ var NativeInteger = Number : [
                 plof{False}
             } lte
         }
-    };
+    }
 
     opGreater = (x as NativeInteger) {
         psl {
@@ -131,7 +131,7 @@ var NativeInteger = Number : [
                 plof{False}
             } gt
         }
-    };
+    }
 
     opGreaterEqual = (x as NativeInteger) {
         psl {
@@ -144,7 +144,7 @@ var NativeInteger = Number : [
                 plof{False}
             } gte
         }
-    };
+    }
 
 
     opAdd = (x as NativeInteger) {
@@ -155,7 +155,7 @@ var NativeInteger = Number : [
                 add
             }
         )
-    };
+    }
 
     opSub = (x as NativeInteger) {
         new NativeInteger(
@@ -165,7 +165,7 @@ var NativeInteger = Number : [
                 sub
             }
         )
-    };
+    }
 
     opMul = (x as NativeInteger) {
         new NativeInteger(
@@ -175,7 +175,7 @@ var NativeInteger = Number : [
                 mul
             }
         )
-    };
+    }
 
     opDiv = (x as NativeInteger) {
         new NativeInteger(
@@ -185,7 +185,7 @@ var NativeInteger = Number : [
                 div
             }
         )
-    };
+    }
 
     opMod = (x as NativeInteger) {
         new NativeInteger(
@@ -195,7 +195,7 @@ var NativeInteger = Number : [
                 mod
             }
         )
-    };
+    }
 ]
 
 // opInteger should return a native number
