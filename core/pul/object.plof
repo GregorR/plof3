@@ -56,8 +56,8 @@ Object := [init = {this};]
 /// References
 var Reference = Object : [
     this (readx, writex) {
-        this.read = readx;
-        this.write = writex;
+        this.read = readx
+        this.write = writex
     }
 ]
 
@@ -67,4 +67,4 @@ var Debug = Object : [
     print = (val) {
         psl { plof{val.__pul_val} pul_eval print }
     }
-];
+]

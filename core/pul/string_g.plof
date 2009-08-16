@@ -26,7 +26,7 @@
 // A string in Plof supports the typical C escapes
 plofbnf {
     // String/collection concatenation
-    plof_cmp => plof_concat;
+    plof_cmp => plof_concat
 
     plof_concat = plof_concat "~"w plof_concat_next => plof {
         $0.opConcat($2)

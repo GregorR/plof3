@@ -24,25 +24,25 @@
 
 // Object is true for logic unless it's False
 Object := [
-    opOr = (x) { True };
-    opAnd = (x) { x };
-    opNot = { False };
+    opOr = (x) { True }
+    opAnd = (x) { x }
+    opNot = { False }
 ]
 
 // True and False are both Bools
 var Bool = Object : [
-    ifTrue = (x) { this };
-    ifFalse = (x) { this };
+    ifTrue = (x) { this }
+    ifFalse = (x) { this }
 ]
 
 var True = Bool : [
-    ifTrue = (x) { x; this };
+    ifTrue = (x) { x; this }
 ]
 
 var False = Bool : [
-    ifFalse = (x) { x; this };
+    ifFalse = (x) { x; this }
 
-    opOr = (x) { x };
-    opAnd = (x) { False };
-    opNot = { True };
+    opOr = (x) { x }
+    opAnd = (x) { False }
+    opNot = { True }
 ]

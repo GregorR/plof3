@@ -282,12 +282,12 @@ pslbnf {
 // the base PUL grammar
 pslbnf {
     top = white top_next => { push0 1 index }
-    top => plof_statement;
+    top => plof_statement
 
     plof_statement = plof_statement_next eos => {
         push0 0 index pul_apply_eval {pop} concat
     }
-    plof_statement => plof_assign;
+    plof_statement => plof_assign
 
     // allow Plof in PSL
     pslOp = "plof"w "\{"w plof_semicolon "\}"w => {
@@ -303,7 +303,7 @@ pslbnf {
         push0 0 index
     }
     plof_semicolon = plof_semicolon_next => { push0 0 index }
-    plof_semicolon => plof_assign;
+    plof_semicolon => plof_assign
 
     plof_assign = plof_assign_next "="w plof_assign => {
         push0 2 index pul_apply_eval
@@ -312,7 +312,7 @@ pslbnf {
         pul_apply_funcwrap
     }
     plof_assign = plof_assign_next => { push0 0 index }
-    plof_assign => plof_bind;
+    plof_assign => plof_bind
 
     plof_bind = "let"w plof_bind_next "="w plof_bind => {
         push0 3 index
@@ -321,7 +321,7 @@ pslbnf {
         pul_apply_funcwrap
     }
     plof_bind = plof_bind_next => { push0 0 index }
-    plof_bind => plof_group;
+    plof_bind => plof_group
 
     plof_group = "forceEval"w "\("w plof_identifier "\)" => {
         push0 2 index
@@ -348,13 +348,13 @@ pslbnf {
         pul_apply_funcwrap
     }
     plof_group = plof_group_next => { push0 0 index }
-    plof_group => plof_parens;
+    plof_group => plof_parens
 
     plof_parens = "\("w plof_semicolon "\)" => {
         push0 1 index
     }
     plof_parens = plof_parens_next => { push0 0 index }
-    plof_parens => plof_literal;
+    plof_parens => plof_literal
 
     // none of these literals are actually literals (hm), but they're at the same precedence
     plof_literal = "psl"w "\{"w pslOps "\}" => {
@@ -367,7 +367,7 @@ pslbnf {
         "ü" wrap
     }
     plof_literal = plof_literal_next => { push0 0 index }
-    plof_literal => plof_var;
+    plof_literal => plof_var
 
     plof_var = "var"w plof_identifier => {
         {pul_fcontext}
@@ -376,7 +376,7 @@ pslbnf {
         pul_apply_funcwrap
     }
     plof_var = plof_var_next => { push0 0 index }
-    plof_var => plof_ident;
+    plof_var => plof_ident
 
     plof_ident = plof_identifier => {
         // call the global opMember with the context and name, which will return a new context
@@ -414,7 +414,7 @@ pslbnf {
         /()(?!to[^A-Za-z0-9_])/
         /()(?!var[^A-Za-z0-9_])/
         => {{}}
-};
+}
 
 // now plofbnf
 pslbnf {
@@ -473,7 +473,7 @@ pslbnf {
         // make it immediate
         iwrap
     }
-};
+}
 
 // Integers
 pslbnf {
@@ -487,11 +487,11 @@ pslbnf {
 
         pul_apply_funcwrap
     }
-};
+}
 
 // Basic object definition
 pslbnf {
-    plof_bind => plof_combine;
+    plof_bind => plof_combine
 
     plof_assign = plof_assign_next ":="w "\["w plof_obj_defs "\]" => {
         // get the left
@@ -553,7 +553,7 @@ pslbnf {
     plof_obj_defs = white => {
         {}
     }
-    plof_obj_defs => plof_obj_def;
+    plof_obj_defs => plof_obj_def
 
     plof_obj_def = plof_identifier "="w plof_bind_next => {
         {push0}

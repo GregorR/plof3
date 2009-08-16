@@ -23,10 +23,10 @@
  */
 
 var PCRE = Object : [
-    libpcre = C.dlopen("libpcre.so.0");
+    libpcre = C.dlopen("libpcre.so.0")
 
     // pcre_compile
-    pcre_compile_s = C.dlsym(libpcre, "pcre_compile");
+    pcre_compile_s = C.dlsym(libpcre, "pcre_compile")
     pcre_compile_c = C.prepcif(
         C.pointer,
         [[  C.pointer,
@@ -34,41 +34,41 @@ var PCRE = Object : [
             C.pointer,
             C.pointer,
             C.pointer ]],
-        0);
+        0)
     // returns [[ success, pointer or error string ]]
     compile = (pattern as String,
                options as Number) {
         // allocate space for the pattern and errptr
-        var c_pattern = C.calloc(pattern.length() + 1);
-        C.set(c_pattern, pattern);
-        var c_err = C.malloc(256);
-        var c_errptr = C.malloc(C.sizeof(C.pointer));
-        C.set(c_errptr, c_err);
-        var c_erroffset = C.malloc(C.sizeof(C.int));
+        var c_pattern = C.calloc(pattern.length() + 1)
+        C.set(c_pattern, pattern)
+        var c_err = C.malloc(256)
+        var c_errptr = C.malloc(C.sizeof(C.pointer))
+        C.set(c_errptr, c_err)
+        var c_erroffset = C.malloc(C.sizeof(C.int))
 
         // call compile
-        var ret;
+        var ret
         var cret = C.call(pcre_compile_c, pcre_compile_s,
                           [[c_pattern, options as NativeInteger,
                             c_errptr, c_erroffset,
-                            null]]);
+                            null]])
         if ((cret as Number) == 0) (
-            ret = [[Null, C.getstr(c_err)]];
+            ret = [[Null, C.getstr(c_err)]]
         ) else (
-            ret = [[cret, Null]];
-        );
+            ret = [[cret, Null]]
+        )
 
         // free everything
-        C.free(c_erroffset);
-        C.free(c_errptr);
-        C.free(c_err);
-        C.free(c_pattern);
+        C.free(c_erroffset)
+        C.free(c_errptr)
+        C.free(c_err)
+        C.free(c_pattern)
 
-        return ret;
-    };
+        return ret
+    }
 
     // pcre_exec
-    pcre_exec_s = C.dlsym(libpcre, "pcre_exec");
+    pcre_exec_s = C.dlsym(libpcre, "pcre_exec")
     pcre_exec_c = C.prepcif(
         C.int,
         [[  C.pointer,
@@ -79,7 +79,7 @@ var PCRE = Object : [
             C.int,
             C.pointer,
             C.int ]],
-        0);
+        0)
     // returns [[ success, pointer or error string ]]
     compile = (pattern as String,
                options as Number) {

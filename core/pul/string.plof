@@ -26,11 +26,11 @@
 // Strings are all String objects, which is currently a stub
 var String = Object : [
     this (intstring) {
-        this.__pul_val = intstring;
+        this.__pul_val = intstring
     }
 
     opEquals = (x) {
-        var xs = x as String;
+        var xs = x as String
         if (!(xs is null)) (
             return (opInteger(psl {
                     plof{this.__pul_val} pul_eval
@@ -63,3 +63,7 @@ var String = Object : [
         }
     }
 ]
+
+var print = (x as String) {
+    x.print()
+}

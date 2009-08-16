@@ -62,26 +62,26 @@ Object := [
             // didn't find it
             plof{return False} pul_eval
         }
-    };
+    }
 
     opAs = (type) {
         if (this is type) (
             // simple case
-            return this;
+            return this
         ) else if (!((var ret = this.opCastTo(type)) is Null)) (
-            return ret;
+            return ret
         ) else if (!((var ret = type.opCastFrom(this)) is Null)) (
-            return ret;
+            return ret
         ) else (
-            return Null;
-        );
-    };
+            return Null
+        )
+    }
 
     opCastTo = (type) {
         Null
-    };
+    }
 
     opCastFrom = (obj) {
         Null
-    };
+    }
 ]

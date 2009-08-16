@@ -24,7 +24,7 @@
 
 // basic math
 plofbnf {
-    plof_and => plof_equals;
+    plof_and => plof_equals
 
     plof_equals = plof_equals "=="w plof_equals_next => plof {
         $0.opEquals($2)
@@ -33,7 +33,7 @@ plofbnf {
         $0.opNEquals($2)
     }
     plof_equals = plof_equals_next => plof { $0 }
-    plof_equals => plof_cmp;
+    plof_equals => plof_cmp
 
     plof_cmp = plof_cmp "<"w plof_cmp_next => plof {
         $0.opLess($2)
@@ -48,7 +48,7 @@ plofbnf {
         $0.opGreaterEqual($2)
     }
     plof_cmp = plof_cmp_next => plof { $0 }
-    plof_cmp => plof_add;
+    plof_cmp => plof_add
 
     plof_add = plof_add "\+"w plof_add_next => plof {
         $0.opAdd($2)
@@ -57,7 +57,7 @@ plofbnf {
         $0.opSub($2)
     }
     plof_add = plof_add_next => plof { $0 }
-    plof_add => plof_mul;
+    plof_add => plof_mul
 
     plof_mul = plof_mul "\*"w plof_mul_next => plof {
         $0.opMul($2)
@@ -70,7 +70,7 @@ plofbnf {
     }
     plof_mul = plof_mul_next => plof { $0 }
 
-    plof_unop => plof_unopr;
+    plof_unop => plof_unopr
 
     plof_unopr = plof_unopr "\+\+" => plof {
         $0 = $0.opInc()
