@@ -222,7 +222,7 @@ var CData = Object : [
         ) else if (x is String) (
             return(this : (x as String))
         ) else (
-            return(psl { null })
+            return(Null)
         )
     }
 
@@ -235,7 +235,7 @@ var CData = Object : [
         ) else if (x is CPointer) (
             return(this : CPointer)
         ) else (
-            return(psl { null })
+            return(Null)
         )
     }
 ]

@@ -73,7 +73,7 @@ Object := [
         ) else if (!((var ret = type.opCastFrom(this)) is Null)) (
             return ret
         ) else (
-            return Null
+            throw (new OpAsException(this, type))
         )
     }
 
@@ -83,5 +83,16 @@ Object := [
 
     opCastFrom = (obj) {
         Null
+    }
+]
+
+// OpAsException is thrown when OpAs fails
+var OpAsException = Object : [
+    from = Null
+    tto = Null
+
+    this (from, tto) {
+        this.from = from
+        this.tto = tto
     }
 ]
