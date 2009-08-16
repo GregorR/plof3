@@ -1,0 +1,4 @@
+psl {
+    plof{"Hello".length().__pul_val} pul_eval
+    print
+}
