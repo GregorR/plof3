@@ -1,0 +1,89 @@
+/*
+ * I/O mediated by the CNFI
+ *
+ *  Copyright (c) 2009 Josiah Worcester
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to
+ *  deal in the Software without restriction, including without limitation the
+ *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *  sell copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *  IN THE SOFTWARE.
+ */
+
+C.__fopen = C.libc("fopen", C.pointer, [[C.pointer, C.pointer]]);
+C.__fputs = C.libc("fputs", C.int, [[ C.pointer, C.pointer ]]);
+C.__fread = C.libc("fread", C.pointer, [[ C.pointer, C.pointer, C.pointer, C.pointer ]]);
+C.__getline = C.libc("getline", C.pointer, [[ C.pointer, C.pointer, C.pointer ]]);
+C.__fclose = C.libc("fclose", C.int, [[C.pointer]]);
+C.__printfpp = C.libc("printf", C.int, [[C.pointer, C.pointer]]);
+
+var File = Handle : [
+    this (file as String, type as String) {
+        var c_file = C.calloc(file.length() + 1)
+        var c_type = C.calloc(type.length() + 1)
+        C.set c_file file
+        C.set c_type type
+
+        this.filepointer = C.__fopen([[c_file, c_type]])
+
+        C.free c_file
+        C.free c_type
+    }
+
+    filepointer = Null as CPointer
+
+    write = (x as String) {
+        var c_x = C.calloc(x.length() + 1)
+        C.set c_x x
+        var ret = C.__fputs([[c_x, this.filepointer]]) as NativeInteger
+        C.free c_x
+        return ret
+    };
+
+    read = (x as NativeInteger) {
+        var sz = x + 1
+        var c_data = C.calloc(x + 1)
+        var read_length = C.__fread([[ c_data, 1, x, this.filepointer]]) as NativeInteger
+        var ret = C.get(c_data, read_length) as String
+        C.free c_data
+        return ret
+    }
+
+    readLine = () {
+        Abstract()
+    }
+
+    close = () {
+        var ret = C.__fclose([[this.filepointer]]) as NativeInteger
+        this.filepointer = Null as CPointer
+        return ret
+    }
+];
+
+var Stdout = Handle : [
+    write = (x as String) {
+        var s = "%s"
+        var c_s = C.calloc(s.length() + 1)
+        var c_x = C.calloc(x.length() + 1)
+        C.set c_s s
+        C.set c_x x
+
+        var ret = C.__printfpp([[c_s, c_x]]) as NativeInteger
+
+        C.free c_s
+        C.free c_x
+        return ret
+    };
+];
