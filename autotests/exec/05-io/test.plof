@@ -1,0 +1,7 @@
+Stdout.write "Hello, world!\n"
+
+var f = new File("foo", "r")
+
+var s = f.read(2)
+Stdout.write (s)
+f.close()

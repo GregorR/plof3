@@ -21,11 +21,12 @@ STD_PSL_SOURCE=core/pul/object.plof \
                core/pul/number_g.plof core/pul/number.plof \
                core/pul/string_g.plof core/pul/string.plof \
                core/pul/collection_g.plof core/pul/collection.plof \
+	       core/pul/io.plof \
                core/pul/versions.plof \
                core/pul/nfi.plof
 
 # cnfi.psl is the C NFI, loaded by nfi.plof if CNFI is set
-CNFI_PSL_SOURCE=core/pul/cnfi.plof
+CNFI_PSL_SOURCE=core/pul/cnfi.plof core/pul/cio.plof
 
 all: cplof/src/cplof \
      plof_include/std.psl plof_include/debug/std.psl plof_include/debug/stddebug.psl \

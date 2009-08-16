@@ -11,7 +11,8 @@ label(interp_psl_cget);
         rd = GC_NEW_Z(struct PlofRawData);
         rd->type = PLOF_DATA_RAW;
         rd->length = ASINT(b);
-        rd->data = (unsigned char *) ASPTR(a);
+        rd->data = (unsigned char *) GC_MALLOC_ATOMIC(rd->length);
+        memcpy(rd->data, ASPTR(a), rd->length);
 
         c = GC_NEW_Z(struct PlofObject);
         c->parent = context;
