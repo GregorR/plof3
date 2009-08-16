@@ -22,12 +22,12 @@
  *  IN THE SOFTWARE.
  */
 
-C.__fopen = C.libc("fopen", C.pointer, [[C.pointer, C.pointer]]);
-C.__fputs = C.libc("fputs", C.int, [[ C.pointer, C.pointer ]]);
-C.__fread = C.libc("fread", C.pointer, [[ C.pointer, C.pointer, C.pointer, C.pointer ]]);
-C.__getline = C.libc("getline", C.pointer, [[ C.pointer, C.pointer, C.pointer ]]);
-C.__fclose = C.libc("fclose", C.int, [[C.pointer]]);
-C.__printfpp = C.libc("printf", C.int, [[C.pointer, C.pointer]]);
+C.__fopen = C.libc("fopen", C.pointer, [[C.pointer, C.pointer]])
+C.__fputs = C.libc("fputs", C.int, [[ C.pointer, C.pointer ]])
+C.__fread = C.libc("fread", C.pointer, [[ C.pointer, C.pointer, C.pointer, C.pointer ]])
+C.__getline = C.libc("getline", C.pointer, [[ C.pointer, C.pointer, C.pointer ]])
+C.__fclose = C.libc("fclose", C.int, [[C.pointer]])
+C.__printfpp = C.libc("printf", C.int, [[C.pointer, C.pointer]])
 
 var File = Handle : [
     this (file as String, type as String) {
@@ -50,7 +50,7 @@ var File = Handle : [
         var ret = C.__fputs([[c_x, this.filepointer]]) as NativeInteger
         C.free c_x
         return ret
-    };
+    }
 
     read = (x as NativeInteger) {
         var sz = x + 1
@@ -70,7 +70,7 @@ var File = Handle : [
         this.filepointer = Null as CPointer
         return ret
     }
-];
+]
 
 var Stdout = Handle : [
     write = (x as String) {
@@ -85,5 +85,5 @@ var Stdout = Handle : [
         C.free c_s
         C.free c_x
         return ret
-    };
-];
+    }
+]

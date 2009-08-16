@@ -34,6 +34,6 @@ var Handle = Object : [
     close = () {
         Abstract()
     }
-];
+]
 
 // provided by the NFI: Stdout, File(name, mode)
