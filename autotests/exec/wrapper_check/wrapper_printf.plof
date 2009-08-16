@@ -1,0 +1,10 @@
+var printf = C.libc("printf", C.int, [[C.pointer]])
+
+var print = (x as String) {
+    var c_x = C.calloc(x.length() + 1)
+    C.set c_x x
+    printf([[c_x]])
+    C.free c_x
+}
+
+print "Hello, world!\n"

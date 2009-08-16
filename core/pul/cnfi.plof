@@ -167,6 +167,12 @@ var C = Object : [
         return(ret)
     }
 
+    wrapper = (library as CPointer, function as String, returnType as NativeInteger, argTypes as Array) {
+    	var x_s = C.dlsym library function
+   	var x_c = C.prepcif returnType argTypes 0
+   	return (C.call x_c x_s)
+    }
+
     // types
     void = opInteger(psl { 0 ctype })
     int = opInteger(psl { 1 ctype })
@@ -241,15 +247,16 @@ var CData = Object : [
 ]
 
 // convenient wrappers
-C.calloc_s = C.dlsym(Null, "calloc")
-C.calloc_c = C.prepcif(C.pointer, [[C.pointer, C.pointer]], 0)
+C.libc = C.wrapper Null
+
+C.__calloc = C.libc("calloc", C.pointer, [[C.pointer, C.pointer]])
 C.calloc = (x as NativeInteger) {
-    C.call(C.calloc_c, C.calloc_s, [[x, 1]]) as CPointer
+    C.__calloc([[x, 1]]) as CPointer
 }
-C.strlen_s = C.dlsym(Null, "strlen")
-C.strlen_c = C.prepcif(C.pointer, [[C.pointer]], 0)
+
+C.__strlen = C.libc("strlen", C.pointer, [[C.pointer]])
 C.strlen = (x as CPointer) {
-    C.call(C.strlen_c, C.strlen_s, [[x]]) as Number
+    C.__strlen([[x]]) as Number
 }
 
 C.getstr = (x as CPointer) {
@@ -258,8 +265,7 @@ C.getstr = (x as CPointer) {
 }
 
 // things that need CNFI
-C.exit_s = C.dlsym(Null, "exit")
-C.exit_c = C.prepcif(C.pointer, [[]], 0)
-var exit = () {
-    C.call(C.exit_c, C.exit_s, [[]])
+C.__exit = C.libc("exit", C.void, [[C.int]])
+var exit = (x as NativeInteger) {
+    C.__exit([[x]]);
 }
