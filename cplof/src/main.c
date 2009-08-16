@@ -54,6 +54,8 @@ int main(int argc, char **argv)
     struct Buffer_psl compileBuf;
     char *compileFile;
 
+    struct PlofReturn plofRet;
+
     GC_INIT();
 
     /* get our search path */
@@ -193,7 +195,11 @@ int main(int argc, char **argv)
                 WRITE_BUFFER(compileBuf, psl.buf, psl.bufused);
             }
         } else {
-            interpretPSL(context, plofNull, NULL, psl.bufused, psl.buf, 0, 0);
+            plofRet = interpretPSL(context, plofNull, NULL, psl.bufused, psl.buf, 0, 0);
+            if (plofRet.isThrown) {
+                fprintf(stderr, "Plof threw up!\n");
+                return 1;
+            }
         }
     }
 
@@ -244,7 +250,10 @@ int main(int argc, char **argv)
             if (compileOnly) {
                 WRITE_BUFFER(compileBuf, psl.buf, psl.bufused);
             } else {
-                interpretPSL(context, plofNull, NULL, psl.bufused, psl.buf, 0, 0);
+                plofRet = interpretPSL(context, plofNull, NULL, psl.bufused, psl.buf, 0, 0);
+                if (plofRet.isThrown) {
+                    fprintf(stderr, "Plof threw up!\n");
+                }
             }
         }
     }
