@@ -90,8 +90,8 @@ void delProduction(const unsigned char *name)
 {
     /* find the relevant production */
     struct Production *curp = getProduction(name),
-	*curp_left = curp->left,
-	*curp_right = curp->right;
+                      *curp_left = curp->left,
+                      *curp_right = curp->right;
 
     /* and blank it */
     memset(curp, 0, sizeof(struct Production));

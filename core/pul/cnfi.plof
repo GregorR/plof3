@@ -169,9 +169,9 @@ var C = Object : [
     }
 
     wrapper = (library as CPointer, function as String, returnType as NativeInteger, argTypes as Array) {
-    	var x_s = C.dlsym library function
-   	var x_c = C.prepcif returnType argTypes 0
-   	return (C.call x_c x_s)
+        var x_s = C.dlsym library function
+        var x_c = C.prepcif returnType argTypes 0
+        return (C.call x_c x_s)
     }
 
     // types
@@ -235,8 +235,11 @@ var CData = Object : [
 
     opCastTo = (x) {
         if (x is Number) (
-            // this already has __pul_val, so accept it as-is
-            return(this : NativeInteger)
+            // the number might be in the wrong format, so convert
+            print "WARNING: CData casted to Integer; this conversion needs fixing!"
+            return(opInteger(psl {
+                plof{this.__pul_val} pul_eval 0 1 slice integer
+            }))
         ) else if (x is String) (
             return(this : String)
         ) else if (x is CPointer) (
