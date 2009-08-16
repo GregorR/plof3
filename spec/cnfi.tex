@@ -1,0 +1,40 @@
+\begin{longtable}{ | l | l | l | X | }
+\hline
+\textbf{Hex} & \textbf{Name} & \textbf{Stack behavior} & \textbf{Function} \\
+\hline\hline
+C1 & dlopen & 1 $\rightarrow$ 1 & Open a shared library. Pops a raw data object containing the name of the shared library and pushes a shared library handle, which is a pointer. If an error occurs, \textit{null} is pushed instead of a handle. \\
+\hline
+C2 & dlclose & 1 $\rightarrow$ 0 & Close a shared library. Pops a shared library handle, does not report errors. \\
+\hline
+C3 & dlsym & 2 $\rightarrow$ 1 & Resolves a symbol, optionally in a specific shared library. Pops a shared library handle and a raw data object containing the name of the symbol. The handle may be \textit{null}, in which case the symbol will be searched for in any loaded library. \\
+\hline
+C4 & cmalloc & 1 $\rightarrow$ 1 & Direct access to C's 'malloc' function. Pops an integer argument and pushes a pointer. If allocation fails, \textit{null} is pushed. \\
+\hline
+C5 & cfree & 1 $\rightarrow$ 0 & Direct access to C's 'free' function. Pops a pointer. \\
+\hline
+C6 & cget & 2 $\rightarrow$ 1 & Get the given amount of data from the given address. Pops a pointer and an integer number of bytes, pushes the data. \\
+\hline
+C7 & cset & 2 $\rightarrow$ 0 & Put the given data at the given address. Pops the address and the raw data, pushes nothing. Note that it is not necessary to push a size specifier, as the raw data object has a length implicitly. \\
+\hline
+C8 & ctype & 1 $\rightarrow$ 1 &
+Creates a representation of a basic C type. Pops an integer, pushes the type. The correlation: \\
+\hline
+C9 & cstruct & 1 $\rightarrow$ 1 & Create an aggregate (struct) type. Pops an array of types, pushes the resultant type. \\
+\hline
+CA & csizeof & 1 $\rightarrow$ 1 & Get the size in bytes of the provided type. Pops a type and pushes an integer. \\
+\hline
+CB & csget & 3 $\rightarrow$ 1 & Struct-get. Pops a struct type (created by cstruct), a structure (as raw data) and an integer component index, and pushes the element. \\
+\hline
+CC & csset & 4 $\rightarrow$ 0 & Struct-set. Pops a struct type, a structure, an integer index and a new value, and pushes the newly-modified struct. \\
+\hline
+CD & prepcif & 3 $\rightarrow$ 1 & Pops a return type, an array of argument types (which may be 0-length) and an integer ABI specifier (which may be 0 to use the default ABI, and is otherwise implementation-specific), and pushes a cif. \\
+\hline
+CE & ccall & 3 $\rightarrow$ 1 & Pops a cif, a pointer and an array of arguments, and pushes a return value. The arguments must all be raw data of the correct size, and the return will also be raw data. \\
+\hline
+\end{longtable}
+
+\begin{comment}
+0<span style="margin-left:;"/>void (useful for return types)
+1<span style="margin-left:;"/>int<br/><span style="margin-left:;"/>2<span style="margin-left:;"/>float<br/><span style="margin-left:;"/>3<span style="margin-left:;"/>double<br/><span style="margin-left:;"/>4<span style="margin-left:;"/>long double<br/><span style="margin-left:;"/>5<span style="margin-left:;"/>unsigned 8-bit int<br/><span style="margin-left:;"/>6<span style="margin-left:;"/>signed 8-bit int<br/><span style="margin-left:;"/>7<span style="margin-left:;"/>unsigned 16-bit int<br/><span style="margin-left:;"/>8<span style="margin-left:;"/>signed 16-bit int<br/><span style="margin-left:;"/>9<span style="margin-left:;"/>unsigned 32-bit int<br/><span style="margin-left:;"/>10<span style="margin-left:;"/>signed 32-bit int<br/><span style="margin-left:;"/>11<span style="margin-left:;"/>unsigned 64-bit int<br/><span style="margin-left:;"/>12<span style="margin-left:;"/>signed 64-bit int
+14<span style="margin-left:;"/>pointer (any type)<br/><span style="margin-left:;"/>24<span style="margin-left:;"/>unsigned char<br/><span style="margin-left:;"/>25<span style="margin-left:;"/>signed char<br/><span style="margin-left:;"/>26<span style="margin-left:;"/>unsigned short int<br/><span style="margin-left:;"/>27<span style="margin-left:;"/>signed short int<br/><span style="margin-left:;"/>28<span style="margin-left:;"/>unsigned int<br/><span style="margin-left:;"/>29<span style="margin-left:;"/>signed int<br/><span style="margin-left:;"/>30<span style="margin-left:;"/>unsigned long int<br/><span style="margin-left:;"/>31<span style="margin-left:;"/>signed long int<br/><span style="margin-left:;"/>32<span style="margin-left:;"/>unsigned long long int<br/><span style="margin-left:;"/>33<span style="margin-left:;"/>signed long long int
+\end{comment}

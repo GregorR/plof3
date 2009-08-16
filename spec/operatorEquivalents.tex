@@ -1,0 +1,22 @@
+\begin{longtable}{ | l | X | }
+\hline
+\textbf{Operator} & \textbf{Equivalence} \\
+\hline\hline
+\texttt{x < y} & \texttt{x.opCmp(y) < 0} \\
+\hline
+\texttt{x <= y} & \texttt{x.opCmp(y) <= 0} \\
+\hline
+\texttt{x > y} & \texttt{x.opCmp(y) > 0} \\
+\hline
+\texttt{x >= y} & \texttt{x.opCmp(y) >= 0} \\
+\hline
+\texttt{x as y} &
+Multiple steps:
+\begin{enumerate}
+\item If x is derived from y (determined by \texttt{opIs}), returns x.
+\item \texttt{x.opCastTo(y)}
+\item if \texttt{opCastTo} returned \textit{null}, \texttt{y.opCastFrom(x)}
+\item if \texttt{opCastFrom} returned \textit{null}, \textit{null}
+\end{enumerate} \\
+\hline
+\end{longtable}

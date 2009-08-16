@@ -1,0 +1,47 @@
+\chapter{Appendix A -- Primitive Types}
+
+To allow for a fast implementation, primitive data (integers and floats) may not be represented as an object in the same way as all other PSL objects. As such, most of the properties of primitive types are undefined, with the exceptions being those cases in which the spec explicitly states that integers or floats are used.
+
+Primitive data does not need to have a parent or support for members, nor does it need to be usable as raw data. Primitive data must be able to be a member of a true object. Because primitive data may not have a parent or members, the \textit{parent} and \textit{member} operations may return \textit{null}, the \textit{parentset} and \textit{memberset} operations may do nothing, and the result of the \textit{members}, \textit{combine} and \textit{resolve} operations are undefined when they would need to reference the members of primitive data.
+
+
+
+\chapter{Appendix B -- Unsupported Operations and Trap}
+
+A compliant PSL implementation may choose not to implement the following operations:
+
+\textit{parse}\footnote{Footnote: All conforming implementations must implement parse when the input is a PSL file. If the input is not a PSL file, they may call an emulation procedure.}, \textit{gadd}, \textit{grem}, \textit{gcommit}
+
+On such interpreters, these instructions will be trapped.
+
+The purpose of the \textit{trap} instruction is to allow these more complicated parts of PSL to be implemented in PSL or Plof. It pops a raw data argument and a procedure. The first argument is one byte long, the instruction to be trapped. The second argument will be called the “emulation procedure” in this appendix.
+
+From the point of the \textit{trap} instruction on, the instruction in the first argument \textit{may} be trapped. It will only be trapped if it is unsupported by the PSL interpreter. When the instruction is encountered by the PSL interpreter, if it is unsupported by the interpreter, it will call the emulation procedure instead of failing. The argument to the emulation procedure is an array, containing the arguments to the instruction (as defined in this specification). If the instruction pushes a result, the return from the procedure is that result; if not, the return from the procedure is ignored. When the emulating procedure finishes, execution continues normally.
+
+An implementation that fully supports all of the listed instructions will implement \textit{trap} as a no-op. As such, the user must assume that the emulation procedure may not actually be used. It is an error to call any unsupported operation before an associated \textit{trap} instruction.
+
+
+
+\chapter{Appendix C -- Version Specifiers}
+
+Implementations should use whatever version specifiers are appropriate. This is merely a list of suggestions.
+
+Architecture specifiers: ARM, MIPS, PowerPC, x86, x86\_64
+
+Kernel specifiers: Darwin, FreeBSD, HURD, Linux, NetBSD, OpenBSD, Solaris, Windows9x, WindowsNT
+
+Standard library specifiers: BSD, glibc, Mac OS X, Windows
+
+
+
+\chapter{Appendix D -- C Native Function Interface}
+
+Implementations written in C or languages compatible with C may provide the interface described in this appendix. If it is provided, the version specifier “CNFI” should be active. This interface is based on libffi, as provided with the GNU Compiler Collection, but may be implementable with other systems.
+
+To call a function with the Plof CNFI, you need its address, and you need a call interface specification, or 'cif', which is defined at runtime. The address of a function can be found using an interface similar to POSIX's dlfcn.h.
+
+CNFI also includes several new types of data which may be contained in Plof objects: pointers, C types and cifs. Exactly how they are implemented is intentionally unspecified, and user code must not rely on their organization. CNFI also includes pointers, but pointers are merely integers.
+
+The operations that CNFI provides:
+
+\LTXtable{\linewidth}{cnfi.tex}
