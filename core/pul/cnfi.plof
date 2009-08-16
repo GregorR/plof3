@@ -28,17 +28,15 @@ pslbnf {
     pslOp = "dlopen" =>     { 193 byte }
     pslOp = "dlclose" =>    { 194 byte }
     pslOp = "dlsym" =>      { 195 byte }
-    pslOp = "cmalloc" =>    { 196 byte }
-    pslOp = "cfree" =>      { 197 byte }
-    pslOp = "cget" =>       { 198 byte }
-    pslOp = "cset" =>       { 199 byte }
-    pslOp = "ctype" =>      { 200 byte }
-    pslOp = "cstruct" =>    { 201 byte }
-    pslOp = "csizeof" =>    { 202 byte }
-    pslOp = "csget" =>      { 203 byte }
-    pslOp = "csset" =>      { 204 byte }
-    pslOp = "prepcif" =>    { 205 byte }
-    pslOp = "ccall" =>      { 206 byte }
+    pslOp = "cget" =>       { 196 byte }
+    pslOp = "cset" =>       { 197 byte }
+    pslOp = "ctype" =>      { 199 byte }
+    pslOp = "cstruct" =>    { 200 byte }
+    pslOp = "csizeof" =>    { 201 byte }
+    pslOp = "csget" =>      { 202 byte }
+    pslOp = "csset" =>      { 203 byte }
+    pslOp = "prepcif" =>    { 204 byte }
+    pslOp = "ccall" =>      { 205 byte }
 }
 
 // and their Plof equivalents
@@ -74,20 +72,6 @@ var C = Object : [
                 1 array
                 plof{opCPointer} pul_eval call
             } cmp
-        }
-    }
-
-    malloc = (sz as NativeInteger) {
-        opCPointer(psl {
-            plof{sz.__pul_val} pul_eval
-            cmalloc
-        })
-    }
-
-    free = (ptr as CPointer) {
-        psl {
-            plof{ptr.__pul_val} pul_eval
-            cfree null
         }
     }
 
@@ -253,9 +237,19 @@ var CData = Object : [
 // convenient wrappers
 C.libc = C.wrapper Null
 
+C.__malloc = C.libc("malloc", C.pointer, [[C.pointer]])
+C.malloc = (x as NativeInteger) {
+    C.__malloc([[x]]) as CPointer
+}
+
 C.__calloc = C.libc("calloc", C.pointer, [[C.pointer, C.pointer]])
 C.calloc = (x as NativeInteger) {
     C.__calloc([[x, 1]]) as CPointer
+}
+
+C.__free = C.libc("free", C.void, [[C.pointer]])
+C.free = (x as CPointer) {
+    C.__free([[x]])
 }
 
 C.__strlen = C.libc("strlen", C.pointer, [[C.pointer]])

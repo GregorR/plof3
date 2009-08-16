@@ -567,8 +567,6 @@ PASTProc pslToAST(ubyte[] psl)
             case psl_dlopen:
             case psl_dlclose:
             case psl_dlsym:
-            case psl_cmalloc:
-            case psl_cfree:
             case psl_cget:
             case psl_cset:
             case psl_ctype:

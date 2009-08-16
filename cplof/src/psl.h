@@ -95,17 +95,15 @@
 #define psl_dlopen    0xC1
 #define psl_dlclose   0xC2
 #define psl_dlsym     0xC3
-#define psl_cmalloc   0xC4
-#define psl_cfree     0xC5
-#define psl_cget      0xC6
-#define psl_cset      0xC7
-#define psl_ctype     0xC8
-#define psl_cstruct   0xC9
-#define psl_csizeof   0xCA
-#define psl_csget     0xCB
-#define psl_csset     0xCC
-#define psl_prepcif   0xCD
-#define psl_ccall     0xCE
+#define psl_cget      0xC4
+#define psl_cset      0xC5
+#define psl_ctype     0xC7
+#define psl_cstruct   0xC8
+#define psl_csizeof   0xC9
+#define psl_csget     0xCA
+#define psl_csset     0xCB
+#define psl_prepcif   0xCC
+#define psl_ccall     0xCD
 
 /* ctypes */
 #define psl_ctype_void          0

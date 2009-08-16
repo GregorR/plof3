@@ -183,7 +183,7 @@ struct ParseResult *packratParse(struct Production *production,
 
     /* choose the longest */
     longest = pr[0];
-    for (i = 1; pr[i]; i++) {
+    for (i = 0; pr[i]; i++) {
         if (pr[i]->consumedTo > longest->consumedTo)
             longest = pr[i];
     }

@@ -64,9 +64,13 @@ struct ParseResult {
     struct Production *production;
     struct ParseResult **subResults;
 
+    /* what was parsed */
     unsigned char *file;
     int sline, eline;
     int scol, ecol;
+
+    /* the latest failing production, if this was unsuccessful */
+    struct Production *failingProduction;
 
     /* the option chosen, for nondeterministic nonterminals */
     int choice;

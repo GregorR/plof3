@@ -92,8 +92,6 @@
 #include "impl/dlopen.c"
 #include "impl/dlclose.c"
 #include "impl/dlsym.c"
-#include "impl/cmalloc.c"
-#include "impl/cfree.c"
 #include "impl/cget.c"
 #include "impl/cset.c"
 #include "impl/ctype.c"

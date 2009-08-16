@@ -1480,44 +1480,6 @@ PSLObject interpret(ubyte[] psl, PSLStack stack, PSLObject context,
                     });
                     break;
 
-                case psl_cmalloc:
-                    use1((PSLObject a) {
-                        if (!a.isArray && a.raw !is null &&
-                            a.raw.data.length == ptrdiff_t.sizeof) {
-                            void* re = malloc(*(cast(ptrdiff_t*) a.raw.data.ptr));
-
-                            if (re is null) {
-                                push(pslNull);
-
-                            } else {
-                                PSLRawData rd = new PSLRawData(
-                                    (cast(ubyte*) &re)[0..(void*).sizeof]);
-                                PSLObject no = new PSLObject(context);
-                                no.raw = rd;
-                                push(no);
-
-                            }
-
-                        } else {
-                            throw new InterpreterFailure("cmalloc expects an integer operand.");
-
-                        }
-                    });
-                    break;
-
-                case psl_cfree:
-                    use1((PSLObject a) {
-                        if (!a.isArray && a.raw !is null &&
-                            a.raw.data.length == ptrdiff_t.sizeof) {
-                            free(*(cast(void**) a.raw.data.ptr));
-
-                        } else {
-                            throw new InterpreterFailure("cfree expects an integer operand.");
-
-                        }
-                    });
-                    break;
-
                 case psl_cget:
                     use2((PSLObject a, PSLObject b) {
                         if (!a.isArray && a.raw !is null &&

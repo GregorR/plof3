@@ -278,12 +278,6 @@ break;
 case psl_dlsym:
 fprintf(out, "dlsym\n");
 break;
-case psl_cmalloc:
-fprintf(out, "cmalloc\n");
-break;
-case psl_cfree:
-fprintf(out, "cfree\n");
-break;
 case psl_cget:
 fprintf(out, "cget\n");
 break;
