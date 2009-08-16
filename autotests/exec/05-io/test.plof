@@ -1,7 +1,27 @@
 Stdout.write "Hello, world!\n"
 
+var f = new File("foo", "w")
+
+f.write "Hello, world!\n"
+f.write "Line 2!\n"
+f.close()
+
 var f = new File("foo", "r")
 
-var s = f.read(2)
-Stdout.write (s)
+var s = f.read 2
+Stdout.write s
+f.close()
+
+var f = new File("foo", "r")
+
+var s = f.readLine()
+Stdout.write s
+var s = f.readLine()
+Stdout.write s
+f.close()
+
+var f = new File("foo", "r")
+
+var s = f.readFile()
+Stdout.write s
 f.close()

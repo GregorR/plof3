@@ -27,6 +27,7 @@ C.__fputs = C.libc("fputs", C.int, [[ C.pointer, C.pointer ]])
 C.__fread = C.libc("fread", C.pointer, [[ C.pointer, C.pointer, C.pointer, C.pointer ]])
 C.__getline = C.libc("getline", C.pointer, [[ C.pointer, C.pointer, C.pointer ]])
 C.__fclose = C.libc("fclose", C.int, [[C.pointer]])
+C.__feof = C.libc("feof", C.int, [[C.pointer]])
 C.__printfpp = C.libc("printf", C.int, [[C.pointer, C.pointer]])
 
 var File = Handle : [
@@ -62,7 +63,36 @@ var File = Handle : [
     }
 
     readLine = () {
-        Abstract()
+        var input = this.read 1
+        var ret = input
+        while (input != "\n") (
+            input = this.read 1
+            if (!this.eof()) (
+                ret = ret ~ input
+            ) else (
+                return ret
+            )
+        )
+        return ret
+    }
+
+    readFile = () {
+        var input = this.read 1
+        var ret = input
+        while (!this.eof()) (
+            input = this.read 1
+            ret = ret ~ input
+        )
+        return ret
+    }
+
+    eof = () {
+        var ret = C.__feof([[this.filepointer]]) as NativeInteger
+        if (ret == 0) (
+            return False
+        ) else (
+            return True
+        )
     }
 
     close = () {
