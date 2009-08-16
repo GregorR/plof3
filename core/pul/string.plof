@@ -52,7 +52,7 @@ var String = Object : [
     length = {
         opInteger(psl {
             plof{this.__pul_val} pul_eval
-            length
+            rawlength
         })
     }
 
