@@ -232,6 +232,8 @@ var CData = Object : [
             return(this : NativeInteger)
         ) else if (x is String) (
             return(this : String)
+        ) else if (x is CPointer) (
+            return(this : CPointer)
         ) else (
             return(psl { null })
         )
@@ -242,7 +244,7 @@ var CData = Object : [
 C.calloc_s = C.dlsym(Null, "calloc")
 C.calloc_c = C.prepcif(C.pointer, [[C.pointer, C.pointer]], 0)
 C.calloc = (x as NativeInteger) {
-    C.call(C.calloc_c, C.calloc_s, [[x, 1]])
+    C.call(C.calloc_c, C.calloc_s, [[x, 1]]) as CPointer
 }
 C.strlen_s = C.dlsym(Null, "strlen")
 C.strlen_c = C.prepcif(C.pointer, [[C.pointer]], 0)
