@@ -271,5 +271,5 @@ C.getstr = (x as CPointer) {
 // things that need CNFI
 C.__exit = C.libc("exit", C.void, [[C.int]])
 var exit = (x as NativeInteger) {
-    C.__exit([[x]]);
+    C.__exit([[x]])
 }

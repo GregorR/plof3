@@ -12,7 +12,7 @@ var Tree = Object : [
 
 var make_tree = (item, depth) {
     if (depth == 0) (
-        return (new Tree(item, Null, Null));
+        return (new Tree(item, Null, Null))
     )
 
     var item2 = item + item

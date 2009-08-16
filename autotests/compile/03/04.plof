@@ -47,7 +47,7 @@ plofbnf {
         psl { $0 pul_eval $2 pul_eval aconcat }
     }
 
-    plof_args_prime => plof_arg;
+    plof_args_prime => plof_arg
 
     plof_arg = plof_semicolon => plof {
         psl { $0 1 array }
@@ -150,7 +150,7 @@ plofbnf {
         {2 array} concat
     }
 
-    plof_params => plof_param;
+    plof_params => plof_param
 
 
     // type annotations to come later
@@ -173,7 +173,7 @@ plofbnf {
 
     plof_funcbody = white => { {} }
     plof_funcbody = plof_funcbody_next => plof { $0 }
-    plof_funcbody => plof_funcbody_prime;
+    plof_funcbody => plof_funcbody_prime
 
     plof_funcbody_prime = plof_semicolon => plof { $0 }
 

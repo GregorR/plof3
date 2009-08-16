@@ -3,6 +3,6 @@ var print2 = (a as String, b as String) {
     Debug.print(b)
 }
 
-print2("Foobar", "world");
-var c = print2("Hello");
-c("world");
+print2("Foobar", "world")
+var c = print2("Hello")
+c("world")
