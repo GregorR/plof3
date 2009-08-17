@@ -34,6 +34,10 @@ var File = Handle : [
     this (file as String, type as String) {
         var c_file = C.calloc(file.length() + 1)
         var c_type = C.calloc(type.length() + 1)
+        if (c_file == 0 || c_type == 0) (
+            exit 1
+        )
+
         C.set c_file file
         C.set c_type type
 
@@ -47,6 +51,10 @@ var File = Handle : [
 
     write = (x as String) {
         var c_x = C.calloc(x.length() + 1)
+        if (c_x == 0) (
+            exit 1
+        )
+
         C.set c_x x
         var ret = C.__fputs([[c_x, this.filepointer]]) as NativeInteger
         C.free c_x
@@ -56,6 +64,10 @@ var File = Handle : [
     read = (x as NativeInteger) {
         var sz = x + 1
         var c_data = C.calloc(x + 1)
+        if (c_data == 0) (
+            exit 1
+        )
+
         var read_length = C.__fread([[ c_data, 1, x, this.filepointer]]) as NativeInteger
         var ret = C.get(c_data, read_length) as String
         C.free c_data
@@ -88,11 +100,7 @@ var File = Handle : [
 
     eof = () {
         var ret = C.__feof([[this.filepointer]]) as NativeInteger
-        if (ret == 0) (
-            return False
-        ) else (
-            return True
-        )
+        return (ret != 0)
     }
 
     close = () {
@@ -107,6 +115,10 @@ var Stdout = Handle : [
         var s = "%s"
         var c_s = C.calloc(s.length() + 1)
         var c_x = C.calloc(x.length() + 1)
+        if (c_x == 0 || c_s == 0) (
+            exit 1
+        )
+
         C.set c_s s
         C.set c_x x
 
