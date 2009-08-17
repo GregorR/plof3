@@ -28,10 +28,13 @@ STD_PSL_SOURCE=core/pul/object.plof \
 # cnfi.psl is the C NFI, loaded by nfi.plof if CNFI is set
 CNFI_PSL_SOURCE=core/pul/cnfi.plof core/pul/cio.plof
 
+# nonfi.psl gives you Stdout.write even with no NFI
+NONFI_PSL_SOURCE=core/pul/nonfi.plof
+
 all: cplof/src/cplof \
      plof_include/std.psl plof_include/debug/std.psl plof_include/debug/stddebug.psl \
-     plof_include/cnfi.psl plof_include/debug/cnfi.psl
-#all: plof_include/std.psl plof_include/cnfi.psl
+     plof_include/cnfi.psl plof_include/debug/cnfi.psl \
+     plof_include/nonfi.psl plof_include/debug/nonfi.psl
 
 base.psl: $(BASE_PSL_SOURCE) $(PSLASM)
 	$(PSLASM) $(BASE_PSL_SOURCE) base.psl
@@ -60,6 +63,12 @@ plof_include/cnfi.psl: $(CNFI_PSL_SOURCE) plof_include/std.psl $(PLOF_REQ)
 plof_include/debug/cnfi.psl: $(CNFI_PSL_SOURCE) plof_include/debug/std.psl $(PLOF_REQ)
 	$(PLOF) --debug $(PLOF_FLAGS) $(CNFI_PSL_SOURCE) -o plof_include/debug/cnfi.psl
 
+plof_include/nonfi.psl: $(NONFI_PSL_SOURCE) plof_include/std.psl $(PLOF_REQ)
+	$(PLOF) $(PLOF_FLAGS) $(NONFI_PSL_SOURCE) -o plof_include/nonfi.psl
+
+plof_include/debug/nonfi.psl: $(NONFI_PSL_SOURCE) plof_include/std.psl $(PLOF_REQ)
+	$(PLOF) --debug $(PLOF_FLAGS) $(NONFI_PSL_SOURCE) -o plof_include/debug/nonfi.psl
+
 
 cplof/src/pslasm: cplof/src/cplof
 	true
@@ -81,4 +90,5 @@ clean:
 	rm -f base.psl pul.psl puldebug.psl \
 	    plof_include/std.psl plof_include/debug/std.psl \
 	    plof_include/debug/stddebug.psl \
-	    plof_include/cnfi.psl plof_include/debug/cnfi.psl
+	    plof_include/cnfi.psl plof_include/debug/cnfi.psl \
+	    plof_include/nonfi.psl plof_include/debug/nonfi.psl

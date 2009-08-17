@@ -1,8 +1,7 @@
 /*
- * The standard Plof string class.
+ * Interface for simple Stdout I/O with no NFI
  *
- *  Copyright (c) 2007, 2009  Gregor Richards
- *  Copyright (c) 2007  Josiah Worcester
+ *  Copyright (c) 2009  Gregor Richards
  *  
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,36 +22,11 @@
  *  IN THE SOFTWARE.
  */
 
-// Strings are all String objects, which is currently a stub
-var String = Object : [
-    this (intstring) {
-        this.__pul_val = intstring
-    }
-
-    opEquals = (x) {
-        var xs = x as String
-        if (!(xs is null)) (
-            return (opInteger(psl {
-                    plof{this.__pul_val} pul_eval
-                    plof{xs.__pul_val} pul_eval
-                    rawcmp
-                }) == 0)
-        )
-        return False
-    }
-
-    opConcat = (x as String) {
-        return (new String(psl {
-            plof{this.__pul_val} pul_eval
+var Stdout = Handle : [
+    write = (x as String) {
+        psl {
             plof{x.__pul_val} pul_eval
-            concat
-        }))
-    }
-
-    length = {
-        opInteger(psl {
-            plof{this.__pul_val} pul_eval
-            rawlength
-        })
+            print
+        }
     }
 ]
