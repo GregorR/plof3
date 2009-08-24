@@ -25,9 +25,9 @@
 
 \chapter{Overview}
 
-Plof is composed of a user-visible language which is parsed and compiled dynamically to a bytecode. An implementation of Plof must only support the bytecode and the flexible parsing framework; the user language is built entirely out of Plof code.
+Plof is composed of a user-visible language which is parsed and compiled dynamically to a bytecode. An implementation of Plof must only support the bytecode and the flexible parsing framework; the user language is built entirely from Plof code.
 
-The virtual machine runs a simple bytecode stack language, called the Plof Stack Language, or PSL, and code in the user language (the Plof User Language or simply Plof) is compiled using a runtime-defined grammar into PSL code. This specification will cover the details of PSL first. PSL is intended to be low-level, highly generatable, but also analyzable and optimizable.
+The virtual machine runs a simple bytecode stack language, called the Plof Stack Language, or PSL, and code in the user language (the Plof User Language or simply Plof) is compiled using a runtime-defined grammar into PSL code. This specification will cover the details of PSL first. PSL is intended to be low-level and highly generatable, but also analyzable and optimizable.
 
 The intermediary layer between these two is the Plof Runtime Parser (PRP), which is a flexible parsing and compiling framework, allowing the grammar being parsed and output code to be changed dynamically, at runtime. This allows Plof to be an extremely flexible language, with new features added to the language proper by libraries.
 

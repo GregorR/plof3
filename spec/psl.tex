@@ -1,6 +1,6 @@
 \chapter{Plof Stack Language}
 
-The Plof Stack Language is a simple bytecode. That is, every byte is a single operation, with two exceptions (\textit{raw} and \textit{immediate}) which will be covered below. PSL features dynamic objects and first-class procedures.
+The Plof Stack Language is a simple bytecode. That is, every byte is a single operation, with few exceptions (\textit{marker}, \textit{immediate}, \textit{code}, and \textit{raw}) which will be covered below. PSL features dynamic objects and first-class procedures.
 
 
 
@@ -12,7 +12,7 @@ The PSL stack contains an infinite number of \textit{null}s (see below), followe
 
 \section{Objects}
 
-Everything is an object in PSL, including both execution contexts and procedures. PSL's object system is fairly simple. Objects are all by-reference, empty objects can be created with the \textit{new} operation, and objects can be combined with the \textit{combine} operation. When combining objects, object members of the right-hand object override object members of the left-hand object. Object members can be accessed with the \textit{member} and \textit{memberset} operations, and their names are completely arbitrary: They can be anything representable as a string of bytes. The object \textit{null }is used as a marker in various situations, but it is otherwise just a normal object. All objects have a parent setting, which usually refers to the context in which the object was created, and can also be \textit{null}. \textit{this} is the name for the object representing the current context of execution at all times, and \textit{global} is a globally-accessible object meant for the (highly-discouraged) use of global data when necessary. \textit{null} is the parent of both \textit{global} and \textit{null} itself.
+Everything is an object in PSL, including both the current execution context and procedures. PSL's object system is fairly simple. Objects are all by-reference, empty objects can be created with the \textit{new} operation, and objects can be combined with the \textit{combine} operation. When combining objects, object members of the right-hand object override object members of the left-hand object. Object members can be accessed with the \textit{member} and \textit{memberset} operations, and their names are completely arbitrary: They can be anything representable as a string of bytes. The object \textit{null }is used as a marker in various situations, but it is otherwise just a normal object. All objects have a parent setting, which usually refers to the context in which the object was created, and can also be \textit{null}. \textit{this} is the name for the object representing the current context of execution at all times, and \textit{global} is a globally-accessible object meant for the (highly-discouraged) use of global data when necessary. \textit{null} is the parent of both \textit{global} and \textit{null} itself.
 
 PSL implementations should garbage collect. They may use whatever form of garbage collector is suitable; this specification does not cover the details of the GC.
 
@@ -32,7 +32,7 @@ Since PSL is bytecode, PSL instructions are representable within a PSL raw data 
 
 \subsection{Exceptions}
 
-PSL supports very simple exceptions. An object can be thrown with the \textit{throw} operation, and caught with the \textit{catch} operation. Because PSL is typeless, \textit{catch} will catch any object thrown. It is up to the programmer to determine whether the caught object can be handled properly.
+PSL supports very simple exceptions. Any object can be thrown with the \textit{throw} operation, and caught with the \textit{catch} operation. Because PSL is typeless, \textit{catch} will catch any object thrown. It is up to the programmer to determine whether the caught object can be handled properly.
 
 
 
@@ -42,9 +42,15 @@ Object in PSL which do not contain raw data can be arrays. The result of using r
 
 
 
+\section{Call stack}
+
+Every procedure call at runtime has its own stack and context object. The stack initially contains infinite \textit{null}s and the object passed as an argument when the procedure was called. When the procedure completes, the object on the top of its stack is returned, and the rest of its stack is discarded.
+
+
+
 \section{Operations}
 
-This is the list of all PSL operations. The column “Stack Behavior” indicates how many elements are popped from the stack and how many elements are pushed (in that order). In various operations, the function is described such as “pops A and B.” This means that A and B will be on the stack in that order; that is, A was pushed first, then B.
+This is the list of all PSL operations. The column ``Stack behavior'' indicates how many elements are popped from the stack and how many elements are pushed (in that order). In various operations, the function is described such as ``pops A and B.'' This means that A and B will be on the stack in that order; that is, A was pushed first, then B.
 
 
 
@@ -53,7 +59,7 @@ This is the list of all PSL operations. The column “Stack Behavior” indicate
 
 \subsection{Bignums}
 
-The \textit{raw} operation requires a bignum, an integer of arbitrary size. The bignum can be any number of bytes, and the most significant bit of every byte signifies whether another byte follows. If the most significant bit of a byte is 1, another byte follows, and the most significant bit is 0 for the last byte. The remaining bits form the number, in big endian format. So, for example, the number 12,345 (b11110001001000000) is:
+The \textit{raw} operation requires a bignum, an integer of arbitrary size. The bignum can be any number of bytes, and the most significant bit of every byte signifies whether another byte follows. If the most significant bit of a byte is 1, another byte follows, and the most significant bit is 0 for the last byte. The remaining bits form the number, in big endian format. For example, the number 12,345 (b11110001001000000) is:
 
 \noindent\texttt{10000111 11000100 01000000}
 

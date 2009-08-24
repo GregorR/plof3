@@ -6,7 +6,7 @@ The Plof User Language (called simply Plof, or PUL to differentiate it from the 
 
 \section{PUL ABI}
 
-Because PUL has some advanced features unsupported in PSL, many fundamental PUL operations compile to several PSL operations or procedures, and some constructs are represented in abstract ways.
+Because PUL has some advanced features not directly supported in PSL, many fundamental PUL operations compile to several PSL operations or procedures, and some constructs are represented in abstract ways.
 
 
 
@@ -40,13 +40,13 @@ Finally, there are several global functions to automatically convert functions a
 
 \subsection{Calling Convention}
 
-The arguments to a function are pushed onto the stack as an array. The function is expected to pop all of its local variables and the arguments, and push its return value. If it doesn't return a value, it should still push something, usually a null.
+The arguments to a function are pushed onto the stack as an array. The function is expected to push its return value.
 
 
 
 \section{Language}
 
-PUL is an extremely dynamic impure functional language with support for the imperative paradigm. Although imperative programming is well-supported, the language is lazy. The laziness, however, is diminished by the presence of statements and immediate assignment.
+PUL is an extremely dynamic impure functional language with support for the imperative paradigm. The language is lazy. The laziness, however, is diminished by the presence of statements and immediate assignment.
 
 The object system of PUL is prototype-based, but with additional properties allowing it to be used with annotations. This will be discussed in a later section.
 
@@ -54,7 +54,9 @@ The object system of PUL is prototype-based, but with additional properties allo
 
 \subsection{Grammar}
 
-The following is the grammar of PUL, roughly in BNF. The 'white' keyword which parses whitespace in the master grammar has been removed; suffice to say that the grammar parses whitespace before every token, as in C. Statements are terminated by a newline or semicolon. Whitespace elements in PUL are space, tab, carriage return, line feed and C-style and C++-style comments.
+The following is the grammar of PUL, roughly in BNF. The syntax \texttt{"regex"w} is used to represent that the regex will be parsed and expected to be followed by whitespace. Statements are terminated by a newline or semicolon. Whitespace elements in PUL are space, tab, carriage return and C-style and C++-style comments, as well as a backspace followed by a newline, to allow for multi-line statements.
+
+The syntax \texttt{A => B} is shorthand for \texttt{A\_next = B}. This style is used to allow other productions to be added into the grammar by code loaded later.
 
 The following is the base grammar as created by \texttt{pul\_g.plof} and \texttt{object\_g.plof}; other extensions to the grammar added by the standard library will be covered in later sections.
 
@@ -65,9 +67,6 @@ The following is the base grammar as created by \texttt{pul\_g.plof} and \texttt
 
     plof_statement = plof_statement_next eos
     plof_statement => plof_assign
-
-    // allow Plof in PSL
-    pslOp = "plof"w "\{"w plof_semicolon "\}"w
 
     plof_semicolon = plof_semicolon eos plof_semicolon_next
     plof_semicolon = plof_semicolon eos
@@ -93,7 +92,6 @@ The following is the base grammar as created by \texttt{pul\_g.plof} and \texttt
     plof_parens = plof_parens_next
     plof_parens => plof_literal
 
-    // none of these literals are actually literals (hm), but they're at the same precedence
     plof_literal = "psl"w "\{"w pslOps "\}"
     plof_literal = /\$/ number nnlwhite
     plof_literal = plof_literal_next
@@ -156,7 +154,6 @@ The following is the base grammar as created by \texttt{pul\_g.plof} and \texttt
     plof_funcbody_prime = plof_semicolon
 
 
-    // deep returns
     plof_group = "return"w plof_group_next
 
     plof_group = "\{"w plof_funcbody "\}"
@@ -170,7 +167,7 @@ The following is the base grammar as created by \texttt{pul\_g.plof} and \texttt
 
 \subsection{Basic Syntax}
 
-PUL's statements and expressions resemble those in most C-style languages. Statements are terminated by ';', and of course any number of statements may be listed consecutively. The precedence of all of the operators is described in the above grammar. Statements are implemented in a functional style; that is, semicolon-separated statements really just form an expression, and evaluation of that expression will result in evaluation of the left and right sides in order, evaluating to the value of the right side.
+PUL's statements and expressions resemble those in most C-style languages. The precedence of all of the operators is described in the above grammar. Statements are implemented in a functional style; that is, semicolon-separated statements really just form an expression, and evaluation of that expression will result in evaluation of the left and right sides in order, resulting in the value of the right side.
 
 Because PUL is lazy, several constructs have special meanings to allow eager evaluation. Statements are always evaluated eagerly, although the resultant value is not used. Note however that this does \textit{not} mean that every value used in the statement is evaluated. Whatever is necessary to attain a final value of the expression is evaluated, and that final value is discarded. The right-hand side of an assignment expression is also evaluated eagerly. All other cases are evaluated lazily, including notably arguments to functions.
 
@@ -178,7 +175,7 @@ Because PUL is lazy, several constructs have special meanings to allow eager eva
 
 \subsection{Variables}
 
-Variables may declared within any context with the \texttt{var} keyword. When first defined, a variable will have the value \textit{null}, so a \texttt{var} expression may be used as an l-value or an r-value. Variables may not be used without being declared. Variable assignment uses the '=' operator as in C-family languages, but '=' returns void, so chains like \texttt{a = b = c} do not function as they do in most C-family languages.
+Variables may declared within any context with the \texttt{var} keyword. When first defined, a variable will have the value \textit{null}, so a \texttt{var} expression may be used as an l-value or an r-value. Variables may not be used without being declared. Variable assignment uses the '=' operator as in C-family languages, but '=' returns \textit{null}, so chains like \texttt{a = b = c} do not function as they do in most C-family languages.
 
 
 
@@ -210,8 +207,8 @@ Objects are defined by the syntax \texttt{Super : [...]}, where 'Super' is the p
 
 \begin{verbatim}
 var O = Object : [
-    x = 3;
-    y = 4;
+    x = 3
+    y = 4
 ]
 \end{verbatim}
 
@@ -219,7 +216,7 @@ var O = Object : [
 
 Fields may be functions (the syntax of which is defined later), creating methods, but methods are in no other way different from other fields. Field definitions may refer to previous fields but not later ones, as the fields will be evaluated in the order that they appear.
 
->Every object contains a special field, \texttt{\_\_pul\_type}, which contains an array of objects which this object is derived from, then itself. The ordering of \texttt{\_\_pul\_type} is well-defined, as an object definition will always simply append one element to the \texttt{\_\_pul\_type} of the parent. \texttt{opIs} implements type-checking by simply comparing its parameter with every element in \texttt{\_\_pul\_type}. If any match, the type-check succeeds.
+Every object contains a special field, \texttt{\_\_pul\_type}, which contains an array of objects which this object is derived from, then itself. The ordering of \texttt{\_\_pul\_type} is well-defined, as an object definition will always simply append one element to the \texttt{\_\_pul\_type} of the parent. \texttt{opIs} implements type-checking by simply comparing its parameter with every element in \texttt{\_\_pul\_type}. If any match, the type-check succeeds.
 
 
 

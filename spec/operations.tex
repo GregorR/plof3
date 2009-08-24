@@ -2,7 +2,7 @@
 \hline
 \textbf{Hex} & \textbf{Name} & \textbf{Stack behavior} & \textbf{Function} \\
 \hline\hline
-00-07 & push0-push7 & 0 $\rightarrow$ 1 & Push\textit{n} pushes the \textit{n}th element of the stack onto the top of the stack. e.g., for the stack:
+00-07 & push0-push7 & 0 $\rightarrow$ 1 & push\textit{n} pushes the \textit{n}th element of the stack onto the top of the stack. e.g., for the stack:
 
 original stack: a, b, c
 
@@ -22,7 +22,7 @@ after push2: a, b, c, a \\
 \hline
 0D & combine & 2 $\rightarrow$ 1 & \input{operations/combine.tex} \\
 \hline
-0E & member & 2 $\rightarrow$ 1 & Get a member from an object. Pops the object then the name of the member from the stack, and pushes the member object. \\
+0E & member & 2 $\rightarrow$ 1 & Get a member from an object. Pops the object then the name of the member as raw data from the stack, and pushes the member object. \\
 \hline
 0F & memberset & 3 $\rightarrow$ 0 & Set a member in an object. Pops the object, the name of the member and the new member object from the stack. \\
 \hline
@@ -38,17 +38,17 @@ Set the parent of an object. Pops two objects, sets the parent of the first to t
 \hline
 13 & return & (special) & Return from the current procedure. \\
 \hline
-14 & throw & (special) & Throw an object. Pops the object to be thrown. Everything on the stack which was pushed by contexts which are unwound is popped. \\
+14 & throw & (special) & Throw an object. Pops the object to be thrown. Everything on the stack which was pushed by contexts which are unwound is discarded. \\
 \hline
-15 & catch & 3 $\rightarrow$ 1 & Catch an object. Pops two procedures. The first procedure is called. If an exception is thrown, all of the objects pushed onto the stack by the first procedure are popped, the thrown object is pushed, and the second procedure is called. \\
+15 & catch & 3 $\rightarrow$ 1 & Catch an object. Pops two procedures. The first procedure is called. If an exception is thrown, the stack of the called procedure is discarded, and the second procedure is called with the thrown object as an argument. \\
 \hline
-16 & cmp & 5 $\rightarrow$ 1 & Compare two objects and branch based on their equality. Pops two objects and two procedures. If the two objects are equal, the first procedure is called, otherwise the second procedure is called. \\
+16 & cmp & 5 $\rightarrow$ 1 & Compare two objects and branch based on their equality. Pops an argument object, two objects to compare and two procedures. If the two objects are referentially equal, the first procedure is called, otherwise the second procedure is called. \\
 \hline
 17 & concat & 2 $\rightarrow$ 1 & Concatenate the raw data in two objects. Pops the two objects, and pushes a new object. The raw data of the two objects are concatenated into the new object. The new object does not have any members, and its parent is set to the current context object. \\
 \hline
-18 & wrap & 2 $\rightarrow$ 1 & Wrap raw data in an operation to push it, outputting a raw data object containing PSL code. Pops two raw data objects, the first with the data to be wrapped and the second with the operation it should be wrapped in, and pushes a raw data object. \\
+18 & wrap & 2 $\rightarrow$ 1 & Wrap raw data in an operation to push it, outputting a raw data object containing PSL code. Pops two raw data objects, the first with the data to be wrapped and the second with the one-byte PSL instruction it should be wrapped in, and pushes a raw data object. \\
 \hline
-19 & resolve & 2 $\rightarrow$ 2 & Find an object with a given member. Pops an object and a name or array of names. Given only a single name (as raw data), finds the nearest parent of the object with the given name as a member with a value other than \textit{null}. Given multiple names (as an array of raw data objects), finds the nearest parent of the object with \textit{any} of the given names. Pushes the found object and found name. If no object/name combo is found, pushes \textit{null} twice. \\
+19 & resolve & 2 $\rightarrow$ 2 & Find an object with a given member. Pops an object and a name or array of names. Given only a single name (as raw data), finds the nearest parent of the object with the given name as a member with a value other than \textit{null}. Given multiple names (as an array of raw data objects), finds the nearest parent of the object with any of the given names. Pushes the found object and found name. If no object/name combo is found, pushes two \textit{null}s. \\
 \hline
 1A & while & 3 $\rightarrow$ 1 & \input{operations/while.tex} \\
 \hline
@@ -56,7 +56,7 @@ Set the parent of an object. Pops two objects, sets the parent of the first to t
 \hline
 1C & replace & 2 $\rightarrow$ 1 & Replace markers with raw data in raw data. Pops a raw data object and an array of raw data objects. In the first argument, markers associated with the index of each element of the second argument are replaced with the data in the same index. That is, a marker with the (one-byte) value 0 will be replaced with the first element in the array. This is done with PSL code in mind: That is, if a marker is replaced within a \textit{code} operation, its length will be updated correctly. Markers are not replaced within \textit{raw} operations. The parent of the pushed object is the parent of the first raw data operand. \\
 \hline
-20 & array & >0 $\rightarrow$ 1 & Creates an array from elements on the stack. The top element on the stack should be an integer (see the \textit{integer} operation), the length of the array. The length is popped, and the appropriate number of elements are popped below it, and added to the array. They will appear in the array in the order that they appear in on the stack, which is of course the order in which they were pushed. The parent of the array is set to the current context object. \\
+20 & array & $>0$ $\rightarrow$ 1 & Creates an array from elements on the stack. The top element on the stack should be an integer (see the \textit{integer} operation), the length of the array. The length is popped, and the appropriate number of elements are popped below it, and added to the array. They will appear in the array in the order that they appear in on the stack, which is of course the order in which they were pushed. The parent of the array is set to the current context object. \\
 \hline
 21 & aconcat & 2 $\rightarrow$ 1 & Identical to \textit{concat}, but for arrays. \\
 \hline
@@ -90,7 +90,7 @@ Set the parent of an object. Pops two objects, sets the parent of the first to t
 \hline
 77 & sub & 2 $\rightarrow$ 1 & Integer subtract. \\
 \hline
-78 & lt & 5 $\rightarrow$ 1 & Pops two integers and two procedures. If the first integer is less than the second integer, the first procedure is called, otherwise the second procedure is called. \\
+78 & lt & 5 $\rightarrow$ 1 & Pops an argument object, two integers and two procedures. If the first integer is less than the second integer, the first procedure is called, otherwise the second procedure is called. \\
 \hline
 79 & lte & 5 $\rightarrow$ 1 & Less than or equal to. \\
 \hline
@@ -118,7 +118,7 @@ Set the parent of an object. Pops two objects, sets the parent of the first to t
 \hline
 85 & nand & 2 $\rightarrow$ 1 & Bitwise nand. \\
 \hline
-8E & byte & 1 $\rightarrow$ 1 & Convert an integer modulo 256 to a single raw byte. Pops the integer as raw data and pushes the byte as raw data. \\
+8E & byte & 1 $\rightarrow$ 1 & Convert an integer modulo 256 to a single raw byte. Pops the integer and pushes the byte as raw data. \\
 \hline
 90 & float & 1 $\rightarrow$ 1 & Converts an integer into the most efficient floating point form of the host. Pops an integer, pushes a float. Like integers, floating point numbers are only defined over their own range (91-AF), so they can be implemented by whatever means is most efficient. \\
 \hline

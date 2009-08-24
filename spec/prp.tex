@@ -15,6 +15,6 @@ add = digit => { push0 0 index }
 
 The parser must support self-referencing left-recursive productions such as \texttt{A = A /b/}, but not more complex left-recursive productions such as \texttt{A = B /b/ ; B = A /a/}.
 
-Regular expression targets will parse greedily. If they contain any parenthesized parts, they will consume only up to the end of the first parenthesized part, otherwise the entire matching substring is consumed. The result of a regular expression, returned to the production using it, is PSL code to parse the consumed string as a raw data object. Because the parser's terminals are regular expressions, no tokenization step is necessary in parsing.
+Regular expression targets will parse greedily. If they contain any parenthesized parts, they will consume only up to the end of the first parenthesized part, otherwise the entire matching substring is consumed. The result of a regular expression, returned to the production using it, is PSL code to produce the consumed string as a raw data object. Because the parser's terminals are regular expressions, no tokenization step is necessary in parsing.
 
 The Plof interpreter parses code by repeatedly applying the production named ``top'' to the remaining input code. As such, the ``top'' production should parse one top-level statement or declaration of the target language. The interpreter's grammar should contain no productions at startup, so precompiled PSL code is required to initialize the parser.
