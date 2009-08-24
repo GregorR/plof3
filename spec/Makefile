@@ -11,7 +11,7 @@ a4book.pdf: hgversion
 
 hgversion:
 	hg id | sed 's/_/\\_/g' > hgversion.tex
-	hg log -l 1 --template='{date|date}' . > hgdate.tex
+	date --date="`hg log -l 1 --template='{date|isodate}' .`" +'%d %B %Y' > hgdate.tex
 
 .SUFFIXES: .tex .pdf
 
