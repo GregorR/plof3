@@ -1,4 +1,6 @@
-\chapter{Appendix A -- Primitive Types}
+\appendix
+
+\chapter{Primitive Types}
 
 To allow for a fast implementation, primitive data (integers and floats) may not be represented as an object in the same way as all other PSL objects. As such, most of the properties of primitive types are undefined, with the exceptions being those cases in which the spec explicitly states that integers or floats are used.
 
@@ -6,7 +8,7 @@ Primitive data does not need to have a parent or support for members, nor does i
 
 
 
-\chapter{Appendix B -- Unsupported Operations and Trap}
+\chapter{Unsupported Operations and Trap}
 
 A compliant PSL implementation may choose not to implement the following operations:
 
@@ -22,7 +24,7 @@ An implementation that fully supports all of the listed instructions will implem
 
 
 
-\chapter{Appendix C -- Version Specifiers}
+\chapter{Version Specifiers}
 
 Implementations should use whatever version specifiers are appropriate. This is merely a list of suggestions.
 
@@ -34,7 +36,7 @@ Standard library specifiers: BSD, glibc, Mac OS X, Windows
 
 
 
-\chapter{Appendix D -- C Native Function Interface}
+\chapter{C Native Function Interface}
 
 Implementations written in C or languages compatible with C may provide the interface described in this appendix. If it is provided, the version specifier “CNFI” should be active. This interface is based on libffi, as provided with the GNU Compiler Collection, but may be implementable with other systems.
 
