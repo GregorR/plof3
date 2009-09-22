@@ -7,6 +7,8 @@ label(interp_psl_cget);
     BINARY;
 
     if (ISPTR(a) && ISINT(b)) {
+        struct PlofObject *otmp;
+
         /* construct a raw data object */
         rd = GC_NEW_Z(struct PlofRawData);
         rd->type = PLOF_DATA_RAW;
@@ -14,11 +16,11 @@ label(interp_psl_cget);
         rd->data = (unsigned char *) GC_MALLOC_ATOMIC(rd->length);
         memcpy(rd->data, ASPTR(a), rd->length);
 
-        c = GC_NEW_Z(struct PlofObject);
-        c->parent = context;
-        c->data = (struct PlofData *) rd;
+        otmp = GC_NEW_Z(struct PlofObject);
+        otmp->parent = context;
+        otmp->data = (struct PlofData *) rd;
 
-        STACK_PUSH(c);
+        STACK_PUSH(otmp);
 
     } else {
         BADTYPE("cget");

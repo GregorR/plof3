@@ -14,6 +14,7 @@ label(interp_psl_ccall);
         int i;
         size_t sz;
         ptrdiff_t val;
+        struct PlofObject *otmp;
 
         cif = (ffi_cif_plus *) ASPTR(a);
         func = (void(*)()) ASPTR(b);
@@ -92,11 +93,11 @@ label(interp_psl_ccall);
         rd->type = PLOF_DATA_RAW;
         rd->length = cif->rtype->size;
         rd->data = ret;
-        a = GC_NEW_Z(struct PlofObject);
-        a->parent = context;
-        a->data = (struct PlofData *) rd;
+        otmp = GC_NEW_Z(struct PlofObject);
+        otmp->parent = context;
+        otmp->data = (struct PlofData *) rd;
 
-        STACK_PUSH(a);
+        STACK_PUSH(otmp);
 
     } else {
         BADTYPE("ccall");

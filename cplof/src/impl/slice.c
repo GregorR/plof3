@@ -5,6 +5,7 @@ label(interp_psl_slice);
         size_t start = ASINT(b);
         size_t end = ASINT(c);
         struct PlofRawData *ra = RAW(a);
+        struct PlofObject *otmp;
 
         /* make sure we're in bounds */
         if (start >= ra->length)
@@ -20,10 +21,10 @@ label(interp_psl_slice);
         rd->length = end - start;
         rd->data = ra->data + start;
 
-        a = GC_NEW_Z(struct PlofObject);
-        a->parent = context;
-        a->data = (struct PlofData *) rd;
-        STACK_PUSH(a);
+        otmp = GC_NEW_Z(struct PlofObject);
+        otmp->parent = context;
+        otmp->data = (struct PlofData *) rd;
+        STACK_PUSH(otmp);
     } else {
         BADTYPE("slice");
         STACK_PUSH(plofNull);

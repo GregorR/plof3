@@ -3,6 +3,7 @@ label(interp_psl_replace);
     BINARY;
     if (ISRAW(a) && ISARRAY(b)) {
         size_t i;
+        struct PlofObject *otmp;
 
         ad = ARRAY(b);
 
@@ -18,10 +19,10 @@ label(interp_psl_replace);
         rd = pslReplace(RAW(a), ad);
 
         /* and put it in an object */
-        b = GC_NEW_Z(struct PlofObject);
-        b->parent = a->parent;
-        b->data = (struct PlofData *) rd;
-        STACK_PUSH(b);
+        otmp = GC_NEW_Z(struct PlofObject);
+        otmp->parent = a->parent;
+        otmp->data = (struct PlofData *) rd;
+        STACK_PUSH(otmp);
 
     } else {
         BADTYPE("replace");

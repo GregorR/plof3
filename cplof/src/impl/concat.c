@@ -3,6 +3,7 @@ label(interp_psl_concat);
     BINARY;
     if (ISRAW(a) && ISRAW(b)) {
         struct PlofRawData *ra, *rb;
+        struct PlofObject *otmp;
 
         ra = RAW(a);
         rb = RAW(b);
@@ -14,11 +15,11 @@ label(interp_psl_concat);
         memcpy(rd->data, ra->data, ra->length);
         memcpy(rd->data + ra->length, rb->data, rb->length);
 
-        a = GC_NEW_Z(struct PlofObject);
-        a->parent = context;
-        a->data = (struct PlofData *) rd;
+        otmp = GC_NEW_Z(struct PlofObject);
+        otmp->parent = context;
+        otmp->data = (struct PlofData *) rd;
 
-        STACK_PUSH(a);
+        STACK_PUSH(otmp);
 
     } else {
         BADTYPE("concat");

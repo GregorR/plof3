@@ -4,8 +4,10 @@ label(interp_psl_while);
 
     if (ISRAW(b) && ISRAW(c)) {
         struct PlofReturn ret;
+        struct PlofObject *otmp;
 
         /* now run the loop */
+        otmp = a;
         while (1) {
             ret = interpretPSL(b->parent, plofNull, b, 0, NULL, 1, 0);
             
@@ -16,16 +18,16 @@ label(interp_psl_while);
             }
 
             /* condition succeeded, run the code */
-            ret = interpretPSL(c->parent, a, c, 0, NULL, 1, 0);
+            ret = interpretPSL(c->parent, otmp, c, 0, NULL, 1, 0);
 
             if (ret.isThrown) {
                 return ret;
             }
 
-            a = ret.ret;
+            otmp = ret.ret;
         }
 
-        STACK_PUSH(a);
+        STACK_PUSH(otmp);
 
     } else {
         BADTYPE("while");

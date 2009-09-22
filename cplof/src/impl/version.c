@@ -2,6 +2,7 @@ label(interp_psl_version);
     DEBUG_CMD("version");
     {
         size_t i;
+        struct PlofObject *otmp;
         ad = GC_NEW_Z(struct PlofArrayData);
         ad->type = PLOF_DATA_ARRAY;
 
@@ -12,11 +13,11 @@ label(interp_psl_version);
             rd->length = strlen(str); \
             rd->data = (unsigned char *) str; \
             \
-            a = GC_NEW_Z(struct PlofObject); \
-            a->parent = context; \
-            a->data = (struct PlofData *) rd; \
+            otmp = GC_NEW_Z(struct PlofObject); \
+            otmp->parent = context; \
+            otmp->data = (struct PlofData *) rd; \
             \
-            ad->data[i++] = a; \
+            ad->data[i++] = otmp; \
         }
 
         ad->data = (struct PlofObject **) GC_MALLOC(VERSION_MAX * sizeof(struct PlofObject *));
@@ -96,9 +97,9 @@ label(interp_psl_version);
 
         /* Finally, put it in an object */
         ad->length = i;
-        a = GC_NEW_Z(struct PlofObject);
-        a->parent = context;
-        a->data = (struct PlofData *) ad;
-        STACK_PUSH(a);
+        otmp = GC_NEW_Z(struct PlofObject);
+        otmp->parent = context;
+        otmp->data = (struct PlofData *) ad;
+        STACK_PUSH(otmp);
     }
     STEP;

@@ -4,6 +4,7 @@ label(interp_psl_resolve);
     {
         int i;
         size_t *hashes;
+        struct PlofObject *otmp, *otmpb;
 
         if (!ISOBJ(a) || !ISOBJ(b)) {
             /* FIXME */
@@ -35,24 +36,25 @@ label(interp_psl_resolve);
         }
 
         /* now try to find a match */
-        b = plofNull;
-        while (a && a != plofNull) {
+        otmpb = plofNull;
+        otmp = a;
+        while (otmp && otmp != plofNull) {
             for (i = 0; i < ad->length; i++) {
                 rd = RAW(ad->data[i]);
-                b = plofRead(a, rd->length, rd->data, hashes[i]);
-                if (b != plofNull) {
+                otmpb = plofRead(otmp, rd->length, rd->data, hashes[i]);
+                if (otmpb != plofNull) {
                     /* done */
-                    STACK_PUSH(a);
+                    STACK_PUSH(otmp);
                     STACK_PUSH(ad->data[i]);
-                    a = plofNull;
+                    otmp = plofNull;
                     break;
                 }
             }
 
-            a = a->parent;
+            otmp = otmp->parent;
         }
 
-        if (b == plofNull) {
+        if (otmpb == plofNull) {
             /* didn't find one */
             STACK_PUSH(plofNull);
             STACK_PUSH(plofNull);

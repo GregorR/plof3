@@ -3,6 +3,7 @@ label(interp_psl_aconcat);
     BINARY;
     {
         struct PlofArrayData *aa, *ba, *ra;
+        struct PlofObject *otmp;
         size_t al, bl, rl;
         aa = ba = ra = NULL;
         al = bl = rl = 0;
@@ -37,10 +38,10 @@ label(interp_psl_aconcat);
             memcpy(ra->data + al, ba->data, bl * sizeof(struct PlofObject *));
 
         /* now put it in an object */
-        a = GC_NEW_Z(struct PlofObject);
-        a->parent = context;
-        a->data = (struct PlofData *) ra;
-        STACK_PUSH(a);
+        otmp = GC_NEW_Z(struct PlofObject);
+        otmp->parent = context;
+        otmp->data = (struct PlofData *) ra;
+        STACK_PUSH(otmp);
     }
     STEP;
 

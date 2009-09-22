@@ -7,6 +7,7 @@ label(interp_psl_include);
         unsigned char **path, *file, *data;
         FILE *fh;
         size_t rdb, bufsz, bufi;
+        struct PlofObject *otmp;
 
         rd = RAW(a);
 
@@ -47,11 +48,11 @@ label(interp_psl_include);
             rd->length = bufi;
             rd->data = (unsigned char *) data;
 
-            a = GC_NEW_Z(struct PlofObject);
-            a->parent = context;
-            a->data = (struct PlofData *) rd;
+            otmp = GC_NEW_Z(struct PlofObject);
+            otmp->parent = context;
+            otmp->data = (struct PlofData *) rd;
 
-            STACK_PUSH(a);
+            STACK_PUSH(otmp);
         }
 
     } else {

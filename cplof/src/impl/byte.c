@@ -3,6 +3,7 @@ label(interp_psl_byte);
     UNARY;
     if (ISINT(a)) {
         ptrdiff_t val = ASINT(a);
+        struct PlofObject *otmp;
 
         /* prepare the new value */
         rd = (struct PlofRawData *) GC_NEW_Z(struct PlofRawData);
@@ -12,10 +13,10 @@ label(interp_psl_byte);
         rd->data[0] = (unsigned char) (val & 0xFF);
 
         /* and push it */
-        a = (struct PlofObject *) GC_NEW_Z(struct PlofObject);
-        a->parent = context;
-        a->data = (struct PlofData *) rd;
-        STACK_PUSH(a);
+        otmp = (struct PlofObject *) GC_NEW_Z(struct PlofObject);
+        otmp->parent = context;
+        otmp->data = (struct PlofData *) rd;
+        STACK_PUSH(otmp);
     } else {
         BADTYPE("byte");
         STACK_PUSH(plofNull);

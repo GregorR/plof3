@@ -4,6 +4,7 @@ label(interp_psl_array);
     {
         size_t length = 0;
         ptrdiff_t stacki, arri;
+        struct PlofObject *otmp;
         length = stacki = arri = 0;
 
         if (ISINT(a)) {
@@ -34,10 +35,10 @@ label(interp_psl_array);
         }
 
         /* then just put it in an object */
-        a = GC_NEW_Z(struct PlofObject);
-        a->parent = context;
-        a->data = (struct PlofData *) ad;
-        STACK_PUSH(a);
+        otmp = GC_NEW_Z(struct PlofObject);
+        otmp->parent = context;
+        otmp->data = (struct PlofData *) ad;
+        STACK_PUSH(otmp);
     }
     STEP;
 

@@ -4,6 +4,7 @@ label(interp_psl_wrap);
     if (ISRAW(a) && ISRAW(b)) {
         size_t bignumsz;
         struct PlofRawData *ra, *rb;
+        struct PlofObject *otmp;
 
         ra = RAW(a);
         rb = RAW(b);
@@ -29,10 +30,10 @@ label(interp_psl_wrap);
         memcpy(rd->data + 1 + bignumsz, ra->data, ra->length);
 
         /* then push it */
-        a = GC_NEW_Z(struct PlofObject);
-        a->parent = context;
-        a->data = (struct PlofData *) rd;
-        STACK_PUSH(a);
+        otmp = GC_NEW_Z(struct PlofObject);
+        otmp->parent = context;
+        otmp->data = (struct PlofData *) rd;
+        STACK_PUSH(otmp);
 
     } else {
         BADTYPE("wrap");

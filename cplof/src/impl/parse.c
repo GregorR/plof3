@@ -4,6 +4,7 @@ label(interp_psl_parse);
 
     if (ISRAW(a) && ISRAW(b) && ISRAW(c)) {
         struct PlofRawData *retrd;
+        struct PlofObject *otmp;
 
         rd = RAW(a);
 
@@ -39,10 +40,10 @@ label(interp_psl_parse);
         }
 
         /* and push the resulting data */
-        a = GC_NEW_Z(struct PlofObject);
-        a->parent = context;
-        a->data = (struct PlofData *) retrd;
-        STACK_PUSH(a);
+        otmp = GC_NEW_Z(struct PlofObject);
+        otmp->parent = context;
+        otmp->data = (struct PlofData *) retrd;
+        STACK_PUSH(otmp);
 
     } else {
         BADTYPE("parse");
