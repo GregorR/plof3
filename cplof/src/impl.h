@@ -96,7 +96,7 @@ if ((rd)->hash) { \
     rd->data = (unsigned char *) GC_NEW(ptrdiff_t); \
     *((ptrdiff_t *) rd->data) = _val; \
     \
-    newo = GC_NEW_Z(struct PlofObject); \
+    newo = newPlofObject(); \
     newo->parent = context; \
     newo->data = (struct PlofData *) rd; \
     STACK_PUSH(newo); \

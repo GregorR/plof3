@@ -191,7 +191,7 @@ struct PlofReturn interpretPSL(
         /* allocate our stuff */
         lstacklen = 8;
         lstackcur = 0;
-        lstack = GC_MALLOC(lstacklen * sizeof(struct Leaky));
+        lstack = GC_MALLOC_ATOMIC(lstacklen * sizeof(struct Leaky));
         cpsl = GC_MALLOC(cpsllen * sizeof(void*));
 
         /* now go through the PSL and translate it into compiled PSL */
@@ -618,6 +618,9 @@ struct PlofOHashTable *plofHashtableNew(size_t namelen, unsigned char *name, siz
     nht->value = value;
     return nht;
 }
+
+static int pocreated = 0;
+static int podeleted = 0;
 
 /* Allocate a PlofObject */
 struct PlofObject *newPlofObject() {

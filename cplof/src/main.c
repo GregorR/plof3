@@ -134,13 +134,13 @@ int main(int argc, char **argv)
     INIT_BUFFER(compileBuf);
     
     /* Initialize null and global */
-    plofNull = GC_NEW_Z(struct PlofObject);
+    plofNull = newPlofObject();
     plofNull->parent = plofNull;
-    plofGlobal = GC_NEW_Z(struct PlofObject);
+    plofGlobal = newPlofObject();
     plofGlobal->parent = plofGlobal;
 
     /* And the context */
-    context = GC_NEW_Z(struct PlofObject);
+    context = newPlofObject();
     context->parent = plofNull;
 
     /* load in the files */

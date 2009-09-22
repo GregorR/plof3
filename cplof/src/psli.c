@@ -119,13 +119,13 @@ int main(int argc, char **argv)
     }
 
     /* Initialize null and global */
-    plofNull = GC_NEW_Z(struct PlofObject);
+    plofNull = newPlofObject();
     plofNull->parent = plofNull;
-    plofGlobal = GC_NEW_Z(struct PlofObject);
+    plofGlobal = newPlofObject();
     plofGlobal->parent = plofGlobal;
 
     /* And the context */
-    context = GC_NEW_Z(struct PlofObject);
+    context = newPlofObject();
     context->parent = plofNull;
 
     /* Now interp */

@@ -178,7 +178,7 @@ struct PlofObject *parseHelper(unsigned char *code, struct ParseResult *pr)
     }
 
     /* put the array in an object */
-    obj = GC_NEW_Z(struct PlofObject);
+    obj = newPlofObject();
     obj->parent = plofNull;
     obj->data = (struct PlofData *) ad;
 
@@ -219,7 +219,7 @@ struct PlofObject *parseHelper(unsigned char *code, struct ParseResult *pr)
         rd->type = PLOF_DATA_RAW;
         rd->length = psl.bufused;
         rd->data = psl.buf;
-        ret = GC_NEW_Z(struct PlofObject);
+        ret = newPlofObject();
         ret->parent = plofNull;
         ret->data = (struct PlofData *) rd;
 
@@ -281,7 +281,7 @@ struct PlofObject *parseHelper(unsigned char *code, struct ParseResult *pr)
             rd->type = PLOF_DATA_RAW;
             rd->length = psl.bufused;
             rd->data = psl.buf;
-            obj = GC_NEW_Z(struct PlofObject);
+            obj = newPlofObject();
             obj->parent = ret->parent;
             obj->data = (struct PlofData *) rd;
             ret = obj;
