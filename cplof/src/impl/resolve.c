@@ -5,6 +5,7 @@ label(interp_psl_resolve);
         int i;
         size_t *hashes;
         struct PlofObject *otmp, *otmpb;
+        int freeArray;
 
         if (!ISOBJ(a) || !ISOBJ(b)) {
             /* FIXME */
@@ -17,15 +18,17 @@ label(interp_psl_resolve);
         /* get an array of names regardless */
         if (ISARRAY(b)) {
             ad = ARRAY(b);
+            freeArray = 0;
         } else {
-            ad = GC_NEW_Z(struct PlofArrayData);
-            ad->type = PLOF_DATA_ARRAY;
+            ad = newPlofArrayData(1);
 
             if (ISRAW(b)) {
-                ad->length = 1;
-                ad->data = (struct PlofObject **) GC_MALLOC(sizeof(struct PlofObject *));
                 ad->data[0] = b;
+            } else {
+                ad->data[0] = plofNull;
             }
+
+            freeArray = 1;
         }
 
         /* hash them all */
@@ -59,6 +62,8 @@ label(interp_psl_resolve);
             STACK_PUSH(plofNull);
             STACK_PUSH(plofNull);
         }
+
+        if (freeArray) freePlofArrayData(ad);
     }
     STEP;
 

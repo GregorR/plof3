@@ -9,14 +9,9 @@ label(interp_psl_wrap);
         ra = RAW(a);
         rb = RAW(b);
 
-        /* create the new rd */
-        rd = GC_NEW_Z(struct PlofRawData);
-        rd->type = PLOF_DATA_RAW;
-
         /* figure out how much space is needed */
         bignumsz = pslBignumLength(ra->length);
-        rd->length = 1 + bignumsz + ra->length;
-        rd->data = (unsigned char *) GC_MALLOC_ATOMIC(rd->length);
+        rd = newPlofRawData(1 + bignumsz + ra->length);
 
         /* copy in the instruction */
         if (rb->length >= 1) {

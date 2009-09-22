@@ -8,13 +8,11 @@ label(interp_psl_cget);
 
     if (ISPTR(a) && ISINT(b)) {
         struct PlofObject *otmp;
+        size_t len = ASINT(b);
 
         /* construct a raw data object */
-        rd = GC_NEW_Z(struct PlofRawData);
-        rd->type = PLOF_DATA_RAW;
-        rd->length = ASINT(b);
-        rd->data = (unsigned char *) GC_MALLOC_ATOMIC(rd->length);
-        memcpy(rd->data, ASPTR(a), rd->length);
+        rd = newPlofRawData(len);
+        memcpy(rd->data, ASPTR(a), len);
 
         otmp = newPlofObject();
         otmp->parent = context;

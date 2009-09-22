@@ -31,6 +31,7 @@
 #include "bignum.h"
 #include "buffer.h"
 #include "helpers.h"
+#include "memory.h"
 #include "packrat.h"
 #include "plof.h"
 #include "psl.h"
@@ -167,13 +168,12 @@ struct PlofObject *parseHelper(unsigned char *code, struct ParseResult *pr)
     struct PlofRawData *rd;
     struct PlofArrayData *ad;
     struct PlofObject *obj, *ret;
+    size_t len;
 
     /* produce an array from the sub-results */
-    ad = GC_NEW_Z(struct PlofArrayData);
-    ad->type = PLOF_DATA_ARRAY;
-    for (ad->length = 0; pr->subResults && pr->subResults[ad->length]; ad->length++);
-    ad->data = (struct PlofObject **) GC_MALLOC(ad->length * sizeof(struct PlofObject *));
-    for (i = 0; i < ad->length; i++) {
+    for (len = 0; pr->subResults && pr->subResults[len]; len++);
+    ad = newPlofArrayData(len);
+    for (i = 0; i < len; i++) {
         ad->data[i] = parseHelper(code, pr->subResults[i]);
     }
 
@@ -215,10 +215,8 @@ struct PlofObject *parseHelper(unsigned char *code, struct ParseResult *pr)
         WRITE_BUFFER(psl, code + pr->consumedFrom, pr->consumedTo - pr->consumedFrom);
 
         /* and put it in an object */
-        rd = GC_NEW_Z(struct PlofRawData);
-        rd->type = PLOF_DATA_RAW;
-        rd->length = psl.bufused;
-        rd->data = psl.buf;
+        rd = newPlofRawData(psl.bufused);
+        memcpy(rd->data, psl.buf, psl.bufused);
         ret = newPlofObject();
         ret->parent = plofNull;
         ret->data = (struct PlofData *) rd;
@@ -277,10 +275,8 @@ struct PlofObject *parseHelper(unsigned char *code, struct ParseResult *pr)
             WRITE_BUFFER(psl, rd->data, rd->length);
 
             /* now recreate the data */
-            rd = GC_NEW_Z(struct PlofRawData);
-            rd->type = PLOF_DATA_RAW;
-            rd->length = psl.bufused;
-            rd->data = psl.buf;
+            rd = newPlofRawData(psl.bufused);
+            memcpy(rd->data, psl.buf, psl.bufused);
             obj = newPlofObject();
             obj->parent = ret->parent;
             obj->data = (struct PlofData *) rd;

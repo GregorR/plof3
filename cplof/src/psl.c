@@ -60,6 +60,7 @@ typedef struct _ffi_cif_plus {
 #include "impl.h"
 #include "jump.h"
 #include "leaky.h"
+#include "memory.h"
 #include "plof.h"
 #include "psl.h"
 #include "pslfile.h"
@@ -209,23 +210,24 @@ struct PlofReturn interpretPSL(
 
             /* maybe it has raw data */
             if (cmd >= psl_marker) {
-                raw = GC_NEW_Z(struct PlofRawData);
-                raw->type = PLOF_DATA_RAW;
+                size_t len;
 
                 psli++;
-                psli += pslBignumToInt(psl + psli, (size_t *) &raw->length);
+                psli += pslBignumToInt(psl + psli, (size_t *) &len);
 
                 /* make sure this doesn't go off the edge */
-                if (psli + raw->length > psllen) {
+                if (psli + len > psllen) {
                     fprintf(stderr, "Bad data in PSL!\n");
-                    raw->length = psllen - psli;
+                    len = psllen - psli;
                 }
 
+                /* set up the PlofRawData */
+                raw = newPlofRawData(len);
+
                 /* copy it in */
-                raw->data = (unsigned char *) GC_MALLOC_ATOMIC(raw->length + 1);
                 memcpy(raw->data, psl + psli, raw->length);
-                raw->data[raw->length] = '\0';
-                psli += raw->length - 1;
+
+                psli += len - 1;
 
                 cpsl[cpsli + 1] = raw;
             } else {
@@ -337,6 +339,7 @@ struct PlofReturn interpretPSL(
 
         /* and save it */
         if (pslraw && !immediate) {
+            ((struct PlofRawData *) pslraw->data)->idl = cpsli + 2;
             ((struct PlofRawData *) pslraw->data)->idata = cpsl;
         }
     }
@@ -413,10 +416,8 @@ struct PlofObjects plofMembersSub(struct PlofOHashTable *of)
     ret.data = (struct PlofObject **) GC_MALLOC(ret.length * sizeof(struct PlofObject *));
 
     /* and the object */
-    rd = GC_NEW_Z(struct PlofRawData);
-    rd->type = PLOF_DATA_RAW;
-    rd->length = of->namelen;
-    rd->data = of->name;
+    rd = newPlofRawData(of->namelen);
+    memcpy(rd->data, of->name, of->namelen);
     obj = newPlofObject();
     obj->parent = plofNull; /* FIXME */
     obj->data = (struct PlofData *) rd;
@@ -436,6 +437,7 @@ struct PlofArrayData *plofMembers(struct PlofObject *of)
     struct PlofArrayData *ad;
     int i, off;
     struct PlofObjects eachobjs[PLOF_HASHTABLE_SIZE];
+    size_t len;
 
     /* get out the members */
     for (i = 0; i < PLOF_HASHTABLE_SIZE; i++) {
@@ -443,11 +445,9 @@ struct PlofArrayData *plofMembers(struct PlofObject *of)
     }
 
     /* and combine them into the output */
-    ad = GC_NEW_Z(struct PlofArrayData);
-    ad->type = PLOF_DATA_ARRAY;
-    ad->length = 0;
-    for (i = 0; i < PLOF_HASHTABLE_SIZE; i++) ad->length += eachobjs[i].length;
-    ad->data = (struct PlofObject **) GC_MALLOC(ad->length * sizeof(struct PlofObject *));
+    len = 0;
+    for (i = 0; i < PLOF_HASHTABLE_SIZE; i++) len += eachobjs[i].length;
+    ad = newPlofArrayData(len);
 
     off = 0;
     for (i = 0; i < PLOF_HASHTABLE_SIZE; i++) {
@@ -463,21 +463,20 @@ struct PlofArrayData *plofMembers(struct PlofObject *of)
 /* Implementation of 'replace' */
 struct PlofRawData *pslReplace(struct PlofRawData *in, struct PlofArrayData *with)
 {
-    size_t i, retalloc;
-    struct PlofRawData *ret = GC_NEW_Z(struct PlofRawData);
-    struct PlofRawData *wr;
-    ret->type = PLOF_DATA_RAW;
+    size_t i, retalloc, bufused;
+    struct PlofRawData *ret, *wr;
+    unsigned char *buf;
 
     /* preallocate some space */
     retalloc = in->length;
-    ret->length = 0;
-    ret->data = (unsigned char *) GC_MALLOC_ATOMIC(retalloc);
+    bufused = 0;
+    buf = (unsigned char *) malloc(retalloc);
 
     /* auto-reallocation */
 #define SPACEFOR(n) \
-    while (ret->length + (n) > retalloc) { \
+    while (bufused + (n) > retalloc) { \
         retalloc *= 2; \
-        ret->data = (unsigned char *) GC_REALLOC(ret->data, retalloc); \
+        buf = (unsigned char *) realloc(buf, retalloc); \
     }
 
     /* go through the commands in 'in' ... */
@@ -487,14 +486,15 @@ struct PlofRawData *pslReplace(struct PlofRawData *in, struct PlofArrayData *wit
 
         /* get out the data */
         if (cmd >= psl_marker) {
-            data = GC_NEW_Z(struct PlofRawData);
+            size_t datalen;
 
             i++;
-            i += pslBignumToInt(in->data + i, (size_t *) &data->length);
-            if (i + data->length > in->length) {
-                data->length = in->length - i;
+            i += pslBignumToInt(in->data + i, (size_t *) &datalen);
+            if (i + datalen > in->length) {
+                datalen = in->length - i;
             }
-            data->data = in->data + i;
+            data = newPlofRawData(datalen);
+            memcpy(data->data, in->data + i, datalen);
             i += data->length - 1;
         }
 
@@ -515,8 +515,8 @@ struct PlofRawData *pslReplace(struct PlofRawData *in, struct PlofArrayData *wit
                 SPACEFOR(wr->length);
 
                 /* copy it in */
-                memcpy(ret->data + ret->length, wr->data, wr->length);
-                ret->length += wr->length;
+                memcpy(buf + bufused, wr->data, wr->length);
+                bufused += wr->length;
             }
 
         } else if (cmd == psl_code) {
@@ -532,28 +532,34 @@ struct PlofRawData *pslReplace(struct PlofRawData *in, struct PlofArrayData *wit
             SPACEFOR(1 + bignumlen + sub->length);
 
             /* then copy it all in */
-            ret->data[ret->length] = cmd;
-            pslIntToBignum(ret->data + ret->length + 1, sub->length, bignumlen);
-            memcpy(ret->data + ret->length + 1 + bignumlen, sub->data, sub->length);
-            ret->length += 1 + bignumlen + sub->length;
+            buf[bufused] = cmd;
+            pslIntToBignum(buf + bufused + 1, sub->length, bignumlen);
+            memcpy(buf + bufused + 1 + bignumlen, sub->data, sub->length);
+            bufused += 1 + bignumlen + sub->length;
+            freePlofRawData(sub);
 
         } else if (cmd > psl_marker) {
             /* rewrite it */
             size_t bignumlen = pslBignumLength(data->length);
             SPACEFOR(1 + bignumlen + data->length);
-            ret->data[ret->length] = cmd;
-            pslIntToBignum(ret->data + ret->length + 1, data->length, bignumlen);
-            memcpy(ret->data + ret->length + 1 + bignumlen, data->data, data->length);
-            ret->length += 1 + bignumlen + data->length;
+            buf[bufused] = cmd;
+            pslIntToBignum(buf + bufused + 1, data->length, bignumlen);
+            memcpy(buf + bufused + 1 + bignumlen, data->data, data->length);
+            bufused += 1 + bignumlen + data->length;
 
         } else {
             /* just write out the command */
             SPACEFOR(1);
-            ret->data[ret->length++] = cmd;
+            buf[bufused++] = cmd;
 
         }
+
+        if (data) freePlofRawData(data);
     }
 
+    ret = newPlofRawData(bufused);
+    memcpy(ret->data, buf, bufused);
+    free(buf);
     return ret;
 }
 
@@ -606,40 +612,11 @@ void plofWrite(struct PlofObject *obj, size_t namelen, unsigned char *name, size
 struct PlofOHashTable *plofHashtableNew(size_t namelen, unsigned char *name, size_t namehash, struct PlofObject *value)
 {
     unsigned char *namedup;
-    struct PlofOHashTable *nht = GC_NEW_Z(struct PlofOHashTable);
+    struct PlofOHashTable *nht = newPlofOHashTable(namelen);
     nht->hashedName = namehash;
-    nht->namelen = namelen;
-
-    namedup = GC_MALLOC_ATOMIC(namelen + 1);
-    memcpy(namedup, name, namelen);
-    namedup[namelen] = '\0';
-
-    nht->name = namedup;
+    memcpy(nht->name, name, namelen);
     nht->value = value;
     return nht;
-}
-
-static int pocreated = 0;
-static int podeleted = 0;
-
-/* Allocate a PlofObject */
-struct PlofObject *newPlofObject() {
-    struct PlofObject *ret;
-    if (plofFreeList) {
-        ret = plofFreeList;
-        plofFreeList = plofFreeList->parent;
-        ret->parent = NULL;
-    } else {
-        ret = GC_NEW_Z(struct PlofObject);
-    }
-    return ret;
-}
-
-/* Free a PlofObject (optional) */
-void freePlofObject(struct PlofObject *tofree) {
-    memset(tofree, 0, sizeof(struct PlofObject));
-    tofree->parent = plofFreeList;
-    plofFreeList = tofree;
 }
 
 /* GC on DJGPP is screwy */
@@ -650,4 +627,3 @@ void vsnprintf() {}
 /* Null and global */
 struct PlofObject *plofNull = NULL;
 struct PlofObject *plofGlobal = NULL;
-struct PlofObject *plofFreeList = NULL;

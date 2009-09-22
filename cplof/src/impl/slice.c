@@ -1,6 +1,7 @@
 label(interp_psl_slice);
     DEBUG_CMD("slice");
     TRINARY;
+    printf("SLICE IS BROKEN\n");
     if (ISRAW(a) && ISINT(b) && ISINT(c)) {
         size_t start = ASINT(b);
         size_t end = ASINT(c);
