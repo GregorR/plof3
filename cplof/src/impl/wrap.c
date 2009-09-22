@@ -30,7 +30,7 @@ label(interp_psl_wrap);
         memcpy(rd->data + 1 + bignumsz, ra->data, ra->length);
 
         /* then push it */
-        otmp = GC_NEW_Z(struct PlofObject);
+        otmp = newPlofObject();
         otmp->parent = context;
         otmp->data = (struct PlofData *) rd;
         STACK_PUSH(otmp);

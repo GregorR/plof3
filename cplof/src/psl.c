@@ -143,7 +143,7 @@ struct PlofReturn interpretPSL(
 
     /* Perhaps generate the context */
     if (generateContext) {
-        a = GC_NEW_Z(struct PlofObject);
+        a = newPlofObject();
         a->parent = context;
         context = a;
     }
@@ -417,7 +417,7 @@ struct PlofObjects plofMembersSub(struct PlofOHashTable *of)
     rd->type = PLOF_DATA_RAW;
     rd->length = of->namelen;
     rd->data = of->name;
-    obj = GC_NEW_Z(struct PlofObject);
+    obj = newPlofObject();
     obj->parent = plofNull; /* FIXME */
     obj->data = (struct PlofData *) rd;
 
@@ -619,6 +619,25 @@ struct PlofOHashTable *plofHashtableNew(size_t namelen, unsigned char *name, siz
     return nht;
 }
 
+/* Allocate a PlofObject */
+struct PlofObject *newPlofObject() {
+    struct PlofObject *ret;
+    if (plofFreeList) {
+        ret = plofFreeList;
+        plofFreeList = plofFreeList->parent;
+        ret->parent = NULL;
+    } else {
+        ret = GC_NEW_Z(struct PlofObject);
+    }
+    return ret;
+}
+
+/* Free a PlofObject (optional) */
+void freePlofObject(struct PlofObject *tofree) {
+    memset(tofree, 0, sizeof(struct PlofObject));
+    tofree->parent = plofFreeList;
+    plofFreeList = tofree;
+}
 
 /* GC on DJGPP is screwy */
 #ifdef __DJGPP__
@@ -628,3 +647,4 @@ void vsnprintf() {}
 /* Null and global */
 struct PlofObject *plofNull = NULL;
 struct PlofObject *plofGlobal = NULL;
+struct PlofObject *plofFreeList = NULL;

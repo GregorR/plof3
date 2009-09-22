@@ -93,7 +93,7 @@ label(interp_psl_ccall);
         rd->type = PLOF_DATA_RAW;
         rd->length = cif->rtype->size;
         rd->data = ret;
-        otmp = GC_NEW_Z(struct PlofObject);
+        otmp = newPlofObject();
         otmp->parent = context;
         otmp->data = (struct PlofData *) rd;
 

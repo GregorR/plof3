@@ -35,7 +35,7 @@ label(interp_psl_array);
         }
 
         /* then just put it in an object */
-        otmp = GC_NEW_Z(struct PlofObject);
+        otmp = newPlofObject();
         otmp->parent = context;
         otmp->data = (struct PlofData *) ad;
         STACK_PUSH(otmp);

@@ -13,7 +13,7 @@ label(interp_psl_version);
             rd->length = strlen(str); \
             rd->data = (unsigned char *) str; \
             \
-            otmp = GC_NEW_Z(struct PlofObject); \
+            otmp = newPlofObject(); \
             otmp->parent = context; \
             otmp->data = (struct PlofData *) rd; \
             \
@@ -97,7 +97,7 @@ label(interp_psl_version);
 
         /* Finally, put it in an object */
         ad->length = i;
-        otmp = GC_NEW_Z(struct PlofObject);
+        otmp = newPlofObject();
         otmp->parent = context;
         otmp->data = (struct PlofData *) ad;
         STACK_PUSH(otmp);

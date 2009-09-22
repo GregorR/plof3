@@ -13,7 +13,7 @@ label(interp_psl_byte);
         rd->data[0] = (unsigned char) (val & 0xFF);
 
         /* and push it */
-        otmp = (struct PlofObject *) GC_NEW_Z(struct PlofObject);
+        otmp = (struct PlofObject *) newPlofObject();
         otmp->parent = context;
         otmp->data = (struct PlofData *) rd;
         STACK_PUSH(otmp);

@@ -21,7 +21,7 @@ label(interp_psl_slice);
         rd->length = end - start;
         rd->data = ra->data + start;
 
-        otmp = GC_NEW_Z(struct PlofObject);
+        otmp = newPlofObject();
         otmp->parent = context;
         otmp->data = (struct PlofData *) rd;
         STACK_PUSH(otmp);

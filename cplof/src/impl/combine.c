@@ -13,7 +13,7 @@ label(interp_psl_combine);
         struct PlofObject *newo;
 
         /* start making the new object */
-        newo = GC_NEW_Z(struct PlofObject);
+        newo = newPlofObject();
         newo->parent = b->parent;
     
         /* duplicate the left object */

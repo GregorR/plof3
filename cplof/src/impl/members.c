@@ -4,7 +4,7 @@ label(interp_psl_members);
     if (ISOBJ(a)) {
         struct PlofObject *otmp;
         ad = plofMembers(a);
-        otmp = GC_NEW_Z(struct PlofObject);
+        otmp = newPlofObject();
         otmp->parent = context;
         otmp->data = (struct PlofData *) ad;
         STACK_PUSH(otmp);

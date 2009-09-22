@@ -40,7 +40,7 @@ label(interp_psl_parse);
         }
 
         /* and push the resulting data */
-        otmp = GC_NEW_Z(struct PlofObject);
+        otmp = newPlofObject();
         otmp->parent = context;
         otmp->data = (struct PlofData *) retrd;
         STACK_PUSH(otmp);

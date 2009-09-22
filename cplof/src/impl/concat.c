@@ -15,7 +15,7 @@ label(interp_psl_concat);
         memcpy(rd->data, ra->data, ra->length);
         memcpy(rd->data + ra->length, rb->data, rb->length);
 
-        otmp = GC_NEW_Z(struct PlofObject);
+        otmp = newPlofObject();
         otmp->parent = context;
         otmp->data = (struct PlofData *) rd;
 

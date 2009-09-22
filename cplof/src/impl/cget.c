@@ -16,7 +16,7 @@ label(interp_psl_cget);
         rd->data = (unsigned char *) GC_MALLOC_ATOMIC(rd->length);
         memcpy(rd->data, ASPTR(a), rd->length);
 
-        otmp = GC_NEW_Z(struct PlofObject);
+        otmp = newPlofObject();
         otmp->parent = context;
         otmp->data = (struct PlofData *) rd;
 

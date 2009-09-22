@@ -19,7 +19,7 @@ label(interp_psl_replace);
         rd = pslReplace(RAW(a), ad);
 
         /* and put it in an object */
-        otmp = GC_NEW_Z(struct PlofObject);
+        otmp = newPlofObject();
         otmp->parent = a->parent;
         otmp->data = (struct PlofData *) rd;
         STACK_PUSH(otmp);

@@ -38,7 +38,7 @@ label(interp_psl_aconcat);
             memcpy(ra->data + al, ba->data, bl * sizeof(struct PlofObject *));
 
         /* now put it in an object */
-        otmp = GC_NEW_Z(struct PlofObject);
+        otmp = newPlofObject();
         otmp->parent = context;
         otmp->data = (struct PlofData *) ra;
         STACK_PUSH(otmp);
