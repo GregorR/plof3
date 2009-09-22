@@ -36,8 +36,6 @@
 #include <time.h>
 #endif
 
-#include "impl.h"
-
 /* For CNFI */
 #ifdef WITH_CNFI
 #include <dlfcn.h>
@@ -59,7 +57,9 @@ typedef struct _ffi_cif_plus {
 #endif
 
 #include "bignum.h"
+#include "impl.h"
 #include "jump.h"
+#include "leaky.h"
 #include "plof.h"
 #include "psl.h"
 #include "pslfile.h"
@@ -181,8 +181,17 @@ struct PlofReturn interpretPSL(
     if (!cpsl) {
         volatile int psli, cpsli;
 
+        /* our stack of leakies for determining what can be freed immediately */
+        struct Leaky *lstack;
+        int lstacklen, lstackcur;
+
         /* start with 8 slots */
-        size_t cpsllen = 8;
+        int cpsllen = 8;
+
+        /* allocate our stuff */
+        lstacklen = 8;
+        lstackcur = 0;
+        lstack = GC_MALLOC(lstacklen * sizeof(struct Leaky));
         cpsl = GC_MALLOC(cpsllen * sizeof(void*));
 
         /* now go through the PSL and translate it into compiled PSL */
@@ -193,7 +202,7 @@ struct PlofReturn interpretPSL(
             struct PlofRawData *raw;
 
             /* make sure cpsl is big enough */
-            if (cpsli > cpsllen - 2) {
+            while (cpsli >= cpsllen - 12) {
                 cpsllen *= 2;
                 cpsl = GC_REALLOC(cpsl, cpsllen * sizeof(void*));
             }
@@ -223,7 +232,7 @@ struct PlofReturn interpretPSL(
                 cpsl[cpsli + 1] = NULL;
             }
 
-            /* either get only immediates, or not */
+            /* either get only immediates, or everything else */
             cpsl[cpsli] = addressof(interp_psl_nop);
             if (immediate) {
                 if (cmd == psl_immediate) {
@@ -231,22 +240,100 @@ struct PlofReturn interpretPSL(
                 }
 
             } else {
+                int arity = 0;
+                int pushes = 0;
+                int leaka, leakb, leakc, leakd, leake, leakp;
+                int ari, pushi;
+                leaka = leakb = leakc = leakd = leake = leakp = 0;
+
+#define LEAKY_PUSH(depth) \
+                { \
+                    while (lstackcur >= lstacklen) { \
+                        lstacklen *= 2; \
+                        lstack = GC_REALLOC(lstack, lstacklen * sizeof(struct Leaky)); \
+                    } \
+                    if (lstackcur > depth) { \
+                        lstack[lstackcur].dup = lstack + lstackcur - 1 - depth; \
+                        lstackcur++; \
+                    } else { \
+                        lstack[lstackcur].dup = NULL; \
+                        lstack[lstackcur].leaks = 1; \
+                        lstackcur++; \
+                    } \
+                }
+
                 switch (cmd) {
-#define FOREACH(inst) \
-                    case psl_ ## inst: \
-                        cpsl[cpsli] = addressof(interp_psl_ ## inst); \
-                        break;
-#include "psl_inst.h"
-#undef FOREACH
+#include "psl-cpsl.c"
 
                     default:
                         fprintf(stderr, "Invalid operation: 0x%x\n", cmd);
+                }
+
+                /* pop the things it popped */
+                if (arity) {
+#define MARKLEAK(depth) \
+                    { \
+                        int _depth = (depth); \
+                        if (depth > 0 && lstackcur >= _depth) { \
+                            struct Leaky *curl = lstack + lstackcur - _depth; \
+                            curl->leaks = 1; \
+                        } \
+                    }
+
+                    /* first mark leaks */
+                    if (leaka) { MARKLEAK(arity); }
+                    if (leakb) { MARKLEAK(arity - 1); }
+                    if (leakc) { MARKLEAK(arity - 2); }
+                    if (leakd) { MARKLEAK(arity - 3); }
+                    if (leake) { MARKLEAK(arity - 4); }
+#undef MARKLEAK
+
+                    /* now delete nonleaks */
+                    for (ari = 0; ari < arity; ari++) {
+                        int lsi = lstackcur - arity + ari;
+                        struct Leaky *lcur;
+
+                        if (lsi < 0) continue;
+
+                        lcur = lstack + lsi;
+                        if (!lcur->dup && !lcur->leaks) {
+                            switch (ari) {
+                                case 0: cpsl[cpsli += 2] = addressof(interp_psl_deletea); break;
+                                case 1: cpsl[cpsli += 2] = addressof(interp_psl_deleteb); break;
+                                case 2: cpsl[cpsli += 2] = addressof(interp_psl_deletec); break;
+                                case 3: cpsl[cpsli += 2] = addressof(interp_psl_deleted); break;
+                                case 4: cpsl[cpsli += 2] = addressof(interp_psl_deletee); break;
+                            }
+                            cpsl[cpsli+1] = NULL;
+                        }
+                    }
+
+                    /* and update our stack */
+                    lstackcur -= arity;
+                    if (lstackcur < 0) lstackcur = 0;
+                }
+
+                /* now push whatever it pushes */
+                if (pushes) {
+                    while (lstackcur + pushes > lstacklen) {
+                        lstacklen *= 2;
+                        lstack = GC_REALLOC(lstack, lstacklen * sizeof(struct Leaky));
+                    }
+    
+                    for (pushi = 0; pushi < pushes; pushi++) {
+                        lstack[lstackcur].dup = NULL;
+                        lstack[lstackcur].leaks = leakp;
+                        lstackcur++;
+                    }
                 }
             }
         }
 
         /* now close off the end */
         cpsl[cpsli] = addressof(interp_psl_done);
+        cpsl[cpsli+1] = NULL;
+
+        GC_FREE(lstack);
 
         /* and save it */
         if (pslraw && !immediate) {
@@ -261,6 +348,7 @@ struct PlofReturn interpretPSL(
     jumphead;
 #include "impl/nop.c"
 #include "psl-impl.c"
+#include "impl/delete.c"
 #include "impl/done.c"
     jumptail;
 }

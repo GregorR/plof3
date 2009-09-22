@@ -88,6 +88,7 @@ if ((rd)->hash) { \
 #define PUSHPTR(val) \
 { \
     ptrdiff_t _val = (ptrdiff_t) (val); \
+    struct PlofObject *newo; \
     \
     rd = GC_NEW_Z(struct PlofRawData); \
     rd->type = PLOF_DATA_RAW; \
@@ -95,10 +96,10 @@ if ((rd)->hash) { \
     rd->data = (unsigned char *) GC_NEW(ptrdiff_t); \
     *((ptrdiff_t *) rd->data) = _val; \
     \
-    a = GC_NEW_Z(struct PlofObject); \
-    a->parent = context; \
-    a->data = (struct PlofData *) rd; \
-    STACK_PUSH(a); \
+    newo = GC_NEW_Z(struct PlofObject); \
+    newo->parent = context; \
+    newo->data = (struct PlofData *) rd; \
+    STACK_PUSH(newo); \
 }
 
 #if defined(PLOF_BOX_NUMBERS)
