@@ -419,7 +419,7 @@ struct PlofObjects plofMembersSub(struct PlofOHashTable *of)
     ret.data = (struct PlofObject **) GC_MALLOC(ret.length * sizeof(struct PlofObject *));
 
     /* and the object */
-    rd = newPlofRawData(strlen(of->name));
+    rd = newPlofRawData(strlen((char *) of->name));
     memcpy(rd->data, of->name, rd->length);
     obj = newPlofObject();
     obj->parent = plofNull; /* FIXME */
@@ -466,9 +466,9 @@ struct PlofArrayData *plofMembers(struct PlofObject *of)
 /* Implementation of 'replace' */
 struct PlofRawData *pslReplace(struct PlofRawData *in, struct PlofArrayData *with)
 {
-    size_t i, retalloc;
     struct PlofRawData *ret, *wr;
     struct Buffer_psl pslBuf;
+    int i;
 
     /* preallocate some space */
     INIT_BUFFER(pslBuf);
@@ -595,9 +595,7 @@ void plofWrite(struct PlofObject *obj, unsigned char *name, size_t namehash, str
 /* Function for creating a new hashTable object */
 struct PlofOHashTable *plofHashtableNew(struct PlofOHashTable *into, unsigned char *name, size_t namehash, struct PlofObject *value)
 {
-    unsigned char *namedup;
     struct PlofOHashTable *nht;
-    size_t namelen;
     if (into) {
         nht = into;
     } else {
@@ -605,12 +603,7 @@ struct PlofOHashTable *plofHashtableNew(struct PlofOHashTable *into, unsigned ch
     }
     nht->hashedName = namehash;
 
-    namelen = strlen(name);
-    namedup = GC_MALLOC_ATOMIC(namelen + 1);
-    memcpy(namedup, name, namelen);
-    namedup[namelen] = '\0';
-
-    nht->name = namedup;
+    nht->name = name; /* should always be safe maybe? */
     nht->value = value;
     return nht;
 }
