@@ -161,7 +161,7 @@ struct PlofReturn interpretPSL(
         if (procedureHash == 0) {
             procedureHash = plofHash(10, (unsigned char *) "+procedure");
         }
-        plofWrite(context, 10, (unsigned char *) "+procedure", procedureHash, pslraw);
+        plofWrite(context, (unsigned char *) "+procedure", procedureHash, pslraw);
     }
 
     /* Start the stack at size 8 */
@@ -378,7 +378,7 @@ void plofObjCopyPrime(struct PlofObject *to, struct PlofOHashTable *from)
 {
     if (from == NULL || from->name == NULL) return;
 
-    plofWrite(to, from->namelen, from->name, from->hashedName, from->value);
+    plofWrite(to, from->name, from->hashedName, from->value);
     plofObjCopyPrime(to, from->next);
 }
 
@@ -419,8 +419,8 @@ struct PlofObjects plofMembersSub(struct PlofOHashTable *of)
     ret.data = (struct PlofObject **) GC_MALLOC(ret.length * sizeof(struct PlofObject *));
 
     /* and the object */
-    rd = newPlofRawData(of->namelen);
-    memcpy(rd->data, of->name, of->namelen);
+    rd = newPlofRawData(strlen(of->name));
+    memcpy(rd->data, of->name, rd->length);
     obj = newPlofObject();
     obj->parent = plofNull; /* FIXME */
     obj->data = (struct PlofData *) rd;
@@ -548,7 +548,7 @@ struct PlofRawData *pslReplace(struct PlofRawData *in, struct PlofArrayData *wit
 }
 
 /* Function for getting a value from the hash table in an object */
-struct PlofObject *plofRead(struct PlofObject *obj, size_t namelen, unsigned char *name, size_t namehash)
+struct PlofObject *plofRead(struct PlofObject *obj, unsigned char *name, size_t namehash)
 {
     struct PlofObject *res = plofNull;
     struct PlofOHashTable *cur = &obj->hashTable[namehash & PLOF_HASHTABLE_MASK];
@@ -565,12 +565,12 @@ struct PlofObject *plofRead(struct PlofObject *obj, size_t namelen, unsigned cha
 }
 
 /* Function for writing a value into an object */
-void plofWrite(struct PlofObject *obj, size_t namelen, unsigned char *name, size_t namehash, struct PlofObject *value)
+void plofWrite(struct PlofObject *obj, unsigned char *name, size_t namehash, struct PlofObject *value)
 {
     struct PlofOHashTable *cur;
     size_t subhash = namehash & PLOF_HASHTABLE_MASK;
     if (obj->hashTable[subhash].name == NULL) {
-        plofHashtableNew(&obj->hashTable[subhash], namelen, name, namehash, value);
+        plofHashtableNew(&obj->hashTable[subhash], name, namehash, value);
        
     } else {
         cur = &obj->hashTable[subhash];
@@ -583,7 +583,7 @@ void plofWrite(struct PlofObject *obj, size_t namelen, unsigned char *name, size
                 if (cur->next) {
                     cur = cur->next;
                 } else {
-                    cur->next = plofHashtableNew(NULL, namelen, name, namehash, value);
+                    cur->next = plofHashtableNew(NULL, name, namehash, value);
                     cur = NULL;
                 }
                
@@ -593,18 +593,19 @@ void plofWrite(struct PlofObject *obj, size_t namelen, unsigned char *name, size
 }
 
 /* Function for creating a new hashTable object */
-struct PlofOHashTable *plofHashtableNew(struct PlofOHashTable *into, size_t namelen, unsigned char *name, size_t namehash, struct PlofObject *value)
+struct PlofOHashTable *plofHashtableNew(struct PlofOHashTable *into, unsigned char *name, size_t namehash, struct PlofObject *value)
 {
     unsigned char *namedup;
     struct PlofOHashTable *nht;
+    size_t namelen;
     if (into) {
         nht = into;
     } else {
         nht = GC_NEW_Z(struct PlofOHashTable);
     }
     nht->hashedName = namehash;
-    nht->namelen = namelen;
 
+    namelen = strlen(name);
     namedup = GC_MALLOC_ATOMIC(namelen + 1);
     memcpy(namedup, name, namelen);
     namedup[namelen] = '\0';

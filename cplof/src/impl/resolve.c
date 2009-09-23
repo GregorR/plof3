@@ -40,7 +40,7 @@ label(interp_psl_resolve);
         while (otmp && otmp != plofNull) {
             for (i = 0; i < ad->length; i++) {
                 rd = RAW(ad->data[i]);
-                otmpb = plofRead(otmp, rd->length, rd->data, hashes[i]);
+                otmpb = plofRead(otmp, rd->data, hashes[i]);
                 if (otmpb != plofNull) {
                     /* done */
                     STACK_PUSH(otmp);

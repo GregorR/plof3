@@ -51,13 +51,13 @@ extern unsigned char **plofIncludePaths;
 #endif
 
 /* Function for getting a value from the hash table in an object */
-struct PlofObject *plofRead(struct PlofObject *obj, size_t namelen, unsigned char *name, size_t namehash);
+struct PlofObject *plofRead(struct PlofObject *obj, unsigned char *name, size_t namehash);
 
 /* Function for writing a value into an object */
-void plofWrite(struct PlofObject *obj, size_t namelen, unsigned char *name, size_t namehash, struct PlofObject *value);
+void plofWrite(struct PlofObject *obj, unsigned char *name, size_t namehash, struct PlofObject *value);
 
 /* Function for creating a new hashTable object */
-struct PlofOHashTable *plofHashtableNew(struct PlofOHashTable *into, size_t namelen, unsigned char *name, size_t namehash, struct PlofObject *value);
+struct PlofOHashTable *plofHashtableNew(struct PlofOHashTable *into, unsigned char *name, size_t namehash, struct PlofObject *value);
 
 /* Default length of the hash table buckets, in terms of bits represented by buckets */
 #ifndef PLOF_HASHTABLE_BITS
@@ -74,7 +74,6 @@ typedef struct PlofReturn (*PlofFunction)(struct PlofObject *, struct PlofObject
  * value */
 struct PlofOHashTable {
     size_t hashedName;
-    size_t namelen;
     unsigned char *name;
     struct PlofObject *value;
     struct PlofOHashTable *next;
