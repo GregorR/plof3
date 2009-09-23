@@ -386,8 +386,11 @@ void plofObjCopy(struct PlofObject *to, struct PlofObject *from)
 {
     int i;
 
-    for (i = 0; i < PLOF_HASHTABLE_SIZE; i++) {
-        plofObjCopyPrime(to, &from->hashTable[i]);
+    if (from->hashTable) {
+        struct PlofOHashTables *ht = from->hashTable;
+        for (i = 0; i < PLOF_HASHTABLE_SIZE; i++) {
+            plofObjCopyPrime(to, &ht->elems[i]);
+        }
     }
 }
 
@@ -442,8 +445,13 @@ struct PlofArrayData *plofMembers(struct PlofObject *of)
     size_t len;
 
     /* get out the members */
-    for (i = 0; i < PLOF_HASHTABLE_SIZE; i++) {
-        eachobjs[i] = plofMembersSub(&of->hashTable[i]);
+    if (of->hashTable) {
+        struct PlofOHashTables *ht = of->hashTable;
+        for (i = 0; i < PLOF_HASHTABLE_SIZE; i++) {
+            eachobjs[i] = plofMembersSub(&ht->elems[i]);
+        }
+    } else {
+        memset(eachobjs, 0, PLOF_HASHTABLE_SIZE * sizeof(struct PlofObjects));
     }
 
     /* and combine them into the output */
@@ -550,7 +558,10 @@ struct PlofRawData *pslReplace(struct PlofRawData *in, struct PlofArrayData *wit
 struct PlofObject *plofRead(struct PlofObject *obj, unsigned char *name, size_t namehash)
 {
     struct PlofObject *res = plofNull;
-    struct PlofOHashTable *cur = &obj->hashTable[namehash & PLOF_HASHTABLE_MASK];
+    struct PlofOHashTable *cur;
+    if (!obj->hashTable) return plofNull;
+
+    cur = &obj->hashTable->elems[namehash & PLOF_HASHTABLE_MASK];
     while (cur && cur->name) {
         if (namehash == cur->hashedName) {
             /* FIXME: collisions, name check */
@@ -567,12 +578,17 @@ struct PlofObject *plofRead(struct PlofObject *obj, unsigned char *name, size_t 
 void plofWrite(struct PlofObject *obj, unsigned char *name, size_t namehash, struct PlofObject *value)
 {
     struct PlofOHashTable *cur;
+    struct PlofOHashTables *ht;
     size_t subhash = namehash & PLOF_HASHTABLE_MASK;
-    if (obj->hashTable[subhash].name == NULL) {
-        plofHashtableNew(&obj->hashTable[subhash], name, namehash, value);
+    ht = obj->hashTable;
+    if (ht == NULL) {
+        obj->hashTable = ht = GC_NEW_Z(struct PlofOHashTables);
+    }
+    if (ht->elems[subhash].name == NULL) {
+        plofHashtableNew(&ht->elems[subhash], name, namehash, value);
        
     } else {
-        cur = &obj->hashTable[subhash];
+        cur = &ht->elems[subhash];
         while (cur) {
             if (namehash == cur->hashedName) {
                 cur->value = value; /* FIXME, collisions */

@@ -61,9 +61,7 @@ struct PlofOHashTable *plofHashtableNew(struct PlofOHashTable *into, unsigned ch
 
 /* Default length of the hash table buckets, in terms of bits represented by buckets */
 #ifndef PLOF_HASHTABLE_BITS
-#define PLOF_HASHTABLE_BITS 0 /* as it turns out, hashtables hurt GC
-                               * performance more than they help object
-                               * performance for Plof */
+#define PLOF_HASHTABLE_BITS 0
 #endif
 #define PLOF_HASHTABLE_SIZE (1<<PLOF_HASHTABLE_BITS)
 #if PLOF_HASHTABLE_BITS == 0
@@ -76,13 +74,18 @@ struct PlofOHashTable *plofHashtableNew(struct PlofOHashTable *into, unsigned ch
  * args: context, arg */
 typedef struct PlofReturn (*PlofFunction)(struct PlofObject *, struct PlofObject *);
 
-/* Hash tables, associating an int hashed name with a char * real name and
- * value */
+/* Hash table elements, associating an int hashed name with a char * real name and
+ * value (sorry, poorly named) */
 struct PlofOHashTable {
     size_t hashedName;
     unsigned char *name;
     struct PlofObject *value;
     struct PlofOHashTable *next;
+};
+
+/* The hash table itself */
+struct PlofOHashTables {
+    struct PlofOHashTable elems[PLOF_HASHTABLE_SIZE];
 };
 
 /* A Plof object
@@ -91,7 +94,7 @@ struct PlofOHashTable {
 struct PlofObject {
     struct PlofObject *parent;
     struct PlofData *data;
-    struct PlofOHashTable hashTable[PLOF_HASHTABLE_SIZE];
+    struct PlofOHashTables *hashTable;
 };
 
 /* The return type from Plof functions, which specifies whether a value is
