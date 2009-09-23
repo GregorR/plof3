@@ -57,7 +57,7 @@ struct PlofObject *plofRead(struct PlofObject *obj, size_t namelen, unsigned cha
 void plofWrite(struct PlofObject *obj, size_t namelen, unsigned char *name, size_t namehash, struct PlofObject *value);
 
 /* Function for creating a new hashTable object */
-struct PlofOHashTable *plofHashtableNew(size_t namelen, unsigned char *name, size_t namehash, struct PlofObject *value);
+struct PlofOHashTable *plofHashtableNew(struct PlofOHashTable *into, size_t namelen, unsigned char *name, size_t namehash, struct PlofObject *value);
 
 /* Default length of the hash table buckets, in terms of bits represented by buckets */
 #ifndef PLOF_HASHTABLE_BITS
@@ -70,13 +70,23 @@ struct PlofOHashTable *plofHashtableNew(size_t namelen, unsigned char *name, siz
  * args: context, arg */
 typedef struct PlofReturn (*PlofFunction)(struct PlofObject *, struct PlofObject *);
 
+/* Hash tables, associating an int hashed name with a char * real name and
+ * value */
+struct PlofOHashTable {
+    size_t hashedName;
+    size_t namelen;
+    unsigned char *name;
+    struct PlofObject *value;
+    struct PlofOHashTable *next;
+};
+
 /* A Plof object
  * data: raw or array data associated with the object
  * hashTable: hash table of name->value associations */
 struct PlofObject {
     struct PlofObject *parent;
     struct PlofData *data;
-    struct PlofOHashTable *hashTable[PLOF_HASHTABLE_SIZE];
+    struct PlofOHashTable hashTable[PLOF_HASHTABLE_SIZE];
 };
 
 /* The return type from Plof functions, which specifies whether a value is
@@ -86,16 +96,6 @@ struct PlofObject {
 struct PlofReturn {
     struct PlofObject *ret;
     unsigned char isThrown;
-};
-
-/* Hash tables, associating an int hashed name with a char * real name and
- * value */
-struct PlofOHashTable {
-    size_t hashedName;
-    size_t namelen;
-    unsigned char *name;
-    struct PlofObject *value;
-    struct PlofOHashTable *next;
 };
 
 /* "Superclass" for Plof data

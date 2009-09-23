@@ -376,7 +376,7 @@ size_t plofHash(size_t slen, unsigned char *str)
 /* Copy the content of a PlofOHashTable into an object */
 void plofObjCopyPrime(struct PlofObject *to, struct PlofOHashTable *from)
 {
-    if (from == NULL) return;
+    if (from == NULL || from->name == NULL) return;
 
     plofWrite(to, from->namelen, from->name, from->hashedName, from->value);
     plofObjCopyPrime(to, from->next);
@@ -388,7 +388,7 @@ void plofObjCopy(struct PlofObject *to, struct PlofObject *from)
     int i;
 
     for (i = 0; i < PLOF_HASHTABLE_SIZE; i++) {
-        plofObjCopyPrime(to, from->hashTable[i]);
+        plofObjCopyPrime(to, &from->hashTable[i]);
     }
 }
 
@@ -405,7 +405,7 @@ struct PlofObjects plofMembersSub(struct PlofOHashTable *of)
     struct PlofObject *obj;
     struct PlofRawData *rd;
 
-    if (of == NULL) {
+    if (of == NULL || of->name == NULL) {
         ret.length = 0;
         ret.data = NULL;
         return ret;
@@ -444,7 +444,7 @@ struct PlofArrayData *plofMembers(struct PlofObject *of)
 
     /* get out the members */
     for (i = 0; i < PLOF_HASHTABLE_SIZE; i++) {
-        eachobjs[i] = plofMembersSub(of->hashTable[i]);
+        eachobjs[i] = plofMembersSub(&of->hashTable[i]);
     }
 
     /* and combine them into the output */
@@ -551,8 +551,8 @@ struct PlofRawData *pslReplace(struct PlofRawData *in, struct PlofArrayData *wit
 struct PlofObject *plofRead(struct PlofObject *obj, size_t namelen, unsigned char *name, size_t namehash)
 {
     struct PlofObject *res = plofNull;
-    struct PlofOHashTable *cur = obj->hashTable[namehash & PLOF_HASHTABLE_MASK];
-    while (cur) {
+    struct PlofOHashTable *cur = &obj->hashTable[namehash & PLOF_HASHTABLE_MASK];
+    while (cur && cur->name) {
         if (namehash == cur->hashedName) {
             /* FIXME: collisions, name check */
             res = cur->value;
@@ -569,11 +569,11 @@ void plofWrite(struct PlofObject *obj, size_t namelen, unsigned char *name, size
 {
     struct PlofOHashTable *cur;
     size_t subhash = namehash & PLOF_HASHTABLE_MASK;
-    if (obj->hashTable[subhash] == NULL) {
-        obj->hashTable[subhash] = plofHashtableNew(namelen, name, namehash, value);
+    if (obj->hashTable[subhash].name == NULL) {
+        plofHashtableNew(&obj->hashTable[subhash], namelen, name, namehash, value);
        
     } else {
-        cur = obj->hashTable[subhash];
+        cur = &obj->hashTable[subhash];
         while (cur) {
             if (namehash == cur->hashedName) {
                 cur->value = value; /* FIXME, collisions */
@@ -583,7 +583,7 @@ void plofWrite(struct PlofObject *obj, size_t namelen, unsigned char *name, size
                 if (cur->next) {
                     cur = cur->next;
                 } else {
-                    cur->next = plofHashtableNew(namelen, name, namehash, value);
+                    cur->next = plofHashtableNew(NULL, namelen, name, namehash, value);
                     cur = NULL;
                 }
                
@@ -593,10 +593,15 @@ void plofWrite(struct PlofObject *obj, size_t namelen, unsigned char *name, size
 }
 
 /* Function for creating a new hashTable object */
-struct PlofOHashTable *plofHashtableNew(size_t namelen, unsigned char *name, size_t namehash, struct PlofObject *value)
+struct PlofOHashTable *plofHashtableNew(struct PlofOHashTable *into, size_t namelen, unsigned char *name, size_t namehash, struct PlofObject *value)
 {
     unsigned char *namedup;
-    struct PlofOHashTable *nht = GC_NEW_Z(struct PlofOHashTable);
+    struct PlofOHashTable *nht;
+    if (into) {
+        nht = into;
+    } else {
+        nht = GC_NEW_Z(struct PlofOHashTable);
+    }
     nht->hashedName = namehash;
     nht->namelen = namelen;
 
