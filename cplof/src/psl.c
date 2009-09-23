@@ -61,6 +61,7 @@ typedef struct _ffi_cif_plus {
 #include "jump.h"
 #include "leaky.h"
 #include "memory.h"
+#include "optimizations.h"
 #include "plof.h"
 #include "psl.h"
 #include "pslfile.h"

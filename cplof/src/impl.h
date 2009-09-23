@@ -84,14 +84,17 @@ if ((rd)->hash) { \
 #endif
 
 /* Type coercions */
-#define PUSHPTR(val) \
+#define RDPTR(val) \
 { \
     ptrdiff_t _val = (ptrdiff_t) (val); \
-    struct PlofObject *newo; \
     \
     rd = newPlofRawDataNonAtomic(sizeof(ptrdiff_t)); \
     *((ptrdiff_t *) rd->data) = _val; \
-    \
+}
+#define PUSHPTR(val) \
+{ \
+    struct PlofObject *newo; \
+    RDPTR(val); \
     newo = newPlofObject(); \
     newo->parent = context; \
     newo->data = (struct PlofData *) rd; \
@@ -99,9 +102,14 @@ if ((rd)->hash) { \
 }
 
 #if defined(PLOF_BOX_NUMBERS)
+#define RDINT(val) RDPTR(val)
 #define PUSHINT(val) PUSHPTR(val)
 
 #elif defined(PLOF_FREE_INTS)
+#define RDINT(val) \
+{ \
+    rd = (struct PlofRawData *) (((ptrdiff_t)(val)<<1) | 1); \
+}
 #define PUSHINT(val) \
 { \
     STACK_PUSH((void *) (((ptrdiff_t)(val)<<1) | 1)); \
