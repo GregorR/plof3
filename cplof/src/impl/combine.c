@@ -73,6 +73,7 @@ label(interp_psl_combine);
                 struct PlofArrayData *aa = ARRAY(a);
                 ad = newPlofArrayData(aa->length);
                 memcpy(ad->data, aa->data, ad->length * sizeof(struct PlofObject *));
+                newo->data = (struct PlofData *) ad;
     
             }
     
@@ -89,6 +90,7 @@ label(interp_psl_combine);
                 ad = newPlofArrayData(ab->length);
                 ad->type = PLOF_DATA_ARRAY;
                 memcpy(ad->data, ab->data, ad->length * sizeof(struct PlofObject *));
+                newo->data = (struct PlofData *) ad;
     
             }
     

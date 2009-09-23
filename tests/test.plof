@@ -157,7 +157,7 @@ if (x == "world!") (
 // Ranges
 Debug.print("Ranges")
 Debug.print("This test should print all the numbers from 0 to 9 which are divisible by 2")
-(0 to 10 by 2).each (ref x) (
+(0 to 1000 by 2).each (ref x) (
     Debug.print(x)
 )
 

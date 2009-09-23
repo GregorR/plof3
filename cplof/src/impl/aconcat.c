@@ -26,7 +26,9 @@ label(interp_psl_aconcat);
         rl = al + bl;
 
         /* make the new array object */
-        ra = newPlofArrayData(rl);
+        otmp = newPlofObjectWithArray(rl);
+        otmp->parent = context;
+        ra = (struct PlofArrayData *) otmp->data;
 
         /* then copy */
         if (al)
@@ -35,9 +37,6 @@ label(interp_psl_aconcat);
             memcpy(ra->data + al, ba->data, bl * sizeof(struct PlofObject *));
 
         /* now put it in an object */
-        otmp = newPlofObject();
-        otmp->parent = context;
-        otmp->data = (struct PlofData *) ra;
         STACK_PUSH(otmp);
     }
     STEP;

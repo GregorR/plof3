@@ -116,8 +116,8 @@ struct PlofReturn interpretPSL(
     jumpvars
 
     /* The stack */
-    size_t stacklen, stacktop;
-    struct PlofObject **stack;
+    size_t stacktop;
+    struct PSLStack stack;
 
     /* Slots for n-ary ops */
     struct PlofObject *a, *b, *c, *d, *e;
@@ -164,11 +164,10 @@ struct PlofReturn interpretPSL(
         plofWrite(context, (unsigned char *) "+procedure", procedureHash, pslraw);
     }
 
-    /* Start the stack at size 8 */
-    stack = GC_MALLOC(8 * sizeof(struct PlofObject *));
-    stacklen = 8;
+    /* Start the stack */
+    stack = newPSLStack();
     if (arg) {
-        stack[0] = arg;
+        stack.data[0] = arg;
         stacktop = 1;
     } else {
         stacktop = 0;

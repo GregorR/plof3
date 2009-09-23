@@ -172,15 +172,12 @@ struct PlofObject *parseHelper(unsigned char *code, struct ParseResult *pr)
 
     /* produce an array from the sub-results */
     for (len = 0; pr->subResults && pr->subResults[len]; len++);
-    ad = newPlofArrayData(len);
+    obj = newPlofObjectWithArray(len);
+    obj->parent = plofNull;
+    ad = (struct PlofArrayData *) obj->data;
     for (i = 0; i < ad->length; i++) {
         ad->data[i] = parseHelper(code, pr->subResults[i]);
     }
-
-    /* put the array in an object */
-    obj = newPlofObject();
-    obj->parent = plofNull;
-    obj->data = (struct PlofData *) ad;
 
     /* run the code if applicable */
     if (pr->production->userarg) {

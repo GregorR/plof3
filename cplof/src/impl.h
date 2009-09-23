@@ -3,19 +3,17 @@
 /* "Function" for pushing to the stack */
 #define STACK_PUSH(val) \
 { \
-    if (stacktop == stacklen) { \
-        stacklen *= 2; \
-        stack = GC_REALLOC(stack, stacklen * sizeof(struct PlofObject *)); \
+    if (stacktop == stack.length) { \
+        stack = reallocPSLStack(stack); \
     } \
-    stack[stacktop] = (val); \
-    stacktop++; \
+    stack.data[stacktop++] = (val); \
 }
 #define STACK_POP(into) \
 { \
     if (stacktop == 0) { \
         into = plofNull; \
     } else { \
-        into = stack[--stacktop]; \
+        into = stack.data[--stacktop]; \
     } \
 }
 

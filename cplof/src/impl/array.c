@@ -12,7 +12,9 @@ label(interp_psl_array);
         }
 
         /* now make an array of the appropriate size */
-        ad = newPlofArrayData(length);
+        otmp = newPlofObjectWithArray(length);
+        otmp->parent = context;
+        ad = (struct PlofArrayData *) otmp->data;
 
         /* copy in the stack */
         if (length > 0) {
@@ -21,7 +23,7 @@ label(interp_psl_array);
                  stacki >= 0 &&
                  arri >= 0;
                  stacki--, arri--) {
-                ad->data[arri] = stack[stacki];
+                ad->data[arri] = stack.data[stacki];
             }
             stacktop = stacki + 1;
         }
@@ -32,9 +34,6 @@ label(interp_psl_array);
         }
 
         /* then just put it in an object */
-        otmp = newPlofObject();
-        otmp->parent = context;
-        otmp->data = (struct PlofData *) ad;
         STACK_PUSH(otmp);
     }
     STEP;
