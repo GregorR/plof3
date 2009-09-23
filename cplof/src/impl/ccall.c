@@ -89,8 +89,10 @@ label(interp_psl_ccall);
         ffi_call(&cif->cif, func, ret, args);
 
         /* and put the return together */
-        rd = newPlofRawData(cif->rtype->size);
-        memcpy(rd->data, ret, cif->rtype->size);
+        rd = GC_NEW_Z(struct PlofRawData);
+        rd->type = PLOF_DATA_RAW;
+        rd->length = cif->rtype->size;
+        rd->data = ret;
         otmp = newPlofObject();
         otmp->parent = context;
         otmp->data = (struct PlofData *) rd;

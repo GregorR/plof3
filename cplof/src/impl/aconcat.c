@@ -26,7 +26,10 @@ label(interp_psl_aconcat);
         rl = al + bl;
 
         /* make the new array object */
-        ra = newPlofArrayData(rl);
+        ra = GC_NEW_Z(struct PlofArrayData);
+        ra->type = PLOF_DATA_ARRAY;
+        ra->length = rl;
+        ra->data = (struct PlofObject **) GC_MALLOC(rl * sizeof(struct PlofObject *));
 
         /* then copy */
         if (al)

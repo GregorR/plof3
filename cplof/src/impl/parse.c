@@ -8,6 +8,10 @@ label(interp_psl_parse);
 
         rd = RAW(a);
 
+        retrd = GC_NEW_Z(struct PlofRawData);
+        retrd->type = PLOF_DATA_RAW;
+        retrd->data = NULL;
+
         /* check if it's a PSL file */
         if (isPSLFile(rd->length, rd->data)) {
             struct Buffer_psl psl = readPSLFile(rd->length, rd->data);
@@ -15,15 +19,23 @@ label(interp_psl_parse);
             /* if we didn't find one, this is bad */
             if (psl.buf == NULL) {
                 BADTYPE("parse psl");
-                retrd = newPlofRawData(0);
+                retrd->length = 0;
+                retrd->data = GC_MALLOC_ATOMIC(1);
             } else {
-                retrd = newPlofRawData(psl.bufused);
-                memcpy(retrd->data, psl.buf, psl.bufused);
+                retrd->length = psl.bufused;
+                retrd->data = psl.buf;
             }
 
         } else {
+#ifdef PLOF_NO_PARSER
             BADTYPE("parse not psl");
-            retrd = newPlofRawData(1);
+            retrd->length = 0;
+            retrd->data = GC_MALLOC_ATOMIC(1);
+#else
+            BADTYPE("womp womp");
+            retrd->length = 0;
+            retrd->data = GC_MALLOC_ATOMIC(1);
+#endif
 
         }
 

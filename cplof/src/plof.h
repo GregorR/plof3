@@ -106,20 +106,17 @@ struct PlofData {
 
 /* Standard Plof raw data
  * type: Should always be PLOF_DATA_RAW
- * refC: The reference count
  * length: The length of the data
  * data: The data itself (of course)
- * idl: Length of idata
  * idata: Any data stored by the interpreter (e.g. a compiled version)
  * proc: The fully-compiled function of this data */
 struct PlofRawData {
     int type;
-    int refC;
     size_t length;
     unsigned char *data;
     size_t hash;
-    size_t idl;
     void *idata;
+    PlofFunction proc;
 };
 
 /* Array data
@@ -133,7 +130,7 @@ struct PlofArrayData {
 };
 
 /* Major Plof constants */
-extern struct PlofObject *plofNull, *plofGlobal;
+extern struct PlofObject *plofNull, *plofGlobal, *plofFreeList;
 
 /* The standard PSL interpreter */
 struct PlofReturn interpretPSL(
@@ -144,6 +141,12 @@ struct PlofReturn interpretPSL(
         unsigned char *pslalt,
         int generateContext,
         int immediate);
+
+/* Allocate a PlofObject */
+struct PlofObject *newPlofObject();
+
+/* Free a PlofObject (optional) */
+void freePlofObject(struct PlofObject *tofree);
 
 /* Hash function */
 size_t plofHash(size_t slen, unsigned char *str);

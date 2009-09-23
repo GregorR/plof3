@@ -90,7 +90,10 @@ if ((rd)->hash) { \
     ptrdiff_t _val = (ptrdiff_t) (val); \
     struct PlofObject *newo; \
     \
-    rd = newPlofRawData(sizeof(ptrdiff_t)); \
+    rd = GC_NEW_Z(struct PlofRawData); \
+    rd->type = PLOF_DATA_RAW; \
+    rd->length = sizeof(ptrdiff_t); \
+    rd->data = (unsigned char *) GC_NEW(ptrdiff_t); \
     *((ptrdiff_t *) rd->data) = _val; \
     \
     newo = newPlofObject(); \

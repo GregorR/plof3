@@ -12,7 +12,10 @@ label(interp_psl_array);
         }
 
         /* now make an array of the appropriate size */
-        ad = newPlofArrayData(length);
+        ad = GC_NEW_Z(struct PlofArrayData);
+        ad->type = PLOF_DATA_ARRAY;
+        ad->length = length;
+        ad->data = GC_MALLOC(length * sizeof(struct PlofObject *));
 
         /* copy in the stack */
         if (length > 0) {

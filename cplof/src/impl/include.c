@@ -22,13 +22,13 @@ label(interp_psl_include);
                 /* this file exists, use it */
                 bufsz = BUFSZ;
                 bufi = 0;
-                data = malloc(BUFSZ);
+                data = GC_MALLOC_ATOMIC(BUFSZ);
 
                 while ((rdb = fread(data + bufi, 1, bufsz - bufi, fh)) > 0) {
                     bufi += rdb;
                     if (bufi == bufsz) {
                         bufsz *= 2;
-                        data = realloc(data, bufsz);
+                        data = GC_REALLOC(data, bufsz);
                     }
                 }
 
@@ -43,9 +43,10 @@ label(interp_psl_include);
             STACK_PUSH(plofNull);
 
         } else {
-            rd = newPlofRawData(bufi);
-            memcpy(rd->data, data, bufi);
-            free(data);
+            rd = GC_NEW_Z(struct PlofRawData);
+            rd->type = PLOF_DATA_RAW;
+            rd->length = bufi;
+            rd->data = (unsigned char *) data;
 
             otmp = newPlofObject();
             otmp->parent = context;

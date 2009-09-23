@@ -26,7 +26,6 @@
 #include <string.h>
 
 #include "bignum.h"
-#include "memory.h"
 #include "plof.h"
 #include "psl.h"
 #include "whereami.h"
