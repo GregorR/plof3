@@ -141,6 +141,8 @@ struct PlofReturn interpretPSL(
     struct timespec stspec, etspec;
 #endif
 
+    a = b = c = d = e = NULL;
+
     /* Perhaps generate the context */
     if (generateContext) {
         a = newPlofObject();
@@ -618,9 +620,6 @@ struct PlofOHashTable *plofHashtableNew(size_t namelen, unsigned char *name, siz
     nht->value = value;
     return nht;
 }
-
-static int pocreated = 0;
-static int podeleted = 0;
 
 /* Allocate a PlofObject */
 struct PlofObject *newPlofObject() {
