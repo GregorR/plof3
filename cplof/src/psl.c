@@ -440,6 +440,7 @@ struct PlofArrayData *plofMembers(struct PlofObject *of)
     struct PlofArrayData *ad;
     int i, off;
     struct PlofObjects eachobjs[PLOF_HASHTABLE_SIZE];
+    size_t len;
 
     /* get out the members */
     for (i = 0; i < PLOF_HASHTABLE_SIZE; i++) {
@@ -447,11 +448,9 @@ struct PlofArrayData *plofMembers(struct PlofObject *of)
     }
 
     /* and combine them into the output */
-    ad = GC_NEW_Z(struct PlofArrayData);
-    ad->type = PLOF_DATA_ARRAY;
-    ad->length = 0;
-    for (i = 0; i < PLOF_HASHTABLE_SIZE; i++) ad->length += eachobjs[i].length;
-    ad->data = (struct PlofObject **) GC_MALLOC(ad->length * sizeof(struct PlofObject *));
+    len = 0;
+    for (i = 0; i < PLOF_HASHTABLE_SIZE; i++) len += eachobjs[i].length;
+    ad = newPlofArrayData(len);
 
     off = 0;
     for (i = 0; i < PLOF_HASHTABLE_SIZE; i++) {

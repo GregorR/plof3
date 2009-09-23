@@ -52,7 +52,16 @@ struct PlofRawData *newPlofRawDataNonAtomic(size_t length)
 }
 
 /* Allocate a PlofArrayData */
-struct PlofArrayData *newPlofArrayData(size_t length) {}
+struct PlofArrayData *newPlofArrayData(size_t length)
+{
+    struct PlofArrayData *ad;
+    ad = GC_NEW_Z(struct PlofArrayData);
+    ad->type = PLOF_DATA_ARRAY;
+    ad->length = length;
+    ad->data = (struct PlofObject **) GC_MALLOC(length * sizeof(struct PlofObject *));
+    memset(ad->data, 0, length * sizeof(struct PlofObject *));
+    return ad;
+}
 
 /* Free a PlofData (either kind) */
 void freePlofData(struct PlofData *obj) {}

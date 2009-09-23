@@ -168,12 +168,11 @@ struct PlofObject *parseHelper(unsigned char *code, struct ParseResult *pr)
     struct PlofRawData *rd;
     struct PlofArrayData *ad;
     struct PlofObject *obj, *ret;
+    size_t len;
 
     /* produce an array from the sub-results */
-    ad = GC_NEW_Z(struct PlofArrayData);
-    ad->type = PLOF_DATA_ARRAY;
-    for (ad->length = 0; pr->subResults && pr->subResults[ad->length]; ad->length++);
-    ad->data = (struct PlofObject **) GC_MALLOC(ad->length * sizeof(struct PlofObject *));
+    for (len = 0; pr->subResults && pr->subResults[len]; len++);
+    ad = newPlofArrayData(len);
     for (i = 0; i < ad->length; i++) {
         ad->data[i] = parseHelper(code, pr->subResults[i]);
     }

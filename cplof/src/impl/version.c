@@ -3,8 +3,7 @@ label(interp_psl_version);
     {
         size_t i;
         struct PlofObject *otmp;
-        ad = GC_NEW_Z(struct PlofArrayData);
-        ad->type = PLOF_DATA_ARRAY;
+        ad = newPlofArrayData(VERSION_MAX);
 
 #define CREATE_VERSION(str) \
         { \
@@ -17,8 +16,6 @@ label(interp_psl_version);
             \
             ad->data[i++] = otmp; \
         }
-
-        ad->data = (struct PlofObject **) GC_MALLOC(VERSION_MAX * sizeof(struct PlofObject *));
 
         /* now go step by step */
         i = 0;

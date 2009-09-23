@@ -60,11 +60,7 @@ label(interp_psl_combine);
                 aa = ARRAY(a);
                 ab = ARRAY(b);
     
-                ad = GC_NEW_Z(struct PlofArrayData);
-                ad->type = PLOF_DATA_ARRAY;
-    
-                ad->length = aa->length + ab->length;
-                ad->data = (struct PlofObject **) GC_MALLOC(ad->length * sizeof(struct PlofObject *));
+                ad = newPlofArrayData(aa->length + ab->length);
     
                 /* copy in both */
                 memcpy(ad->data, aa->data, aa->length * sizeof(struct PlofObject *));
@@ -74,11 +70,9 @@ label(interp_psl_combine);
     
             } else {
                 /* duplicate the left array */
-                ad = GC_NEW_Z(struct PlofArrayData);
-                ad->type = PLOF_DATA_ARRAY;
-                memcpy(ad, ARRAY(a), sizeof(struct PlofArrayData));
-                ad->data = (struct PlofObject **) GC_MALLOC(ad->length * sizeof(struct PlofObject *));
-                memcpy(ad->data, ARRAY(a)->data, ad->length * sizeof(struct PlofObject *));
+                struct PlofArrayData *aa = ARRAY(a);
+                ad = newPlofArrayData(aa->length);
+                memcpy(ad->data, aa->data, ad->length * sizeof(struct PlofObject *));
     
             }
     
@@ -91,11 +85,10 @@ label(interp_psl_combine);
     
             } else if (ISARRAY(b)) {
                 /* duplicate the right array */
-                ad = GC_NEW_Z(struct PlofArrayData);
+                struct PlofArrayData *ab = ARRAY(b);
+                ad = newPlofArrayData(ab->length);
                 ad->type = PLOF_DATA_ARRAY;
-                memcpy(ad, ARRAY(b), sizeof(struct PlofArrayData));
-                ad->data = (struct PlofObject **) GC_MALLOC(ad->length * sizeof(struct PlofObject *));
-                memcpy(ad->data, ARRAY(b)->data, ad->length * sizeof(struct PlofObject *));
+                memcpy(ad->data, ab->data, ad->length * sizeof(struct PlofObject *));
     
             }
     

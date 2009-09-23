@@ -18,13 +18,12 @@ label(interp_psl_resolve);
         if (ISARRAY(b)) {
             ad = ARRAY(b);
         } else {
-            ad = GC_NEW_Z(struct PlofArrayData);
-            ad->type = PLOF_DATA_ARRAY;
+            ad = newPlofArrayData(1);
 
             if (ISRAW(b)) {
-                ad->length = 1;
-                ad->data = (struct PlofObject **) GC_MALLOC(sizeof(struct PlofObject *));
                 ad->data[0] = b;
+            } else {
+                ad->data[0] = plofNull;
             }
         }
 
