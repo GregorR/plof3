@@ -61,10 +61,16 @@ struct PlofOHashTable *plofHashtableNew(struct PlofOHashTable *into, unsigned ch
 
 /* Default length of the hash table buckets, in terms of bits represented by buckets */
 #ifndef PLOF_HASHTABLE_BITS
-#define PLOF_HASHTABLE_BITS 2
+#define PLOF_HASHTABLE_BITS 0 /* as it turns out, hashtables hurt GC
+                               * performance more than they help object
+                               * performance for Plof */
 #endif
 #define PLOF_HASHTABLE_SIZE (1<<PLOF_HASHTABLE_BITS)
+#if PLOF_HASHTABLE_BITS == 0
+#define PLOF_HASHTABLE_MASK 0
+#else
 #define PLOF_HASHTABLE_MASK ((size_t) -1 >> (sizeof(size_t)*8 - PLOF_HASHTABLE_BITS))
+#endif
 
 /* All functions accessible directly from Plof should be of this form
  * args: context, arg */
@@ -107,15 +113,13 @@ struct PlofData {
  * type: Should always be PLOF_DATA_RAW
  * length: The length of the data
  * data: The data itself (of course)
- * idata: Any data stored by the interpreter (e.g. a compiled version)
- * proc: The fully-compiled function of this data */
+ * idata: Any data stored by the interpreter (e.g. a compiled version) */
 struct PlofRawData {
     int type;
     size_t length;
     unsigned char *data;
     size_t hash;
     void *idata;
-    PlofFunction proc;
 };
 
 /* Array data
