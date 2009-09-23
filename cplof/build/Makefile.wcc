@@ -10,7 +10,7 @@ LFLAGS=system dos4g
 
 LIB=wlib
 
-PLOF_LIB_OBJS=src/bignum.o src/memory.o src/psl.o src/pslfile.o
+PLOF_LIB_OBJS=src/bignum.o src/memory.o src/optimizations.o src/psl.o src/pslfile.o
 PSLI_OBJS=src/psli.o src/whereami.o
 PSLI_LIBS=library plof library gc
 PSLASM_OBJS=src/bignum.o src/lex.o src/parse.o src/pslasm.o src/pslfile.o
