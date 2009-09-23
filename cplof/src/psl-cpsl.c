@@ -319,6 +319,10 @@ case psl_debug:
     cpsl[cpsli] = addressof(interp_psl_debug);
 #include "optim/debug.c"
     break;
+case psl_intrinsic:
+    cpsl[cpsli] = addressof(interp_psl_intrinsic);
+#include "optim/intrinsic.c"
+    break;
 case psl_trap:
     cpsl[cpsli] = addressof(interp_psl_trap);
 #include "optim/trap.c"

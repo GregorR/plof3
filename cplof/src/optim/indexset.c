@@ -1,2 +1,2 @@
 arity = 3;
-leakc = 1;
+leaka = leakc = 1;

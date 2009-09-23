@@ -116,13 +116,15 @@ struct PlofData {
  * type: Should always be PLOF_DATA_RAW
  * length: The length of the data
  * data: The data itself (of course)
- * idata: Any data stored by the interpreter (e.g. a compiled version) */
+ * idata: Any data stored by the interpreter (e.g. a compiled version)
+ * proc: The intrinsic (compiled) function */
 struct PlofRawData {
     int type;
     size_t length;
     unsigned char *data;
     size_t hash;
     void *idata;
+    PlofFunction proc;
 };
 
 /* Array data

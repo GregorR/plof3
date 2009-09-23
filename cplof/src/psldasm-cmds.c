@@ -239,6 +239,9 @@ break;
 case psl_debug:
 fprintf(out, "debug\n");
 break;
+case psl_intrinsic:
+fprintf(out, "intrinsic\n");
+break;
 case psl_trap:
 fprintf(out, "trap\n");
 break;

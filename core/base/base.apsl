@@ -174,6 +174,7 @@ gadd
 "pslOp" "/index/" "token" "white" 3 array {{index}} gadd
 "pslOp" "/indexset/" "token" "white" 3 array {{indexset}} gadd
 "pslOp" "/integer/" "token" "white" 3 array {{integer}} gadd
+"pslOp" "/intrinsic/" "token" "white" 3 array {{intrinsic}} gadd
 "pslOp" "/intwidth/" "token" "white" 3 array {{intwidth}} gadd
 "pslOp" "/length/" "token" "white" 3 array {{length}} gadd
 "pslOp" "/lengthset/" "token" "white" 3 array {{lengthset}} gadd

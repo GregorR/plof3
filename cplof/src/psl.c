@@ -58,6 +58,7 @@ typedef struct _ffi_cif_plus {
 
 #include "bignum.h"
 #include "impl.h"
+#include "intrinsics.h"
 #include "jump.h"
 #include "leaky.h"
 #include "memory.h"
@@ -150,6 +151,22 @@ struct PlofReturn interpretPSL(
 
     a = b = c = d = e = NULL;
 
+    /* Get out the PSL */
+    if (pslraw) {
+        rd = (struct PlofRawData *) pslraw->data;
+        psllen = rd->length;
+        psl = rd->data;
+        cpsl = (volatile void **) rd->idata;
+    } else {
+        psllen = pslaltlen;
+        psl = pslalt;
+    }
+
+    /* call the intrinsic if applicable */
+    if (pslraw && rd->proc) {
+        return rd->proc(context, arg);
+    }
+
     /* Perhaps generate the context */
     if (generateContext) {
         a = newPlofObject();
@@ -157,7 +174,7 @@ struct PlofReturn interpretPSL(
         context = a;
     }
 
-    /* Set +procedure */
+    /* add +procedure */
     if (pslraw) {
         if (procedureHash == 0) {
             procedureHash = plofHash(10, (unsigned char *) "+procedure");
@@ -171,17 +188,6 @@ struct PlofReturn interpretPSL(
     if (arg) {
         stack.data[0] = arg;
         stacktop = 1;
-    }
-
-    /* Get out the PSL */
-    if (pslraw) {
-        rd = (struct PlofRawData *) pslraw->data;
-        psllen = rd->length;
-        psl = rd->data;
-        cpsl = (volatile void **) rd->idata;
-    } else {
-        psllen = pslaltlen;
-        psl = pslalt;
     }
 
     /* Make sure it's compiled */

@@ -1,4 +1,12 @@
+#ifndef IMPL_H
+#define IMPL_H
+
 /* convenient macros for implementing PSL */
+#ifdef HAVE_CONFIG_H
+#include "../config.h"
+#else
+#include "basicconfig.h"
+#endif
 
 /* "Function" for pushing to the stack */
 #define STACK_PUSH(val) \
@@ -193,3 +201,4 @@ QUINARY; \
 #define STEP pc += 2; jump(*pc)
 #endif
 
+#endif
