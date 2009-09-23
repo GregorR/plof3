@@ -6,8 +6,8 @@ static size_t __pul_v_hash = 0, __pul_e_hash;
 /* Get the necessary hashes */
 static void getHashes()
 {
-    __pul_v_hash = plofHash(7, "__pul_v");
-    __pul_e_hash = plofHash(7, "__pul_e");
+    __pul_v_hash = plofHash(7, (unsigned char *) "__pul_v");
+    __pul_e_hash = plofHash(7, (unsigned char *) "__pul_e");
 }
 #define GET_HASHES if (__pul_v_hash == 0) getHashes()
 
@@ -50,7 +50,7 @@ static struct PlofReturn pul_eval(struct PlofObject *ctx, struct PlofObject *arg
     }
 
     /* check if it has pul_v */
-    tmp = plofRead(arg, "__pul_v", __pul_v_hash);
+    tmp = plofRead(arg, (unsigned char *) "__pul_v", __pul_v_hash);
     if (tmp != plofNull) {
         /* perfect! */
         ret.ret = tmp;
@@ -58,7 +58,7 @@ static struct PlofReturn pul_eval(struct PlofObject *ctx, struct PlofObject *arg
     }
 
     /* OK, no pul_v, try pul_e */
-    tmp = plofRead(arg, "__pul_e", __pul_e_hash);
+    tmp = plofRead(arg, (unsigned char *) "__pul_e", __pul_e_hash);
     if (tmp != plofNull) {
         /* OK, call that */
         ret = interpretPSL(tmp->parent, plofNull, tmp, 0, NULL, 1, 0);
@@ -71,7 +71,7 @@ static struct PlofReturn pul_eval(struct PlofObject *ctx, struct PlofObject *arg
         }
 
         /* save it */
-        plofWrite(arg, "__pul_v", __pul_v_hash, ret.ret);
+        plofWrite(arg, (unsigned char *) "__pul_v", __pul_v_hash, ret.ret);
 
         return ret;
     }
