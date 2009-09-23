@@ -8,7 +8,7 @@ label(interp_psl_memberset);
         name = rd->data;
         HASHOF(namehash, rd);
 
-        plofWrite(a, name, namehash, c);
+        plofWrite(a, rd->length, name, namehash, c);
     } else {
         BADTYPE("memberset");
     }
