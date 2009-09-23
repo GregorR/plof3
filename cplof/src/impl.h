@@ -6,7 +6,8 @@
     if (stacktop == stack.length) { \
         stack = reallocPSLStack(stack); \
     } \
-    stack.data[stacktop++] = (val); \
+    stack.data[stacktop] = (val); \
+    stacktop++; \
 }
 #define STACK_POP(into) \
 { \

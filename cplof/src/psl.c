@@ -166,11 +166,10 @@ struct PlofReturn interpretPSL(
 
     /* Start the stack */
     stack = newPSLStack();
+    stacktop = 0;
     if (arg) {
         stack.data[0] = arg;
         stacktop = 1;
-    } else {
-        stacktop = 0;
     }
 
     /* Get out the PSL */

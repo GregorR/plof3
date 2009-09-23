@@ -123,7 +123,9 @@ struct PlofArrayData *newPlofArrayData(size_t length)
 
 /* Allocate an objects with raw data inline */
 struct PlofObject *newPlofObjectWithRaw(size_t length)
-{}
+{
+    return NULL;
+}
 
 /* Allocate an objects with array data inline */
 struct PlofObject *newPlofObjectWithArray(size_t length)
