@@ -12,6 +12,9 @@ void freePlofObject(struct PlofObject *tofree);
 /* Allocate a PlofRawData */
 struct PlofRawData *newPlofRawData(size_t length);
 
+/* Allocate a PlofRawData with non-atomic data */
+struct PlofRawData *newPlofRawDataNonAtomic(size_t length);
+
 /* Allocate a PlofArrayData */
 struct PlofArrayData *newPlofArrayData(size_t length);
 

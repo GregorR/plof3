@@ -29,11 +29,7 @@ label(interp_psl_combine);
                 ra = RAW(a);
                 rb = RAW(b);
     
-                rd = GC_NEW_Z(struct PlofRawData);
-                rd->type = PLOF_DATA_RAW;
-    
-                rd->length = ra->length + rb->length;
-                rd->data = (unsigned char *) GC_MALLOC_ATOMIC(rd->length);
+                rd = newPlofRawData(ra->length + rb->length);
     
                 /* copy in both */
                 memcpy(rd->data, ra->data, ra->length);
@@ -43,14 +39,20 @@ label(interp_psl_combine);
     
             } else {
                 /* just the left */
-                newo->data = a->data;
+                struct PlofRawData *ra = (struct PlofRawData *) a->data;
+                rd = newPlofRawData(ra->length);
+                memcpy(rd->data, ra->data, rd->length);
+                newo->data = (struct PlofData *) rd;
     
             }
     
         } else if (ISARRAY(a)) {
             if (ISRAW(b)) {
                 /* just the right */
-                newo->data = b->data;
+                struct PlofRawData *rb = (struct PlofRawData *) b->data;
+                rd = newPlofRawData(rb->length);
+                memcpy(rd->data, rb->data, rd->length);
+                newo->data = (struct PlofData *) rd;
     
             } else if (ISARRAY(b)) {
                 /* combine the arrays */
@@ -82,7 +84,10 @@ label(interp_psl_combine);
     
         } else {
             if (ISRAW(b)) {
-                newo->data = b->data;
+                struct PlofRawData *rb = (struct PlofRawData *) b->data;
+                rd = newPlofRawData(rb->length);
+                memcpy(rd->data, rb->data, rd->length);
+                newo->data = (struct PlofData *) rd;
     
             } else if (ISARRAY(b)) {
                 /* duplicate the right array */

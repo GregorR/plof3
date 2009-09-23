@@ -16,10 +16,8 @@ label(interp_psl_slice);
             end = start;
 
         /* start making a new rd */
-        rd = GC_NEW_Z(struct PlofRawData);
-        rd->type = PLOF_DATA_RAW;
-        rd->length = end - start;
-        rd->data = ra->data + start;
+        rd = newPlofRawData(end - start);
+        memcpy(rd->data, ra->data + start, rd->length);
 
         otmp = newPlofObject();
         otmp->parent = context;

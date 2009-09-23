@@ -217,23 +217,21 @@ struct PlofReturn interpretPSL(
 
             /* maybe it has raw data */
             if (cmd >= psl_marker) {
-                raw = GC_NEW_Z(struct PlofRawData);
-                raw->type = PLOF_DATA_RAW;
+                size_t len;
 
                 psli++;
-                psli += pslBignumToInt(psl + psli, (size_t *) &raw->length);
+                psli += pslBignumToInt(psl + psli, (size_t *) &len);
 
                 /* make sure this doesn't go off the edge */
-                if (psli + raw->length > psllen) {
+                if (psli + len > psllen) {
                     fprintf(stderr, "Bad data in PSL!\n");
-                    raw->length = psllen - psli;
+                    len = psllen - psli;
                 }
 
                 /* copy it in */
-                raw->data = (unsigned char *) GC_MALLOC_ATOMIC(raw->length + 1);
-                memcpy(raw->data, psl + psli, raw->length);
-                raw->data[raw->length] = '\0';
-                psli += raw->length - 1;
+                raw = newPlofRawData(len);
+                memcpy(raw->data, psl + psli, len);
+                psli += len - 1;
 
                 cpsl[cpsli + 1] = raw;
             } else {
@@ -421,10 +419,8 @@ struct PlofObjects plofMembersSub(struct PlofOHashTable *of)
     ret.data = (struct PlofObject **) GC_MALLOC(ret.length * sizeof(struct PlofObject *));
 
     /* and the object */
-    rd = GC_NEW_Z(struct PlofRawData);
-    rd->type = PLOF_DATA_RAW;
-    rd->length = of->namelen;
-    rd->data = of->name;
+    rd = newPlofRawData(of->namelen);
+    memcpy(rd->data, of->name, of->namelen);
     obj = newPlofObject();
     obj->parent = plofNull; /* FIXME */
     obj->data = (struct PlofData *) rd;
@@ -472,21 +468,11 @@ struct PlofArrayData *plofMembers(struct PlofObject *of)
 struct PlofRawData *pslReplace(struct PlofRawData *in, struct PlofArrayData *with)
 {
     size_t i, retalloc;
-    struct PlofRawData *ret = GC_NEW_Z(struct PlofRawData);
-    struct PlofRawData *wr;
-    ret->type = PLOF_DATA_RAW;
+    struct PlofRawData *ret, *wr;
+    struct Buffer_psl pslBuf;
 
     /* preallocate some space */
-    retalloc = in->length;
-    ret->length = 0;
-    ret->data = (unsigned char *) GC_MALLOC_ATOMIC(retalloc);
-
-    /* auto-reallocation */
-#define SPACEFOR(n) \
-    while (ret->length + (n) > retalloc) { \
-        retalloc *= 2; \
-        ret->data = (unsigned char *) GC_REALLOC(ret->data, retalloc); \
-    }
+    INIT_BUFFER(pslBuf);
 
     /* go through the commands in 'in' ... */
     for (i = 0; i < in->length; i++) {
@@ -495,15 +481,17 @@ struct PlofRawData *pslReplace(struct PlofRawData *in, struct PlofArrayData *wit
 
         /* get out the data */
         if (cmd >= psl_marker) {
-            data = GC_NEW_Z(struct PlofRawData);
+            size_t len;
 
             i++;
-            i += pslBignumToInt(in->data + i, (size_t *) &data->length);
-            if (i + data->length > in->length) {
-                data->length = in->length - i;
+            i += pslBignumToInt(in->data + i, (size_t *) &len);
+            if (i + len > in->length) {
+                len = in->length - i;
             }
-            data->data = in->data + i;
-            i += data->length - 1;
+
+            data = newPlofRawData(len);
+            memcpy(data->data, in->data + i, len);
+            i += len - 1;
         }
 
         /* do something with the command */
@@ -519,12 +507,8 @@ struct PlofRawData *pslReplace(struct PlofRawData *in, struct PlofArrayData *wit
                 /* yup! */
                 wr = RAW(with->data[mval]);
 
-                /* do we have enough space? */
-                SPACEFOR(wr->length);
-
                 /* copy it in */
-                memcpy(ret->data + ret->length, wr->data, wr->length);
-                ret->length += wr->length;
+                WRITE_BUFFER(pslBuf, wr->data, wr->length);
             }
 
         } else if (cmd == psl_code) {
@@ -536,32 +520,31 @@ struct PlofRawData *pslReplace(struct PlofRawData *in, struct PlofArrayData *wit
             /* figure out the bignum length */
             bignumlen = pslBignumLength(sub->length);
 
-            /* make sure we have enough room */
-            SPACEFOR(1 + bignumlen + sub->length);
-
             /* then copy it all in */
-            ret->data[ret->length] = cmd;
-            pslIntToBignum(ret->data + ret->length + 1, sub->length, bignumlen);
-            memcpy(ret->data + ret->length + 1 + bignumlen, sub->data, sub->length);
-            ret->length += 1 + bignumlen + sub->length;
+            WRITE_BUFFER(pslBuf, &cmd, 1);
+            while (BUFFER_SPACE(pslBuf) < bignumlen) EXPAND_BUFFER(pslBuf);
+            pslIntToBignum(pslBuf.buf + pslBuf.bufused, sub->length, bignumlen);
+            pslBuf.bufused += bignumlen;
+            WRITE_BUFFER(pslBuf, sub->data, sub->length);
 
         } else if (cmd > psl_marker) {
             /* rewrite it */
             size_t bignumlen = pslBignumLength(data->length);
-            SPACEFOR(1 + bignumlen + data->length);
-            ret->data[ret->length] = cmd;
-            pslIntToBignum(ret->data + ret->length + 1, data->length, bignumlen);
-            memcpy(ret->data + ret->length + 1 + bignumlen, data->data, data->length);
-            ret->length += 1 + bignumlen + data->length;
+            WRITE_BUFFER(pslBuf, &cmd, 1);
+            while (BUFFER_SPACE(pslBuf) < bignumlen) EXPAND_BUFFER(pslBuf);
+            pslIntToBignum(pslBuf.buf + pslBuf.bufused, data->length, bignumlen);
+            pslBuf.bufused += bignumlen;
+            WRITE_BUFFER(pslBuf, data->data, data->length);
 
         } else {
             /* just write out the command */
-            SPACEFOR(1);
-            ret->data[ret->length++] = cmd;
+            WRITE_BUFFER(pslBuf, &cmd, 1);
 
         }
     }
 
+    ret = newPlofRawData(pslBuf.bufused);
+    memcpy(ret->data, pslBuf.buf, pslBuf.bufused);
     return ret;
 }
 

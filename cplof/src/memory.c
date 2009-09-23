@@ -1,3 +1,6 @@
+#include <stdlib.h>
+#include <string.h>
+
 #include "memory.h"
 
 static struct PlofObject *plofObjectFreeList = NULL;
@@ -33,6 +36,18 @@ struct PlofRawData *newPlofRawData(size_t length)
     rd->length = length;
     rd->data = GC_MALLOC_ATOMIC(length + 1);
     memset(rd->data, 0, length + 1);
+    return rd;
+}
+
+/* Allocate a PlofRawData with non-atomic data */
+struct PlofRawData *newPlofRawDataNonAtomic(size_t length)
+{
+    struct PlofRawData *rd;
+    rd = GC_NEW_Z(struct PlofRawData);
+    rd->type = PLOF_DATA_RAW;
+    rd->length = length;
+    rd->data = GC_MALLOC(length);
+    memset(rd->data, 0, length);
     return rd;
 }
 

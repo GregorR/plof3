@@ -8,10 +8,7 @@ label(interp_psl_concat);
         ra = RAW(a);
         rb = RAW(b);
 
-        rd = GC_NEW_Z(struct PlofRawData);
-        rd->type = PLOF_DATA_RAW;
-        rd->length = ra->length + rb->length;
-        rd->data = (unsigned char *) GC_MALLOC_ATOMIC(rd->length);
+        rd = newPlofRawData(ra->length + rb->length);
         memcpy(rd->data, ra->data, ra->length);
         memcpy(rd->data + ra->length, rb->data, rb->length);
 

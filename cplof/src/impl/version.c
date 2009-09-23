@@ -8,10 +8,8 @@ label(interp_psl_version);
 
 #define CREATE_VERSION(str) \
         { \
-            rd = GC_NEW_Z(struct PlofRawData); \
-            rd->type = PLOF_DATA_RAW; \
-            rd->length = strlen(str); \
-            rd->data = (unsigned char *) str; \
+            rd = newPlofRawData(strlen(str)); \
+            memcpy(rd->data, str, rd->length); \
             \
             otmp = newPlofObject(); \
             otmp->parent = context; \
