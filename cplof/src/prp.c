@@ -31,6 +31,7 @@
 #include "bignum.h"
 #include "buffer.h"
 #include "helpers.h"
+#include "memory.h"
 #include "packrat.h"
 #include "plof.h"
 #include "psl.h"

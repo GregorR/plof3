@@ -60,6 +60,7 @@ typedef struct _ffi_cif_plus {
 #include "impl.h"
 #include "jump.h"
 #include "leaky.h"
+#include "memory.h"
 #include "plof.h"
 #include "psl.h"
 #include "pslfile.h"
@@ -626,26 +627,6 @@ struct PlofOHashTable *plofHashtableNew(size_t namelen, unsigned char *name, siz
     return nht;
 }
 
-/* Allocate a PlofObject */
-struct PlofObject *newPlofObject() {
-    struct PlofObject *ret;
-    if (plofFreeList) {
-        ret = plofFreeList;
-        plofFreeList = plofFreeList->parent;
-        ret->parent = NULL;
-    } else {
-        ret = GC_NEW_Z(struct PlofObject);
-    }
-    return ret;
-}
-
-/* Free a PlofObject (optional) */
-void freePlofObject(struct PlofObject *tofree) {
-    memset(tofree, 0, sizeof(struct PlofObject));
-    tofree->parent = plofFreeList;
-    plofFreeList = tofree;
-}
-
 /* GC on DJGPP is screwy */
 #ifdef __DJGPP__
 void vsnprintf() {}
@@ -654,4 +635,3 @@ void vsnprintf() {}
 /* Null and global */
 struct PlofObject *plofNull = NULL;
 struct PlofObject *plofGlobal = NULL;
-struct PlofObject *plofFreeList = NULL;

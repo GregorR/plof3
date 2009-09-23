@@ -130,7 +130,7 @@ struct PlofArrayData {
 };
 
 /* Major Plof constants */
-extern struct PlofObject *plofNull, *plofGlobal, *plofFreeList;
+extern struct PlofObject *plofNull, *plofGlobal;
 
 /* The standard PSL interpreter */
 struct PlofReturn interpretPSL(
@@ -141,12 +141,6 @@ struct PlofReturn interpretPSL(
         unsigned char *pslalt,
         int generateContext,
         int immediate);
-
-/* Allocate a PlofObject */
-struct PlofObject *newPlofObject();
-
-/* Free a PlofObject (optional) */
-void freePlofObject(struct PlofObject *tofree);
 
 /* Hash function */
 size_t plofHash(size_t slen, unsigned char *str);
