@@ -84,6 +84,11 @@ enum jumplabel {
 #define FOREACH(inst) interp_psl_ ## inst,
 #include "psl_inst.h"
 #undef FOREACH
+    interp_psl_deletea,
+    interp_psl_deleteb,
+    interp_psl_deletec,
+    interp_psl_deleted,
+    interp_psl_deletee,
     interp_psl_done
 };
 #endif
