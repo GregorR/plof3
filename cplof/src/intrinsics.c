@@ -1,5 +1,6 @@
 #include "impl.h"
 #include "intrinsics.h"
+#include "memory.h"
 
 static size_t __pul_v_hash = 0, __pul_e_hash, __pul_type_hash;
 
