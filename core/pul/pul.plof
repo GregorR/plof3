@@ -373,7 +373,8 @@ psl {
      * Plof. opMember searches for the $1'th member of object $0, but also
      * searches through the object's type before searching through its parents.
      * It returns either null or the object which ultimately contains the
-     * desired name */
+     * desired name
+     * This is intrinsic 1 on cplof */
     this "opMember" {
         this "obj" push2 0 index pul_eval memberset
         this "name" push2 1 index pul_eval memberset
@@ -504,5 +505,5 @@ psl {
         {
             // oh, we found it, done
         } cmp
-    } memberset
+    } 1 intrinsic memberset
 }

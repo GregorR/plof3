@@ -153,6 +153,9 @@ struct PlofReturn interpretPSL(
 /* Hash function */
 size_t plofHash(size_t slen, unsigned char *str);
 
+/* Combine two objects */
+struct PlofObject *plofCombine(struct PlofObject *a, struct PlofObject *b);
+
 /* Copy the content of one object into another (for 'combine') */
 void plofObjCopy(struct PlofObject *to, struct PlofObject *from);
 
