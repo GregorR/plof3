@@ -412,20 +412,14 @@ struct PlofObject *plofCombine(struct PlofObject *a, struct PlofObject *b)
 
         } else {
             /* just the left */
-            struct PlofRawData *ra = (struct PlofRawData *) a->data;
-            rd = newPlofRawData(ra->length);
-            memcpy(rd->data, ra->data, rd->length);
-            newo->data = (struct PlofData *) rd;
+            newo->data = a->data;
 
         }
 
     } else if (ISARRAY(a)) {
         if (ISRAW(b)) {
             /* just the right */
-            struct PlofRawData *rb = (struct PlofRawData *) b->data;
-            rd = newPlofRawData(rb->length);
-            memcpy(rd->data, rb->data, rd->length);
-            newo->data = (struct PlofData *) rd;
+            newo->data = b->data;
 
         } else if (ISARRAY(b)) {
             /* combine the arrays */
@@ -452,10 +446,7 @@ struct PlofObject *plofCombine(struct PlofObject *a, struct PlofObject *b)
 
     } else {
         if (ISRAW(b)) {
-            struct PlofRawData *rb = (struct PlofRawData *) b->data;
-            rd = newPlofRawData(rb->length);
-            memcpy(rd->data, rb->data, rd->length);
-            newo->data = (struct PlofData *) rd;
+            newo->data = b->data;
 
         } else if (ISARRAY(b)) {
             /* duplicate the right array */
