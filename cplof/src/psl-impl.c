@@ -79,6 +79,7 @@
 #include "impl/dsrccol.c"
 #include "impl/print.c"
 #include "impl/debug.c"
+#include "impl/intrinsic.c"
 #include "impl/trap.c"
 #include "impl/include.c"
 #include "impl/parse.c"

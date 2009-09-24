@@ -9,7 +9,7 @@ label(interp_psl_member);
         name = rd->data;
         HASHOF(namehash, rd);
 
-        otmp = plofRead(a, rd->length, name, namehash);
+        otmp = plofRead(a, name, namehash);
         STACK_PUSH(otmp);
     } else {
         /*BADTYPE("member");*/

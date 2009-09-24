@@ -28,7 +28,8 @@ psl {
     /* PUL objects can potentially be unevaluated. This function evaluates
      * unevaluated objects, or just returns the object if it has been evaluated.
      * A boxed object has a __pul_e function to evaluate it, and a __pul_v
-     * member if it has already been evaluated */
+     * member if it has already been evaluated
+     * This is intrinsic 0 on cplof */
     global "__pul_eval" {
         // is __pul_v set?
         push0 "__pul_v" member null
@@ -52,7 +53,7 @@ psl {
             "__pul_v" member
             //global "__pul_eval" member call
         } cmp
-    } memberset
+    } 0 intrinsic memberset
 
     // This forces a boxed object to be evaluated, even if it already has been
     global "__pul_forceEval" {
@@ -372,7 +373,8 @@ psl {
      * Plof. opMember searches for the $1'th member of object $0, but also
      * searches through the object's type before searching through its parents.
      * It returns either null or the object which ultimately contains the
-     * desired name */
+     * desired name
+     * This is intrinsic 1 on cplof */
     this "opMember" {
         this "obj" push2 0 index pul_eval memberset
         this "name" push2 1 index pul_eval memberset
@@ -503,5 +505,5 @@ psl {
         {
             // oh, we found it, done
         } cmp
-    } memberset
+    } 1 intrinsic memberset
 }

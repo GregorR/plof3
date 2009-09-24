@@ -9,6 +9,6 @@ label(interp_psl_nop);
     if (stacktop <= n) { \
         STACK_PUSH(plofNull); \
     } else { \
-        STACK_PUSH(stack[stacktop - n - 1]); \
+        STACK_PUSH(stack.data[stacktop - n - 1]); \
     } \
     STEP

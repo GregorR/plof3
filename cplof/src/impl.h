@@ -1,13 +1,20 @@
+#ifndef IMPL_H
+#define IMPL_H
+
 /* convenient macros for implementing PSL */
+#ifdef HAVE_CONFIG_H
+#include "../config.h"
+#else
+#include "basicconfig.h"
+#endif
 
 /* "Function" for pushing to the stack */
 #define STACK_PUSH(val) \
 { \
-    if (stacktop == stacklen) { \
-        stacklen *= 2; \
-        stack = GC_REALLOC(stack, stacklen * sizeof(struct PlofObject *)); \
+    if (stacktop == stack.length) { \
+        stack = reallocPSLStack(stack); \
     } \
-    stack[stacktop] = (val); \
+    stack.data[stacktop] = (val); \
     stacktop++; \
 }
 #define STACK_POP(into) \
@@ -15,7 +22,7 @@
     if (stacktop == 0) { \
         into = plofNull; \
     } else { \
-        into = stack[--stacktop]; \
+        into = stack.data[--stacktop]; \
     } \
 }
 
@@ -85,14 +92,17 @@ if ((rd)->hash) { \
 #endif
 
 /* Type coercions */
-#define PUSHPTR(val) \
+#define RDPTR(val) \
 { \
     ptrdiff_t _val = (ptrdiff_t) (val); \
-    struct PlofObject *newo; \
     \
     rd = newPlofRawDataNonAtomic(sizeof(ptrdiff_t)); \
     *((ptrdiff_t *) rd->data) = _val; \
-    \
+}
+#define PUSHPTR(val) \
+{ \
+    struct PlofObject *newo; \
+    RDPTR(val); \
     newo = newPlofObject(); \
     newo->parent = context; \
     newo->data = (struct PlofData *) rd; \
@@ -100,9 +110,14 @@ if ((rd)->hash) { \
 }
 
 #if defined(PLOF_BOX_NUMBERS)
+#define RDINT(val) RDPTR(val)
 #define PUSHINT(val) PUSHPTR(val)
 
 #elif defined(PLOF_FREE_INTS)
+#define RDINT(val) \
+{ \
+    rd = (struct PlofRawData *) (((ptrdiff_t)(val)<<1) | 1); \
+}
 #define PUSHINT(val) \
 { \
     STACK_PUSH((void *) (((ptrdiff_t)(val)<<1) | 1)); \
@@ -186,3 +201,4 @@ QUINARY; \
 #define STEP pc += 2; jump(*pc)
 #endif
 
+#endif

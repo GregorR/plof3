@@ -52,7 +52,7 @@ int main(int argc, char **argv)
 #define FOREACH(inst) \
         printf("case psl_%s:\n" \
                "    cpsl[cpsli] = addressof(interp_psl_%s);\n" \
-               "#include \"leaky/%s.c\"\n" \
+               "#include \"optim/%s.c\"\n" \
                "    break;\n", #inst, #inst, #inst);
 #include "psl_inst.h"
 #undef FOREACH
