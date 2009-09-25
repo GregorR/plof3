@@ -55,4 +55,13 @@ var String = Object : [
             rawlength
         })
     }
+
+    slice = (fromi as NativeInteger, toi as NativeInteger) {
+        new String(psl {
+            plof{this.__pul_val} pul_eval
+            plof{fromi.__pul_val} pul_eval
+            plof{toi.__pul_val} pul_eval
+            slice
+        })
+    }
 ]
