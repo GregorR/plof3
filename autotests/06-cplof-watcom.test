@@ -5,6 +5,7 @@ export WCC="`which wcc386`"
 export WATCOM="`dirname $WCC`/.."
 export INCLUDE="`dirname $WCC`/../h"
 export LIB="`dirname $WCC`/../lib386"
+make -f build/Makefile.gcc clean
 runtest watcom make -f build/Makefile.wcc
 make -f build/Makefile.gcc clean
 unset WCC WATCOM INCLUDE LIB
