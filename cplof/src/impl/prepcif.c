@@ -17,6 +17,7 @@ label(interp_psl_prepcif);
         rettype = (ffi_type *) ASPTR(a);
         ad = ARRAY(b);
         abi = ASINT(c);
+        if (abi == 0) abi = FFI_DEFAULT_ABI;
 
         /* put the argument types in the proper type of array */
         atypes = GC_MALLOC(ad->length * sizeof(ffi_type *));
