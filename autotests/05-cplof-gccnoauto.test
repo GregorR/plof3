@@ -3,7 +3,7 @@ cd cplof
 
 # makefile-based tests
 make -f build/Makefile.gcc clean
-runtest make_noauto_Wall make -k -f build/Makefile.gcc ECFLAGS="-ansi -Wall -Werror -D_BSD_SOURCE"
+runtest make_noauto_Wall make -k -f build/Makefile.gcc ECFLAGS="-ansi -pedantic -Wall -Werror -D_BSD_SOURCE -DFAKE_JUMPS"
 make -f build/Makefile.gcc clean
 runtest make_noauto make -k -f build/Makefile.gcc
 make -f build/Makefile.gcc clean

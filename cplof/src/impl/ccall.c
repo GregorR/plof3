@@ -17,7 +17,8 @@ label(interp_psl_ccall);
         struct PlofObject *otmp;
 
         cif = (ffi_cif_plus *) ASPTR(a);
-        func = (void(*)()) ASPTR(b);
+        /* this stupid cast is to compile with -pedantic */
+        func = (void(*)()) (size_t) ASPTR(b);
         ad = ARRAY(c);
 
         /* now start preparing the args and return */

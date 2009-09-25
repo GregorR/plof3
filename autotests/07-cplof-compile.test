@@ -7,7 +7,7 @@ runtest autoreconf autoreconf
 runtest configure ./configure
 make clean
 # build with -Wall and without
-runtest make_Wall make -k CFLAGS="-ansi -Wall -Werror -D_BSD_SOURCE"
+runtest make_Wall make -k CFLAGS="-ansi -pedantic -Wall -Werror -D_BSD_SOURCE -DFAKE_JUMPS"
 make clean
 runtest make make -k
 #make distclean # don't clean, we want cplof to run tests
