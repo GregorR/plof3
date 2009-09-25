@@ -1,8 +1,8 @@
 label(interp_psl_debug);
     DEBUG_CMD("debug");
     {
-        static size_t debugCount = 0;
-        fprintf(stderr, "%d\r", ++debugCount);
+        static unsigned int debugCount = 0;
+        fprintf(stderr, "%u\r", ++debugCount);
     }
     STEP;
 
