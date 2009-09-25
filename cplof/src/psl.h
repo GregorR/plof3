@@ -98,6 +98,7 @@
 #define psl_dlsym     0xC3
 #define psl_cget      0xC4
 #define psl_cset      0xC5
+#define psl_cinteger  0xC6
 #define psl_ctype     0xC7
 #define psl_cstruct   0xC8
 #define psl_csizeof   0xC9

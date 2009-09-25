@@ -95,6 +95,7 @@
 #include "impl/dlsym.c"
 #include "impl/cget.c"
 #include "impl/cset.c"
+#include "impl/cinteger.c"
 #include "impl/ctype.c"
 #include "impl/cstruct.c"
 #include "impl/csizeof.c"

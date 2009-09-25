@@ -220,9 +220,8 @@ var CData = Object : [
     opCastTo = (x) {
         if (x is Number) (
             // the number might be in the wrong format, so convert
-            Debug.print "WARNING: CData casted to Integer; this conversion needs fixing!"
             return(opInteger(psl {
-                plof{this.__pul_val} pul_eval 0 1 slice integer
+                plof{this.__pul_val} pul_eval cinteger
             }))
         ) else if (x is String) (
             return(this : String)

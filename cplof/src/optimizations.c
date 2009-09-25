@@ -1,3 +1,17 @@
+#include <stdint.h>
+
+#ifdef HAVE_CONFIG_H
+#include "../config.h"
+#else
+#include "basicconfig.h"
+#endif
+
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#else
+#include "pstdint.h"
+#endif
+
 #include "optimizations.h"
 
 /* parse an int (here so it can be done both during optimization and at runtime */
@@ -37,6 +51,40 @@ ptrdiff_t parseRawInt(struct PlofRawData *rd)
                   ((ptrdiff_t) rd->data[7]);
             break;
 #endif
+    }
+
+    return val;
+}
+
+/* parse a C int */
+ptrdiff_t parseRawCInt(struct PlofRawData *rd)
+{
+    ptrdiff_t val = 0;
+
+    switch (rd->length) {
+        case 1:
+            val = *((int8_t *) rd->data);
+            break;
+
+        case 2:
+            val = *((int16_t *) rd->data);
+            break;
+
+        case 4:
+            val = *((int32_t *) rd->data);
+            break;
+
+        case 8:
+#if SIZEOF_VOID_P < 8
+#ifdef WORDS_BIGENDIAN
+            val = ((int32_t *) rd->data)[1];
+#else
+            val = ((int32_t *) rd->data)[0];
+#endif
+#else
+            val = *((int64_t *) rd->data);
+#endif
+            break;
     }
 
     return val;

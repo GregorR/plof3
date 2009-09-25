@@ -142,6 +142,7 @@ gadd
 "pslOp" "/call/" "token" "white" 3 array {{call}} gadd
 "pslOp" "/calli/" "token" "white" 3 array {{calli}} gadd
 "pslOp" "/catch/" "token" "white" 3 array {{catch}} gadd
+"pslOp" "/cinteger/" "token" "white" 3 array {{cinteger}} gadd
 "pslOp" "/cmp/" "token" "white" 3 array {{cmp}} gadd
 "pslOp" "/combine/" "token" "white" 3 array {{combine}} gadd
 "pslOp" "/concat/" "token" "white" 3 array {{concat}} gadd

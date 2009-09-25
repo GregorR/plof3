@@ -42,7 +42,7 @@ AC_CHECK_LIB([pcre], [pcre_compile])
 # Checks for header files.
 #AC_HEADER_STDC
 #AC_CHECK_HEADERS([stddef.h string.h unistd.h])
-AC_CHECK_HEADERS([unistd.h gc/gc.h])
+AC_CHECK_HEADERS([stdint.h unistd.h gc/gc.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 #AC_TYPE_SIZE_T

@@ -383,6 +383,10 @@ case psl_cset:
     cpsl[cpsli] = addressof(interp_psl_cset);
 #include "optim/cset.c"
     break;
+case psl_cinteger:
+    cpsl[cpsli] = addressof(interp_psl_cinteger);
+#include "optim/cinteger.c"
+    break;
 case psl_ctype:
     cpsl[cpsli] = addressof(interp_psl_ctype);
 #include "optim/ctype.c"

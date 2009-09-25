@@ -287,6 +287,9 @@ break;
 case psl_cset:
 fprintf(out, "cset\n");
 break;
+case psl_cinteger:
+fprintf(out, "cinteger\n");
+break;
 case psl_ctype:
 fprintf(out, "ctype\n");
 break;

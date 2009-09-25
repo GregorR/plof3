@@ -9,15 +9,15 @@ f.close()
 var f = new File("foo", "r")
 
 var s = f.read 2
-Stdout.write s
+Stdout.write (s~"\n")
 f.close()
 
 var f = new File("foo", "r")
 
 var s = f.readLine()
-Stdout.write s
+Stdout.write (s~"\n")
 var s = f.readLine()
-Stdout.write s
+Stdout.write (s~"\n")
 f.close()
 
 var f = new File("foo", "r")
