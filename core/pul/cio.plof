@@ -88,13 +88,14 @@ var File = Handle : [
     }
 
     readFile = () {
-        var input = this.read 1
-        var ret = input
-        while (!this.eof()) (
-            input = this.read 1
-            ret = ret ~ input
+        var buf = C.calloc(1024)
+        var s = ""
+        var rd = C.__fread([[buf, 1, 1024, this.filepointer]]) as NativeInteger
+        while (rd > 0) (
+            s = s ~ (C.get(buf, rd) as String)
+            rd = C.__fread([[buf, 1, 1024, this.filepointer]]) as NativeInteger
         )
-        return ret
+        return s
     }
 
     eof = () {
