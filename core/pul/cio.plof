@@ -78,7 +78,7 @@ var File = Handle : [
     readLine = () {
         var buf = C.calloc(1024)
         var input = C.__fgets([[buf, 1024, this.filepointer]])
-        var str = C.get(buf, 1024) as String
+        var str = C.getstr(buf)
         C.free buf
         var len = str.length()
         if (len > 0 && str.slice(len - 1, len) == "\n") (
