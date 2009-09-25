@@ -25,6 +25,7 @@
 C.__fopen = C.libc("fopen", C.pointer, [[C.pointer, C.pointer]])
 C.__fputs = C.libc("fputs", C.int, [[ C.pointer, C.pointer ]])
 C.__fread = C.libc("fread", C.pointer, [[ C.pointer, C.pointer, C.pointer, C.pointer ]])
+C.__fgets = C.libc("fgets", C.pointer, [[ C.pointer, C.int, C.pointer ]])
 C.__getline = C.libc("getline", C.pointer, [[ C.pointer, C.pointer, C.pointer ]])
 C.__fclose = C.libc("fclose", C.int, [[C.pointer]])
 C.__feof = C.libc("feof", C.int, [[C.pointer]])
@@ -75,17 +76,15 @@ var File = Handle : [
     }
 
     readLine = () {
-        var input = this.read 1
-        var ret = input
-        while (input != "\n") (
-            input = this.read 1
-            if (!this.eof()) (
-                ret = ret ~ input
-            ) else (
-                return ret
-            )
+        var buf = C.calloc(1024)
+        var input = C.__fgets([[buf, 1024, this.filepointer]])
+        var str = C.get(buf, 1024) as String
+        C.free buf
+        var len = str.length()
+        if (len > 0 && str.slice(len - 1, len) == "\n") (
+            str = str.slice(0, len - 1)
         )
-        return ret
+        return str
     }
 
     readFile = () {
