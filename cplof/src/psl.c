@@ -130,8 +130,8 @@ struct PlofReturn interpretPSL(
     /* The PSL in various forms */
     size_t psllen;
     unsigned char *psl = NULL;
-    volatile void **cpsl = NULL;
-    volatile void **pc = NULL;
+    void **cpsl = NULL;
+    void **pc = NULL;
     /* Compiled PSL is an array of pointers. Every pointer which is 0 mod 2 is
      * the op to run, the next pointer is an argument as a PlofRawData (if
      * applicable) */
@@ -156,7 +156,7 @@ struct PlofReturn interpretPSL(
         rd = (struct PlofRawData *) pslraw->data;
         psllen = rd->length;
         psl = rd->data;
-        cpsl = (volatile void **) rd->idata;
+        cpsl = rd->idata;
     } else {
         psllen = pslaltlen;
         psl = pslalt;
@@ -192,7 +192,7 @@ struct PlofReturn interpretPSL(
 
     /* Make sure it's compiled */
     if (!cpsl) {
-        volatile int psli, cpsli;
+        int psli, cpsli;
 
         /* our stack of leakies for determining what can be freed immediately */
         struct Leaky *lstack;
