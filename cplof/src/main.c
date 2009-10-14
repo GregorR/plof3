@@ -106,6 +106,9 @@ int main(int argc, char **argv)
         } else ARG("interactive", "i") {
             interactive = 1;
 
+        } else ARG("no-intrinsics", "\xFF") {
+            plofLoadIntrinsics = 0;
+
         } else ARG("help", "h") {
             usage();
             return 0;
@@ -293,5 +296,7 @@ void usage()
             "  --debug|-g:\n"
             "\tCause the parser to produce debuggable output.\n"
             "  --interactive|-i:\n"
-            "\tInteractive (read-execute-loop) mode.\n");
+            "\tInteractive (read-execute-loop) mode.\n"
+            "  --no-intrinsics:\n"
+            "\tDo not load intrinsics (much slower execution).\n");
 }

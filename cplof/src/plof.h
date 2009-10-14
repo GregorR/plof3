@@ -42,6 +42,9 @@ struct PlofData;
 /* search path for include, should be a null-terminated array of strings */
 extern unsigned char **plofIncludePaths;
 
+/* should we load intrinsics? */
+extern int plofLoadIntrinsics;
+
 #define PLOF_DATA_RAW 0
 #define PLOF_DATA_ARRAY 1
 

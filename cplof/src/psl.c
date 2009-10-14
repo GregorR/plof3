@@ -75,6 +75,9 @@ typedef struct _ffi_cif_plus {
 /* Include paths */
 unsigned char **plofIncludePaths;
 
+/* Use intrinsics? */
+int plofLoadIntrinsics = 1;
+
 
 /* The maximum number of version strings */
 #define VERSION_MAX 100
