@@ -89,27 +89,17 @@ psl {
 
     // create an unevaluated value from a procedure
     global "__pul_funcwrap" {
-        // arg: procedure
-
-        // put the procedure in a variable
-        this "proc" push2 memberset
-
-        // then make an object
-        new
-
-        // first, __pul_e
         push0 "__pul_e" {
-            null this "proc" resolve member call
+            null this parent call
             global "__pul_eval" member call
-        } memberset
+        } push0 push3 parentset memberset
 
-        // then __pul_s
         push0 "__pul_s" {
-            null this "proc" resolve member call
+            null this parent call
             push1 2 array
             global "__pul_set" member call
-        } memberset
-    } memberset
+        } push0 push3 parentset memberset
+    } 2 intrinsic memberset
 
 
     // create an unevaluated value from a variable

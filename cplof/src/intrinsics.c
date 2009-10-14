@@ -2,13 +2,15 @@
 #include "intrinsics.h"
 #include "memory.h"
 
-static size_t __pul_v_hash = 0, __pul_e_hash, __pul_type_hash;
+static size_t __pul_v_hash = 0, __pul_e_hash, __pul_s_hash, __pul_set_hash, __pul_type_hash;
 
 /* Get the necessary hashes */
 static void getHashes()
 {
     __pul_v_hash = plofHash(7, (unsigned char *) "__pul_v");
     __pul_e_hash = plofHash(7, (unsigned char *) "__pul_e");
+    __pul_s_hash = plofHash(7, (unsigned char *) "__pul_s");
+    __pul_set_hash = plofHash(9, (unsigned char *) "__pul_set");
     __pul_type_hash = plofHash(10, (unsigned char *) "__pul_type");
 }
 #define GET_HASHES if (__pul_v_hash == 0) getHashes()
@@ -187,8 +189,98 @@ static struct PlofReturn opMember(struct PlofObject *ctx, struct PlofObject *arg
     return opMemberPrime(obj, name, namehash, (cont != plofNull));
 }
 
+/* pul_funcwrap wraps a function in an object for later evaluation
+ *
+ * PSL code:
+ *  global "__pul_funcwrap" {
+ *      push0
+ * 
+ *      push0 "__pul_e" {
+ *          null this parent call
+ *          global "__pul_eval" member call
+ *      } push0 push3 parentset memberset
+ * 
+ *      push0 "__pul_s" {
+ *          null this parent call
+ *          push1 2 array
+ *          global "__pul_set" member call
+ *      } push0 push3 parentset memberset
+ *  } memberset
+ */
+static struct PlofReturn pul_funcwrap_e(struct PlofObject *ctx, struct PlofObject *arg);
+static struct PlofReturn pul_funcwrap_s(struct PlofObject *ctx, struct PlofObject *arg);
+static struct PlofReturn pul_funcwrap(struct PlofObject *ctx, struct PlofObject *arg)
+{
+    struct PlofReturn ret;
+    struct PlofObject *pul_e, *pul_s;
+    static struct PlofRawData *pul_e_raw = NULL;
+    static struct PlofRawData *pul_s_raw = NULL;
+    ret.isThrown = 0;
+
+    GET_HASHES;
+
+    if (!ISOBJ(arg)) {
+        /* massive failure */
+        ret.ret = arg;
+        return ret;
+    }
+
+    /* make pul_e */
+    pul_e = newPlofObject();
+    pul_e->parent = arg;
+    if (pul_e_raw == NULL) {
+        pul_e_raw = newPlofRawData(1);
+        pul_e_raw->proc = pul_funcwrap_e;
+    }
+    pul_e->data = (struct PlofData *) pul_e_raw;
+    plofWrite(arg, (unsigned char *) "__pul_e", __pul_e_hash, pul_e);
+
+    /* and pul_s */
+    pul_s = newPlofObject();
+    pul_s->parent = arg;
+    if (pul_s_raw == NULL) {
+        pul_s_raw = newPlofRawData(1);
+        pul_s_raw->proc = pul_funcwrap_s;
+    }
+    pul_s->data = (struct PlofData *) pul_s_raw;
+    plofWrite(arg, (unsigned char *) "__pul_s", __pul_s_hash, pul_s);
+
+    ret.ret = arg;
+    return ret;
+}
+
+static struct PlofReturn pul_funcwrap_e(struct PlofObject *ctx, struct PlofObject *arg)
+{
+    struct PlofReturn ret = interpretPSL(ctx->parent, plofNull, ctx, 0, NULL, 1, 0);
+    if (ret.isThrown) return ret;
+
+    /* otherwise run it through pul_eval */
+    return pul_eval(ctx, ret.ret);
+}
+
+static struct PlofReturn pul_funcwrap_s(struct PlofObject *ctx, struct PlofObject *arg)
+{
+    struct PlofObject *setarg, *pul_set;
+    struct PlofArrayData *setargarr;
+
+    struct PlofReturn ret = interpretPSL(ctx->parent, plofNull, ctx, 0, NULL, 1, 0);
+    if (ret.isThrown) return ret;
+
+    /* otherwise run it through pul_set */
+    setargarr = newPlofArrayData(2);
+    setargarr->data[0] = ret.ret;
+    setargarr->data[1] = arg;
+    setarg = newPlofObject();
+    setarg->parent = ctx;
+    setarg->data = (struct PlofData *) setargarr;
+
+    pul_set = plofRead(plofGlobal, (unsigned char *) "__pul_set", __pul_set_hash);
+    return interpretPSL(pul_set->parent, setarg, pul_set, 0, NULL, 1, 0);
+}
+
 /* the intrinsics list */
 PlofFunction plofIntrinsics[] = {
     pul_eval,
-    opMember
+    opMember,
+    pul_funcwrap
 };
