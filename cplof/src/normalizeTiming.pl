@@ -1,18 +1,24 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
+use strict;
 
-$last = "";
-$count = 0;
-$total = 0;
+my %counts = ();
+my %times = ();
 
-while ($line = <>) {
-    @elems = split(/,/, $line);
-    if (!($elems[0] eq $last)) {
-        print "$last,$count,$total\n";
-        $last = $elems[0];
-        $count = 0;
-        $total = 0;
+while (my $line = <stdin>) {
+    chomp $line;
+    my @elems = split(/,/, $line);
+    my $nm = $elems[0];
+    my $tm = $elems[1] + 0;
+    if (!($counts{$nm})) {
+        $counts{$nm} = $times{$nm} = 0;
     }
-    $count++;
-    $total += $elems[1];
+    $counts{$nm}++;
+    $times{$nm} += $tm;
 }
-print "$last,$count,$total\n";
+
+my $nm;
+foreach $nm (keys %counts) {
+    my $count = $counts{$nm};
+    my $time = $times{$nm};
+    print "$nm,$count,$time\n";
+}
