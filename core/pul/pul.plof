@@ -207,13 +207,16 @@ psl {
         push0 0 index
 
         // make the new object
-        new combine
+        new
 
         // object.this = object
         push0 "this" push2 memberset
 
         // objects are function contexts
         push0 "__pul_fc" push2 memberset
+
+        // initialize __pul_type to the parent's __pul_type
+        push0 "__pul_type" push3 "__pul_type" member memberset
 
         // their type is based on the parent type (if set)
         push0 "__pul_type" member null
@@ -233,10 +236,6 @@ psl {
                 push0 push4 parentset
             memberset
         } cmp
-
-        // and reparent everything
-        push0 push2 0 index 2 array
-        this "opReparent" resolve member call pop
     } memberset
 
     // opReparent reparents members of $0 from $1

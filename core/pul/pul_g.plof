@@ -530,7 +530,7 @@ pslbnf {
         {
             // call opCombine
             2 array
-            push0 this "opCombine" resolve member call
+            this "opCombine" resolve member call
         } concat
 
         // wrap
