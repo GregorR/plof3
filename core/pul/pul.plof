@@ -87,7 +87,8 @@ psl {
         } cmp
     } memberset
 
-    // create an unevaluated value from a procedure
+    /* create an unevaluated value from a procedure
+     * this is intrinsic 2 on cplof */
     global "__pul_funcwrap" {
         push0 "__pul_e" {
             null this parent call

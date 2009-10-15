@@ -64,7 +64,7 @@ struct PlofOHashTable *plofHashtableNew(struct PlofOHashTable *into, unsigned ch
 
 /* Default length of the hash table buckets, in terms of bits represented by buckets */
 #ifndef PLOF_HASHTABLE_BITS
-#define PLOF_HASHTABLE_BITS 0
+#define PLOF_HASHTABLE_BITS 3
 #endif
 #define PLOF_HASHTABLE_SIZE (1<<PLOF_HASHTABLE_BITS)
 #if PLOF_HASHTABLE_BITS == 0
