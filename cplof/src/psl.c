@@ -173,7 +173,20 @@ struct PlofReturn interpretPSL(
 
     /* call the intrinsic if applicable */
     if (pslraw && rd->proc) {
-        return rd->proc(context, arg);
+        ret = rd->proc(context, arg);
+#ifdef DEBUG_TIMING_PROCEDURE
+        clock_gettime(CLOCK_MONOTONIC, &petspec);
+#ifdef DEBUG_NAMES
+        if (pslraw && pslraw->name) {
+            printf("\"%s\", ", (char *) pslraw->name);
+        } else
+#endif
+        printf("\"anonymous\", ");
+        printf("%lld\n",
+               (petspec.tv_sec - pstspec.tv_sec) * 1000000000LL +
+               (petspec.tv_nsec - pstspec.tv_nsec));
+#endif
+        return ret;
     }
 
     /* Perhaps generate the context */
