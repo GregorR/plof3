@@ -22,13 +22,17 @@
  * THE SOFTWARE.
  */
 
+#include <string.h>
+
 #include "impl.h"
 #include "intrinsics.h"
 #include "memory.h"
 
+static struct PlofReturn opDuplicatePrime(struct PlofObject *ctx, struct PlofObject *obj);
+
 static size_t __pul_v_hash = 0, __pul_e_hash, __pul_s_hash, __pul_set_hash,
               __pul_type_hash, this_hash, True_hash, False_hash,
-              opCast_hash;
+              opCast_hash, __pul_fc_hash;
 
 /* Get the necessary hashes */
 static void getHashes()
@@ -42,6 +46,7 @@ static void getHashes()
     True_hash = plofHash(4, (unsigned char *) "True");
     False_hash = plofHash(5, (unsigned char *) "False");
     opCast_hash = plofHash(6, (unsigned char *) "opCast");
+    __pul_fc_hash = plofHash(8, (unsigned char *) "__pul_fc");
 }
 #define GET_HASHES if (__pul_v_hash == 0) getHashes()
 
@@ -148,9 +153,10 @@ static struct PlofReturn opMemberPrime(struct PlofObject *obj, unsigned char *na
         robj = plofRead(typeo, name, namehash);
         if (robj != plofNull) {
             /* cool, we found it; do we need to dup it? */
-            if (robj->parent == typeo) {
+            if (ISOBJ(robj) && robj->parent == typeo) {
                 /* yup. Dup */
-                robj = plofCombine(robj, newPlofObject());
+                ret = opDuplicatePrime(obj, robj);
+                robj = ret.ret;
                 robj->parent = obj;
             }
 
@@ -463,11 +469,116 @@ static struct PlofReturn opAs(struct PlofObject *ctx, struct PlofObject *arg)
     }
 }
 
+/* opDuplicate. Duplicates an object prototype-wise, instead of combine-wise
+ * PSL code:
+ *  {
+ *      push0 0 index
+ * 
+ *      // make the new object
+ *      push0 extractraw
+ * 
+ *      // object.this = object
+ *      push0 "this" push2 memberset
+ * 
+ *      // objects are function contexts
+ *      push0 "__pul_fc" push2 memberset
+ * 
+ *      // initialize __pul_type to the parent's __pul_type
+ *      push0 "__pul_type" push3 "__pul_type" member memberset
+ * 
+ *      // their type is based on the parent type (if set)
+ *      push0 "__pul_type" member null
+ *      {
+ *          // no parent type
+ *          push0 "__pul_type"
+ *              push2 1 array
+ *              push0 push4 parentset
+ *          memberset
+ *      }
+ *      {
+ *          // use the parent type
+ *          push0 "__pul_type"
+ *              push2 1 array
+ *              push3 "__pul_type" member pul_eval
+ *              aconcat
+ *              push0 push4 parentset
+ *          memberset
+ *      } cmp
+ *  }
+ */
+static struct PlofReturn opDuplicatePrime(struct PlofObject *ctx, struct PlofObject *obj)
+{
+    struct PlofReturn ret;
+    struct PlofObject *robj, *orig_pul_type_obj, *pul_type_obj;
+    struct PlofArrayData *orig_pul_type, *pul_type;
+
+    GET_HASHES;
+
+    /* make the object */
+    robj = newPlofObject();
+    robj->parent = ctx;
+    if (ISRAW(obj)) {
+        robj->data = obj->data;
+    }
+    ret.isThrown = 0;
+    ret.ret = robj;
+
+    /* give it necessary fields */
+    plofWrite(robj, (unsigned char *) "this", this_hash, robj);
+    plofWrite(robj, (unsigned char *) "__pul_fc", __pul_fc_hash, robj);
+
+    /* get out the type */
+    orig_pul_type_obj = plofRead(obj, (unsigned char *) "__pul_type", __pul_type_hash);
+    orig_pul_type = NULL;
+    if (orig_pul_type_obj != plofNull && ISARRAY(orig_pul_type_obj)) {
+        orig_pul_type = ARRAY(orig_pul_type_obj);
+
+        /* make a new one based on it */
+        pul_type = newPlofArrayData(orig_pul_type->length + 1);
+        pul_type->data[0] = robj;
+        memcpy(pul_type->data + 1, orig_pul_type->data, orig_pul_type->length * sizeof(struct PlofObject *));
+
+    } else {
+        /* just build a simple one */
+        pul_type = newPlofArrayData(1);
+        pul_type->data[0] = robj;
+    }
+    pul_type_obj = newPlofObject();
+    pul_type_obj->parent = robj;
+    pul_type_obj->data = (struct PlofData *) pul_type;
+    plofWrite(robj, (unsigned char *) "__pul_type", __pul_type_hash, pul_type_obj);
+
+    return ret;
+}
+
+static struct PlofReturn opDuplicate(struct PlofObject *ctx, struct PlofObject *arg)
+{
+    struct PlofReturn ret;
+    ret.isThrown = 0;
+    ret.ret = plofNull;
+
+    if (ISARRAY(arg)) {
+        struct PlofArrayData *ad;
+        ad = ARRAY(arg);
+        if (ad->length >= 1) {
+            return opDuplicatePrime(ctx, ad->data[0]);
+        } else {
+            return ret;
+        }
+
+    } else {
+        return ret;
+
+    }
+}
+
+
 /* the intrinsics list */
 PlofFunction plofIntrinsics[] = {
     pul_eval,
     opMember,
     pul_funcwrap,
     opIs,
-    opAs
+    opAs,
+    opDuplicate
 };

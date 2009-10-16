@@ -201,7 +201,8 @@ psl {
         push2
     memberset
 
-    // opDuplicate duplicates an object, used for derivation
+    /* opDuplicate duplicates an object, used for derivation
+     * this is intrinsic 5 on cplof */
     pul_fcontext "opDuplicate"
     {
         push0 0 index
@@ -236,7 +237,7 @@ psl {
                 push0 push4 parentset
             memberset
         } cmp
-    } memberset
+    } 5 intrinsic memberset
 
     // opReparent reparents members of $0 from $1
     pul_fcontext "opReparent"
@@ -439,7 +440,7 @@ psl {
                     push2
                 {
                     // yup, it's owned by the type. Duplicate,
-                    new combine
+                    1 array this "opDuplicate" resolve member call pul_eval
 
                     // and reparent
                     push0
