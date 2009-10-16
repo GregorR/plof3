@@ -241,7 +241,7 @@ psl {
     // opReparent reparents members of $0 from $1
     pul_fcontext "opReparent"
     {
-        this "object"  push2 0 index memberset
+        this "+object"  push2 0 index memberset
         this "old"     push2 1 index memberset
         this "members" push2 0 index members memberset
         this "index"   0 memberset
@@ -255,7 +255,7 @@ psl {
         }
         {
             // no, check this one
-            this "object" resolve member
+            this "+object" resolve member
                 this "members" resolve member
                     this "index" resolve member
                         index
@@ -264,7 +264,7 @@ psl {
                 // if the parent is the old one, we'll reparent
                 parent this "old" resolve member
                 {
-                    this "object" resolve member
+                    this "+object" resolve member
                         this "members" resolve member
                             this "index" resolve member
                                 index
@@ -295,8 +295,8 @@ psl {
         // do the primitive combine first
         push0 0 index push1 1 index combine
 
-        // put it in "new" for later
-        this "new" push2 memberset
+        // put it in "+new" for later
+        this "+new" push2 memberset
 
         // object.this = object
         push0 "this" push2 memberset
@@ -311,13 +311,13 @@ psl {
             this "old2" resolve member "__pul_type" member pul_eval null
             {
                 // none on either side, just use itself
-                this "new" resolve member "__pul_type"
+                this "+new" resolve member "__pul_type"
                     push1 1 array
                 memberset
             }
             {
                 // right but not left
-                this "new" resolve member "__pul_type"
+                this "+new" resolve member "__pul_type"
                     push1 1 array
                     this "old2" resolve member "__pul_type" member pul_eval
                     aconcat
@@ -329,7 +329,7 @@ psl {
             this "old2" resolve member "__pul_type" member pul_eval null
             {
                 // left but not right
-                this "new" resolve member "__pul_type"
+                this "+new" resolve member "__pul_type"
                     push1 1 array
                     this "old1" resolve member "__pul_type" member pul_eval
                     aconcat
@@ -337,7 +337,7 @@ psl {
             }
             {
                 // both set
-                this "new" resolve member "__pul_type"
+                this "+new" resolve member "__pul_type"
                     push1 1 array
                     this "old2" resolve member "__pul_type" member pul_eval
                     aconcat

@@ -694,7 +694,11 @@ void plofWrite(struct PlofObject *obj, unsigned char *name, size_t namehash, str
     size_t subhash = namehash & PLOF_HASHTABLE_MASK;
 
 #ifdef DEBUG_NAMES
-    if (ISOBJ(value) && value->name == NULL) {
+    /* note that these heuristics are not meant to be general, they're just
+     * handy for Plof */
+    if (name[0] != '+' && strcmp(name, "this") && strcmp(name, "__pul_fc") &&
+        strcmp(name, "__pul_v") &&
+        ISOBJ(value) && value->name == NULL) {
         value->name = name;
     }
 #endif
