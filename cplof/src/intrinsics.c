@@ -3,7 +3,8 @@
 #include "memory.h"
 
 static size_t __pul_v_hash = 0, __pul_e_hash, __pul_s_hash, __pul_set_hash,
-              __pul_type_hash, this_hash, True_hash, False_hash;
+              __pul_type_hash, this_hash, True_hash, False_hash,
+              opCast_hash;
 
 /* Get the necessary hashes */
 static void getHashes()
@@ -16,6 +17,7 @@ static void getHashes()
     this_hash = plofHash(4, (unsigned char *) "this");
     True_hash = plofHash(4, (unsigned char *) "True");
     False_hash = plofHash(5, (unsigned char *) "False");
+    opCast_hash = plofHash(6, (unsigned char *) "opCast");
 }
 #define GET_HASHES if (__pul_v_hash == 0) getHashes()
 
@@ -386,10 +388,62 @@ static struct PlofReturn opIs(struct PlofObject *ctx, struct PlofObject *arg)
     return ret;
 }
 
+/* opAs
+ * Plof code:
+ *   opAs = (type) {
+ *      if (this is type) (
+ *          // simple case
+ *          return this
+ *      )
+ *      return (opCast(type))
+ *  }
+ */
+static struct PlofReturn opAs(struct PlofObject *ctx, struct PlofObject *arg)
+{
+    struct PlofObject *obj, *type;
+    struct PlofArrayData *ad;
+    struct PlofReturn ret;
+
+    ret.isThrown = 0;
+    ret.ret = plofNull;
+
+    GET_HASHES;
+
+    /* make sure the arg is right */
+    if (!ISARRAY(arg)) return ret;
+    ad = ARRAY(arg);
+    if (ad->length < 1) return ret;
+    ret = pul_eval(ctx, ad->data[0]);
+    if (ret.isThrown) return ret;
+    type = ret.ret;
+
+    /* and get the obj ("this") */
+    ret = opMemberPrime(ctx, (unsigned char *) "this", this_hash, 1);
+    ret = pul_eval(ctx, ret.ret);
+    if (ret.isThrown) return ret;
+    obj = ret.ret;
+    if (obj == plofNull) return ret;
+
+    /* now check */
+    if (opIsPrime(obj, type)) {
+        ret.ret = obj;
+        return ret;
+    } else {
+        /* OK, use opCast */
+        struct PlofObject *opCast;
+
+        ret = opMemberPrime(ctx, (unsigned char *) "opCast", opCast_hash, 1);
+        opCast = plofRead(ret.ret, (unsigned char *) "opCast", opCast_hash);
+
+        return interpretPSL(opCast->parent, arg, opCast, 0, NULL, 1, 0);
+    }
+}
+
 /* the intrinsics list */
 PlofFunction plofIntrinsics[] = {
     pul_eval,
     opMember,
     pul_funcwrap,
-    opIs
+    opIs,
+    opAs
 };

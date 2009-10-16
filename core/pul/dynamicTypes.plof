@@ -95,6 +95,7 @@ Object := [
 // set up intrinsics
 psl {
     plof{Object.opIs} pul_eval 3 intrinsic
+    plof{Object.opAs} pul_eval 4 intrinsic
 }
 
 // OpAsException is thrown when OpAs fails
