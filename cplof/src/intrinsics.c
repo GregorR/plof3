@@ -2,7 +2,8 @@
 #include "intrinsics.h"
 #include "memory.h"
 
-static size_t __pul_v_hash = 0, __pul_e_hash, __pul_s_hash, __pul_set_hash, __pul_type_hash;
+static size_t __pul_v_hash = 0, __pul_e_hash, __pul_s_hash, __pul_set_hash,
+              __pul_type_hash, this_hash, True_hash, False_hash;
 
 /* Get the necessary hashes */
 static void getHashes()
@@ -12,6 +13,9 @@ static void getHashes()
     __pul_s_hash = plofHash(7, (unsigned char *) "__pul_s");
     __pul_set_hash = plofHash(9, (unsigned char *) "__pul_set");
     __pul_type_hash = plofHash(10, (unsigned char *) "__pul_type");
+    this_hash = plofHash(4, (unsigned char *) "this");
+    True_hash = plofHash(4, (unsigned char *) "True");
+    False_hash = plofHash(5, (unsigned char *) "False");
 }
 #define GET_HASHES if (__pul_v_hash == 0) getHashes()
 
@@ -278,9 +282,114 @@ static struct PlofReturn pul_funcwrap_s(struct PlofObject *ctx, struct PlofObjec
     return interpretPSL(pul_set->parent, setarg, pul_set, 0, NULL, 1, 0);
 }
 
+/* opIs
+ * Plof code:
+ *  opIs = (type) {
+ *      psl {
+ *          this "mytype"
+ *          plof{this} pul_eval "__pul_type" member
+ *          memberset
+ *          this "index" 0 memberset
+ * 
+ *          // go through each element
+ *          null
+ *          {
+ *              this "index" resolve member
+ *              this "mytype" resolve member length
+ *              { global } { null } lt
+ *          }
+ *          {
+ *              // check this one
+ *              this "mytype" resolve member
+ *                  this "index" resolve member
+ *                      index
+ *                  plof{type} pul_eval
+ *              {
+ *                  // they're equal, this matches
+ *                  plof{return True} pul_eval
+ *              }
+ *              {
+ *                  // no match
+ *              } cmp
+ * 
+ *              // increment the index
+ *              this "index" resolve
+ *                      this "index" resolve member
+ *                          1 add
+ *                          memberset
+ *          } while pop
+ * 
+ *          // didn't find it
+ *          plof{return False} pul_eval
+ *      }
+ *  }
+ */
+static int opIsPrime(struct PlofObject *obj, struct PlofObject *type) {
+    struct PlofObject *pul_type_obj;
+    struct PlofArrayData *pul_type;
+    int ti;
+
+    if (!ISOBJ(obj) || !ISOBJ(type)) return 0;
+    if (obj == type) return 1;
+
+    /* get out the type */
+    pul_type_obj = plofRead(obj, (unsigned char *) "__pul_type", __pul_type_hash);
+    pul_type = NULL;
+    if (pul_type_obj != plofNull && ISARRAY(pul_type_obj)) {
+        pul_type = ARRAY(pul_type_obj);
+    } else {
+        return 0;
+    }
+
+    /* now go over the type */
+    for (ti = 1; ti < pul_type->length; ti++) {
+        if (pul_type->data[ti] == type) return 1;
+    }
+
+    return 0;
+}
+
+static struct PlofReturn opIs(struct PlofObject *ctx, struct PlofObject *arg)
+{
+    struct PlofObject *obj, *type;
+    struct PlofArrayData *ad;
+    struct PlofReturn ret;
+
+    ret.isThrown = 0;
+    ret.ret = plofNull;
+
+    GET_HASHES;
+
+    /* make sure the arg is right */
+    if (!ISARRAY(arg)) return ret;
+    ad = ARRAY(arg);
+    if (ad->length < 1) return ret;
+    ret = pul_eval(ctx, ad->data[0]);
+    if (ret.isThrown) return ret;
+    type = ret.ret;
+
+    /* and get the obj ("this") */
+    ret = opMemberPrime(ctx, (unsigned char *) "this", this_hash, 1);
+    ret = pul_eval(ctx, ret.ret);
+    if (ret.isThrown) return ret;
+    obj = ret.ret;
+    if (obj == plofNull) return ret;
+
+    /* now check */
+    if (opIsPrime(obj, type)) {
+        ret = opMemberPrime(ctx, (unsigned char *) "True", True_hash, 1);
+        ret.ret = plofRead(ret.ret, (unsigned char *) "True", True_hash);
+    } else {
+        ret = opMemberPrime(ctx, (unsigned char *) "False", False_hash, 1);
+        ret.ret = plofRead(ret.ret, (unsigned char *) "False", False_hash);
+    }
+    return ret;
+}
+
 /* the intrinsics list */
 PlofFunction plofIntrinsics[] = {
     pul_eval,
     opMember,
-    pul_funcwrap
+    pul_funcwrap,
+    opIs
 };

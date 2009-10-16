@@ -64,17 +64,23 @@ Object := [
         }
     }
 
-    opAs = (type) {
-        if (this is type) (
-            // simple case
-            return this
-        ) else if (!((var ret = this.opCastTo(type)) is Null)) (
+    // perform a cast iff possible
+    opCast = (type) {
+        if (!((var ret = this.opCastTo(type)) is Null)) (
             return ret
         ) else if (!((var ret = type.opCastFrom(this)) is Null)) (
             return ret
         ) else (
             throw (new OpAsException(this, type))
         )
+    }
+
+    opAs = (type) {
+        if (this is type) (
+            // simple case
+            return this
+        )
+        return (opCast(type))
     }
 
     opCastTo = (type) {
@@ -85,6 +91,11 @@ Object := [
         Null
     }
 ]
+
+// set up intrinsics
+psl {
+    plof{Object.opIs} pul_eval 3 intrinsic
+}
 
 // OpAsException is thrown when OpAs fails
 var OpAsException = Object : [
