@@ -155,6 +155,10 @@ case psl_rawcmp:
     cpsl[cpsli] = addressof(interp_psl_rawcmp);
 #include "optim/rawcmp.c"
     break;
+case psl_extractraw:
+    cpsl[cpsli] = addressof(interp_psl_extractraw);
+#include "optim/extractraw.c"
+    break;
 case psl_integer:
     cpsl[cpsli] = addressof(interp_psl_integer);
 #include "optim/integer.c"

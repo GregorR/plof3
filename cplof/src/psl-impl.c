@@ -38,6 +38,7 @@
 #include "impl/rawlength.c"
 #include "impl/slice.c"
 #include "impl/rawcmp.c"
+#include "impl/extractraw.c"
 #include "impl/integer.c"
 #include "impl/intwidth.c"
 #include "impl/mul.c"

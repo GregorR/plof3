@@ -116,6 +116,9 @@ break;
 case psl_rawcmp:
 fprintf(out, "rawcmp\n");
 break;
+case psl_extractraw:
+fprintf(out, "extractraw\n");
+break;
 case psl_integer:
 fprintf(out, "integer\n");
 break;

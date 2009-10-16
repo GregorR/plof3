@@ -152,6 +152,7 @@ gadd
 "pslOp" "/dsrcfile/" "token" "white" 3 array {{dsrcfile}} gadd
 "pslOp" "/dsrcline/" "token" "white" 3 array {{dsrcline}} gadd
 "pslOp" "/eq/" "token" "white" 3 array {{eq}} gadd
+"pslOp" "/extractraw/" "token" "white" 3 array {{extractraw}} gadd
 "pslOp" "/fadd/" "token" "white" 3 array {{fadd}} gadd
 "pslOp" "/fdiv/" "token" "white" 3 array {{fdiv}} gadd
 "pslOp" "/feq/" "token" "white" 3 array {{feq}} gadd

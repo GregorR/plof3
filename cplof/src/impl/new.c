@@ -6,4 +6,3 @@ label(interp_psl_new);
         STACK_PUSH(otmp);
     }
     STEP;
-

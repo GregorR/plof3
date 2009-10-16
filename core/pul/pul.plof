@@ -207,7 +207,7 @@ psl {
         push0 0 index
 
         // make the new object
-        new
+        push0 extractraw
 
         // object.this = object
         push0 "this" push2 memberset
