@@ -190,9 +190,9 @@ QUINARY; \
 #define STEP \
 { \
     clock_gettime(CLOCK_THREAD_CPUTIME_ID, &etspec); \
-    printf("\"%s\",%d\n", \
+    printf("\"%s\",%lld\n", \
            tiName, \
-           (etspec.tv_sec - stspec.tv_sec) * 1000000000 + \
+           (etspec.tv_sec - stspec.tv_sec) * 1000000000LL + \
            (etspec.tv_nsec - stspec.tv_nsec)); \
     pc += 2; \
     jump(*pc); \

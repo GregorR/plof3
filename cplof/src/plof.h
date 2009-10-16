@@ -98,6 +98,9 @@ struct PlofObject {
     struct PlofObject *parent;
     struct PlofData *data;
     struct PlofOHashTables *hashTable;
+#ifdef DEBUG_NAMES
+    unsigned char *name;
+#endif
 };
 
 /* The return type from Plof functions, which specifies whether a value is

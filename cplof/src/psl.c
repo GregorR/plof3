@@ -32,7 +32,7 @@
 #include "basicconfig.h"
 #endif
 
-#ifdef DEBUG_TIMING
+#if defined(DEBUG_TIMING) || defined(DEBUG_TIMING_PROCEDURE)
 #include <time.h>
 #endif
 
@@ -94,8 +94,7 @@ enum jumplabel {
     interp_psl_deleteb,
     interp_psl_deletec,
     interp_psl_deleted,
-    interp_psl_deletee,
-    interp_psl_done
+    interp_psl_deletee
 };
 #endif
 
@@ -151,8 +150,15 @@ struct PlofReturn interpretPSL(
     char *tiName;
     struct timespec stspec, etspec;
 #endif
+#ifdef DEBUG_TIMING_PROCEDURE
+    struct timespec pstspec, petspec;
+#endif
 
     a = b = c = d = e = NULL;
+
+#ifdef DEBUG_TIMING_PROCEDURE
+    clock_gettime(CLOCK_MONOTONIC, &pstspec);
+#endif
 
     /* Get out the PSL */
     if (pslraw) {
@@ -344,7 +350,7 @@ struct PlofReturn interpretPSL(
         }
 
         /* now close off the end */
-        cpsl[cpsli] = addressof(interp_psl_done);
+        cpsl[cpsli] = addressof(interp_psl_return);
         cpsl[cpsli+1] = NULL;
 
         GC_FREE(lstack);
@@ -363,7 +369,6 @@ struct PlofReturn interpretPSL(
 #include "impl/nop.c"
 #include "psl-impl.c"
 #include "impl/delete.c"
-#include "impl/done.c"
     jumptail;
 }
 
@@ -674,6 +679,13 @@ void plofWrite(struct PlofObject *obj, unsigned char *name, size_t namehash, str
     struct PlofOHashTable *cur;
     struct PlofOHashTables *ht;
     size_t subhash = namehash & PLOF_HASHTABLE_MASK;
+
+#ifdef DEBUG_NAMES
+    if (ISOBJ(value) && value->name == NULL) {
+        value->name = name;
+    }
+#endif
+
     ht = obj->hashTable;
     if (ht == NULL) {
         obj->hashTable = ht = GC_NEW_Z(struct PlofOHashTables);

@@ -1,0 +1,11 @@
+There are certain debug flags you can set while compiling:
+
+-DDEBUG_TIMING
+   Debugs timing of operations.
+
+-DDEBUG_NAMES
+   Attempts to keep procedure/object names around for debugging using
+   e.g. DEBUG_TIMING_PROCEDURE
+
+-DDEBUG_TIMING_PROCEDURE
+   Debugs timing of procedures.
