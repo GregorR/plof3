@@ -1,7 +1,7 @@
 #!/usr/bin/expect -f
 
 set timeout -1
-spawn ../dplof/dplof test_cnfi.plof
+spawn ../cplof/src/cplof test_cnfi.plof
 match_max 100000
 
 expect "Hello, world!"

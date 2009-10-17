@@ -1,7 +1,7 @@
 #!/usr/bin/expect -f
 
 set timeout -1
-spawn ../cplof/src/psli test.psl
+spawn ../cplof/src/cplof test.psl
 match_max 100000
 
 expect "Version strings:"

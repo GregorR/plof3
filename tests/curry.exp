@@ -1,7 +1,7 @@
 #!/usr/bin/expect -f
 
 set timeout -1
-spawn ../cplof/src/psli curry.psl
+spawn ../cplof/src/cplof curry.psl
 match_max 100000
 
 expect Foobar
