@@ -1,4 +1,4 @@
-PLOFC=../dplof/plofc
+PLOFC=../cplof/src/cplof -c
 #PLOF_FLAGS=--debug
 STD_PSL=../plof_include/std.psl
 
@@ -19,7 +19,7 @@ included.psl: included.plof
 .SUFFIXES: .plof .psl
 
 .plof.psl:
-	$(PLOFC) $(STD_PSL) $< -o $@
+	$(PLOFC) $< -o $@
 
 clean:
 	rm -f *.psl
