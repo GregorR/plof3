@@ -1,5 +1,6 @@
 PREFIX=/usr
 export CPLOF="$(PWD)/cplof/src/cplof"
+export PSLASM="$(PWD)/cplof/src/pslasm"
 
 all: CPLOF CORE
 
