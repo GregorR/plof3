@@ -51,7 +51,7 @@ plof_include/nonfi.psl: $(NONFI_PSL_SOURCE) plof_include/std.psl
 plof_include/debug/nonfi.psl: $(NONFI_PSL_SOURCE) plof_include/std.psl $(PLOF_REQ)
 	$(PLOFC) --debug $(PLOF_FLAGS) $(NONFI_PSL_SOURCE) -o $@
 
-plof_include/base/base.psl: plof_include/base/base.apsl
+src/base/base.psl: src/base/base.apsl
 	$(PSLASM) $< $@
 
 
