@@ -1,0 +1,11 @@
+// include (at runtime) the appropriate NFI
+var CNFI = False
+var NoNFI = False
+if ("CNFI" in versions) (
+    CNFI = True
+    rtInclude(cnfi.psl)
+) else (
+    NoNFI = True
+    rtInclude(nonfi.psl)
+)
+// no others supported (yet)

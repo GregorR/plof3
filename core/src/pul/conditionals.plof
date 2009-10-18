@@ -1,0 +1,59 @@
+/*
+ * Conditionals.
+ *
+ *  Copyright (c) 2008  Gregor Richards
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to
+ *  deal in the Software without restriction, including without limitation the
+ *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *  sell copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *  IN THE SOFTWARE.
+ */
+
+var if = (cond) {
+    (cond&&True).
+        ifTrue( return ((then) { then; selff }); ).
+        ifFalse(return ((then) { id }); )
+}
+
+var else = (then) {
+    then
+}
+
+var while = (cond, act) {
+    psl {
+        null
+        { global } // while true
+        {
+            // check the condition
+            this "cc" plof{forceEval(cond)} pul_eval memberset
+
+            plof {
+                (cc&&True).ifFalse(return(True);)
+            } pul_eval
+
+            // perform the action
+            plof{forceEval(act)} pul_eval
+        } while
+    }
+}
+
+var for = (init, cond, step, act) {
+    init
+    while (forceEval(cond)) (
+        forceEval(act)
+        forceEval(step)
+    )
+}

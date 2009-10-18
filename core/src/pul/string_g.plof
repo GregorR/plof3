@@ -1,0 +1,101 @@
+/*
+ * The standard Plof string class.
+ *
+ *  Copyright (c) 2007, 2009  Gregor Richards
+ *  Copyright (c) 2007  Josiah Worcester
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to
+ *  deal in the Software without restriction, including without limitation the
+ *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *  sell copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *  IN THE SOFTWARE.
+ */
+
+// A string in Plof supports the typical C escapes
+plofbnf {
+    // String/collection concatenation
+    plof_cmp => plof_concat
+
+    plof_concat = plof_concat "~"w plof_concat_next => plof {
+        $0.opConcat($2)
+    }
+    plof_concat = plof_concat_next => plof { $0 }
+
+    plof_assign = plof_assign_next "~="w plof_assign => plof {
+        $0.opAppend($2)
+    }
+
+    // The pul_char stuff. Basically, a normal char + escapes
+    pul_char = /[^\\"]/ => {
+        push0 0 index call
+    }
+    pul_char = /\\0/ => { // NULL
+        0 byte
+    }
+    pul_char = /\\a/ => { // Bell
+        7 byte
+    }
+    pul_char = /\\b/ => { // Backspace
+        8 byte
+    }
+    pul_char = /\\t/ => { // Horizontal tab
+        9 byte
+    }
+    pul_char = /\\n/ => { // Newline
+        10 byte
+    }
+    pul_char = /\\v/ => { // Vertical tab
+        11 byte
+    }
+    pul_char = /\\f/ => { // Form feed
+        12 byte
+    }
+    pul_char = /\\r/ => { // Carriage return
+        13 byte
+    }
+    pul_char = /\\e/ => { // Escape
+        27 byte
+    }
+    pul_char = /\\"/ => {  // "
+        34 byte
+    }
+    pul_char = /\\\\/ => { // \
+        92 byte
+    }
+    pul_char = /\\\{/ number /\}/ => { // \{code}
+        push0 1 index byte
+    }
+
+    // pul_chars is any number of pul_char. . .
+    pul_chars = pul_char pul_chars => {
+        push0 0 index push1 1 index concat
+    }
+    pul_chars = pul_char => {
+        push0 0 index
+    }
+
+    // and pul_str is pul_chars in PSL
+    pul_str = pul_chars => {
+        push0 0 index {""} wrap
+    }
+
+    // strings in plof
+    plof_literal = /"/ pul_str /"/ nnlwhite => plof {
+        new String($1)
+    }
+    plof_literal = /""/ nnlwhite => plof {
+        new String(psl { "" })
+    }
+}
