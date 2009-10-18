@@ -22,7 +22,7 @@ CNFI_PSL_SOURCE=src/pul/cnfi.plof src/pul/cio.plof
 
 NONFI_PSL_SOURCE=src/pul/nonfi.plof
 
-MOSTLYCLEANFILES=src/pul.psl plof_include/puldebug.psl plof_include/base/base.psl plof_include/std.psl plof_include/cnfi.psl plof_include/nonfi.psl plof_include/debug/std.psl plof_include/debug/cnfi.psl plof_include/debug/nonfi.psl plof_include/debug/stddebug.psl
+MOSTLYCLEANFILES=src/pul.psl src/base/base.psl plof_include/puldebug.psl plof_include/std.psl plof_include/cnfi.psl plof_include/nonfi.psl plof_include/debug/std.psl plof_include/debug/cnfi.psl plof_include/debug/nonfi.psl plof_include/debug/stddebug.psl
 
 src/pul/pul.psl: $(PUL_PSL_SOURCE)
 	$(PLOFC) -N $(PUL_PSL_SOURCE) -o $@
