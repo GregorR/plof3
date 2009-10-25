@@ -12,7 +12,7 @@ do
     done
 
     # Now run it
-    runtest prp_${bni}_run trybtout output cplof -N *.psl
+    runtest prp_${bni}_run trybtout output cplof -N *.psl *.plof
     runtest prp_${bni}_cmp cmp output expected
     rm -f output
 
