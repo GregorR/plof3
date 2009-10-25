@@ -1,9 +1,4 @@
 #!/bin/bash
-prp_cplof_output() {
-    cplof -N *.psl *.plof > output
-    return $?
-}
-
 for i in autotests/prp/*
 do
     bni=`basename $i`
@@ -17,7 +12,7 @@ do
     done
 
     # Now run it
-    runtest prp_${bni}_run prp_cplof_output
+    runtest prp_${bni}_run trybtout output cplof -N *.psl
     runtest prp_${bni}_cmp cmp output expected
     rm -f output
 
