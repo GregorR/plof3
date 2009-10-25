@@ -400,7 +400,7 @@ performThrow:
         }
 
         rd = newPlofRawData(curlen + strlen((char *) dfile) + 6*sizeof(int) + 16);
-        sprintf((char *) rd->data, "%.*s\n\tat %s line %d col %d", curlen, curmsg, dfile, dline, dcol);
+        sprintf((char *) rd->data, "%.*s\n\tat %s line %d col %d", (int) curlen, curmsg, dfile, (int) dline, (int) dcol);
         rd->length = strlen((char *) rd->data);
         a = newPlofObject();
         a->parent = plofNull;
@@ -417,7 +417,7 @@ void plofThrewUp(struct PlofObject *obj)
     struct PlofObject *exc = plofRead(obj, (unsigned char *) PSL_EXCEPTION_STACK, plofHash(sizeof(PSL_EXCEPTION_STACK)-1, (unsigned char *) PSL_EXCEPTION_STACK));
     if (ISRAW(exc)) {
         struct PlofRawData *rd = RAW(exc);
-        fprintf(stderr, "%.*s\n", rd->length, rd->data);
+        fprintf(stderr, "%.*s\n", (int) rd->length, rd->data);
     }
 }
 
