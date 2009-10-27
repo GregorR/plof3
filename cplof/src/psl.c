@@ -383,6 +383,42 @@ struct PlofReturn interpretPSL(
 #include "psl-impl.c"
 #include "impl/delete.c"
     jumptail;
+
+performThrow:
+    /* called when there's a throw */
+    if (dfile) {
+        unsigned char *curmsg = (unsigned char *) "";
+        size_t curlen = 0;
+        size_t es = plofHash(sizeof(PSL_EXCEPTION_STACK)-1, (unsigned char *) PSL_EXCEPTION_STACK);
+
+        /* add call stack info */
+        a = plofRead(ret.ret, (unsigned char *) PSL_EXCEPTION_STACK, es);
+        if (ISRAW(a)) {
+            rd = RAW(a);
+            curlen = rd->length;
+            curmsg = rd->data;
+        }
+
+        rd = newPlofRawData(curlen + strlen((char *) dfile) + 6*sizeof(int) + 16);
+        sprintf((char *) rd->data, "%.*s\n\tat %s line %d col %d", curlen, curmsg, dfile, dline, dcol);
+        rd->length = strlen((char *) rd->data);
+        a = newPlofObject();
+        a->parent = plofNull;
+        a->data = (struct PlofData *) rd;
+
+        plofWrite(ret.ret, (unsigned char *) PSL_EXCEPTION_STACK, es, a);
+    }
+    return ret;
+}
+
+/* Called when Plof throws up */
+void plofThrewUp(struct PlofObject *obj)
+{
+    struct PlofObject *exc = plofRead(obj, (unsigned char *) PSL_EXCEPTION_STACK, plofHash(sizeof(PSL_EXCEPTION_STACK)-1, (unsigned char *) PSL_EXCEPTION_STACK));
+    if (ISRAW(exc)) {
+        struct PlofRawData *rd = RAW(exc);
+        fprintf(stderr, "%.*s\n", rd->length, rd->data);
+    }
 }
 
 /* Hash function */

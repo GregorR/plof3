@@ -211,7 +211,7 @@ int main(int argc, char **argv)
         } else {
             plofRet = interpretPSL(context, plofNull, NULL, psl.bufused, psl.buf, 0, 0);
             if (plofRet.isThrown) {
-                fprintf(stderr, "Plof threw up!\n");
+                plofThrewUp(plofRet.ret);
                 return 1;
             }
         }
@@ -266,7 +266,7 @@ int main(int argc, char **argv)
             } else {
                 plofRet = interpretPSL(context, plofNull, NULL, psl.bufused, psl.buf, 0, 0);
                 if (plofRet.isThrown) {
-                    fprintf(stderr, "Plof threw up!\n");
+                    plofThrewUp(plofRet.ret);
                 }
             }
         }

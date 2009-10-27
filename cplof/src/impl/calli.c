@@ -2,11 +2,11 @@ label(interp_psl_calli);
     DEBUG_CMD("calli");
     UNARY;
     if (ISRAW(a)) {
-        struct PlofReturn ret = interpretPSL(a->parent, plofNull, a, 0, NULL, 1, 1);
+        ret = interpretPSL(a->parent, plofNull, a, 0, NULL, 1, 1);
 
         /* check the return */
         if (ret.isThrown) {
-            return ret;
+            goto performThrow;
         }
 
         STACK_PUSH(ret.ret);

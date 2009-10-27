@@ -3,11 +3,11 @@ label(interp_psl_cmp);
     QUINARY;
     if (b == c) {
         if (ISRAW(d)) {
-            struct PlofReturn ret = interpretPSL(d->parent, a, d, 0, NULL, 1, 0);
+            ret = interpretPSL(d->parent, a, d, 0, NULL, 1, 0);
 
             /* rethrow */
             if (ret.isThrown) {
-                return ret;
+                goto performThrow;
             }
             STACK_PUSH(ret.ret);
         } else {
@@ -16,11 +16,11 @@ label(interp_psl_cmp);
         }
     } else {
         if (ISRAW(e)) {
-            struct PlofReturn ret = interpretPSL(e->parent, a, e, 0, NULL, 1, 0);
+            ret = interpretPSL(e->parent, a, e, 0, NULL, 1, 0);
 
             /* rethrow */
             if (ret.isThrown) {
-                return ret;
+                goto performThrow;
             }
             STACK_PUSH(ret.ret);
         } else {

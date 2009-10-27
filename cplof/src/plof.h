@@ -156,6 +156,9 @@ struct PlofReturn interpretPSL(
         int generateContext,
         int immediate);
 
+/* If Plof throws up, call this to print an error */
+void plofThrewUp(struct PlofObject *obj);
+
 /* Hash function */
 size_t plofHash(size_t slen, unsigned char *str);
 
