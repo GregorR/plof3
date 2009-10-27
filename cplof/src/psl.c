@@ -400,7 +400,7 @@ performThrow:
         }
 
         rd = newPlofRawData(curlen + strlen((char *) dfile) + 6*sizeof(int) + 16);
-        sprintf((char *) rd->data, "%.*s\n\tat %s line %d col %d", (int) curlen, curmsg, dfile, (int) dline, (int) dcol);
+        sprintf((char *) rd->data, "%.*s\n\tat %s line %d col %d", (int) curlen, curmsg, dfile, (int) dline+1, (int) dcol+1);
         rd->length = strlen((char *) rd->data);
         a = newPlofObject();
         a->parent = plofNull;
