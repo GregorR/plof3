@@ -1,0 +1,2 @@
+import(c01)
+c01.foo()

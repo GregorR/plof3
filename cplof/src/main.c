@@ -113,6 +113,9 @@ int main(int argc, char **argv)
 
         plofIncludePaths = GC_MALLOC(16 * sizeof(unsigned char *));
 
+        plofIncludePaths[onIncPath] = GC_MALLOC_ATOMIC(3);
+        sprintf((char *) plofIncludePaths[onIncPath++], "./");
+
         if (prpDebug) {
             plofIncludePaths[onIncPath] = GC_MALLOC_ATOMIC(strlen(wdir) + 30);
             sprintf((char *) plofIncludePaths[onIncPath++], "%s/../share/plof_include/debug/", wdir);
