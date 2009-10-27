@@ -406,6 +406,7 @@ pslbnf {
         /()(?!by[^A-Za-z0-9_])/
         /()(?!forceEval[^A-Za-z0-9_])/
         /()(?!is[^A-Za-z0-9_])/
+        /()(?!import[^A-Za-z0-9_])/
         /()(?!in[^A-Za-z0-9_])/
         /()(?!include[^A-Za-z0-9_])/
         /()(?!parent[^A-Za-z0-9_])/
