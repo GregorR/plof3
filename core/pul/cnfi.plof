@@ -187,9 +187,8 @@ var C = Object : [
 
 // the type of pointers from dlopen/dlsym/etc
 var CPointer = Object : [
-    init = (x) {
+    this(x) {
         this.__pul_val = x
-        return this
     }
 
     opCastFrom = (x) {
@@ -234,7 +233,13 @@ var CData = Object : [
 ]
 
 // convenient wrappers
-C.libc = C.wrapper Null
+if ("Darwin" in versions) (
+    C.libc = C.wrapper (C.dlopen "libc.dylib")
+) else (
+    /* most platforms use NULL for "whatever I've already got" (libc, but
+     * technically also gc, pcre, ... */
+    C.libc = C.wrapper Null
+)
 
 C.__malloc = C.libc("malloc", C.pointer, [[C.pointer]])
 C.malloc = (x as NativeInteger) {
