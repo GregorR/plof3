@@ -1,2 +1,4 @@
 import(c01)
 c01.foo()
+public(c01)
+foo()

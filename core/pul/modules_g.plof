@@ -79,4 +79,19 @@ plofbnf {
 
         pul_apply_funcwrap
     }
+
+    /*
+    plof_group = "public" "\(" plof_group "\)" => {
+        {
+            pul_fcontext "__pul_type"
+                push1 push1 member
+        }
+        push1 2 index pul_apply_eval concat
+        {
+                1 array aconcat
+            memberset null
+        } concat
+        pul_apply_funcwrap
+    }
+    */
 }

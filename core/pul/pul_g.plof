@@ -277,6 +277,10 @@ pslbnf {
     pslOp = "pul_fcontext" => {
         {this global "__pul_fcontext" member call}
     }
+
+    pslOp = "pul_fcontext_of" => {
+        {global "__pul_fcontext" member call}
+    }
 }
 
 // the base PUL grammar
