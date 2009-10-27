@@ -59,28 +59,6 @@ int main(int argc, char **argv)
 
     GC_INIT();
 
-    /* get our search path */
-    if (whereAmI(argv[0], &wdir, &wfil)) {
-        plofIncludePaths = GC_MALLOC(3 * sizeof(unsigned char *));
-
-        /* /../share/plof_include/ */
-        plofIncludePaths[0] = GC_MALLOC_ATOMIC(strlen(wdir) + 24);
-        sprintf((char *) plofIncludePaths[0], "%s/../share/plof_include/", wdir);
-
-        /* /../../plof_include/ (for running from src/) */
-        plofIncludePaths[1] = GC_MALLOC_ATOMIC(strlen(wdir) + 21);
-        sprintf((char *) plofIncludePaths[1], "%s/../../plof_include/", wdir);
-
-        plofIncludePaths[2] = NULL;
-
-        /* FIXME: should support -I eventually */
-
-    } else {
-        fprintf(stderr, "Could not deterine include paths!\n");
-        return 1;
-
-    }
-
     /* load std.psl by default */
     files[0] = "std.psl";
     fn = 1;
@@ -128,6 +106,38 @@ int main(int argc, char **argv)
         }
     }
     files[fn] = NULL;
+
+    /* get our search path */
+    if (whereAmI(argv[0], &wdir, &wfil)) {
+        int onIncPath = 0;
+
+        plofIncludePaths = GC_MALLOC(16 * sizeof(unsigned char *));
+
+        if (prpDebug) {
+            plofIncludePaths[onIncPath] = GC_MALLOC_ATOMIC(strlen(wdir) + 30);
+            sprintf((char *) plofIncludePaths[onIncPath++], "%s/../share/plof_include/debug/", wdir);
+
+            plofIncludePaths[onIncPath] = GC_MALLOC_ATOMIC(strlen(wdir) + 27);
+            sprintf((char *) plofIncludePaths[onIncPath++], "%s/../../plof_include/debug/", wdir);
+        }
+
+        /* /../share/plof_include/ */
+        plofIncludePaths[onIncPath] = GC_MALLOC_ATOMIC(strlen(wdir) + 24);
+        sprintf((char *) plofIncludePaths[onIncPath++], "%s/../share/plof_include/", wdir);
+
+        /* /../../plof_include/ (for running from src/) */
+        plofIncludePaths[onIncPath] = GC_MALLOC_ATOMIC(strlen(wdir) + 21);
+        sprintf((char *) plofIncludePaths[onIncPath++], "%s/../../plof_include/", wdir);
+
+        plofIncludePaths[onIncPath] = NULL;
+
+        /* FIXME: should support -I eventually */
+
+    } else {
+        fprintf(stderr, "Could not deterine include paths!\n");
+        return 1;
+
+    }
 
     /* complain if there aren't any files */
     if (fn == 1 && !interactive) {
