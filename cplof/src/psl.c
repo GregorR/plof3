@@ -64,6 +64,7 @@ typedef struct _ffi_cif_plus {
 #include "memory.h"
 #include "optimizations.h"
 #include "plof.h"
+#include "prp.h"
 #include "psl.h"
 #include "pslfile.h"
 #ifndef PLOF_NO_PARSER

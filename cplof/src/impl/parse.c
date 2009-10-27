@@ -3,10 +3,12 @@ label(interp_psl_parse);
     TRINARY;
 
     if (ISRAW(a) && ISRAW(b) && ISRAW(c)) {
-        struct PlofRawData *retrd;
+        struct PlofRawData *retrd, *brd, *crd;
         struct PlofObject *otmp;
 
         rd = RAW(a);
+        brd = RAW(b);
+        crd = RAW(c);
 
         /* check if it's a PSL file */
         if (isPSLFile(rd->length, rd->data)) {
@@ -22,8 +24,13 @@ label(interp_psl_parse);
             }
 
         } else {
+#ifdef PLOF_NO_PARSER
             BADTYPE("parse not psl");
-            retrd = newPlofRawData(0);
+#else
+            struct Buffer_psl psl = parseAll(rd->data, brd->data, crd->data);
+            retrd = newPlofRawData(psl.bufused);
+            memcpy(retrd->data, psl.buf, psl.bufused);
+#endif
 
         }
 
