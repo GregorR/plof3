@@ -56,11 +56,19 @@ plofbnf {
         // now create a context
         {
             new
-            push0 "__pul_fc" push0 memberset
-            // stack: new context
+            push0 "__pul_fc" push1 memberset
+            push0 "this" push1 memberset
+            // stack: new_context
 
             // prepare to set it
             pul_fcontext
+
+            // stack: new_context cur_context
+            push1 "__pul_type"
+                    push1 1 array
+                        push3 "__pul_type" member
+                            aconcat
+                    memberset
         }
         push2 2 index concat
         {
@@ -79,19 +87,4 @@ plofbnf {
 
         pul_apply_funcwrap
     }
-
-    /*
-    plof_group = "public" "\(" plof_group "\)" => {
-        {
-            pul_fcontext "__pul_type"
-                push1 push1 member
-        }
-        push1 2 index pul_apply_eval concat
-        {
-                1 array aconcat
-            memberset null
-        } concat
-        pul_apply_funcwrap
-    }
-    */
 }

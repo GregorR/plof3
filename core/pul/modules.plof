@@ -22,19 +22,27 @@
  *  IN THE SOFTWARE.
  */
 
-psl {
-    pul_fcontext "__pul_type"
-    pul_fcontext 1 array
-    memberset
-}
-
-var public = (m) {
-    psl {
-        pul_fcontext parent pul_fcontext_of
-        "__pul_type"
-        push1 push1 member
-        plof{m} pul_eval
-        1 array aconcat
-        memberset
+var Module = Object : [
+    public = (m) {
+        psl {
+            pul_fcontext parent pul_fcontext_of
+            "__pul_type"
+            push1 push1 member
+            plof{m} pul_eval
+            1 array aconcat
+            memberset
+        }
     }
+]
+
+psl {
+    pul_fcontext
+        
+    push0 "__pul_type"
+        push1 plof{Module} pul_eval 2 array
+    memberset
+
+    push0 "this"
+        push1
+    memberset
 }
