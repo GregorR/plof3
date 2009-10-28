@@ -1,0 +1,9 @@
+Object.parent = this
+
+var Foo = Object : [
+    foo = {
+        bar()
+    }
+]
+
+import(i01)
