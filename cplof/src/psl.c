@@ -115,6 +115,11 @@ struct PlofReturn interpretPSL(
         int generateContext,
         int immediate)
 {
+#ifdef FAKE_JUMPS_FUNCTIONS
+    /* need to be able to goto out of the nested functions */
+    __label__ performThrow, opRet;
+#endif
+
     static size_t procedureHash = 0;
 
     /* Necessary jump variables */
@@ -409,6 +414,8 @@ performThrow:
 
         plofWrite(ret.ret, (unsigned char *) PSL_EXCEPTION_STACK, es, a);
     }
+
+opRet:
     return ret;
 }
 

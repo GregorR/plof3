@@ -18,5 +18,4 @@ label(interp_psl_return);
            (petspec.tv_nsec - pstspec.tv_nsec));
 #endif
 
-    return ret;
-
+    goto opRet;
