@@ -71,11 +71,14 @@ plof_include/debug/nonfi.psl: $(NONFI_PSL_SOURCE) plof_include/std.psl $(PLOF_RE
 	$(PLOF) --debug $(PLOF_FLAGS) $(NONFI_PSL_SOURCE) -o plof_include/debug/nonfi.psl
 
 
+cplof/src/cplof: cplof/configure
+	cd cplof ; ./configure --prefix="$(PREFIX)" ; $(MAKE)
+
+cplof/configure:
+	cd cplof ; autoreconf
+
 cplof/src/pslasm: cplof/src/cplof
 	true
-
-cplof/src/cplof:
-	cd cplof ; ./configure --prefix="$(PREFIX)" ; $(MAKE)
 
 
 
