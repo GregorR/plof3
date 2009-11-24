@@ -1,0 +1,11 @@
+var files = [[]]
+
+var x
+args.each (ref x) (
+    Debug.print("arg " ~ x)
+    files ~= [[x]]
+)
+
+files.each (ref x) (
+    Debug.print("File " ~ x)
+)
