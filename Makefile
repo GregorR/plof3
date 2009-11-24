@@ -23,7 +23,7 @@ STD_PSL_SOURCE=core/pul/object.plof \
                core/pul/string_g.plof core/pul/string.plof \
                core/pul/collection_g.plof core/pul/collection.plof \
 	       core/pul/io.plof \
-               core/pul/versions.plof \
+               core/pul/builtins.plof \
                core/pul/nfi.plof
 
 # cnfi.psl is the C NFI, loaded by nfi.plof if CNFI is set
@@ -42,33 +42,33 @@ base.psl: $(BASE_PSL_SOURCE) $(PSLASM)
 
 
 pul.psl: $(PUL_PSL_SOURCE) $(PLOF_REQ)
-	$(PLOF) -N $(PLOF_FLAGS) $(PUL_PSL_SOURCE) -o pul.psl
+	$(PLOF) -N -c $(PLOF_FLAGS) $(PUL_PSL_SOURCE) -o pul.psl
 
 puldebug.psl: $(PUL_PSL_SOURCE) $(PLOF_REQ)
-	$(PLOF) -N --debug $(PLOF_FLAGS) $(PUL_PSL_SOURCE) -o puldebug.psl
+	$(PLOF) -N -c --debug $(PLOF_FLAGS) $(PUL_PSL_SOURCE) -o puldebug.psl
 
 
 plof_include/std.psl: pul.psl $(STD_PSL_SOURCE) $(PLOF_REQ)
-	$(PLOF) -N $(PLOF_FLAGS) pul.psl $(STD_PSL_SOURCE) -o plof_include/std.psl
+	$(PLOF) -N -c $(PLOF_FLAGS) pul.psl $(STD_PSL_SOURCE) -o plof_include/std.psl
 
 plof_include/debug/std.psl: pul.psl $(STD_PSL_SOURCE) $(PLOF_REQ)
-	$(PLOF) -N --debug $(PLOF_FLAGS) pul.psl $(STD_PSL_SOURCE) -o plof_include/debug/std.psl
+	$(PLOF) -N -c --debug $(PLOF_FLAGS) pul.psl $(STD_PSL_SOURCE) -o plof_include/debug/std.psl
 
 plof_include/debug/stddebug.psl: puldebug.psl $(STD_PSL_SOURCE) $(PLOF_REQ)
-	$(PLOF) -N --debug $(PLOF_FLAGS) puldebug.psl $(STD_PSL_SOURCE) -o plof_include/debug/stddebug.psl
+	$(PLOF) -N -c --debug $(PLOF_FLAGS) puldebug.psl $(STD_PSL_SOURCE) -o plof_include/debug/stddebug.psl
 
 
 plof_include/cnfi.psl: $(CNFI_PSL_SOURCE) plof_include/std.psl $(PLOF_REQ)
-	$(PLOF) $(PLOF_FLAGS) $(CNFI_PSL_SOURCE) -o plof_include/cnfi.psl
+	$(PLOF) -c $(PLOF_FLAGS) $(CNFI_PSL_SOURCE) -o plof_include/cnfi.psl
 
 plof_include/debug/cnfi.psl: $(CNFI_PSL_SOURCE) plof_include/debug/std.psl $(PLOF_REQ)
-	$(PLOF) --debug $(PLOF_FLAGS) $(CNFI_PSL_SOURCE) -o plof_include/debug/cnfi.psl
+	$(PLOF) -c --debug $(PLOF_FLAGS) $(CNFI_PSL_SOURCE) -o plof_include/debug/cnfi.psl
 
 plof_include/nonfi.psl: $(NONFI_PSL_SOURCE) plof_include/std.psl $(PLOF_REQ)
-	$(PLOF) $(PLOF_FLAGS) $(NONFI_PSL_SOURCE) -o plof_include/nonfi.psl
+	$(PLOF) -c $(PLOF_FLAGS) $(NONFI_PSL_SOURCE) -o plof_include/nonfi.psl
 
 plof_include/debug/nonfi.psl: $(NONFI_PSL_SOURCE) plof_include/std.psl $(PLOF_REQ)
-	$(PLOF) --debug $(PLOF_FLAGS) $(NONFI_PSL_SOURCE) -o plof_include/debug/nonfi.psl
+	$(PLOF) -c --debug $(PLOF_FLAGS) $(NONFI_PSL_SOURCE) -o plof_include/debug/nonfi.psl
 
 
 cplof/src/cplof: cplof/configure

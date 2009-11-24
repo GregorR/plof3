@@ -1,4 +1,0 @@
-/* the 'version' array is present in all NFIs, but needs to be translated to a
- * Plof array of Plof strings */
-var versions = new Array(psl { version })
-versions.apply((x) { new String(x) })

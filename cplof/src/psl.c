@@ -790,6 +790,28 @@ struct PlofOHashTable *plofHashtableNew(struct PlofOHashTable *into, unsigned ch
     return nht;
 }
 
+/* Put the args to this program into into.name */
+void plofSetArgs(struct PlofObject *into, unsigned char *name, int argc, char **argv)
+{
+    struct PlofObject *argarr, *argcur;
+    int i;
+
+    /* make the args */
+    argarr = newPlofObjectWithArray(argc);
+    argarr->parent = plofNull;
+
+    /* transfer them */
+    for (i = 0; i < argc; i++) {
+        argcur = newPlofObjectWithRaw(strlen(argv[i]));
+        argcur->parent = plofNull;
+        strcpy((char *) ((struct PlofRawData *) argcur->data)->data, argv[i]);
+        ((struct PlofArrayData *) argarr->data)->data[i] = argcur;
+    }
+
+    /* then set it */
+    plofWrite(into, name, plofHash(strlen(name), name), argarr);
+}
+
 /* GC on DJGPP is screwy */
 #ifdef __DJGPP__
 void vsnprintf() {}

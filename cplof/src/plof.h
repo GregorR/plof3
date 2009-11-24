@@ -62,6 +62,9 @@ void plofWrite(struct PlofObject *obj, unsigned char *name, size_t namehash, str
 /* Function for creating a new hashTable object */
 struct PlofOHashTable *plofHashtableNew(struct PlofOHashTable *into, unsigned char *name, size_t namehash, struct PlofObject *value);
 
+/* Put the args to this program into into.name */
+void plofSetArgs(struct PlofObject *into, unsigned char *name, int argc, char **argv);
+
 /* Default length of the hash table buckets, in terms of bits represented by buckets */
 #ifndef PLOF_HASHTABLE_BITS
 #define PLOF_HASHTABLE_BITS 3

@@ -57,6 +57,9 @@ int main(int argc, char **argv)
 
     struct PlofReturn plofRet;
 
+    int plofargc;
+    char **plofargv;
+
     GC_INIT();
 
     /* load std.psl by default */
@@ -65,6 +68,8 @@ int main(int argc, char **argv)
     compileOnly = 0;
     compileFile = "a.psl";
     interactive = 0;
+    plofargc = 0;
+    plofargv = NULL;
 
     /* handle args */
     for (argn = 1; argn < argc; argn++) {
@@ -101,6 +106,12 @@ int main(int argc, char **argv)
             if (fn >= MAX_FILES) {
                 fprintf(stderr, "Too many files!\n");
                 return 1;
+            } else if (!compileOnly && fn >= 2) {
+                /* we have an input file, we're not compiling, so the rest is Plof args */
+                argn++;
+                plofargc = argc - argn;
+                plofargv = argv + argn;
+                break;
             }
 
         }
@@ -155,6 +166,9 @@ int main(int argc, char **argv)
     plofNull->parent = plofNull;
     plofGlobal = newPlofObject();
     plofGlobal->parent = plofGlobal;
+
+    /* transfer args */
+    plofSetArgs(plofGlobal, (unsigned char *) "args", plofargc, plofargv);
 
     /* And the context */
     context = newPlofObject();
