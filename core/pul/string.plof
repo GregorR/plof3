@@ -64,4 +64,14 @@ var String = Object : [
             slice
         })
     }
+
+    charCodeAt = (i as NativeInteger) {
+        opInteger(psl {
+            plof{this.__pul_val} pul_eval
+            plof{i.__pul_val} pul_eval
+            push0 1 add
+            slice
+            integer
+        })
+    }
 ]
