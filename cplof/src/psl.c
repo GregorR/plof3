@@ -809,7 +809,7 @@ void plofSetArgs(struct PlofObject *into, unsigned char *name, int argc, char **
     }
 
     /* then set it */
-    plofWrite(into, name, plofHash(strlen(name), name), argarr);
+    plofWrite(into, name, plofHash(strlen((char *) name), name), argarr);
 }
 
 /* GC on DJGPP is screwy */
