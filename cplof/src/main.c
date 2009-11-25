@@ -106,7 +106,7 @@ int main(int argc, char **argv)
             if (fn >= MAX_FILES) {
                 fprintf(stderr, "Too many files!\n");
                 return 1;
-            } else if (!compileOnly && fn >= 2) {
+            } else if (files[0] && !compileOnly && fn >= 2) {
                 /* we have an input file, we're not compiling, so the rest is Plof args */
                 argn++;
                 plofargc = argc - argn;
