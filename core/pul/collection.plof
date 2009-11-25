@@ -379,6 +379,10 @@ var ListArray = IndexableCollection : ConcatableCollection : AppendableCollectio
     }
 
     opAppend = (x as IndexableCollection) {
+        // FIXME: shouldn't do this
+        var y
+        x.each (ref y) y
+
         if (x is ListArray) (
             mlist.snoc(x as Array)
         ) else (
