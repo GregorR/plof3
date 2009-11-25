@@ -1,0 +1,21 @@
+/* PlofPlof: Plof in Plof
+ * Writing this is how I find bugs in Plof, which is why nothing is written yet
+ */
+
+var files = [[]]
+
+// get the files to be read
+var x
+args.each (ref x) (
+    files ~= [[x]]
+)
+
+// read them
+var fcont = [[]]
+files.each (ref x) (
+    fcont ~= [[(new File(x, "r")).readFile().asByteArray()]]
+)
+
+fcont.each (ref x) (
+    Debug.print x
+)
