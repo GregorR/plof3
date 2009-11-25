@@ -88,6 +88,24 @@ var IndexableCollection = Collection : [
     opIndex = (x as Number) {
         Abstract()
     }
+
+    length = Abstract
+
+    /*
+    opEquals = (x as IndexableCollection) {
+        var l = length()
+        if (l != x.length()) (return False)
+
+        var i
+        for (i = 0) (i < l) (i = i + 1) (
+            if (this[i] != x[i]) (
+                return False
+            )
+        )
+
+        return True
+    }
+    */
 ]
 
 var ConcatableCollection = Collection : [
@@ -148,6 +166,13 @@ var Array = IndexableCollection : ConcatableCollection : [
                 indexset
             } memberset
         })
+    }
+
+    length = {
+        return(opInteger(psl {
+            plof{this.__pul_val} pul_eval
+            length
+        }))
     }
 
     opConcat = (x as Array) {
@@ -228,6 +253,16 @@ var MList = IndexableCollection : ConcatableCollection : AppendableCollection : 
 
         // done (must return instead of just evaling since returns can be byref)
         return(cur.val)
+    }
+
+    length = {
+        var l = 0
+        var cur = head
+        while (Null != cur) (
+            cur = cur.next
+            l = l + 1
+        )
+        l
     }
 
     opConcat = (x as IndexableCollection) {
@@ -363,6 +398,17 @@ var ListArray = IndexableCollection : ConcatableCollection : AppendableCollectio
         return (ret[retx])
     }
 
+    length = {
+        var l = 0
+        var x
+
+        mlist.each (ref x) (
+            l = l + x.length()
+        )
+
+        l
+    }
+
     opConcat = (x as IndexableCollection) {
         // start by duplicating myself
         var ret = dup()
@@ -442,3 +488,15 @@ var Range = Collection : [
         )
     }
 ]
+
+/// Conversions for strings
+String.asByteArray = {
+    var ret = [[]]
+    var i
+    var l = length()
+    for (i = 0) (i < l) (i = i + 1) (
+        ret ~= [[charCodeAt(i)]]
+    )
+    ret
+}
+String.asByteArray.parent = String
