@@ -48,7 +48,10 @@ var id = (x) { x }
 
 /// Standard object initialization
 var new = (type) {
-    (type:[]).init
+    //(type:[]).init
+    var robj = type:[]
+    robj.parent = type.parent
+    robj.init
 }
 Object := [init = {this};]
 

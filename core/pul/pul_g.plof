@@ -515,6 +515,7 @@ pslbnf {
         {
             1 array
             this "opDuplicate" resolve member call
+            push0 pul_fcontext parentset
             push0
         } concat
 
@@ -536,6 +537,7 @@ pslbnf {
             // call opCombine
             2 array
             this "opCombine" resolve member call
+            push0 pul_fcontext parentset
         } concat
 
         // wrap
