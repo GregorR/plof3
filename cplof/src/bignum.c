@@ -24,6 +24,12 @@
 
 #include "bignum.h"
 
+#ifdef HAVE_CONFIG_H
+#include "../config.h"
+#else
+#include "basicconfig.h"
+#endif
+
 /* Convert a PSL bignum to an int */
 int pslBignumToInt(unsigned char *bignum, size_t *into)
 {
