@@ -22,6 +22,7 @@
  *  IN THE SOFTWARE.
  */
 
+// the module type
 var Module = Object : [
     public = (m) {
         psl {
@@ -33,8 +34,67 @@ var Module = Object : [
             memberset
         }
     }
+
+    // opModule, the function which loads modules
+    opModule = (name) {
+        var module = new Module()
+        module.parent = this
+
+        var strname = new String(name)
+    
+        // two names to look for
+        var pslname = strname ~ ".psl"
+        var plofname = strname ~ ".plof"
+    
+        psl {
+            // try loading the files
+            pul_fcontext "psldat"
+            plof{pslname.__pul_val} pul_eval include pul_nullNull memberset
+    
+            pul_fcontext "plofdat"
+            plof{plofname.__pul_val} pul_eval include pul_nullNull memberset
+        }
+
+        // now figure out which, if either, loaded
+        if (psldat !== Null) (
+            psldat.parent = module
+            psldat()
+        ) else if (plofdat !== Null) (
+            // need to parse this
+            var parsed
+            psl {
+               this "parsed" resolve
+
+               // now parse it
+               plof{plofdat} pul_eval
+               "top" plof{name} pul_eval
+               parse
+
+               // and set it
+               memberset
+           }
+
+           // OK, now we can call it
+           parsed.parent = module
+           parsed()
+       ) else (
+           // FIXME: correct error
+           Abstract()
+       )
+
+       // now assign the module to the correct name
+       psl {
+           plof{this} pul_eval
+           plof{name} pul_eval
+           plof{module} pul_eval
+           memberset
+       }
+
+       module
+    }
 ]
 
+// make our top module a Module
 psl {
     pul_fcontext
         

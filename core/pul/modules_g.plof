@@ -24,6 +24,15 @@
 
 plofbnf {
     plof_group = "import" "\(" /[A-Za-z0-9_\-\.]+/ white "\)" => {
+        // import this file into its own module at runtime
+        push0 2 index
+        {
+            1 array
+            plof{opModule} pul_eval call
+        } concat
+        pul_apply_funcwrap
+
+        /*
         // get the file name
         null push1 2 index call
         this "filename" push2 memberset
@@ -93,5 +102,6 @@ plofbnf {
         } concat
 
         pul_apply_funcwrap
+        */
     }
 }
