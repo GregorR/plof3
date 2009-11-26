@@ -259,7 +259,7 @@ struct PlofReturn interpretPSL(
                 if (psli + len > psllen) {
                     rd = newPlofRawData(128);
                     sprintf((char *) rd->data, "Bad data in PSL, instruction of type %X too long ((%d+%d)/%d)",
-                            cmd, psli, len, psllen);
+                            (int) cmd, (int) psli, (int) len, (int) psllen);
                     a = newPlofObject();
                     a->parent = plofNull;
                     a->data = (struct PlofData *) rd;
