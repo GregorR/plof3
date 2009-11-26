@@ -104,6 +104,10 @@ var IndexableCollection = Collection : [
 
         return True
     }
+
+    slice = (from as NativeInteger, tto as NativeInteger) {
+        new SlicedCollection(this, from, tto)
+    }
 ]
 
 var ConcatableCollection = Collection : [
@@ -484,6 +488,34 @@ var Range = Collection : [
             r.write x
             forceEval(act)
         )
+    }
+]
+
+/// Sliced collection
+var SlicedCollection = IndexableCollection : [
+    this (coll as IndexableCollection, from as NativeInteger, tto as NativeInteger) {
+        this.coll = coll
+        this.from = from
+        this.tto = tto
+    }
+
+    each = (r, act) {
+        // FIXME: this is terribly slow
+        var i = 0
+        coll.each (r) (
+            if (i >= from && i < tto) (
+                forceEval(act)
+            )
+            i = i + 1
+        )
+    }
+
+    opIndex = (x as NativeInteger) {
+        coll[from + x]
+    }
+
+    length = {
+        tto - from
     }
 ]
 
