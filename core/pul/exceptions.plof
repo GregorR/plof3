@@ -65,12 +65,32 @@ var catchall = (ex, r, f) {
 
 
 // Technically anything can be thrown, but the user should only throw Exceptions
-var Exception = Object:[]
+var Exception = Object : [
+    this () {
+        // FIXME: strings
+//        setMessage("Exception")
+    }
+
+    setMessage = (s /* as String, but no dynamic types yet */) {
+        psl {
+            plof{this} pul_eval "+exception"
+            plof{s.__pul_val} pul_eval memberset
+        }
+    }
+]
 
 // System exceptions
-var AbstractFunctionException = Exception:[]
+var AbstractFunctionException = Exception : [
+    this() {
+        // FIXME: strings
+//        setMessage("Abstract function called")
+    }
+]
+
 var TypeMismatchException = Exception : [
     init = (obj, type) {
+        // FIXME: strings
+//        setMessage("Type mismatch")
         this.obj = obj
         this.type = type
         return this
