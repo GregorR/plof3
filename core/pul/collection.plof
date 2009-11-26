@@ -108,6 +108,10 @@ var IndexableCollection = Collection : [
     slice = (from as NativeInteger, tto as NativeInteger) {
         new SlicedCollection(this, from, tto)
     }
+
+    sliceFrom = (from as NativeInteger) {
+        slice(from, length())
+    }
 ]
 
 var ConcatableCollection = Collection : [

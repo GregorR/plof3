@@ -9,3 +9,11 @@ x.slice(2, 4).each (ref z) (
 y.slice(2, 4).each (ref z) (
     Debug.print z
 )
+
+x.sliceFrom(2).each (ref z) (
+    Debug.print z
+)
+
+y.sliceFrom(2).each (ref z) (
+    Debug.print z
+)
