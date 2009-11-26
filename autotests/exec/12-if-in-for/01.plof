@@ -2,6 +2,7 @@
 
 IndexableCollection.foo = (x as IndexableCollection) {
     var i
+    var l = length()
     for (i = 0) (i < l) (i = i + 1) (
         if (this[i] != x[i]) (i)
     )
