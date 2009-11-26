@@ -91,7 +91,6 @@ var IndexableCollection = Collection : [
 
     length = Abstract
 
-    /*
     opEquals = (x as IndexableCollection) {
         var l = length()
         if (l != x.length()) (return False)
@@ -105,7 +104,6 @@ var IndexableCollection = Collection : [
 
         return True
     }
-    */
 ]
 
 var ConcatableCollection = Collection : [
