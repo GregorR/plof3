@@ -1,11 +1,11 @@
 // Broken in fe5dae42a407
 
-IndexableCollection.foo = (x as IndexableCollection) (
+IndexableCollection.foo = (x as IndexableCollection) {
     var i
     for (i = 0) (i < l) (i = i + 1) (
         if (this[i] != x[i]) (i)
     )
-)
+}
 IndexableCollection.foo.parent = IndexableCollection
 
 [[1, 2, 3]].foo([[4, 5, 6]])
