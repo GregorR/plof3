@@ -1,0 +1,10 @@
+import(i01)
+i01.Foo.parent = i01 // this shouldn't be necessary to cause issues
+public(i01)
+
+var f = new (i01.Foo)()
+if (f is Foo) (
+    Debug.print "Good"
+) else (
+    Debug.print "Bad"
+)
