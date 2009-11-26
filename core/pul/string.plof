@@ -31,7 +31,7 @@ var String = Object : [
 
     opEquals = (x) {
         var xs = x as String
-        if (!(xs is Null)) (
+        if (!(xs === Null)) (
             return (opInteger(psl {
                     plof{this.__pul_val} pul_eval
                     plof{xs.__pul_val} pul_eval

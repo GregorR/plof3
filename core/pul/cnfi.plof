@@ -193,7 +193,7 @@ var CPointer = Object : [
     }
 
     opCastFrom = (x) {
-        if (x is Null) (
+        if (x === Null) (
             return (new CPointer(Null))
         ) else (
             return Null

@@ -1,5 +1,5 @@
 /*
- * Numbers (specifically, Integers).
+ * Numbers (specifically, Integers) and comparisons
  *
  *  Copyright (c) 2008  Gregor Richards
  *  
@@ -31,6 +31,24 @@ plofbnf {
     }
     plof_equals = plof_equals "!="w plof_equals_next => plof {
         $0.opNEquals($2)
+    }
+    plof_equals = plof_equals "==="w plof_equals_next => {
+        {
+            null
+        }
+        push1 0 index
+        pul_apply_eval concat
+        push1 2 index
+        pul_apply_eval concat
+        {
+            {
+                plof{True}
+            }
+            {
+                plof{False}
+            } cmp
+        } concat
+        pul_apply_funcwrap
     }
     plof_equals = plof_equals_next => plof { $0 }
     plof_equals => plof_cmp
