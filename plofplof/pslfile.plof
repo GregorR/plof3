@@ -1,0 +1,18 @@
+var PSLFileException = Exception : [
+    this () {
+        setMessage("Invalid PSL file")
+    }
+]
+
+var PSLFile = Object : [
+    this (dat) {
+        this.dat = dat
+    }
+
+    getPSL = () {
+        // first make sure it's a valid PSL file
+        if (dat.slice(0, 8) != [[158, 80, 83, 76, 23, 242, 88, 140]]) (
+            throw (new PSLFileException())
+        )
+    }
+]

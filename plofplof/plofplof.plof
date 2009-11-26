@@ -2,6 +2,8 @@
  * Writing this is how I find bugs in Plof, which is why nothing is written yet
  */
 
+import(pslfile)
+
 var files = [[]]
 
 // get the files to be read
@@ -17,5 +19,6 @@ files.each (ref x) (
 )
 
 fcont.each (ref x) (
-    Debug.print x
+    var pf = new (pslfile.PSLFile)(x)
+    var psl = pf.getPSL()
 )
