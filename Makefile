@@ -17,6 +17,7 @@ STD_PSL_SOURCE=core/pul/object.plof \
 	       core/pul/modules_g.plof core/pul/modules.plof \
                core/pul/exceptions.plof \
                core/pul/boolean_g.plof core/pul/boolean.plof \
+               core/pul/comparisons_g.plof core/pul/comparisons.plof \
                core/pul/conditionals.plof \
                core/pul/dynamicTypes_g.plof core/pul/dynamicTypes.plof \
                core/pul/number_g.plof core/pul/number.plof \

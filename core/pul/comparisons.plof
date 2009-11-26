@@ -1,5 +1,5 @@
 /*
- * Numbers (specifically, Integers) and comparisons
+ * Comparisons
  *
  *  Copyright (c) 2008  Gregor Richards
  *  
@@ -22,37 +22,37 @@
  *  IN THE SOFTWARE.
  */
 
-// basic math
-plofbnf {
-    plof_cmp => plof_add
+Object := [
+    // Use object equality by default
+    opEquals = (x) {
+        psl {
+            plof{this} pul_eval
+            plof{x} pul_eval
+            {
+                plof{True}
+            }
+            {
+                plof{False}
+            } cmp
+        }
+    }
 
-    plof_add = plof_add "\+"w plof_add_next => plof {
-        $0.opAdd($2)
+    // Just do a not-equals for nequals
+    opNEquals = (x) {
+        !(this == x)
     }
-    plof_add = plof_add "-"w plof_add_next => plof {
-        $0.opSub($2)
-    }
-    plof_add = plof_add_next => plof { $0 }
-    plof_add => plof_mul
 
-    plof_mul = plof_mul "\*"w plof_mul_next => plof {
-        $0.opMul($2)
+    // All the comparisons use opCmp by default
+    opLess = (x) {
+        this.opCmp(x) < 0
     }
-    plof_mul = plof_mul /\// white plof_mul_next => plof {
-        $0.opDiv($3)
+    opLessEqual = (x) {
+        this.opCmp(x) <= 0
     }
-    plof_mul = plof_mul "%"w plof_mul_next => plof {
-        $0.opMod($2)
+    opGreater = (x) {
+        this.opCmp(x) > 0
     }
-    plof_mul = plof_mul_next => plof { $0 }
-
-    plof_unop => plof_unopr
-
-    plof_unopr = plof_unopr "\+\+" => plof {
-        $0 = $0.opInc()
+    opGreaterEqual = (x) {
+        this.opCmp(x) >= 0
     }
-    plof_unopr = plof_unopr "--" => plof {
-        $0 = $0.opDec()
-    }
-    plof_unopr = plof_unopr_next => plof { $0 }
-}
+]

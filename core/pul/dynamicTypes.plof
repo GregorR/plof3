@@ -75,6 +75,7 @@ Object := [
         )
     }
 
+/*
     opAs = (type) {
         if (this is type) (
             // simple case
@@ -90,6 +91,7 @@ Object := [
     opCastFrom = (obj) {
         Null
     }
+    */
 ]
 
 // set up intrinsics
