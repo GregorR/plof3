@@ -43,8 +43,15 @@ plofbnf {
 
             push0 null
             {
-                // really not found. FIXME: better error
-                "FILE NOT FOUND" push0 print throw
+                // really not found
+                new
+                push0
+                "+exception"
+                "File "
+                this "filename" resolve member concat
+                " not found." concat
+                memberset
+                throw
             } {} cmp
         } {} cmp
         // stack: content_of_file

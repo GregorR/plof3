@@ -188,7 +188,13 @@ struct PlofObject *parseHelper(unsigned char *code, struct ParseResult *pr)
         
         /* run it */
         pret = interpretPSL(plofNull, obj, NULL, psl.bufused, psl.buf, 1, 0);
-        ret = pret.ret;
+        if (pret.isThrown) {
+            /* uh oh ! */
+            ret = plofNull;
+            plofThrewUp(pret.ret);
+        } else {
+            ret = pret.ret;
+        }
 
     } else {
         size_t parsedsz, bignumsz;
