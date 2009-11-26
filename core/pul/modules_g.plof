@@ -59,14 +59,14 @@ plofbnf {
             push0 "__pul_fc" push1 memberset
             push0 "this" push1 memberset
             // stack: new_context
-
-            // prepare to set it
             pul_fcontext
-
             // stack: new_context cur_context
+
+            push1 push1 parentset
+
             push1 "__pul_type"
                     push1 1 array
-                        push3 "__pul_type" member
+                        this "Module" resolve member pul_eval
                             aconcat
                     memberset
         }
