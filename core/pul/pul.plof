@@ -124,6 +124,18 @@ psl {
             this "opMember" resolve member pul_eval call
 
             push1 1 index member
+
+            // if it's null, complain
+            push0 null {
+                new
+                 push0
+                  "+exception"
+                   "Variable "
+                    this "arg" resolve member 1 index concat
+                    " undefined." concat
+                 memberset
+                throw
+            } {} cmp
         } memberset
 
         // then, __pul_s

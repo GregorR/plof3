@@ -64,6 +64,7 @@ var C = Object : [
     dlsym = (handle as CPointer, symbol as String) {
         psl {
             plof{handle.__pul_val} pul_eval
+                push0 plof{Null} pul_eval { null } {} cmp // Null -> null
             plof{symbol.__pul_val} pul_eval
             dlsym
             push0 null
@@ -193,7 +194,7 @@ var CPointer = Object : [
 
     opCastFrom = (x) {
         if (x is Null) (
-            return (new CPointer(psl { null }))
+            return (new CPointer(Null))
         ) else (
             return Null
         )
