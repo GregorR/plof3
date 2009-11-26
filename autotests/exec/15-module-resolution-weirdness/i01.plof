@@ -1,6 +1,6 @@
-var B = Exception : [
-    this () {
-        setMessage("B")
+var B = Object : [
+    msg = () {
+        return "B"
     }
 ]
 
@@ -11,7 +11,7 @@ var A = Object : [
 
     foo = () {
         if (dat.slice(0, 8) != [[158, 80, 83, 76, 23, 242, 88, 140]]) (
-            throw (new B())
+            Debug.print((new B()).msg())
         )
     }
 ]
