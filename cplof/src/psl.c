@@ -257,8 +257,18 @@ struct PlofReturn interpretPSL(
 
                 /* make sure this doesn't go off the edge */
                 if (psli + len > psllen) {
-                    fprintf(stderr, "Bad data in PSL!\n");
-                    len = psllen - psli;
+                    rd = newPlofRawData(128);
+                    sprintf((char *) rd->data, "Bad data in PSL, instruction of type %X too long ((%d+%d)/%d)",
+                            cmd, psli, len, psllen);
+                    a = newPlofObject();
+                    a->parent = plofNull;
+                    a->data = (struct PlofData *) rd;
+
+                    ret.ret = newPlofObject();
+                    ret.ret->parent = plofNull;
+                    plofWrite(ret.ret, (unsigned char *) PSL_EXCEPTION_STACK, plofHash(sizeof(PSL_EXCEPTION_STACK)-1, (unsigned char *) PSL_EXCEPTION_STACK), a);
+                    ret.isThrown = 1;
+                    goto performThrow;
                 }
 
                 /* copy it in */
