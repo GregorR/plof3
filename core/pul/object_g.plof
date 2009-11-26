@@ -216,6 +216,27 @@ plofbnf {
     }
 }
 
+/// Conversions from null to Null and Null to null
+pslbnf {
+    pslOp = "pul_nullNull" => {
+        {
+            push0 null
+            {
+                plof{Null} pul_eval
+            } {} cmp
+        }
+    }
+
+    pslOp = "pul_Nullnull" => {
+        {
+            push0 plof{Null} pul_eval
+            {
+                null
+            } {} cmp
+        }
+    }
+}
+
 /// References
 plofbnf {
     plof_literal = "ref"w plof_var => plof {

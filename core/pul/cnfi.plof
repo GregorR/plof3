@@ -64,7 +64,7 @@ var C = Object : [
     dlsym = (handle as CPointer, symbol as String) {
         psl {
             plof{handle.__pul_val} pul_eval
-                push0 plof{Null} pul_eval { null } {} cmp // Null -> null
+            pul_Nullnull
             plof{symbol.__pul_val} pul_eval
             dlsym
             push0 null
