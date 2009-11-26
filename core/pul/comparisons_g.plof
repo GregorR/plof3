@@ -49,6 +49,24 @@ plofbnf {
         } concat
         pul_apply_funcwrap
     }
+    plof_equals = plof_equals "!=="w plof_equals_next => {
+        {
+            null
+        }
+        push1 0 index
+        pul_apply_eval concat
+        push1 2 index
+        pul_apply_eval concat
+        {
+            {
+                plof{False}
+            }
+            {
+                plof{True}
+            } cmp
+        } concat
+        pul_apply_funcwrap
+    }
     plof_equals = plof_equals_next => plof { $0 }
     plof_equals => plof_cmp
 
