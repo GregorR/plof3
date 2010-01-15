@@ -101,10 +101,15 @@ struct PRPResult parseOne(unsigned char *code, unsigned char *top, unsigned char
     struct PRPResult ret;
     struct PlofObject *pobj;
     struct PlofRawData *rd;
+    struct ParseContext *ctx = GC_NEW_Z(struct ParseContext);
     struct Production *top_prod = getProduction((unsigned char *)"top");
-    struct ParseResult *res = packratParse(top_prod, file, line,
+    struct ParseResult *res = packratParse(ctx, top_prod, file, line,
                                            column, code);
     memset(&ret, 0, sizeof(struct PRPResult));
+
+    /* pass out the context */
+    ret.ctx = ctx;
+
     if (res == NULL) /* bail out */
         return ret;
 
@@ -138,16 +143,28 @@ struct Buffer_psl parseAll(unsigned char *code, unsigned char *top, unsigned cha
     while (*code) {
         struct PRPResult prpr = parseOne(code, top, file, line, column);
         if (prpr.code.buf == NULL) {
-            fprintf(stderr, "Parse error in file %s near '%.10s'\n", file, code);
-#ifdef DEBUG
-            fprintf(stderr, "%s\n", code);
-#endif
+            fprintf(stderr, "Parse error in file %s ", file);
+
+            /* get the error from the context */
+            if (prpr.ctx && prpr.ctx->current) {
+                fprintf(stderr, "line %d col %d, parsing %s, expected %s, found '%.10s'\n",
+                        prpr.ctx->line + 1, prpr.ctx->col + 1,
+                        prpr.ctx->current->name, prpr.ctx->expected->name,
+                        code + prpr.ctx->loc);
+
+            } else {
+                fprintf(stderr, "near '%.10s'\n",
+                        prpr.remainder);
+
+            }
+                        
             exit(1);
 #ifdef DEBUG
         } else {
             fprintf(stderr, "Parsed %.*s\n", prpr.remainder - code, code);
 #endif
         }
+
         code = prpr.remainder;
         line = prpr.rline;
         column = prpr.rcol;

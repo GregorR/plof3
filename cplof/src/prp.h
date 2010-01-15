@@ -30,6 +30,7 @@
 
 /* Parsing returns Buffer_psl (the resultant code), and a pointer to the remainder of the code */
 struct PRPResult {
+    struct ParseContext *ctx;
     struct Buffer_psl code;
     unsigned char *remainder;
     unsigned int rline, rcol;

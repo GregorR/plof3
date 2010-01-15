@@ -26,12 +26,28 @@
 #define PACKRAT_H
 
 struct Production;
+struct ParseContext;
 
 /* The type for the underlying parser functions, returns a NULL-terminated
  * array of (potential) parse results */
-typedef struct ParseResult **(*Parser) (struct Production *production,
+typedef struct ParseResult **(*Parser) (struct ParseContext *ctx,
+                                        struct Production *production,
                                         unsigned char *file, int line, int col,
                                         unsigned char *input, size_t off);
+
+/* A parsing context. Used mainly for detecting parse errors, this gets filled
+ * in with the latest valid parse */
+struct ParseContext {
+    /* starting location AFTER the latest successful parse */
+    size_t loc;
+    int line, col;
+
+    /* the production currently being parsed */
+    struct Production *current;
+
+    /* the production which was /expected/ */
+    struct Production *expected;
+};
 
 /* A production. Could be a terminal or a nonterminal, includes a
  * reference to the relevant parsing function and arg. Grammar elements form a
@@ -61,6 +77,7 @@ extern struct Production *productions;
 
 /* A parsing result, including the particular production, file, etc */
 struct ParseResult {
+    struct ParseContext *ctx;
     struct Production *production;
     struct ParseResult **subResults;
 
@@ -68,9 +85,6 @@ struct ParseResult {
     unsigned char *file;
     int sline, eline;
     int scol, ecol;
-
-    /* the latest failing production, if this was unsuccessful */
-    struct Production *failingProduction;
 
     /* the option chosen, for nondeterministic nonterminals */
     int choice;
@@ -90,16 +104,19 @@ void delProduction(const unsigned char *name);
 void delAllProductions();
 
 /* parse using the specified production */
-struct ParseResult *packratParse(struct Production *production,
+struct ParseResult *packratParse(struct ParseContext *ctx,
+                                 struct Production *production,
                                  unsigned char *file,
                                  int line, int col,
                                  unsigned char *input);
 
 /* built-in parsers */
-struct ParseResult **packratNonterminal(struct Production *production,
+struct ParseResult **packratNonterminal(struct ParseContext *ctx,
+                                        struct Production *production,
                                         unsigned char *file, int line, int col,
                                         unsigned char *input, size_t off);
-struct ParseResult **packratRegexTerminal(struct Production *production,
+struct ParseResult **packratRegexTerminal(struct ParseContext *ctx,
+                                          struct Production *production,
                                           unsigned char *file, int line, int col,
                                           unsigned char *input, size_t off);
 
