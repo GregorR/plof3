@@ -13,7 +13,7 @@ do
 
     # Now run it
     runtest prp_${bni}_run trybtout output cplof -N *.psl *.plof
-    runtest prp_${bni}_cmp cmp output expected
+    runtest prp_${bni}_cmp diff output expected
     rm -f output
 
     # Get rid of compiled .psl files

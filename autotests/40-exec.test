@@ -15,7 +15,7 @@ do
 
     # Now run it
     runtest exec_${bni}_run trybtout output cplof [0-9]*.plof
-    runtest exec_${bni}_cmp cmp output expected
+    runtest exec_${bni}_cmp diff output expected
     rm -f output
 
     popd

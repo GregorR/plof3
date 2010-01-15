@@ -1,6 +1,6 @@
 #!/bin/bash
 pushd autotests/exec/01
 runtest exec_nointrinsics_run trybtout output cplof *.plof
-runtest exec_nointrinsics_cmp cmp output expected
+runtest exec_nointrinsics_cmp diff output expected
 rm -f output
 popd
