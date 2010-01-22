@@ -87,7 +87,7 @@ cplof/src/pslasm: cplof/src/cplof
 
 install: all
 	-cd cplof ; make install DESTDIR="$(DESTDIR)"
-	mkdir -p "$(PREFIX)/share/plof_include"
+	mkdir -p "$(DESTDIR)$(PREFIX)/share/plof_include"
 	cp -dRf plof_include/* "$(DESTDIR)$(PREFIX)/share/plof_include"
 
 
