@@ -21,6 +21,7 @@ STD_PSL_SOURCE=core/pul/object.plof \
                core/pul/dynamicTypes_g.plof core/pul/dynamicTypes.plof \
                core/pul/number_g.plof core/pul/number.plof \
                core/pul/string_g.plof core/pul/string.plof \
+               core/pul/exception_strings.plof \
                core/pul/modules_g.plof core/pul/modules.plof \
                core/pul/collection_g.plof core/pul/collection.plof \
 	       core/pul/io.plof \
