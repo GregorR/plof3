@@ -1,2 +1,4 @@
 #!/bin/bash
-runtest build_std make
+runtest build_std_reconf autoreconf
+runtest build_std_conf ./configure
+runtest build_std_make make
