@@ -131,8 +131,8 @@ int main(int argc, char **argv)
             plofIncludePaths[onIncPath] = GC_MALLOC_ATOMIC(strlen(wdir) + 30);
             sprintf((char *) plofIncludePaths[onIncPath++], "%s/../share/plof_include/debug/", wdir);
 
-            plofIncludePaths[onIncPath] = GC_MALLOC_ATOMIC(strlen(wdir) + 27);
-            sprintf((char *) plofIncludePaths[onIncPath++], "%s/../../plof_include/debug/", wdir);
+            plofIncludePaths[onIncPath] = GC_MALLOC_ATOMIC(strlen(wdir) + 23);
+            sprintf((char *) plofIncludePaths[onIncPath++], "%s/../../plofcore/debug/", wdir);
         }
 
         /* /../share/plof_include/ */
@@ -140,8 +140,8 @@ int main(int argc, char **argv)
         sprintf((char *) plofIncludePaths[onIncPath++], "%s/../share/plof_include/", wdir);
 
         /* /../../plof_include/ (for running from src/) */
-        plofIncludePaths[onIncPath] = GC_MALLOC_ATOMIC(strlen(wdir) + 21);
-        sprintf((char *) plofIncludePaths[onIncPath++], "%s/../../plof_include/", wdir);
+        plofIncludePaths[onIncPath] = GC_MALLOC_ATOMIC(strlen(wdir) + 17);
+        sprintf((char *) plofIncludePaths[onIncPath++], "%s/../../plofcore/", wdir);
 
         plofIncludePaths[onIncPath] = NULL;
 

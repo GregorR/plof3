@@ -1,0 +1,108 @@
+/*
+ * Support for import() (modules)
+ *
+ *  Copyright (c) 2009  Gregor Richards
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to
+ *  deal in the Software without restriction, including without limitation the
+ *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *  sell copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *  IN THE SOFTWARE.
+ */
+
+// the module type
+var Module = Object : [
+    public = (m) {
+        psl {
+            pul_fcontext parent pul_fcontext_of
+            "__pul_type"
+            push1 push1 member
+            plof{m} pul_eval
+            1 array aconcat
+            memberset
+        }
+    }
+
+    // opModule, the function which loads modules
+    opModule = (name) {
+        var module = new Module()
+        module.parent = this
+
+        var strname = new String(name)
+    
+        // two names to look for
+        var pslname = strname ~ ".psl"
+        var plofname = strname ~ ".plof"
+    
+        psl {
+            // try loading the files
+            pul_fcontext "psldat"
+            plof{pslname.__pul_val} pul_eval include pul_nullNull memberset
+    
+            pul_fcontext "plofdat"
+            plof{plofname.__pul_val} pul_eval include pul_nullNull memberset
+        }
+
+        // now figure out which, if either, loaded
+        if (psldat !== Null) (
+            psldat.parent = module
+            psldat()
+        ) else if (plofdat !== Null) (
+            // need to parse this
+            var parsed
+            psl {
+               this "parsed" resolve
+
+               // now parse it
+               plof{plofdat} pul_eval
+               "top" plof{name} pul_eval
+               parse
+
+               // and set it
+               memberset
+           }
+
+           // OK, now we can call it
+           parsed.parent = module
+           parsed()
+       ) else (
+           // FIXME: correct error
+           Abstract()
+       )
+
+       // now assign the module to the correct name
+       psl {
+           plof{this} pul_eval
+           plof{name} pul_eval
+           plof{module} pul_eval
+           memberset
+       }
+
+       module
+    }
+]
+
+// make our top module a Module
+psl {
+    pul_fcontext
+        
+    push0 "__pul_type"
+        push1 plof{Module} pul_eval 2 array
+    memberset
+
+    push0 "this"
+        push1
+    memberset
+}
