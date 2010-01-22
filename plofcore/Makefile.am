@@ -1,7 +1,7 @@
 plof_includedir = $(datadir)/plof_include
-plof_include_DATA = plof_include/std.psl plof_include/cnfi.psl plof_include/nonfi.psl
+plof_include_DATA = std.psl cnfi.psl nonfi.psl
 plof_debugdir = $(plof_includedir)/debug/
-plof_debug_DATA =  plof_include/debug/std.psl plof_include/debug/cnfi.psl plof_include/debug/nonfi.psl plof_include/debug/stddebug.psl
+plof_debug_DATA =  plof_include_debug/std.psl plof_include_debug/cnfi.psl plof_include_debug/nonfi.psl plof_include_debug/stddebug.psl
 
 PUL_PSL_SOURCE=src/base/base.psl src/pul/pul_g.plof src/pul/pul.plof src/pul/object_g.plof
 
@@ -22,7 +22,7 @@ CNFI_PSL_SOURCE=src/pul/cnfi.plof src/pul/cio.plof
 
 NONFI_PSL_SOURCE=src/pul/nonfi.plof
 
-MOSTLYCLEANFILES=src/pul.psl src/base/base.psl plof_include/puldebug.psl plof_include/std.psl plof_include/cnfi.psl plof_include/nonfi.psl plof_include/debug/std.psl plof_include/debug/cnfi.psl plof_include/debug/nonfi.psl plof_include/debug/stddebug.psl
+MOSTLYCLEANFILES=src/pul.psl src/base/base.psl puldebug.psl std.psl cnfi.psl nonfi.psl plof_include_debug/std.psl plof_include_debug/cnfi.psl plof_include_debug/nonfi.psl plof_include_debug/stddebug.psl
 
 src/pul/pul.psl: $(PUL_PSL_SOURCE)
 	$(PLOFC) -N $(PUL_PSL_SOURCE) -o $@
@@ -30,25 +30,25 @@ src/pul/pul.psl: $(PUL_PSL_SOURCE)
 src/pul/puldebug.psl: $(PUL_PSL_SOURCE)
 	$(PLOFC) -N --debug $(PLOF_FLAGS) $(PUL_PSL_SOURCE) -o $@
 
-plof_include/std.psl: src/pul/pul.psl $(STD_PSL_SOURCE)
+std.psl: src/pul/pul.psl $(STD_PSL_SOURCE)
 	$(PLOFC) -N $(PLOF_FLAGS) src/pul/pul.psl $(STD_PSL_SOURCE) -o $@
 
-plof_include/debug/std.psl: src/pul/pul.psl $(STD_PSL_SOURCE)
+plof_include_debug/std.psl: src/pul/pul.psl $(STD_PSL_SOURCE)
 	$(PLOFC) -N --debug $(PLOF_FLAGS) src/pul/pul.psl $(STD_PSL_SOURCE) -o $@
 
-plof_include/debug/stddebug.psl: src/pul/puldebug.psl $(STD_PSL_SOURCE)
+plof_include_debug/stddebug.psl: src/pul/puldebug.psl $(STD_PSL_SOURCE)
 	$(PLOFC) -N --debug $(PLOF_FLAGS) src/pul/puldebug.psl $(STD_PSL_SOURCE) -o $@
 
-plof_include/cnfi.psl: $(CNFI_PSL_SOURCE) plof_include/std.psl
+cnfi.psl: $(CNFI_PSL_SOURCE) std.psl
 	$(PLOFC) $(PLOF_FLAGS) $(CNFI_PSL_SOURCE) -o $@
 
-plof_include/debug/cnfi.psl: $(CNFI_PSL_SOURCE) plof_include/debug/std.psl
+plof_include_debug/cnfi.psl: $(CNFI_PSL_SOURCE) std.psl
 	$(PLOFC) --debug $(PLOF_FLAGS) $(CNFI_PSL_SOURCE) -o $@
 
-plof_include/nonfi.psl: $(NONFI_PSL_SOURCE) plof_include/std.psl
+nonfi.psl: $(NONFI_PSL_SOURCE) std.psl
 	$(PLOFC) $(PLOF_FLAGS) $(NONFI_PSL_SOURCE) -o $@
 
-plof_include/debug/nonfi.psl: $(NONFI_PSL_SOURCE) plof_include/std.psl $(PLOF_REQ)
+plof_include_debug/nonfi.psl: $(NONFI_PSL_SOURCE) std.psl $(PLOF_REQ)
 	$(PLOFC) --debug $(PLOF_FLAGS) $(NONFI_PSL_SOURCE) -o $@
 
 src/base/base.psl: src/base/base.apsl
