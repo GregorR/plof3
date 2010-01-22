@@ -1,0 +1,7 @@
+all: cplof/cplof plofcore/std.psl
+
+cplof/cplof:
+	cd cplof ; $(MAKE) -f build/Makefile.gcc
+
+plofcore/std.psl: cplof/cplof
+	cd plofcore ; $(MAKE) -f build/Makefile.gcc
