@@ -1,5 +1,5 @@
 /*
- * Numbers (specifically, Integers).
+ * Numbers (specifically, Integers) and comparisons
  *
  *  Copyright (c) 2008  Gregor Richards
  *  
@@ -24,30 +24,6 @@
 
 // basic math
 plofbnf {
-    plof_and => plof_equals
-
-    plof_equals = plof_equals "=="w plof_equals_next => plof {
-        $0.opEquals($2)
-    }
-    plof_equals = plof_equals "!="w plof_equals_next => plof {
-        $0.opNEquals($2)
-    }
-    plof_equals = plof_equals_next => plof { $0 }
-    plof_equals => plof_cmp
-
-    plof_cmp = plof_cmp "<"w plof_cmp_next => plof {
-        $0.opLess($2)
-    }
-    plof_cmp = plof_cmp "<="w plof_cmp_next => plof {
-        $0.opLessEqual($2)
-    }
-    plof_cmp = plof_cmp ">"w plof_cmp_next => plof {
-        $0.opGreater($2)
-    }
-    plof_cmp = plof_cmp ">="w plof_cmp_next => plof {
-        $0.opGreaterEqual($2)
-    }
-    plof_cmp = plof_cmp_next => plof { $0 }
     plof_cmp => plof_add
 
     plof_add = plof_add "\+"w plof_add_next => plof {
@@ -70,13 +46,23 @@ plofbnf {
     }
     plof_mul = plof_mul_next => plof { $0 }
 
-    plof_unop => plof_unopr
+    plof_unop => plof_postfixopr
 
-    plof_unopr = plof_unopr "\+\+" => plof {
+    plof_postfixopr = plof_postfixopr "\+\+" => plof {
         $0 = $0.opInc()
     }
-    plof_unopr = plof_unopr "--" => plof {
+    plof_postfixopr = plof_postfixopr "--" => plof {
         $0 = $0.opDec()
     }
-    plof_unopr = plof_unopr_next => plof { $0 }
+    plof_postfixopr = plof_postfixopr_next => plof { $0 }
+}
+
+plofbnf {
+    plof_unop = "-" plof_unop => plof {
+        0 - $1
+    }
+
+    plof_unop = "\+" plof_unop => plof {
+        $1
+    }
 }

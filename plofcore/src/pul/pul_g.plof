@@ -277,6 +277,10 @@ pslbnf {
     pslOp = "pul_fcontext" => {
         {this global "__pul_fcontext" member call}
     }
+
+    pslOp = "pul_fcontext_of" => {
+        {global "__pul_fcontext" member call}
+    }
 }
 
 // the base PUL grammar
@@ -406,6 +410,7 @@ pslbnf {
         /()(?!by[^A-Za-z0-9_])/
         /()(?!forceEval[^A-Za-z0-9_])/
         /()(?!is[^A-Za-z0-9_])/
+        /()(?!import[^A-Za-z0-9_])/
         /()(?!in[^A-Za-z0-9_])/
         /()(?!include[^A-Za-z0-9_])/
         /()(?!parent[^A-Za-z0-9_])/
@@ -510,6 +515,7 @@ pslbnf {
         {
             1 array
             this "opDuplicate" resolve member call
+            push0 pul_fcontext parentset
             push0
         } concat
 
@@ -531,6 +537,7 @@ pslbnf {
             // call opCombine
             2 array
             this "opCombine" resolve member call
+            // FIXME: This should parent, but that causes issues
         } concat
 
         // wrap

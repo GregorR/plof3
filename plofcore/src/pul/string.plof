@@ -31,7 +31,7 @@ var String = Object : [
 
     opEquals = (x) {
         var xs = x as String
-        if (!(xs is null)) (
+        if (!(xs === Null)) (
             return (opInteger(psl {
                     plof{this.__pul_val} pul_eval
                     plof{xs.__pul_val} pul_eval
@@ -62,6 +62,16 @@ var String = Object : [
             plof{fromi.__pul_val} pul_eval
             plof{toi.__pul_val} pul_eval
             slice
+        })
+    }
+
+    charCodeAt = (i as NativeInteger) {
+        opInteger(psl {
+            plof{this.__pul_val} pul_eval
+            plof{i.__pul_val} pul_eval
+            push0 1 add
+            slice
+            integer
         })
     }
 ]

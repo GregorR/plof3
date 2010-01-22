@@ -24,39 +24,6 @@
 
 // operators on Object
 Object := [
-    // Use object equality by default
-    opEquals = (x) {
-        psl {
-            plof{this} pul_eval
-            plof{x} pul_eval
-            {
-                plof{True}
-            }
-            {
-                plof{False}
-            } cmp
-        }
-    }
-
-    // Just do a not-equals for nequals
-    opNEquals = (x) {
-        !(this == x)
-    }
-
-    // All the comparisons use opCmp by default
-    opLess = (x) {
-        this.opCmp(x) < 0
-    }
-    opLessEqual = (x) {
-        this.opCmp(x) <= 0
-    }
-    opGreater = (x) {
-        this.opCmp(x) > 0
-    }
-    opGreaterEqual = (x) {
-        this.opCmp(x) >= 0
-    }
-
     // Inc/dec just add/subtract 1 by default
     opInc = {
         this + 1

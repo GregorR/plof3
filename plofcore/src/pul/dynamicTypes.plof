@@ -66,9 +66,9 @@ Object := [
 
     // perform a cast iff possible
     opCast = (type) {
-        if (!((var ret = this.opCastTo(type)) is Null)) (
+        if (!((var ret = this.opCastTo(type)) === Null)) (
             return ret
-        ) else if (!((var ret = type.opCastFrom(this)) is Null)) (
+        ) else if (!((var ret = type.opCastFrom(this)) === Null)) (
             return ret
         ) else (
             throw (new OpAsException(this, type))

@@ -1,8 +1,0 @@
-/* these builtin arrays should be present in all NFIs, but need to be translated to
- * Plof arrays of Plof strings */
-
-var versions = new Array(psl { version })
-versions.apply((x) { new String(x) })
-
-var args = new Array(psl { global "args" member })
-args.apply((x) { new String(x) })
