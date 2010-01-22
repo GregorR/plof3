@@ -1,5 +1,6 @@
 /*
- * The master list of PSL instructions with associated bytecode
+ * The master list of PSL instructions with associated bytecode, as well as
+ * special names in PSL
  *
  * Copyright (C) 2009 Gregor Richards
  * 
@@ -157,5 +158,9 @@
 #define psl_ctype_slong         31
 #define psl_ctype_ulonglong     32
 #define psl_ctype_slonglong     33
+
+/* special names */
+#define PSL_SELF_PROCEDURE      "+procedure"
+#define PSL_EXCEPTION_STACK     "+exception"
 
 #endif

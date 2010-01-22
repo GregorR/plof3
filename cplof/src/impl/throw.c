@@ -3,5 +3,4 @@ label(interp_psl_throw);
     UNARY;
     ret.ret = a;
     ret.isThrown = 1;
-    return ret;
-
+    goto performThrow;

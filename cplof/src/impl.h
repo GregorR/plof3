@@ -60,11 +60,17 @@
 /* Basic type-checks */
 #define BADTYPE(cmd) \
 { \
-    fprintf(stderr, "Type error in " cmd); \
-    if (dfile) { \
-        fprintf(stderr, " at %s, line %d col %d", dfile, (int) dline+1, (int) dcol+1); \
-    } \
-    fprintf(stderr, "\n"); \
+    rd = newPlofRawData(sizeof(cmd)-1 + 15); \
+    sprintf((char *) rd->data, "Type error in %s", cmd); \
+    a = newPlofObject(); \
+    a->parent = plofNull; \
+    a->data = (struct PlofData *) rd; \
+    \
+    ret.ret = newPlofObject(); \
+    ret.ret->parent = plofNull; \
+    plofWrite(ret.ret, (unsigned char *) PSL_EXCEPTION_STACK, plofHash(sizeof(PSL_EXCEPTION_STACK)-1, (unsigned char *) PSL_EXCEPTION_STACK), a); \
+    ret.isThrown = 1; \
+    goto performThrow; \
 }
 #ifdef DEBUG
 #define DBADTYPE BADTYPE
@@ -173,7 +179,6 @@ QUINARY; \
 { \
     if (ISINT(b) && ISINT(c) && ISRAW(d) && ISRAW(e)) { \
         ptrdiff_t ia, ib; \
-        struct PlofReturn ret; \
         \
         /* get the values */ \
         ia = ASINT(b); \
@@ -188,7 +193,7 @@ QUINARY; \
         \
         /* maybe rethrow */ \
         if (ret.isThrown) { \
-            return ret; \
+            goto performThrow; \
         } \
         \
         STACK_PUSH(ret.ret); \

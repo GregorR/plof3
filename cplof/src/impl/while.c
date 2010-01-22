@@ -3,7 +3,6 @@ label(interp_psl_while);
     TRINARY;
 
     if (ISRAW(b) && ISRAW(c)) {
-        struct PlofReturn ret;
         struct PlofObject *otmp;
 
         /* now run the loop */
@@ -12,7 +11,7 @@ label(interp_psl_while);
             ret = interpretPSL(b->parent, plofNull, b, 0, NULL, 1, 0);
             
             if (ret.isThrown) {
-                return ret;
+                goto performThrow;
             } else if (ret.ret == plofNull) {
                 break;
             }
@@ -21,7 +20,7 @@ label(interp_psl_while);
             ret = interpretPSL(c->parent, otmp, c, 0, NULL, 1, 0);
 
             if (ret.isThrown) {
-                return ret;
+                goto performThrow;
             }
 
             otmp = ret.ret;

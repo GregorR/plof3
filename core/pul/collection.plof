@@ -1,0 +1,536 @@
+/*
+ * Collection types
+ *
+ *  Copyright (c) 2008, 2009  Gregor Richards
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to
+ *  deal in the Software without restriction, including without limitation the
+ *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *  sell copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *  IN THE SOFTWARE.
+ */
+
+// Default implementations
+Object := [
+    opContains = (x) {
+        False
+    }
+]
+
+/* Note that opArray is used in the core of the language, but is redefined here
+ * in terms of the user-defined Array type. This allows arrays such as 'args'
+ * in functions to be Arrays. */
+
+var Collection = Object : [
+    NilElement = Object:[]
+
+    opContains = (x) {
+        var y
+        each (ref y) (
+            if (y == x) (
+                return True
+            )
+        )
+        return False
+    }
+
+    each = (r, act) {
+        Abstract()
+    }
+
+    dup = Abstract
+
+    apply = (x as Function) {
+        Abstract()
+    }
+
+    map = (x as Function) {
+        dup().apply x
+    }
+
+    size = {
+        var i = 0
+        var x
+        each (ref x) (i++)
+        i
+    }
+
+    fold = (init, f as Function) {
+        var ret = init
+        var x
+        each (ref x) (ret = f(ret, x))
+        ret
+    }
+
+    sum = {
+        fold(0, (x, y) { x + y })
+    }
+
+    product = {
+        fold(1, (x, y) { x * y })
+    }
+]
+
+// collection families
+var IndexableCollection = Collection : [
+    opIndex = (x as Number) {
+        Abstract()
+    }
+
+    length = Abstract
+
+    opEquals = (x as IndexableCollection) {
+        var l = length()
+        if (l != x.length()) (return False)
+
+        var i
+        for (i = 0) (i < l) (i = i + 1) (
+            if (this[i] != x[i]) (
+                return False
+            )
+        )
+
+        return True
+    }
+
+    slice = (from as NativeInteger, tto as NativeInteger) {
+        new SlicedCollection(this, from, tto)
+    }
+
+    sliceFrom = (from as NativeInteger) {
+        slice(from, length())
+    }
+]
+
+var ConcatableCollection = Collection : [
+    opConcat = (x as IndexableCollection) {
+        Abstract()
+    }
+]
+
+var AppendableCollection = Collection : [
+    opAppend = (x as IndexableCollection) {
+        Abstract()
+    }
+]
+
+// particular collections
+var Array = IndexableCollection : ConcatableCollection : [
+    this (intarr) {
+        this.__pul_val = intarr
+    }
+
+    opCastFrom = (x) {
+        if (x is Collection) (
+            var arr = new Array(psl { 0 array })
+            var y
+
+            // now add element-by-element
+            x.each (ref y) (
+                arr.__pul_val = psl {
+                   plof{arr.__pul_val} pul_eval
+                   plof{y} pul_eval 1 array
+                   aconcat
+                }
+            )
+
+            return arr
+        ) else (
+            return Null
+        )
+    }
+
+    opIndex = (x as NativeInteger) {
+        return(psl {
+            // this needs to be wrapped up specially
+            new
+
+            push0 "__pul_e"
+            {
+                plof{this.__pul_val} pul_eval
+                plof{x.__pul_val} pul_eval
+                index
+            } memberset
+
+            push0 "__pul_s"
+            {
+                plof{this.__pul_val} pul_eval
+                plof{x.__pul_val} pul_eval
+                push2
+                indexset
+            } memberset
+        })
+    }
+
+    length = {
+        return(opInteger(psl {
+            plof{this.__pul_val} pul_eval
+            length
+        }))
+    }
+
+    opConcat = (x as Array) {
+        new Array(psl {
+            // just concat the two arrays
+            plof{this.__pul_val} pul_eval
+            plof{x.__pul_val} pul_eval
+            aconcat
+        })
+    }
+
+    each = (r, act) {
+        for (var i = 0) (i < size()) (i++) (
+            r.write (this[i])
+            forceEval(act)
+        )
+        this
+    }
+
+    dup = {
+        new Array(
+            psl {
+                plof{this.__pul_val} pul_eval
+                0 array aconcat
+            }
+        )
+    }
+
+    apply = (x as Function) {
+        for (var i = 0) (i < size()) (i++) (
+            this[i] = x(this[i])
+        )
+        this
+    }
+
+    size = {
+        opInteger(psl {
+            plof{this.__pul_val} pul_eval length
+        })
+    }
+]
+
+var ListNode = Object : [
+    type = Object
+
+    val = Null
+    next = Null
+
+    set = (x as type) {
+        val = x
+    }
+
+    get = {
+        val
+    }
+]
+
+var MList = IndexableCollection : ConcatableCollection : AppendableCollection : [
+    head = Null
+    tail = Null
+    cSize = 0
+
+    opIndex = (x as Number) {
+        if (Null == head) (
+            head = new ListNode()
+        )
+
+        // find the right one
+        var cur = head
+        for (x) (x > 0) (x--) (
+            if (Null == cur.next) (
+                cur.next = new ListNode()
+                tail = cur.next
+            )
+
+            cur = cur.next
+        )
+
+        // done (must return instead of just evaling since returns can be byref)
+        return(cur.val)
+    }
+
+    length = {
+        var l = 0
+        var cur = head
+        while (Null != cur) (
+            cur = cur.next
+            l = l + 1
+        )
+        l
+    }
+
+    opConcat = (x as IndexableCollection) {
+        var newlist = new MList()
+
+        var y
+        each (ref y) (
+            newlist.snoc(y)
+        )
+        x.each (ref y) (
+            newlist.snoc(y)
+        )
+
+        newlist
+    }
+
+    opAppend = (x as IndexableCollection) {
+        var y
+        x.each (ref y) (
+            snoc(y)
+        )
+        this
+    }
+
+    each = (r, act) {
+        for (var cur = head) (Null != cur) (cur = cur.next) (
+            r.write (cur.val)
+            forceEval(act)
+        )
+        this
+    }
+
+    cons = (x) {
+        var add = new ListNode()
+        add.val = x
+        
+        if (Null == head) (
+            tail = add
+        ) else (
+            add.next = head
+        )
+        head = add
+
+        cSize++
+    }
+
+    snoc = (x) {
+        var add = new ListNode()
+        add.val = x
+
+        if (Null == tail) (
+            head = add
+        ) else (
+            tail.next = add
+        )
+        tail = add
+
+        cSize++
+    }
+
+    dup = {
+        var res = new MList()
+        var x
+
+        // just snoc
+        each (ref x) (
+            res.snoc(x)
+        )
+
+        res
+    }
+
+    apply = (x as Function) {
+        for (var cur = head) (Null != cur) (cur = cur.next) (
+            cur.val = x(cur.val)
+        )
+        this
+    }
+
+    size = {
+        cSize
+    }
+]
+
+
+// The fundamental collection type, ListArray
+var ListArray = IndexableCollection : ConcatableCollection : AppendableCollection : [
+    mlist = Null
+
+    this {
+        mlist = new MList()
+    }
+
+    opCastTo = (x) {
+        if (x is Array) (
+            var retarr = psl { 0 array }
+            var x
+
+            // we can do this faster by going over the arrays directly
+            mlist.each (ref x) (
+                retarr = psl { plof{retarr} pul_eval plof{x.__pul_val} pul_eval aconcat }
+            )
+
+            // then make the result
+            return (new Array(retarr))
+        ) else (
+            return Null
+        )
+    }
+
+    opIndex = (x as Number) {
+        var ret
+        var retx
+        var y
+
+        // find the right list
+        mlist.each (ref y) (
+            var sz = y.size()
+            if (x >= 0 && sz > x) (
+                ret = y
+                retx = x
+            )
+            x = x - sz
+        )
+
+        // perhaps fail
+        if (Null == ret) (
+            // FIXME: better error
+            return Null
+        )
+
+        // then return the right element
+        return (ret[retx])
+    }
+
+    length = {
+        var l = 0
+        var x
+
+        mlist.each (ref x) (
+            l = l + x.length()
+        )
+
+        l
+    }
+
+    opConcat = (x as IndexableCollection) {
+        // start by duplicating myself
+        var ret = dup()
+
+        // then just append the other one
+        if (x is ListArray) (
+            // do it the fast way
+            ret.mlist.snoc(x as Array)
+        ) else (
+            ret ~= x.dup()
+        )
+
+        ret
+    }
+
+    opAppend = (x as IndexableCollection) {
+        // FIXME: shouldn't do this
+        var y
+        x.each (ref y) y
+
+        if (x is ListArray) (
+            mlist.snoc(x as Array)
+        ) else (
+            mlist.snoc((x as Array).dup())
+        )
+        this
+    }
+
+    each = (r, act) {
+        var y
+        mlist.each (ref y) (
+            y.each r (forceEval(act))
+        )
+        this
+    }
+
+    dup = {
+        var res = new ListArray()
+        res ~= this
+        res
+    }
+
+    apply = (x as Function) {
+        mlist.apply((y) {
+            y.apply(x)
+        })
+        this
+    }
+
+    size = {
+        var sz = 0
+        var x
+        mlist.each (ref x) (
+            sz = sz + x.size()
+        )
+        sz
+    }
+]
+
+/// Automatic ranges
+var Range = Collection : [
+    start = Null
+    end = Null
+    step = Null
+
+    this (start, end, step) {
+        this.start = start
+        this.end = end
+        this.step = step
+    }
+
+    each = (r, act) {
+        var x
+        for (x = start) (x < end) (x = x + step) (
+            r.write x
+            forceEval(act)
+        )
+    }
+]
+
+/// Sliced collection
+var SlicedCollection = IndexableCollection : [
+    this (coll as IndexableCollection, from as NativeInteger, tto as NativeInteger) {
+        this.coll = coll
+        this.from = from
+        this.tto = tto
+    }
+
+    each = (r, act) {
+        // FIXME: this is terribly slow
+        var i = 0
+        coll.each (r) (
+            if (i >= from && i < tto) (
+                forceEval(act)
+            )
+            i = i + 1
+        )
+    }
+
+    opIndex = (x as NativeInteger) {
+        coll[from + x]
+    }
+
+    length = {
+        tto - from
+    }
+]
+
+/// Conversions for strings
+String.asByteArray = {
+    var ret = [[]]
+    var i
+    var l = length()
+    for (i = 0) (i < l) (i = i + 1) (
+        ret ~= [[charCodeAt(i)]]
+    )
+    ret
+}
+String.asByteArray.parent = String

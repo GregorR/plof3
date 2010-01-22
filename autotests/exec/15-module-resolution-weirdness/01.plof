@@ -1,0 +1,6 @@
+// Broken in dd06046481eb
+
+import(i01)
+
+var a = new (i01.A)([[1, 2, 3, 4, 5, 6, 7, 8]])
+var b = a.foo()

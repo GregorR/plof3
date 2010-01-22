@@ -10,7 +10,7 @@ label(interp_psl_ccall);
     if (ISPTR(a) && ISPTR(b) && ISARRAY(c)) {
         ffi_cif_plus *cif;
         void (*func)();
-        void **args, *ret, *arg;
+        void **args, *cret, *arg;
         int i;
         size_t sz;
         ptrdiff_t val;
@@ -22,7 +22,7 @@ label(interp_psl_ccall);
         ad = ARRAY(c);
 
         /* now start preparing the args and return */
-        ret = GC_MALLOC(cif->rtype->size);
+        cret = GC_MALLOC(cif->rtype->size);
         args = GC_MALLOC(cif->cif.nargs);
 
         /* go through each argument and copy it in */
@@ -87,11 +87,11 @@ label(interp_psl_ccall);
         }
 
         /* finally, call the function */
-        ffi_call(&cif->cif, func, ret, args);
+        ffi_call(&cif->cif, func, cret, args);
 
         /* and put the return together */
         rd = newPlofRawData(cif->rtype->size);
-        memcpy(rd->data, ret, rd->length);
+        memcpy(rd->data, cret, rd->length);
         otmp = newPlofObject();
         otmp->parent = context;
         otmp->data = (struct PlofData *) rd;

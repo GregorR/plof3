@@ -64,6 +64,7 @@ typedef struct _ffi_cif_plus {
 #include "memory.h"
 #include "optimizations.h"
 #include "plof.h"
+#include "prp.h"
 #include "psl.h"
 #include "pslfile.h"
 #ifndef PLOF_NO_PARSER
@@ -114,6 +115,11 @@ struct PlofReturn interpretPSL(
         int generateContext,
         int immediate)
 {
+#ifdef FAKE_JUMPS_FUNCTIONS
+    /* need to be able to goto out of the nested functions */
+    __label__ performThrow, opRet;
+#endif
+
     static size_t procedureHash = 0;
 
     /* Necessary jump variables */
@@ -251,8 +257,18 @@ struct PlofReturn interpretPSL(
 
                 /* make sure this doesn't go off the edge */
                 if (psli + len > psllen) {
-                    fprintf(stderr, "Bad data in PSL!\n");
-                    len = psllen - psli;
+                    rd = newPlofRawData(128);
+                    sprintf((char *) rd->data, "Bad data in PSL, instruction of type %X too long ((%d+%d)/%d)",
+                            (int) cmd, (int) psli, (int) len, (int) psllen);
+                    a = newPlofObject();
+                    a->parent = plofNull;
+                    a->data = (struct PlofData *) rd;
+
+                    ret.ret = newPlofObject();
+                    ret.ret->parent = plofNull;
+                    plofWrite(ret.ret, (unsigned char *) PSL_EXCEPTION_STACK, plofHash(sizeof(PSL_EXCEPTION_STACK)-1, (unsigned char *) PSL_EXCEPTION_STACK), a);
+                    ret.isThrown = 1;
+                    goto performThrow;
                 }
 
                 /* copy it in */
@@ -383,6 +399,44 @@ struct PlofReturn interpretPSL(
 #include "psl-impl.c"
 #include "impl/delete.c"
     jumptail;
+
+performThrow:
+    /* called when there's a throw */
+    if (dfile) {
+        unsigned char *curmsg = (unsigned char *) "";
+        size_t curlen = 0;
+        size_t es = plofHash(sizeof(PSL_EXCEPTION_STACK)-1, (unsigned char *) PSL_EXCEPTION_STACK);
+
+        /* add call stack info */
+        a = plofRead(ret.ret, (unsigned char *) PSL_EXCEPTION_STACK, es);
+        if (ISRAW(a)) {
+            rd = RAW(a);
+            curlen = rd->length;
+            curmsg = rd->data;
+        }
+
+        rd = newPlofRawData(curlen + strlen((char *) dfile) + 6*sizeof(int) + 16);
+        sprintf((char *) rd->data, "%.*s\n\tat %s line %d col %d", (int) curlen, curmsg, dfile, (int) dline+1, (int) dcol+1);
+        rd->length = strlen((char *) rd->data);
+        a = newPlofObject();
+        a->parent = plofNull;
+        a->data = (struct PlofData *) rd;
+
+        plofWrite(ret.ret, (unsigned char *) PSL_EXCEPTION_STACK, es, a);
+    }
+
+opRet:
+    return ret;
+}
+
+/* Called when Plof throws up */
+void plofThrewUp(struct PlofObject *obj)
+{
+    struct PlofObject *exc = plofRead(obj, (unsigned char *) PSL_EXCEPTION_STACK, plofHash(sizeof(PSL_EXCEPTION_STACK)-1, (unsigned char *) PSL_EXCEPTION_STACK));
+    if (ISRAW(exc)) {
+        struct PlofRawData *rd = RAW(exc);
+        fprintf(stderr, "%.*s\n", (int) rd->length, rd->data);
+    }
 }
 
 /* Hash function */
@@ -744,6 +798,28 @@ struct PlofOHashTable *plofHashtableNew(struct PlofOHashTable *into, unsigned ch
     nht->name = name; /* should always be safe maybe? */
     nht->value = value;
     return nht;
+}
+
+/* Put the args to this program into into.name */
+void plofSetArgs(struct PlofObject *into, unsigned char *name, int argc, char **argv)
+{
+    struct PlofObject *argarr, *argcur;
+    int i;
+
+    /* make the args */
+    argarr = newPlofObjectWithArray(argc);
+    argarr->parent = plofNull;
+
+    /* transfer them */
+    for (i = 0; i < argc; i++) {
+        argcur = newPlofObjectWithRaw(strlen(argv[i]));
+        argcur->parent = plofNull;
+        strcpy((char *) ((struct PlofRawData *) argcur->data)->data, argv[i]);
+        ((struct PlofArrayData *) argarr->data)->data[i] = argcur;
+    }
+
+    /* then set it */
+    plofWrite(into, name, plofHash(strlen((char *) name), name), argarr);
 }
 
 /* GC on DJGPP is screwy */

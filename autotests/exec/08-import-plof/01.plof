@@ -1,0 +1,4 @@
+import(i01)
+i01.foo()
+public(i01)
+foo()

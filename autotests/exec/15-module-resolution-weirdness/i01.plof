@@ -1,0 +1,17 @@
+var B = Object : [
+    msg = () {
+        return "B"
+    }
+]
+
+var A = Object : [
+    this (dat) {
+        this.dat = dat
+    }
+
+    foo = () {
+        if (dat.slice(0, 8) != [[158, 80, 83, 76, 23, 242, 88, 140]]) (
+            Debug.print((new B()).msg())
+        )
+    }
+]

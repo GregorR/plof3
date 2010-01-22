@@ -38,9 +38,20 @@
  */
 
 
-#if defined(__GNUC__) && !defined(FAKE_JUMPS)
+#if defined(FAKE_JUMPS_FUNCTIONS) /* Use functions for jumps, for profiling sake */
 
-/* The best real option */
+#define jumpenum                1
+#define jumpvars                enum jumplabel __jump_to;
+#define jumphead                while (1) { switch(__jump_to) { case -1: { {
+#define jumptail                } break; } } }
+#define addressof(label)        (void *) (size_t) label
+#define label(name)             } break; } case name: { auto void __jump_ ## name(); __jump_ ## name(); void __jump_ ## name() {
+#define prejump(var)            __jump_to = (enum jumplabel) (size_t) (var)
+#define jump(var)               prejump(var); return
+
+
+#elif defined(__GNUC__) && !defined(FAKE_JUMPS) /* The best real option */
+
 #define jumpvars
 #define jumphead
 #define jumptail
@@ -48,6 +59,7 @@
 #define label(name)             name:
 #define jump(var)               goto *((void *) (var))
 #define prejump                 jump
+
 
 #else /* if defined(FAKE_JUMPS) or unsupported compiler */
 
@@ -59,6 +71,7 @@
 #define label(name)             case name:
 #define prejump(var)            __jump_to = (enum jumplabel) (size_t) (var)
 #define jump(var)               __jump_to = (enum jumplabel) (size_t) (var); break
+
 
 #endif
 

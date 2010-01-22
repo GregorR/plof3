@@ -1,0 +1,10 @@
+var x = [[ 1, 2, 3 ]]
+var y = x as Array
+var z = [[ 1 ]] ~ [[ 2, 3 ]]
+
+if (x == y) (Debug.print "x==y")
+if (x == z) (Debug.print "x==z")
+if (y == z) (Debug.print "y==z")
+if (z == y) (Debug.print "z==y")
+if (z == x) (Debug.print "z==x")
+if (y == x) (Debug.print "y==x")

@@ -108,7 +108,8 @@ void delAllProductions()
 
 /* parse using the specified production, not clearing out caches first (assumed
  * caches are good) */
-static struct ParseResult **packratParsePrime(struct Production *production,
+static struct ParseResult **packratParsePrime(struct ParseContext *ctx,
+                                              struct Production *production,
                                               unsigned char *file, int line, int col,
                                               unsigned char *input, size_t off)
 {
@@ -136,7 +137,7 @@ static struct ParseResult **packratParsePrime(struct Production *production,
     ret = NULL;
     if (production->parser) {
         /* run this production */
-        ret = production->parser(production, file, line, col, input, off);
+        ret = production->parser(ctx, production, file, line, col, input, off);
     } else {
         fprintf(stderr, "Production %s has no parser!\n", production->name);
     }
@@ -167,7 +168,8 @@ static void clearCaches(struct Production *production)
 }
 
 /* parse using the specified production */
-struct ParseResult *packratParse(struct Production *production,
+struct ParseResult *packratParse(struct ParseContext *ctx,
+                                 struct Production *production,
                                  unsigned char *file,
                                  int line, int col,
                                  unsigned char *input)
@@ -179,7 +181,7 @@ struct ParseResult *packratParse(struct Production *production,
     clearCaches(productions);
 
     /* then parse */
-    pr = packratParsePrime(production, file, line, col, input, 0);
+    pr = packratParsePrime(ctx, production, file, line, col, input, 0);
 
     /* choose the longest */
     longest = pr[0];
@@ -191,7 +193,8 @@ struct ParseResult *packratParse(struct Production *production,
 }
 
 /* parse a nonterminal (that is, parse some list of child nodes) */
-struct ParseResult **packratNonterminal(struct Production *production,
+struct ParseResult **packratNonterminal(struct ParseContext *ctx,
+                                        struct Production *production,
                                         unsigned char *file, int line, int col,
                                         unsigned char *input, size_t off)
 {
@@ -245,12 +248,25 @@ struct ParseResult **packratNonterminal(struct Production *production,
 
                 INIT_BUFFER(orResultP);
 
-                /* loop over each of the current points */
+                /* loop over each of the current results */
                 for (i = 0; i < orResult.bufused; i++) {
-                    subres = packratParsePrime(orProduction[thens],
-                                               file, orResult.buf[i]->eline, orResult.buf[i]->ecol,
-                                               input, orResult.buf[i]->consumedTo);
+                    int eline = orResult.buf[i]->eline;
+                    int ecol = orResult.buf[i]->ecol;
+                    int cto = orResult.buf[i]->consumedTo;
+                    subres = packratParsePrime(ctx,
+                                               orProduction[thens],
+                                               file, eline, ecol,
+                                               input, cto);
                     for (srlen = 0; subres[srlen]; srlen++);
+
+                    /* mark it in the context */
+                    if (srlen == 0 && (eline > ctx->line || (eline == ctx->line && ecol >= ctx->col))) {
+                        ctx->loc = cto;
+                        ctx->line = eline;
+                        ctx->col = ecol;
+                        ctx->current = production;
+                        ctx->expected = orProduction[thens];
+                    }
 
                     /* and extend them into orResultP */
                     for (j = 0; subres[j]; j++) {
@@ -299,7 +315,8 @@ struct ParseResult **packratNonterminal(struct Production *production,
 
 /* parse a regex terminal */
 #define OVECTOR_LEN 30
-struct ParseResult **packratRegexTerminal(struct Production *production,
+struct ParseResult **packratRegexTerminal(struct ParseContext *ctx,
+                                          struct Production *production,
                                           unsigned char *file, int line, int col,
                                           unsigned char *input, size_t off)
 {

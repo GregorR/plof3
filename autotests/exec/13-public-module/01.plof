@@ -1,0 +1,9 @@
+import(i01)
+public(i01)
+
+var f = new (i01.Foo)()
+if (f is Foo) (
+    Debug.print "Good"
+) else (
+    Debug.print "Bad"
+)

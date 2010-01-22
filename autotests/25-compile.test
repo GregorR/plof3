@@ -12,8 +12,8 @@ do
     done
 
     # Now run it
-    runtest compile_${bni}_run cplof -N *.psl *.plof -o output
-    runtest compile_${bni}_cmp cmp output expected
+    runtest compile_${bni}_run trybt cplof -N *.psl *.plof -o output
+    runtest compile_${bni}_cmp diff output expected
     rm -f output
 
     # Get rid of compiled .psl files

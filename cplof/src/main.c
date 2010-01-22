@@ -57,29 +57,10 @@ int main(int argc, char **argv)
 
     struct PlofReturn plofRet;
 
+    int plofargc;
+    char **plofargv;
+
     GC_INIT();
-
-    /* get our search path */
-    if (whereAmI(argv[0], &wdir, &wfil)) {
-        plofIncludePaths = GC_MALLOC(3 * sizeof(unsigned char *));
-
-        /* /../share/plof_include/ */
-        plofIncludePaths[0] = GC_MALLOC_ATOMIC(strlen(wdir) + 24);
-        sprintf((char *) plofIncludePaths[0], "%s/../share/plof_include/", wdir);
-
-        /* /../../plof_include/ (for running from src/) */
-        plofIncludePaths[1] = GC_MALLOC_ATOMIC(strlen(wdir) + 17);
-        sprintf((char *) plofIncludePaths[1], "%s/../../plofcore/", wdir);
-
-        plofIncludePaths[2] = NULL;
-
-        /* FIXME: should support -I eventually */
-
-    } else {
-        fprintf(stderr, "Could not deterine include paths!\n");
-        return 1;
-
-    }
 
     /* load std.psl by default */
     files[0] = "std.psl";
@@ -87,6 +68,8 @@ int main(int argc, char **argv)
     compileOnly = 0;
     compileFile = "a.psl";
     interactive = 0;
+    plofargc = 0;
+    plofargv = NULL;
 
     /* handle args */
     for (argn = 1; argn < argc; argn++) {
@@ -123,11 +106,52 @@ int main(int argc, char **argv)
             if (fn >= MAX_FILES) {
                 fprintf(stderr, "Too many files!\n");
                 return 1;
+            } else if (files[0] && !compileOnly && fn >= 2) {
+                /* we have an input file, we're not compiling, so the rest is Plof args */
+                argn++;
+                plofargc = argc - argn;
+                plofargv = argv + argn;
+                break;
             }
 
         }
     }
     files[fn] = NULL;
+
+    /* get our search path */
+    if (whereAmI(argv[0], &wdir, &wfil)) {
+        int onIncPath = 0;
+
+        plofIncludePaths = GC_MALLOC(16 * sizeof(unsigned char *));
+
+        plofIncludePaths[onIncPath] = GC_MALLOC_ATOMIC(3);
+        sprintf((char *) plofIncludePaths[onIncPath++], "./");
+
+        if (prpDebug) {
+            plofIncludePaths[onIncPath] = GC_MALLOC_ATOMIC(strlen(wdir) + 30);
+            sprintf((char *) plofIncludePaths[onIncPath++], "%s/../share/plof_include/debug/", wdir);
+
+            plofIncludePaths[onIncPath] = GC_MALLOC_ATOMIC(strlen(wdir) + 23);
+            sprintf((char *) plofIncludePaths[onIncPath++], "%s/../../plofcore/debug/", wdir);
+        }
+
+        /* /../share/plof_include/ */
+        plofIncludePaths[onIncPath] = GC_MALLOC_ATOMIC(strlen(wdir) + 24);
+        sprintf((char *) plofIncludePaths[onIncPath++], "%s/../share/plof_include/", wdir);
+
+        /* /../../plof_include/ (for running from src/) */
+        plofIncludePaths[onIncPath] = GC_MALLOC_ATOMIC(strlen(wdir) + 17);
+        sprintf((char *) plofIncludePaths[onIncPath++], "%s/../../plofcore/", wdir);
+
+        plofIncludePaths[onIncPath] = NULL;
+
+        /* FIXME: should support -I eventually */
+
+    } else {
+        fprintf(stderr, "Could not deterine include paths!\n");
+        return 1;
+
+    }
 
     /* complain if there aren't any files */
     if (fn == 1 && !interactive) {
@@ -142,6 +166,9 @@ int main(int argc, char **argv)
     plofNull->parent = plofNull;
     plofGlobal = newPlofObject();
     plofGlobal->parent = plofGlobal;
+
+    /* transfer args */
+    plofSetArgs(plofGlobal, (unsigned char *) "args", plofargc, plofargv);
 
     /* And the context */
     context = newPlofObject();
@@ -201,7 +228,7 @@ int main(int argc, char **argv)
         } else {
             plofRet = interpretPSL(context, plofNull, NULL, psl.bufused, psl.buf, 0, 0);
             if (plofRet.isThrown) {
-                fprintf(stderr, "Plof threw up!\n");
+                plofThrewUp(plofRet.ret);
                 return 1;
             }
         }
@@ -256,7 +283,7 @@ int main(int argc, char **argv)
             } else {
                 plofRet = interpretPSL(context, plofNull, NULL, psl.bufused, psl.buf, 0, 0);
                 if (plofRet.isThrown) {
-                    fprintf(stderr, "Plof threw up!\n");
+                    plofThrewUp(plofRet.ret);
                 }
             }
         }

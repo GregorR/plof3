@@ -1,0 +1,5 @@
+Object.bar = {
+    Debug.print "Good"
+}
+
+(new Foo()).bar()

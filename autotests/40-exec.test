@@ -1,18 +1,21 @@
 #!/bin/bash
-exec_cplof_output() {
-    cplof *.plof > output
-    return $?
-}
-
 for i in autotests/exec/*
 do
     bni=`basename $i`
 
     pushd $i
-    
+
+    for j in c*.plof
+    do
+        if [ -e "$j" ]
+        then
+            runtest exec_${bni}_compile_$j trybt cplof $j -o ${j/.plof}.psl
+        fi
+    done
+
     # Now run it
-    runtest exec_${bni}_run exec_cplof_output
-    runtest exec_${bni}_cmp cmp output expected
+    runtest exec_${bni}_run trybtout output cplof [0-9]*.plof
+    runtest exec_${bni}_cmp diff output expected
     rm -f output
 
     popd
