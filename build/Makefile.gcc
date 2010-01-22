@@ -5,3 +5,7 @@ cplof/cplof:
 
 plofcore/std.psl: cplof/cplof
 	cd plofcore ; $(MAKE) -f build/Makefile.gcc
+
+clean:
+	cd cplof ; $(MAKE) -f build/Makefile.gcc clean
+	cd plofcore ; $(MAKE) -f build/Makefile.gcc clean
