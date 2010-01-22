@@ -58,15 +58,11 @@ plofbnf {
 }
 
 plofbnf {
-    plof_postfixopr => plof_prefixopr
-
-    plof_prefixopr = "-" plof_prefixopr => plof {
+    plof_unop = "-" plof_unop => plof {
         0 - $1
     }
 
-    plof_prefixopr = "\+" plof_prefixopr => plof {
+    plof_unop = "\+" plof_unop => plof {
         $1
     }
-
-    plof_prefixopr = plof_prefixopr_next => plof { $0 }
 }
