@@ -68,8 +68,8 @@ int main(int argc, char **argv)
         sprintf((char *) plofIncludePaths[0], "%s/../share/plof_include/", wdir);
 
         /* /../../plof_include/ (for running from src/) */
-        plofIncludePaths[1] = GC_MALLOC_ATOMIC(strlen(wdir) + 21);
-        sprintf((char *) plofIncludePaths[1], "%s/../../plof_include/", wdir);
+        plofIncludePaths[1] = GC_MALLOC_ATOMIC(strlen(wdir) + 17);
+        sprintf((char *) plofIncludePaths[1], "%s/../../plofcore/", wdir);
 
         plofIncludePaths[2] = NULL;
 
