@@ -1,7 +1,7 @@
 /*
  * A Plof-suitable packrat parser (memoized recursive descent parser)
  *
- * Copyright (C) 2009 Gregor Richards
+ * Copyright (C) 2009, 2010 Gregor Richards
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
