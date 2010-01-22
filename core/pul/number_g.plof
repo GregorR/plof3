@@ -46,13 +46,27 @@ plofbnf {
     }
     plof_mul = plof_mul_next => plof { $0 }
 
-    plof_unop => plof_unopr
+    plof_unop => plof_postfixopr
 
-    plof_unopr = plof_unopr "\+\+" => plof {
+    plof_postfixopr = plof_postfixopr "\+\+" => plof {
         $0 = $0.opInc()
     }
-    plof_unopr = plof_unopr "--" => plof {
+    plof_postfixopr = plof_postfixopr "--" => plof {
         $0 = $0.opDec()
     }
-    plof_unopr = plof_unopr_next => plof { $0 }
+    plof_postfixopr = plof_postfixopr_next => plof { $0 }
+}
+
+plofbnf {
+    plof_postfixopr => plof_prefixopr
+
+    plof_prefixopr = "-" plof_prefixopr => plof {
+        0 - $1
+    }
+
+    plof_prefixopr = "\+" plof_prefixopr => plof {
+        $1
+    }
+
+    plof_prefixopr = plof_prefixopr_next => plof { $0 }
 }
