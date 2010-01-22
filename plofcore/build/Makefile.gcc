@@ -1,0 +1,8 @@
+PLOFC=../cplof/cplof
+PSLASM=../cplof/pslasm
+
+srcdir=.
+
+all: std.psl cnfi.psl nonfi.psl debug/std.psl debug/cnfi.psl debug/nonfi.psl debug/stddebug.psl
+
+include Makefile.am
