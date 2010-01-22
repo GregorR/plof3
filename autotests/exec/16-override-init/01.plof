@@ -1,0 +1,11 @@
+var Foo = Object : [
+    this () {}
+]
+
+Foo := [
+    this () {
+        Debug.print("Hello")
+    }
+]
+
+new Foo()
