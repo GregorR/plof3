@@ -30,6 +30,10 @@
 #include "plof.h"
 
 #define PSL_FILE_MAGIC "\x9E\x50\x53\x4C\x17\xF2\x58\x8C"
+#define PSL_SECTION_PROGRAM_DATA                0
+#define PSL_SECTION_COMMENT                     1
+#define PSL_SECTION_STRIPPED_PROGRAM_DATA       2
+#define PSL_SECTION_RAW_DATA_TABLE              3
 
 /* return true if this buffer points to a PSL file */
 int isPSLFile(size_t sz, unsigned char *buf);
@@ -39,5 +43,11 @@ struct Buffer_psl readPSLFile(size_t sz, unsigned char *buf);
 
 /* write out PSL to a file */
 void writePSLFile(FILE *to, size_t sz, unsigned char *buf);
+
+/* unstrip PSL */
+struct Buffer_psl unstripPSL(struct Buffer_psl psls, struct Buffer_psl strtab);
+
+/* strip PSL */
+void stripPSL(struct Buffer_psl psl, struct Buffer_psl *psls, struct Buffer_psl *strtab);
 
 #endif
