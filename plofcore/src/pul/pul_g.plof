@@ -501,9 +501,17 @@ pslbnf {
     plof_assign = plof_assign_next ":="w "\["w plof_obj_defs "\]" => {
         // get the left
         push0 0 index pul_apply_eval
+        {
+            push0
+        } concat
 
         // then run the extender
-        push1 3 index concat
+        push1 3 index cwrap concat
+
+        {
+            // stack: obj obj extender
+            push0 push2 parentset call pop
+        } concat
 
         // wrap it up
         pul_apply_funcwrap
