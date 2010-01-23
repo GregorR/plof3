@@ -44,7 +44,7 @@ struct Buffer_psl readPSLFile(size_t sz, unsigned char *buf)
     struct Buffer_psl psl;
     size_t i, slen, stype, stl;
     size_t hasprgdata = 0, hassprgdata = 0, hasstrtab = 0;
-    size_t prgdatalen, sprgdatalen, strtablen;
+    size_t prgdatalen = 0, sprgdatalen = 0, strtablen = 0;
 
     memset(&psl, 0, sizeof(struct Buffer_psl));
 
