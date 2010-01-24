@@ -177,6 +177,14 @@ struct PlofReturn interpretPSL(
         psl = pslalt;
     }
 
+    if (psllen == 0) {
+        /* common empty function case */
+        ret.ret = plofNull;
+        if (arg) ret.ret = arg;
+        ret.isThrown = 0;
+        return ret;
+    }
+
     /* call the intrinsic if applicable */
     if (pslraw && rd->proc) {
         ret = rd->proc(context, arg);
