@@ -27,6 +27,7 @@
 #include <string.h>
 
 #include "ast.h"
+#include "bignum.h"
 #include "memory.h"
 #include "optimizations.h"
 #include "psl.h"
@@ -66,7 +67,6 @@ struct PSLAstNode *pslToAst(unsigned char *psl, size_t psllen)
         int arity = 0, pushes = 0;
         unsigned short cmd = psl[psli];
         unsigned char *data = NULL;
-        unsigned short temp0 = 0, temp1 = 0;
         size_t datasz = 0;
 
         /* maybe it has raw data */
@@ -274,7 +274,7 @@ void dumpPSLAst(FILE *to, struct PSLAstNode *tree, int spaces)
         if (tree->datasz == (size_t) -1) {
             fprintf(to, "  %d\n", (int) (size_t) tree->data);
         } else {
-            fprintf(to, "  %.*s\n", tree->datasz, (char *) tree->data);
+            fprintf(to, "  %.*s\n", (int) tree->datasz, (char *) tree->data);
         }
     }
 
