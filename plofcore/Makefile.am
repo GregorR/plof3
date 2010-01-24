@@ -36,25 +36,25 @@ puldebug.psl: $(PUL_PSL_SOURCE)
 std.psl: pul.psl $(STD_PSL_SOURCE)
 	$(PLOFC) -N -c $(PLOF_FLAGS) pul.psl $(STD_PSL_SOURCE) -o $@
 
-debug/std.psl: debug pul.psl $(STD_PSL_SOURCE)
+debug/std.psl: pul.psl $(STD_PSL_SOURCE)
 	mkdir -p debug
 	$(PLOFC) -N -c --debug $(PLOF_FLAGS) pul.psl $(STD_PSL_SOURCE) -o $@
 
-debug/stddebug.psl: debug puldebug.psl $(STD_PSL_SOURCE)
+debug/stddebug.psl: puldebug.psl $(STD_PSL_SOURCE)
 	mkdir -p debug
 	$(PLOFC) -N -c --debug $(PLOF_FLAGS) puldebug.psl $(STD_PSL_SOURCE) -o $@
 
 cnfi.psl: $(CNFI_PSL_SOURCE) std.psl
 	$(PLOFC) -c $(PLOF_FLAGS) $(CNFI_PSL_SOURCE) -o $@
 
-debug/cnfi.psl: debug $(CNFI_PSL_SOURCE) std.psl
+debug/cnfi.psl: $(CNFI_PSL_SOURCE) std.psl
 	mkdir -p debug
 	$(PLOFC) -c --debug $(PLOF_FLAGS) $(CNFI_PSL_SOURCE) -o $@
 
 nonfi.psl: $(NONFI_PSL_SOURCE) std.psl
 	$(PLOFC) -c $(PLOF_FLAGS) $(NONFI_PSL_SOURCE) -o $@
 
-debug/nonfi.psl: debug $(NONFI_PSL_SOURCE) std.psl $(PLOF_REQ)
+debug/nonfi.psl: $(NONFI_PSL_SOURCE) std.psl $(PLOF_REQ)
 	mkdir -p debug
 	$(PLOFC) -c --debug $(PLOF_FLAGS) $(NONFI_PSL_SOURCE) -o $@
 
