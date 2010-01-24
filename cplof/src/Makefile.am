@@ -1,5 +1,6 @@
 lib_LIBRARIES=libplof.a libplof_noparser.a
-bin_PROGRAMS=cplof psli pslasm psldasm pslast
+bin_PROGRAMS=cplof psli pslasm psldasm
+noinst_PROGRAMS=pslast
 
 AM_CFLAGS=-DHAVE_CONFIG_H
 
