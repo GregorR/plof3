@@ -325,7 +325,7 @@ struct PlofReturn interpretPSL(
 #define ARITY(x) arity = x;
 #define PUSHES(x) pushes = x;
 #define LEAKA leaka = 1;
-#define LEAKB leaka = 1;
+#define LEAKB leakb = 1;
 #define LEAKC leakc = 1;
 #define LEAKP leakp = 1;
 #define LEAKALL lstackcur = 0; /* if everything is leaked, we have to forget the whole stack */
