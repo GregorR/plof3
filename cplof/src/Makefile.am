@@ -5,13 +5,13 @@ AM_CFLAGS=-DHAVE_CONFIG_H
 
 libplof_a_SOURCES=bignum.c intrinsics.c memory.c optimizations.c psl.c pslfile.c
 if GCC
-libplof_a_CFLAGS=-O3 -fno-crossjumping -fno-gcse $(AM_CFLAGS)
+libplof_a_CFLAGS=-O3 -fno-gcse $(AM_CFLAGS)
 endif
 
 libplof_noparser_a_SOURCES=bignum.c intrinsics.c memory.c optimizations.c psl.c pslfile.c
 libplof_noparser_a_CFLAGS=
 if GCC
-libplof_noparser_a_CFLAGS+=-O3 -fno-crossjumping -fno-gcse $(AM_CFLAGS)
+libplof_noparser_a_CFLAGS+=-O3 -fno-gcse $(AM_CFLAGS)
 endif
 libplof_noparser_a_CFLAGS+=-DPLOF_NO_PARSER
 
