@@ -1,3 +1,3 @@
-arity = 1;
-pushes = 1;
-leakp = 1;
+ARITY(1)
+PUSHES(1)
+LEAKP

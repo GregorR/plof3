@@ -1,2 +1,2 @@
-arity = 1;
-leaka = 1;
+ARITY(1)
+LEAKA

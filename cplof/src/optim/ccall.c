@@ -1,3 +1,6 @@
-arity = 3;
-pushes = 1;
-leaka = leakb = leakc = leakp = 1;
+ARITY(3)
+PUSHES(1)
+LEAKA
+LEAKB
+LEAKC
+LEAKP

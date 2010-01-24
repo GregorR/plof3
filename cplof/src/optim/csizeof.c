@@ -1,2 +1,2 @@
-arity = 1;
-pushes = 1;
+ARITY(1)
+PUSHES(1)

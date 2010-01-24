@@ -1,1 +1,1 @@
-arity = 1;
+ARITY(1)

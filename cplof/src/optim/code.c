@@ -1,1 +1,1 @@
-pushes = 1;
+PUSHES(1)

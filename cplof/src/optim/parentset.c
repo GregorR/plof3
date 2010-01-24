@@ -1,2 +1,2 @@
-arity = 2;
-leakb = 1;
+ARITY(2)
+LEAKB

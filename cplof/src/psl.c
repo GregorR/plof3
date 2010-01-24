@@ -321,7 +321,23 @@ struct PlofReturn interpretPSL(
                 }
 
                 switch (cmd) {
-#include "psl-cpsl.c"
+#define FOREACH(cmd) cpsl[cpsli] = addressof(interp_psl_ ## cmd);
+#define ARITY(x) arity = x;
+#define PUSHES(x) pushes = x;
+#define LEAKA leaka = 1;
+#define LEAKB leaka = 1;
+#define LEAKC leakc = 1;
+#define LEAKP leakp = 1;
+#define LEAKALL lstackcur = 0; /* if everything is leaked, we have to forget the whole stack */
+#define PSL_OPTIM 1
+#include "psl-optim.c"
+#undef ARITY
+#undef PUSHES
+#undef LEAKA
+#undef LEAKB
+#undef LEAKC
+#undef LEAKP
+#undef PSL_OPTIM
 
                     default:
                         fprintf(stderr, "Invalid operation: 0x%x\n", cmd);
