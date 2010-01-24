@@ -10,11 +10,20 @@ AC_CONFIG_HEADER([config.h])
 
 m4_include([scripts/ac_compile_check_sizeof.ac])
 
+USER_CFLAGS=no
+if test "x$CFLAGS" != "x"; then
+    USER_CFLAGS=yes
+fi
+
 # Checks for programs.
 AC_PROG_CC
 AM_PROG_CC_C_O
 AC_PROG_RANLIB
-AM_CONDITIONAL([GCC], [test x$GCC = xyes])
+
+# Some GCC-specific flags
+if test "x$USER_CFLAGS" = "xno" -a "x$GCC" = "xyes"; then
+    CFLAGS="$CFLAGS -O3 -fno-crossjumping -fno-gcse"
+fi
 
 # Checks for libraries.
 AC_SEARCH_LIBS([GC_malloc], [gc])
