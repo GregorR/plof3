@@ -173,6 +173,7 @@ struct PlofReturn interpretPSL(
         psl = rd->data;
         cpsl = rd->idata;
     } else {
+        rd = NULL;
         psllen = pslaltlen;
         psl = pslalt;
     }
