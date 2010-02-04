@@ -118,7 +118,7 @@ struct PSLAstNode *pslToAst(unsigned char *psl, size_t psllen)
         }
 
         /* if we need to flatten the stack (we're duplicating or removing stack elements), do so */
-        if ((cmd >= psl_push0 && cmd <= psl_push7) || cmd == psl_pop || cmd == psl_resolve) {
+        if ((cmd >= psl_push0 && cmd <= psl_push7) || pushes != 1) {
             struct Buffer_PSLAstNode naststack;
             INIT_BUFFER(naststack);
 
@@ -214,7 +214,13 @@ struct PSLAstNode *pslToAst(unsigned char *psl, size_t psllen)
             /* and create the current one */
             cur = allocPSLAstNode(cmd, data, datasz, arity, BUFFER_END(aststack) - arity);
             aststack.bufused -= arity;
-            WRITE_BUFFER(aststack, &cur, 1);
+
+            /* put it either on the stack or in our instruction list */
+            if (pushes == 1) {
+                WRITE_BUFFER(aststack, &cur, 1);
+            } else {
+                WRITE_BUFFER(astout, &cur, 1);
+            }
 
             /* FIXME: array, resolve special */
         }
