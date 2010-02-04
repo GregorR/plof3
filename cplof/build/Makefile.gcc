@@ -1,4 +1,5 @@
 CC=gcc
+INCPATH=-Isrc
 ECLFAGS=
 CFLAGS=-O3 -fno-crossjumping -fno-gcse -g $(ECFLAGS)
 
@@ -30,18 +31,18 @@ libplof.a: $(LIBPLOF_A_OBJS)
 	$(RANLIB) libplof.a
 
 cplof$(EXEEXT): $(CPLOF_OBJS)
-	$(CC) $(CFLAGS) $(FFIFLAGS) $(LDFLAGS) $(CPLOF_OBJS) $(FFI) $(CPLOF_LIBS) $(LIBS) -o cplof$(EXEEXT)
+	$(CC) $(CFLAGS) $(INCPATH) $(FFIFLAGS) $(LDFLAGS) $(CPLOF_OBJS) $(FFI) $(CPLOF_LIBS) $(LIBS) -o cplof$(EXEEXT)
 
 pslasm$(EXEEXT): $(PSLASM_OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(PSLASM_OBJS) $(LIBS) -o pslasm$(EXEEXT)
+	$(CC) $(CFLAGS) $(INCPATH) $(LDFLAGS) $(PSLASM_OBJS) $(LIBS) -o pslasm$(EXEEXT)
 
 psldasm$(EXEEXT): $(PSLDASM_OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(PSLDASM_OBJS) $(LIBS) -o psldasm$(EXEEXT)
+	$(CC) $(CFLAGS) $(INCPATH) $(LDFLAGS) $(PSLDASM_OBJS) $(LIBS) -o psldasm$(EXEEXT)
 
 .SUFFIXES: c o
 
 .c.o:
-	$(CC) $(CFLAGS) $(LIBFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(INCPATH) $(LIBFLAGS) -c $< -o $@
 
 clean:
 	rm -f libplof.a $(LIBPLOF_A_OBJS)
@@ -50,6 +51,6 @@ clean:
 	rm -f psldasm$(EXEEXT) $(PSLDASM_OBJS)
 
 deps:
-	$(CC) $(CFLAGS) -MM src/*.c > deps
+	$(CC) $(CFLAGS) $(INCPATH) -MM src/*.c > deps
 
 include deps
