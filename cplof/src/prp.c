@@ -29,15 +29,15 @@
 #include <errno.h>
 #include <string.h>
 
-#include "bignum.h"
-#include "buffer.h"
-#include "helpers.h"
-#include "memory.h"
-#include "packrat.h"
-#include "plof.h"
-#include "psl.h"
+#include "plof/bignum.h"
+#include "plof/buffer.h"
+#include "plof/helpers.h"
+#include "plof/memory.h"
+#include "plof/packrat.h"
+#include "plof/plof.h"
+#include "plof/psl.h"
 
-#include "prp.h"
+#include "plof/prp.h"
 
 BUFFER(target, unsigned char **);
 BUFFER(psl_array, struct Buffer_psl);

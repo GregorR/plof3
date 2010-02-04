@@ -29,10 +29,10 @@
 #include <gc/gc.h>
 #include <pcre.h>
 
-#include "packrat.h"
+#include "plof/packrat.h"
 
 #define BUFFER_DEFAULT_SIZE 8
-#include "buffer.h"
+#include "plof/buffer.h"
 BUFFER(ParseResult, struct ParseResult *);
 BUFFER(Production, struct Production *);
 BUFFER(Production_p, struct Production **);

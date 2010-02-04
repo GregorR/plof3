@@ -1,7 +1,7 @@
 /*
- * PSL file exporter/importer
+ * Support for reading/writing PSL bignums
  *
- * Copyright (C) 2009, 2010 Gregor Richards
+ * Copyright (C) 2009 Gregor Richards
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,32 +22,19 @@
  * THE SOFTWARE.
  */
 
-#ifndef PSLFILE_H
-#define PSLFILE_H
+#ifndef PLOF_BIGNUM_H
+#define PLOF_BIGNUM_H
 
-#include <stdio.h>
+#include <stdlib.h>
 
-#include "plof.h"
+/* Convert a PSL bignum to an int */
+int pslBignumToInt(unsigned char *bignum, size_t *into);
 
-#define PSL_FILE_MAGIC "\x9E\x50\x53\x4C\x17\xF2\x58\x8C"
-#define PSL_SECTION_PROGRAM_DATA                0
-#define PSL_SECTION_COMMENT                     1
-#define PSL_SECTION_STRIPPED_PROGRAM_DATA       2
-#define PSL_SECTION_RAW_DATA_TABLE              3
+/* Get the lenght of a bignum */
+size_t pslBignumLength(size_t val);
 
-/* return true if this buffer points to a PSL file */
-int isPSLFile(size_t sz, unsigned char *buf);
+/* Convert an int to a bignum into a buffer, of length len */
+void pslIntToBignum(unsigned char *buf, size_t val, size_t len);
 
-/* read in the PSL from a PSL file */
-struct Buffer_psl readPSLFile(size_t sz, unsigned char *buf);
-
-/* write out PSL to a file */
-void writePSLFile(FILE *to, size_t sz, unsigned char *buf);
-
-/* unstrip PSL */
-struct Buffer_psl unstripPSL(struct Buffer_psl psls, struct Buffer_psl strtab);
-
-/* strip PSL */
-void stripPSL(struct Buffer_psl psl, struct Buffer_psl *psls, struct Buffer_psl *strtab);
 
 #endif

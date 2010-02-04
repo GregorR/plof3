@@ -24,9 +24,9 @@
 
 #include <string.h>
 
-#include "bignum.h"
-#include "psl.h"
-#include "pslfile.h"
+#include "plof/bignum.h"
+#include "plof/psl.h"
+#include "plof/pslfile.h"
 
 /* return true if this buffer points to a PSL file */
 int isPSLFile(size_t sz, unsigned char *buf)

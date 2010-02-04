@@ -56,19 +56,19 @@ typedef struct _ffi_cif_plus {
 #include <unistd.h>
 #endif
 
-#include "bignum.h"
+#include "plof/bignum.h"
 #include "impl.h"
 #include "intrinsics.h"
 #include "jump.h"
 #include "leaky.h"
-#include "memory.h"
+#include "plof/memory.h"
 #include "optimizations.h"
-#include "plof.h"
-#include "prp.h"
-#include "psl.h"
-#include "pslfile.h"
+#include "plof/plof.h"
+#include "plof/prp.h"
+#include "plof/psl.h"
+#include "plof/pslfile.h"
 #ifndef PLOF_NO_PARSER
-#include "prp.h"
+#include "plof/prp.h"
 #endif
 
 

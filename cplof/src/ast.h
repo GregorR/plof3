@@ -27,8 +27,8 @@
 
 #include <stdio.h>
 
-#include "buffer.h"
-#include "plof.h"
+#include "plof/buffer.h"
+#include "plof/plof.h"
 
 /* A PSL AST node is fairly generic */
 struct PSLAstNode {

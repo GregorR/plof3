@@ -27,10 +27,10 @@
 #include <string.h>
 
 #include "ast.h"
-#include "bignum.h"
-#include "memory.h"
+#include "plof/bignum.h"
+#include "plof/memory.h"
 #include "optimizations.h"
-#include "psl.h"
+#include "plof/psl.h"
 
 /* allocate a PSL AST node with these children */
 struct PSLAstNode *allocPSLAstNode(unsigned short cmd,

@@ -23,8 +23,8 @@
  * THE SOFTWARE.
  */
 
-#ifndef PLOF_H
-#define PLOF_H
+#ifndef PLOF_PLOF_H
+#define PLOF_PLOF_H
 
 #include <stddef.h>
 

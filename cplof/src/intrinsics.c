@@ -26,7 +26,7 @@
 
 #include "impl.h"
 #include "intrinsics.h"
-#include "memory.h"
+#include "plof/memory.h"
 
 static struct PlofReturn opDuplicatePrime(struct PlofObject *ctx, struct PlofObject *obj);
 

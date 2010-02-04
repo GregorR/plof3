@@ -25,7 +25,7 @@
 #ifndef INTRINSICS_H
 #define INTRINSICS_H
 
-#include "plof.h"
+#include "plof/plof.h"
 
 /* the array of intrinsic operations */
 extern PlofFunction plofIntrinsics[];

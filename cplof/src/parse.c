@@ -27,10 +27,10 @@
 
 #include <gc/gc.h>
 
-#include "bignum.h"
+#include "plof/bignum.h"
 #include "lex.h"
 #include "parse.h"
-#include "psl.h"
+#include "plof/psl.h"
 
 #define BUFSTEP 1024
 

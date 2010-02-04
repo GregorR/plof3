@@ -25,10 +25,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bignum.h"
-#include "memory.h"
-#include "plof.h"
-#include "psl.h"
+#include "plof/bignum.h"
+#include "plof/memory.h"
+#include "plof/plof.h"
+#include "plof/psl.h"
 #include "whereami.h"
 
 #define BUFSTEP 1024

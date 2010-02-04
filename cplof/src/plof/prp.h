@@ -1,7 +1,8 @@
 /*
- * Memory abstraction
+ * Ratpack parser wrappers
  *
- * Copyright (C) 2009 Gregor Richards
+ * Copyright (C) 2009 Josiah Worcester
+ * Copyright (C) 2010 Gregor Richards
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,46 +23,33 @@
  * THE SOFTWARE.
  */
 
-#ifndef MEMORY_H
-#define MEMORY_H
+#ifndef PLOF_PRP_H
+#define PLOF_PRP_H
 
+#include "buffer.h"
 #include "plof.h"
 
-/* Stack of objects, used only in interpPSL */
-struct PSLStack {
-    size_t length;
-    struct PlofObject **data;
+/* Parsing returns Buffer_psl (the resultant code), and a pointer to the remainder of the code */
+struct PRPResult {
+    struct ParseContext *ctx;
+    struct Buffer_psl code;
+    unsigned char *remainder;
+    unsigned int rline, rcol;
 };
 
-/* Allocate a PlofObject */
-struct PlofObject *newPlofObject();
+/* These correspond directly to underlying PSL instructions */
+void gadd(unsigned char *name, unsigned char **target, size_t psllen, unsigned char *psl);
+void grem(unsigned char *name);
+void gcommit(void);
 
-/* Free a PlofObject (optional) */
-void freePlofObject(struct PlofObject *tofree);
+/* Parse some part of PSL code */
+struct PRPResult parseOne(unsigned char *code, unsigned char *top, unsigned char *file,
+                          unsigned int line, unsigned int column);
 
-/* Allocate a PSLStack */
-struct PSLStack newPSLStack();
+/* Parse the entirety of PSL code. Note that this will interpret immediates, whereas parseOne will not. */
+struct Buffer_psl parseAll(unsigned char *code, unsigned char *top, unsigned char *file);
 
-/* Resize a PSLStack */
-struct PSLStack reallocPSLStack(struct PSLStack stack);
-
-/* Free a PSLStack */
-void freePSLStack(struct PSLStack stack);
-
-/* Allocate a PlofRawData */
-struct PlofRawData *newPlofRawData(size_t length);
-
-/* Allocate a PlofRawData with non-atomic data */
-struct PlofRawData *newPlofRawDataNonAtomic(size_t length);
-
-/* Allocate objects with data inline */
-struct PlofObject *newPlofObjectWithRaw(size_t length);
-struct PlofObject *newPlofObjectWithArray(size_t length);
-
-/* Allocate a PlofArrayData */
-struct PlofArrayData *newPlofArrayData(size_t length);
-
-/* Free a PlofData (either kind) */
-void freePlofData(struct PlofData *obj);
+/* Should PRP produce debugging data? */
+extern int prpDebug;
 
 #endif

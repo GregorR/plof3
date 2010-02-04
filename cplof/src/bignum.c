@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-#include "bignum.h"
+#include "plof/bignum.h"
 
 #ifdef HAVE_CONFIG_H
 #include "../config.h"
