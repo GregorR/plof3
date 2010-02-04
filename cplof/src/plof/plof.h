@@ -30,7 +30,7 @@
 
 #include <gc/gc.h>
 
-#include "buffer.h"
+#include "plof/buffer.h"
 
 BUFFER(psl, unsigned char);
 

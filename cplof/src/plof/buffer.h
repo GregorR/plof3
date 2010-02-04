@@ -25,7 +25,7 @@
 
 #include <gc/gc.h>
 
-#include "helpers.h"
+#include "plof/helpers.h"
 
 #ifndef BUFFER_DEFAULT_SIZE
 #define BUFFER_DEFAULT_SIZE 1024

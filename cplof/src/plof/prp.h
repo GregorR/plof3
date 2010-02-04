@@ -26,8 +26,8 @@
 #ifndef PLOF_PRP_H
 #define PLOF_PRP_H
 
-#include "buffer.h"
-#include "plof.h"
+#include "plof/buffer.h"
+#include "plof/plof.h"
 
 /* Parsing returns Buffer_psl (the resultant code), and a pointer to the remainder of the code */
 struct PRPResult {

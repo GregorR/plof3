@@ -27,7 +27,7 @@
 
 #include <stdio.h>
 
-#include "plof.h"
+#include "plof/plof.h"
 
 #define PSL_FILE_MAGIC "\x9E\x50\x53\x4C\x17\xF2\x58\x8C"
 #define PSL_SECTION_PROGRAM_DATA                0

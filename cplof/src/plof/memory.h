@@ -25,7 +25,7 @@
 #ifndef PLOF_MEMORY_H
 #define PLOF_MEMORY_H
 
-#include "plof.h"
+#include "plof/plof.h"
 
 /* Stack of objects, used only in interpPSL */
 struct PSLStack {
