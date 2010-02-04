@@ -1,4 +1,7 @@
+includeplofdir=$(includedir)/plof
+
 lib_LIBRARIES=libplof.a libplof_noparser.a
+includeplof_HEADERS=plof/bignum.h plof/buffer.h plof/helpers.h plof/memory.h plof/packrat.h plof/plof.h plof/prp.h plof/pslfile.h plof/psl.h
 bin_PROGRAMS=cplof psli pslasm psldasm
 noinst_PROGRAMS=pslast
 
