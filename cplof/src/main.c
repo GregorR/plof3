@@ -189,7 +189,7 @@ int main(int argc, char **argv)
         
         /* find the file */
         if (!strcmp(files[fn], "-")) {
-            // read from stdin
+            /* read from stdin */
             fh = stdin;
         } else {
             fh = fopen(files[fn], "rb");
