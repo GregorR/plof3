@@ -1,6 +1,13 @@
 import(i01)
 public(i01)
 
+/* public makes the current module a subtype of the given module, thereby
+ * polluting its namespace. However, the way that prototype inheritance works
+ * in Plof, is an inherited property is accessed from the parent, it will
+ * create a derived object, rather than directly accessing the parent one. What
+ * this means is that a Foo created within i01 will /not/ be derived from Foo
+ * as seen here */
+
 var f = new (i01.Foo)()
 if (f is Foo) (
     Debug.print "Good"
