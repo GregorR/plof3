@@ -96,7 +96,7 @@ int main(int argc, char **argv)
             usage();
             return 0;
 
-        } else if (argv[argn][0] == '-') {
+        } else if (argv[argn][0] == '-' && argv[argn][1]) {
             fprintf(stderr, "Unrecognized option '%s'!\n\n", argv[argn]);
             usage();
             return 1;
@@ -188,7 +188,12 @@ int main(int argc, char **argv)
         INIT_BUFFER(file);
         
         /* find the file */
-        fh = fopen(files[fn], "rb");
+        if (!strcmp(files[fn], "-")) {
+            // read from stdin
+            fh = stdin;
+        } else {
+            fh = fopen(files[fn], "rb");
+        }
         if (fh == NULL) {
             for (path = plofIncludePaths; !fh && *path; path++) {
                 char *file = GC_MALLOC_ATOMIC(strlen((char *) *path) + strlen(files[fn]) + 1);
