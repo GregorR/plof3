@@ -165,7 +165,51 @@ var NativeInteger = Number : [
     }
 ]
 
+// make the integer cache
+psl {
+    pul_fcontext "__pul_icache" 0 array memberset
+    pul_fcontext "__pul_icur" 0 memberset
+
+    // generate them
+    null
+    {
+        pul_fcontext "__pul_icur" member 255
+        { global } { null } lte
+    }
+    {
+        pul_fcontext "__pul_icache"
+                push1 push1 member
+
+                    plof { new NativeInteger(__pul_icur) } pul_eval
+                        1 array aconcat
+                    memberset
+
+        pul_fcontext "__pul_icur"
+                push1 push1 member
+                    1 add
+                    memberset
+    }
+    while
+}
+
 // opInteger should return a native number
 opInteger = (x) {
-    new NativeInteger(x)
+    psl {
+        plof{x} pul_eval push0 255
+        {
+            push0 0
+            {
+                this "__pul_icache" resolve member
+                push1 index
+            }
+            {
+                plof { new NativeInteger(x) }
+            }
+            gte
+        }
+        {
+            plof { new NativeInteger(x) }
+        }
+        lte
+    }
 }
