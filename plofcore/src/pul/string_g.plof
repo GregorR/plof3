@@ -93,9 +93,9 @@ plofbnf {
 
     // strings in plof
     plof_literal = /"/ pul_str /"/ nnlwhite => plof {
-        new String($1)
+        opString($1)
     }
     plof_literal = /""/ nnlwhite => plof {
-        new String(psl { "" })
+        opString(psl { "" })
     }
 }

@@ -40,7 +40,7 @@ var Module = Object : [
         var module = new Module()
         module.parent = this
 
-        var strname = new String(name)
+        var strname = opString(name)
     
         // two names to look for
         var pslname = strname ~ ".psl"

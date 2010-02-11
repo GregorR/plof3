@@ -75,3 +75,7 @@ var String = Object : [
         })
     }
 ]
+
+var opString = (x) {
+    new String(x)
+}

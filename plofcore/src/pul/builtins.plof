@@ -2,7 +2,7 @@
  * Plof arrays of Plof strings */
 
 var versions = new Array(psl { version })
-versions.apply((x) { new String(x) })
+versions.apply((x) { opString(x) })
 
 var args = new Array(psl { global "args" member })
-args.apply((x) { new String(x) })
+args.apply((x) { opString(x) })

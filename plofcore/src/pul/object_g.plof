@@ -190,7 +190,7 @@ plofbnf {
 
 }
 
-plofbnf {
+grammar {
     plof_group = "\{"w plof_funcbody "\}" => plof {
         () { $1 }
     }
