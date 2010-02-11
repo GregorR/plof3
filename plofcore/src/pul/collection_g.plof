@@ -23,7 +23,7 @@
  */
 
 // indexing and similar in the grammar
-plofbnf {
+grammar {
     plof_group = plof_group "\["w plof_semicolon "\]" => plof {
         $0.opIndex($2)
     }
@@ -47,7 +47,7 @@ plofbnf {
 }
 
 // the grammar for ListArrays
-plofbnf {
+grammar {
     plof_literal = "\[\["w plof_arr_elems "\]\]" => plof {
         new ListArray() ~= new Array($1)
     }

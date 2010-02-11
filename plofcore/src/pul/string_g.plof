@@ -24,7 +24,7 @@
  */
 
 // A string in Plof supports the typical C escapes
-plofbnf {
+grammar {
     // String/collection concatenation
     plof_cmp => plof_concat
 

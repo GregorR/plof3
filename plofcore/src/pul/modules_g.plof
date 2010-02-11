@@ -22,7 +22,7 @@
  *  IN THE SOFTWARE.
  */
 
-plofbnf {
+grammar {
     plof_group = "import" "\(" /[A-Za-z0-9_\-\.]+/ white "\)" => {
         // import this file into its own module at runtime
         push0 2 index

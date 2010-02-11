@@ -22,7 +22,7 @@
  *  IN THE SOFTWARE.
  */
 
-plofbnf {
+grammar {
     plof_and => plof_equals
 
     plof_equals = plof_equals "=="w plof_equals_next => plof {

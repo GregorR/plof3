@@ -23,7 +23,7 @@
  */
 
 // basic math
-plofbnf {
+grammar {
     plof_cmp => plof_add
 
     plof_add = plof_add "\+"w plof_add_next => plof {
@@ -57,7 +57,7 @@ plofbnf {
     plof_postfixopr = plof_postfixopr_next => plof { $0 }
 }
 
-plofbnf {
+grammar {
     plof_unop = "-" plof_unop => plof {
         0 - $1
     }

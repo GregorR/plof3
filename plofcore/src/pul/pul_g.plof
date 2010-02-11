@@ -39,18 +39,18 @@ __grammar_add(psl,
               white /psl/ token white /\{/ white pslOps /\}/ eos,
               push0 6 index);
 
-// PSL BNF: pslbnf { production = target => { code } };
-__grammar_add(top, pslbnf, push0 0 index);
-__grammar_add(pslbnf,
-              white /pslbnf/ token white /\{/ white pslbnf_productions /\}/ eos,
+// PSL BNF: grammar { production = target => { code } };
+__grammar_add(top, grammar, push0 0 index);
+__grammar_add(grammar,
+              white /grammar/ token white /\{/ white grammar_productions /\}/ eos,
               push0 6 index {[gcommit]} concat);
-__grammar_add(pslbnf_productions,
-              pslbnf_productions pslbnf_production,
+__grammar_add(grammar_productions,
+              grammar_productions grammar_production,
               push0 0 index push1 1 index concat);
-__grammar_add(pslbnf_productions,
-              pslbnf_production,
+__grammar_add(grammar_productions,
+              grammar_production,
               push0 0 index);
-__grammar_add(pslbnf_production,
+__grammar_add(grammar_production,
               /[A-Za-z_][A-Za-z0-9_]*/ white /=/ white pslbnf_targets
                   /=>/ white /\{/ white pslOps /\}/ white,
               push0 0 index
@@ -58,7 +58,7 @@ __grammar_add(pslbnf_production,
                   push2 9 index cwrap
                   {gadd}
                   concat concat concat iwrap);
-__grammar_add(pslbnf_production,
+__grammar_add(grammar_production,
               /[A-Za-z_][A-Za-z0-9_]*/ white /=>/ white /[A-Za-z_][A-Za-z0-9_]*/ eos,
 
               // set that->next to this->next, then this->next to that
@@ -216,7 +216,7 @@ __grammar_add(pslbnf_target,
 __grammar_commit();
 
 // some convenient pseudo-ops
-pslbnf {
+grammar {
     pslOp = "pul_eval" => {
         {global "__pul_eval" member call}
     }
@@ -284,7 +284,7 @@ pslbnf {
 }
 
 // the base PUL grammar
-pslbnf {
+grammar {
     top = white top_next => { push0 1 index }
     top => plof_statement
 
@@ -421,25 +421,9 @@ pslbnf {
         => {{}}
 }
 
-// now plofbnf
-pslbnf {
-    top = white plofbnf => { push0 1 index }
-
-    plofbnf = "plofbnf"w /\{/ white plofbnf_productions /\}/ eos => {
-        push0 3 index
-        {[gcommit]} concat
-    }
-
-    plofbnf_productions = plofbnf_productions plofbnf_production => {
-        push0 0 index
-        push1 1 index concat
-    }
-    plofbnf_productions = plofbnf_production => {
-        push0 0 index
-    }
-
-    plofbnf_production = pslbnf_production => { push0 0 index }
-    plofbnf_production =
+// now plofbnf, trivial and removal
+grammar {
+    grammar_production =
         /[A-Za-z_][A-Za-z0-9_]*/ white /=/ white
         pslbnf_targets /=>/ white
         "plof" /\{/ white plof_semicolon /\}/ white => {
@@ -478,10 +462,19 @@ pslbnf {
         // make it immediate
         iwrap
     }
+
+    grammar_production = /!/ white /[A-Za-z_][A-Za-z0-9_]*/ eos => {
+        // remove an element
+        push0 1 index
+        {grem} concat
+
+        // make it immediate
+        iwrap
+    }
 }
 
 // Integers
-pslbnf {
+grammar {
     plof_literal = number nnlwhite => {
         push0 0 index
         {
@@ -495,7 +488,7 @@ pslbnf {
 }
 
 // Basic object definition
-pslbnf {
+grammar {
     plof_bind => plof_combine
 
     plof_assign = plof_assign_next ":="w "\["w plof_obj_defs "\]" => {

@@ -23,7 +23,7 @@
  */
 
 // typechecking operators
-plofbnf {
+grammar {
     plof_combine => plof_is
 
     plof_is = plof_is "is"w plof_is_next => plof {
@@ -38,7 +38,7 @@ plofbnf {
     plof_as = plof_as_next => plof { $0 }
 }
 
-plofbnf {
+grammar {
     // specified argument types
     plof_param = plof_identifier "as"w plof_semicolon_next => {
         // still get the named param as usual

@@ -23,7 +23,7 @@
  */
 
 // trivial plof function calls
-plofbnf {
+grammar {
     plof_group = plof_group plof_group_next => plof {
         psl { $1 1 array $0 pul_eval call }
     }
@@ -55,7 +55,7 @@ plofbnf {
 }
 
 // more advanced function syntax
-plofbnf {
+grammar {
     plof_group = "\("w plof_params "\)" "\{"w plof_funcbody "\}" => {
         // get the params for future reference
         null push1 1 index call
@@ -197,7 +197,7 @@ grammar {
 }
 
 /// Constructors are a somewhat special case of functions
-plofbnf {
+grammar {
     plof_obj_def = "this"w plof_bind_next => {
         {
             push0 "init"
@@ -217,7 +217,7 @@ plofbnf {
 }
 
 /// Conversions from null to Null and Null to null
-pslbnf {
+grammar {
     pslOp = "pul_nullNull" => {
         {
             push0 null
@@ -238,7 +238,7 @@ pslbnf {
 }
 
 /// References
-plofbnf {
+grammar {
     plof_literal = "ref"w plof_var => plof {
         new Reference (
             { $1 },

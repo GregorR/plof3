@@ -22,7 +22,7 @@
  *  IN THE SOFTWARE.
  */
 
-plofbnf {
+grammar {
     plof_bind => plof_or
 
     plof_or = plof_or "\|\|" plof_or_next => plof {

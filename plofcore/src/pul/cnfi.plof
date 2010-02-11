@@ -24,7 +24,7 @@
  */
 
 // the psl operations
-pslbnf {
+grammar {
     pslOp = "dlopen" =>     { 193 byte }
     pslOp = "dlclose" =>    { 194 byte }
     pslOp = "dlsym" =>      { 195 byte }
