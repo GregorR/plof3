@@ -1,7 +1,7 @@
 /*
  * I/O mediated by the CNFI
  *
- *  Copyright (c) 2009 Josiah Worcester
+ *  Copyright (c) 2009, 2010 Josiah Worcester
  *  
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -29,7 +29,17 @@ C.__fgets = C.libc("fgets", C.pointer, [[ C.pointer, C.int, C.pointer ]])
 C.__getline = C.libc("getline", C.pointer, [[ C.pointer, C.pointer, C.pointer ]])
 C.__fclose = C.libc("fclose", C.int, [[C.pointer]])
 C.__feof = C.libc("feof", C.int, [[C.pointer]])
-C.__printfpp = C.libc("printf", C.int, [[C.pointer, C.pointer]])
+C.__fdopen = C.libc("fdopen", C.pointer, [[ C.int, C.pointer ]])
+C.fdopen = (x as NativeInteger, y as String) {
+    var c_y = C.calloc(y.length() + 1)
+    if(c_y == 0) (
+        exit 1
+    )
+    C.set c_y y
+    var ret = C.__fdopen( [[ x, c_y ]] ) as CPointer
+    C.free c_y
+    return ret
+}
 
 var File = Handle : [
     this (file as String, type as String) {
@@ -110,22 +120,9 @@ var File = Handle : [
     }
 ]
 
-var Stdout = Handle : [
-    write = (x as String) {
-        var s = "%s"
-        var c_s = C.calloc(s.length() + 1)
-        var c_x = C.calloc(x.length() + 1)
-        if (c_x == 0 || c_s == 0) (
-            exit 1
-        )
-
-        C.set c_s s
-        C.set c_x x
-
-        var ret = C.__printfpp([[c_s, c_x]]) as NativeInteger
-
-        C.free c_s
-        C.free c_x
-        return ret
-    }
-]
+Stdin = File : []
+Stdin.filepointer = C.fdopen 0 "r"
+Stdout = File : []
+Stdout.filepointer = C.fdopen 1 "w"
+Stderr = File : []
+Stderr.filepointer = C.fdopen 2 "w"
