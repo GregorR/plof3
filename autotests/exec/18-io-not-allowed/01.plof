@@ -1,0 +1,11 @@
+// hopefully you're not running this as root :)
+var f = new File("/usr/bin/ploftestfoo", "w")
+
+f.write "Hello, world!\n"
+f.write "Line 2!\n"
+f.close()
+
+var f = new File("/usr/bin/ploftestfoo", "r")
+var s = f.readFile()
+Stdout.write s
+f.close()
