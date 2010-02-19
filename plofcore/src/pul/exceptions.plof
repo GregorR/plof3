@@ -77,6 +77,12 @@ var Exception = Object : [
             plof{s.__pul_val} pul_eval memberset
         }
     }
+
+    getMessage = {
+        opString(psl {
+            plof{this} pul_eval "+exception" member
+        })
+    }
 ]
 
 // System exceptions
