@@ -14,11 +14,7 @@ label(interp_psl_print);
     } else if (ISOBJ(a)) {
         printf("%d %p\n", (int) ASINT(a), (void *) a);
     } else if (ISINT(a)) {
-#if SIZEOF_VOID_P >= 8
-        printf("%lld\n", (ptrdiff_t) ASINT(a));
-#else
-        printf("%d\n", (ptrdiff_t) ASINT(a));
-#endif
+        printf("%ld\n", (long) ASINT(a));
     }
     STEP;
 
