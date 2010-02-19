@@ -1,0 +1,14 @@
+var x = "Bad"
+
+var A = Object : [
+    x = "Good"
+
+    B = Object : [
+        foo = { x }
+    ]
+]
+
+Debug.print(A.B.foo())
+
+var ab = new (A.B)()
+Debug.print(ab.foo())
