@@ -1,0 +1,5 @@
+var x = "Good"
+
+var B = Object : [
+    foo = { x }
+]

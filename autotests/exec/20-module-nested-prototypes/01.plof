@@ -1,22 +1,15 @@
 var x = "Bad"
-
-var A = Object : [
-    x = "Good"
-
-    B = Object : [
-        foo = { x }
-    ]
-]
+import(i01)
 
 // original prototype
-Debug.print(A.B.foo())
+Debug.print(i01.B.foo())
 
 // instance
-var ab = new (A.B)()
+var ab = new (i01.B)()
 Debug.print(ab.foo())
 
 // derived prototype
-var C = A.B : [
+var C = i01.B : [
     bar = { x }
 ]
 var c = new C()
