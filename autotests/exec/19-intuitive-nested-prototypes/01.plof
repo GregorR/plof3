@@ -8,7 +8,17 @@ var A = Object : [
     ]
 ]
 
+// original prototype
 Debug.print(A.B.foo())
 
+// instance
 var ab = new (A.B)()
 Debug.print(ab.foo())
+
+// derived prototype
+var a = new A()
+var C = a.B : [
+    bar = { x }
+]
+var c = new C()
+Debug.print(c.foo())
