@@ -694,9 +694,6 @@ struct PlofObject *plofRead(struct PlofObject *obj, unsigned char *name)
     if (!ref) {
         return plofNull;
     } else {
-        if (strcmp(cname, ref->name)) {
-            fprintf(stderr, "ERROR: %s != %s\n", cname, ref->name);
-        }
         return ref->value;
     }
 }
@@ -705,10 +702,21 @@ struct PlofObject *plofRead(struct PlofObject *obj, unsigned char *name)
 void plofWrite(struct PlofObject *obj, unsigned char *name, struct PlofObject *value)
 {
     char *cname = (char *) name;
-    struct PlofRef *ref = GC_NEW_Z(struct PlofRef);
-    ref->name = cname;
-    ref->value = value;
-    HASH_ADD_KEYPTR(hh, obj->properties, ref->name, strlen(ref->name), ref);
+    struct PlofRef *ref = NULL;
+
+    /* if it's already there, just update it */
+    HASH_FIND_STR(obj->properties, cname, ref);
+    if (ref) {
+        ref->value = value;
+
+    } else {
+        /* add a new one */
+        ref = GC_NEW_Z(struct PlofRef);
+        ref->name = cname;
+        ref->value = value;
+
+        HASH_ADD_KEYPTR(hh, obj->properties, ref->name, strlen(ref->name), ref);
+    }
 }
 
 /* Put the args to this program into into.name */
