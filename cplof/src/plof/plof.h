@@ -31,12 +31,12 @@
 #include <gc/gc.h>
 
 #include "plof/buffer.h"
+#include "plof/uthash.h"
 
 BUFFER(psl, unsigned char);
 
 struct PlofObject;
 struct PlofReturn;
-struct PlofOHashTable;
 struct PlofData;
 
 /* search path for include, should be a null-terminated array of strings */
@@ -54,53 +54,32 @@ extern int plofLoadIntrinsics;
 #endif
 
 /* Function for getting a value from the hash table in an object */
-struct PlofObject *plofRead(struct PlofObject *obj, unsigned char *name, size_t namehash);
+struct PlofObject *plofRead(struct PlofObject *obj, unsigned char *name);
 
 /* Function for writing a value into an object */
-void plofWrite(struct PlofObject *obj, unsigned char *name, size_t namehash, struct PlofObject *value);
-
-/* Function for creating a new hashTable object */
-struct PlofOHashTable *plofHashtableNew(struct PlofOHashTable *into, unsigned char *name, size_t namehash, struct PlofObject *value);
+void plofWrite(struct PlofObject *obj, unsigned char *name, struct PlofObject *value);
 
 /* Put the args to this program into into.name */
 void plofSetArgs(struct PlofObject *into, unsigned char *name, int argc, char **argv);
-
-/* Default length of the hash table buckets, in terms of bits represented by buckets */
-#ifndef PLOF_HASHTABLE_BITS
-#define PLOF_HASHTABLE_BITS 3
-#endif
-#define PLOF_HASHTABLE_SIZE (1<<PLOF_HASHTABLE_BITS)
-#if PLOF_HASHTABLE_BITS == 0
-#define PLOF_HASHTABLE_MASK 0
-#else
-#define PLOF_HASHTABLE_MASK ((size_t) -1 >> (sizeof(size_t)*8 - PLOF_HASHTABLE_BITS))
-#endif
 
 /* All functions accessible directly from Plof should be of this form
  * args: context, arg */
 typedef struct PlofReturn (*PlofFunction)(struct PlofObject *, struct PlofObject *);
 
-/* Hash table elements, associating an int hashed name with a char * real name and
- * value (sorry, poorly named) */
-struct PlofOHashTable {
-    size_t hashedName;
-    unsigned char *name;
+/* A named reference */
+struct PlofRef {
+    char *name;
     struct PlofObject *value;
-    struct PlofOHashTable *next;
-};
-
-/* The hash table itself */
-struct PlofOHashTables {
-    struct PlofOHashTable elems[PLOF_HASHTABLE_SIZE];
+    UT_hash_handle hh;
 };
 
 /* A Plof object
  * data: raw or array data associated with the object
- * hashTable: hash table of name->value associations */
+ * properties: hash table of name->value associations */
 struct PlofObject {
     struct PlofObject *parent;
     struct PlofData *data;
-    struct PlofOHashTables *hashTable;
+    struct PlofRef *properties;
 #ifdef DEBUG_NAMES
     unsigned char *name;
 #endif
@@ -131,7 +110,6 @@ struct PlofRawData {
     int type;
     size_t length;
     unsigned char *data;
-    size_t hash;
     void *idata;
     PlofFunction proc;
 };
@@ -161,9 +139,6 @@ struct PlofReturn interpretPSL(
 
 /* If Plof throws up, call this to print an error */
 void plofThrewUp(struct PlofObject *obj);
-
-/* Hash function */
-size_t plofHash(size_t slen, unsigned char *str);
 
 /* Combine two objects */
 struct PlofObject *plofCombine(struct PlofObject *a, struct PlofObject *b);

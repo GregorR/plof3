@@ -30,26 +30,6 @@
 
 static struct PlofReturn opDuplicatePrime(struct PlofObject *ctx, struct PlofObject *obj);
 
-static size_t __pul_v_hash = 0, __pul_e_hash, __pul_s_hash, __pul_set_hash,
-              __pul_type_hash, this_hash, True_hash, False_hash,
-              opCast_hash, __pul_fc_hash;
-
-/* Get the necessary hashes */
-static void getHashes()
-{
-    __pul_v_hash = plofHash(7, (unsigned char *) "__pul_v");
-    __pul_e_hash = plofHash(7, (unsigned char *) "__pul_e");
-    __pul_s_hash = plofHash(7, (unsigned char *) "__pul_s");
-    __pul_set_hash = plofHash(9, (unsigned char *) "__pul_set");
-    __pul_type_hash = plofHash(10, (unsigned char *) "__pul_type");
-    this_hash = plofHash(4, (unsigned char *) "this");
-    True_hash = plofHash(4, (unsigned char *) "True");
-    False_hash = plofHash(5, (unsigned char *) "False");
-    opCast_hash = plofHash(6, (unsigned char *) "opCast");
-    __pul_fc_hash = plofHash(8, (unsigned char *) "__pul_fc");
-}
-#define GET_HASHES if (__pul_v_hash == 0) getHashes()
-
 /* pul_eval
  * PSL code:
  *      // is __pul_v set?
@@ -81,15 +61,13 @@ static struct PlofReturn pul_eval(struct PlofObject *ctx, struct PlofObject *arg
     struct PlofReturn ret;
     ret.isThrown = 0;
 
-    GET_HASHES;
-
     if (!ISOBJ(arg)) {
         ret.ret = arg;
         return ret;
     }
 
     /* check if it has pul_v */
-    tmp = plofRead(arg, (unsigned char *) "__pul_v", __pul_v_hash);
+    tmp = plofRead(arg, (unsigned char *) "__pul_v");
     if (tmp != plofNull) {
         /* perfect! */
         ret.ret = tmp;
@@ -97,7 +75,7 @@ static struct PlofReturn pul_eval(struct PlofObject *ctx, struct PlofObject *arg
     }
 
     /* OK, no pul_v, try pul_e */
-    tmp = plofRead(arg, (unsigned char *) "__pul_e", __pul_e_hash);
+    tmp = plofRead(arg, (unsigned char *) "__pul_e");
     if (tmp != plofNull) {
         /* OK, call that */
         ret = interpretPSL(tmp->parent, plofNull, tmp, 0, NULL, 1, 0);
@@ -110,7 +88,7 @@ static struct PlofReturn pul_eval(struct PlofObject *ctx, struct PlofObject *arg
         }
 
         /* save it */
-        plofWrite(arg, (unsigned char *) "__pul_v", __pul_v_hash, ret.ret);
+        plofWrite(arg, (unsigned char *) "__pul_v", ret.ret);
 
         return ret;
     }
@@ -121,7 +99,7 @@ static struct PlofReturn pul_eval(struct PlofObject *ctx, struct PlofObject *arg
 }
 
 /* opMember implements prototypes on Plof */
-static struct PlofReturn opMemberPrime(struct PlofObject *obj, unsigned char *name, size_t namehash, int cont)
+static struct PlofReturn opMemberPrime(struct PlofObject *obj, unsigned char *name, int cont)
 {
     struct PlofReturn ret;
     struct PlofObject *pul_type_obj, *robj;
@@ -129,17 +107,15 @@ static struct PlofReturn opMemberPrime(struct PlofObject *obj, unsigned char *na
     int i;
     ret.isThrown = 0;
 
-    GET_HASHES;
-
     /* check if we just have it */
-    robj = plofRead(obj, name, namehash);
+    robj = plofRead(obj, name);
     if (robj != plofNull) {
         ret.ret = obj;
         return ret;
     }
 
     /* get out the type */
-    pul_type_obj = plofRead(obj, (unsigned char *) "__pul_type", __pul_type_hash);
+    pul_type_obj = plofRead(obj, (unsigned char *) "__pul_type");
     pul_type = NULL;
     if (pul_type_obj != plofNull && ISARRAY(pul_type_obj)) {
         pul_type = ARRAY(pul_type_obj);
@@ -150,7 +126,7 @@ static struct PlofReturn opMemberPrime(struct PlofObject *obj, unsigned char *na
         struct PlofObject *typeo = pul_type->data[i];
 
         /* check if it's here */
-        robj = plofRead(typeo, name, namehash);
+        robj = plofRead(typeo, name);
         if (robj != plofNull) {
             /* cool, we found it; do we need to dup it? */
             if (ISOBJ(robj) && robj->parent == typeo) {
@@ -161,7 +137,7 @@ static struct PlofReturn opMemberPrime(struct PlofObject *obj, unsigned char *na
             }
 
             /* now set it */
-            plofWrite(obj, name, namehash, robj);
+            plofWrite(obj, name, robj);
             ret.ret = obj;
             return ret;
         }
@@ -169,7 +145,7 @@ static struct PlofReturn opMemberPrime(struct PlofObject *obj, unsigned char *na
 
     /* still didn't find it? Maybe recurse */
     if (cont && obj->parent != plofNull) {
-        return opMemberPrime(obj->parent, name, namehash, 1);
+        return opMemberPrime(obj->parent, name, 1);
     }
 
     /* just didn't find it! :( */
@@ -185,7 +161,6 @@ static struct PlofReturn opMember(struct PlofObject *ctx, struct PlofObject *arg
     struct PlofReturn ret;
     struct PlofRawData *rd;
     unsigned char *name;
-    size_t namehash;
     ret.isThrown = 0;
 
     if (!ISARRAY(arg)) {
@@ -214,7 +189,6 @@ static struct PlofReturn opMember(struct PlofObject *ctx, struct PlofObject *arg
     }
     rd = RAW(nameobj);
     name = rd->data;
-    namehash = plofHash(rd->length, name);
 
     /* get out the cont */
     ret = pul_eval(ctx, ad->data[2]);
@@ -222,7 +196,7 @@ static struct PlofReturn opMember(struct PlofObject *ctx, struct PlofObject *arg
     cont = ret.ret;
 
     /* now call opMemberPrime */
-    return opMemberPrime(obj, name, namehash, (cont != plofNull));
+    return opMemberPrime(obj, name, (cont != plofNull));
 }
 
 /* pul_funcwrap wraps a function in an object for later evaluation
@@ -253,8 +227,6 @@ static struct PlofReturn pul_funcwrap(struct PlofObject *ctx, struct PlofObject 
     static struct PlofRawData *pul_s_raw = NULL;
     ret.isThrown = 0;
 
-    GET_HASHES;
-
     if (!ISOBJ(arg)) {
         /* massive failure */
         ret.ret = arg;
@@ -269,7 +241,7 @@ static struct PlofReturn pul_funcwrap(struct PlofObject *ctx, struct PlofObject 
         pul_e_raw->proc = pul_funcwrap_e;
     }
     pul_e->data = (struct PlofData *) pul_e_raw;
-    plofWrite(arg, (unsigned char *) "__pul_e", __pul_e_hash, pul_e);
+    plofWrite(arg, (unsigned char *) "__pul_e", pul_e);
 
     /* and pul_s */
     pul_s = newPlofObject();
@@ -279,7 +251,7 @@ static struct PlofReturn pul_funcwrap(struct PlofObject *ctx, struct PlofObject 
         pul_s_raw->proc = pul_funcwrap_s;
     }
     pul_s->data = (struct PlofData *) pul_s_raw;
-    plofWrite(arg, (unsigned char *) "__pul_s", __pul_s_hash, pul_s);
+    plofWrite(arg, (unsigned char *) "__pul_s", pul_s);
 
     ret.ret = arg;
     return ret;
@@ -310,7 +282,7 @@ static struct PlofReturn pul_funcwrap_s(struct PlofObject *ctx, struct PlofObjec
     setarg->parent = ctx;
     setarg->data = (struct PlofData *) setargarr;
 
-    pul_set = plofRead(plofGlobal, (unsigned char *) "__pul_set", __pul_set_hash);
+    pul_set = plofRead(plofGlobal, (unsigned char *) "__pul_set");
     return interpretPSL(pul_set->parent, setarg, pul_set, 0, NULL, 1, 0);
 }
 
@@ -365,7 +337,7 @@ static int opIsPrime(struct PlofObject *obj, struct PlofObject *type) {
     if (obj == type) return 1;
 
     /* get out the type */
-    pul_type_obj = plofRead(obj, (unsigned char *) "__pul_type", __pul_type_hash);
+    pul_type_obj = plofRead(obj, (unsigned char *) "__pul_type");
     pul_type = NULL;
     if (pul_type_obj != plofNull && ISARRAY(pul_type_obj)) {
         pul_type = ARRAY(pul_type_obj);
@@ -390,8 +362,6 @@ static struct PlofReturn opIs(struct PlofObject *ctx, struct PlofObject *arg)
     ret.isThrown = 0;
     ret.ret = plofNull;
 
-    GET_HASHES;
-
     /* make sure the arg is right */
     if (!ISARRAY(arg)) return ret;
     ad = ARRAY(arg);
@@ -401,7 +371,7 @@ static struct PlofReturn opIs(struct PlofObject *ctx, struct PlofObject *arg)
     type = ret.ret;
 
     /* and get the obj ("this") */
-    ret = opMemberPrime(ctx, (unsigned char *) "this", this_hash, 1);
+    ret = opMemberPrime(ctx, (unsigned char *) "this", 1);
     ret = pul_eval(ctx, ret.ret);
     if (ret.isThrown) return ret;
     obj = ret.ret;
@@ -409,11 +379,11 @@ static struct PlofReturn opIs(struct PlofObject *ctx, struct PlofObject *arg)
 
     /* now check */
     if (opIsPrime(obj, type)) {
-        ret = opMemberPrime(ctx, (unsigned char *) "True", True_hash, 1);
-        ret.ret = plofRead(ret.ret, (unsigned char *) "True", True_hash);
+        ret = opMemberPrime(ctx, (unsigned char *) "True", 1);
+        ret.ret = plofRead(ret.ret, (unsigned char *) "True");
     } else {
-        ret = opMemberPrime(ctx, (unsigned char *) "False", False_hash, 1);
-        ret.ret = plofRead(ret.ret, (unsigned char *) "False", False_hash);
+        ret = opMemberPrime(ctx, (unsigned char *) "False", 1);
+        ret.ret = plofRead(ret.ret, (unsigned char *) "False");
     }
     return ret;
 }
@@ -437,8 +407,6 @@ static struct PlofReturn opAs(struct PlofObject *ctx, struct PlofObject *arg)
     ret.isThrown = 0;
     ret.ret = plofNull;
 
-    GET_HASHES;
-
     /* make sure the arg is right */
     if (!ISARRAY(arg)) return ret;
     ad = ARRAY(arg);
@@ -448,7 +416,7 @@ static struct PlofReturn opAs(struct PlofObject *ctx, struct PlofObject *arg)
     type = ret.ret;
 
     /* and get the obj ("this") */
-    ret = opMemberPrime(ctx, (unsigned char *) "this", this_hash, 1);
+    ret = opMemberPrime(ctx, (unsigned char *) "this", 1);
     ret = pul_eval(ctx, ret.ret);
     if (ret.isThrown) return ret;
     obj = ret.ret;
@@ -462,8 +430,8 @@ static struct PlofReturn opAs(struct PlofObject *ctx, struct PlofObject *arg)
         /* OK, use opCast */
         struct PlofObject *opCast;
 
-        ret = opMemberPrime(ctx, (unsigned char *) "opCast", opCast_hash, 1);
-        opCast = plofRead(ret.ret, (unsigned char *) "opCast", opCast_hash);
+        ret = opMemberPrime(ctx, (unsigned char *) "opCast", 1);
+        opCast = plofRead(ret.ret, (unsigned char *) "opCast");
 
         return interpretPSL(opCast->parent, arg, opCast, 0, NULL, 1, 0);
     }
@@ -512,8 +480,6 @@ static struct PlofReturn opDuplicatePrime(struct PlofObject *ctx, struct PlofObj
     struct PlofObject *robj, *orig_pul_type_obj, *pul_type_obj;
     struct PlofArrayData *orig_pul_type, *pul_type;
 
-    GET_HASHES;
-
     /* make the object */
     robj = newPlofObject();
     robj->parent = ctx;
@@ -524,11 +490,11 @@ static struct PlofReturn opDuplicatePrime(struct PlofObject *ctx, struct PlofObj
     ret.ret = robj;
 
     /* give it necessary fields */
-    plofWrite(robj, (unsigned char *) "this", this_hash, robj);
-    plofWrite(robj, (unsigned char *) "__pul_fc", __pul_fc_hash, robj);
+    plofWrite(robj, (unsigned char *) "this", robj);
+    plofWrite(robj, (unsigned char *) "__pul_fc", robj);
 
     /* get out the type */
-    orig_pul_type_obj = plofRead(obj, (unsigned char *) "__pul_type", __pul_type_hash);
+    orig_pul_type_obj = plofRead(obj, (unsigned char *) "__pul_type");
     orig_pul_type = NULL;
     if (orig_pul_type_obj != plofNull && ISARRAY(orig_pul_type_obj)) {
         orig_pul_type = ARRAY(orig_pul_type_obj);
@@ -546,7 +512,7 @@ static struct PlofReturn opDuplicatePrime(struct PlofObject *ctx, struct PlofObj
     pul_type_obj = newPlofObject();
     pul_type_obj->parent = robj;
     pul_type_obj->data = (struct PlofData *) pul_type;
-    plofWrite(robj, (unsigned char *) "__pul_type", __pul_type_hash, pul_type_obj);
+    plofWrite(robj, (unsigned char *) "__pul_type", pul_type_obj);
 
     return ret;
 }

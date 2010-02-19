@@ -68,7 +68,7 @@
     \
     ret.ret = newPlofObject(); \
     ret.ret->parent = plofNull; \
-    plofWrite(ret.ret, (unsigned char *) PSL_EXCEPTION_STACK, plofHash(sizeof(PSL_EXCEPTION_STACK)-1, (unsigned char *) PSL_EXCEPTION_STACK), a); \
+    plofWrite(ret.ret, (unsigned char *) PSL_EXCEPTION_STACK, a); \
     ret.isThrown = 1; \
     goto performThrow; \
 }
@@ -98,13 +98,6 @@
     memcpy(_into, (_rd)->data, (_rd)->length); \
     _into[(_rd)->length] = '\0'; \
     (into) = (type *) _into; \
-}
-
-#define HASHOF(into, rd) \
-if ((rd)->hash) { \
-    (into) = (rd)->hash; \
-} else { \
-    (into) = (rd)->hash = plofHash((rd)->length, (rd)->data); \
 }
 
 #define ISPTR(obj) (ISRAW(obj) && RAW(obj)->length == sizeof(void*))

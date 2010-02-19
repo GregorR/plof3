@@ -3,13 +3,11 @@ label(interp_psl_member);
     BINARY;
     if (ISOBJ(a) && ISRAW(b)) {
         unsigned char *name;
-        size_t namehash;
         struct PlofObject *otmp;
         rd = RAW(b);
         name = rd->data;
-        HASHOF(namehash, rd);
 
-        otmp = plofRead(a, name, namehash);
+        otmp = plofRead(a, name);
         STACK_PUSH(otmp);
     } else {
         /*BADTYPE("member");*/

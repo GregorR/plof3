@@ -3,7 +3,6 @@ label(interp_psl_resolve);
     BINARY;
     {
         int i;
-        size_t *hashes;
         struct PlofObject *otmp, *otmpb;
 
         if (!ISOBJ(a) || !ISOBJ(b)) {
@@ -27,20 +26,13 @@ label(interp_psl_resolve);
             }
         }
 
-        /* hash them all */
-        hashes = (size_t *) GC_MALLOC_ATOMIC(ad->length * sizeof(size_t));
-        for (i = 0; i < ad->length; i++) {
-            rd = RAW(ad->data[i]);
-            HASHOF(hashes[i], rd);
-        }
-
         /* now try to find a match */
         otmpb = plofNull;
         otmp = a;
         while (otmp && otmp != plofNull) {
             for (i = 0; i < ad->length; i++) {
                 rd = RAW(ad->data[i]);
-                otmpb = plofRead(otmp, rd->data, hashes[i]);
+                otmpb = plofRead(otmp, rd->data);
                 if (otmpb != plofNull) {
                     /* done */
                     STACK_PUSH(otmp);
