@@ -232,6 +232,39 @@ var CData = Object : [
             return(Null)
         )
     }
+
+    opEquals = (x) {
+        if (x is CData) (
+            // compare the data
+            psl {
+                null
+                plof{this.__pul_val} pul_eval
+                plof{x.__pul_val} pul_eval
+                {
+                    plof{return True} pul_eval
+                }
+                {
+                    plof{return False} pul_eval
+                } rawcmp
+            }
+
+        ) else if (x === Null) (
+            // just a null comparison
+            psl {
+                null
+                plof{this.__pul_val} pul_eval cinteger
+                0
+                {
+                    plof{return True} pul_eval
+                }
+                {
+                    plof{return False} pul_eval
+                } eq
+            }
+        ) else (
+            return False
+        )
+    }
 ]
 
 // convenient wrappers
