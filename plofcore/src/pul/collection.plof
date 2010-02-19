@@ -57,7 +57,7 @@ var Collection = Object : [
     }
 
     map = (x as Function) {
-        dup().apply x
+        (dup()).apply x
     }
 
     size = {

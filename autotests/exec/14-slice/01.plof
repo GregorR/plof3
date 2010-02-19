@@ -2,18 +2,18 @@ var x = [[1, 2, 3]] ~ [[4, 5, 6]]
 var y = x as Array
 var z
 
-x.slice(2, 4).each (ref z) (
+(x.slice(2, 4)).each (ref z) (
     Debug.print z
 )
 
-y.slice(2, 4).each (ref z) (
+(y.slice(2, 4)).each (ref z) (
     Debug.print z
 )
 
-x.sliceFrom(2).each (ref z) (
+(x.sliceFrom(2)).each (ref z) (
     Debug.print z
 )
 
-y.sliceFrom(2).each (ref z) (
+(y.sliceFrom(2)).each (ref z) (
     Debug.print z
 )

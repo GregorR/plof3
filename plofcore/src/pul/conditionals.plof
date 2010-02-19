@@ -23,8 +23,8 @@
  */
 
 var if = (cond) {
-    (cond&&True).
-        ifTrue( return ((then) { then; selff }); ).
+    ((cond&&True).
+        ifTrue( return ((then) { then; selff }); )).
         ifFalse(return ((then) { id }); )
 }
 

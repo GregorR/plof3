@@ -24,7 +24,7 @@
 
 // indexing and similar in the grammar
 grammar {
-    plof_group = plof_group "\["w plof_semicolon "\]" => plof {
+    plof_member = plof_member "\["w plof_semicolon "\]" => plof {
         $0.opIndex($2)
     }
 

@@ -340,19 +340,22 @@ grammar {
         cwrap { pul_funcwrap } concat
     }
 
-    plof_group = plof_group "\."w plof_identifier => {
+    plof_group = plof_group_next => { push0 0 index }
+    plof_group => plof_member
+
+    plof_member = plof_member "\."w plof_identifier => {
         push0 0 index pul_apply_eval
         push1 2 index concat
         {pul_varwrap} concat
         pul_apply_funcwrap
     }
-    plof_group = plof_group "\."w "parent" => {
+    plof_member = plof_member "\."w "parent" => {
         push0 0 index pul_apply_eval
         {pul_parentwrap} concat
         pul_apply_funcwrap
     }
-    plof_group = plof_group_next => { push0 0 index }
-    plof_group => plof_parens
+    plof_member = plof_member_next => { push0 0 index }
+    plof_member => plof_parens
 
     plof_parens = "\("w plof_semicolon "\)" => {
         push0 1 index
