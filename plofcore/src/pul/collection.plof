@@ -531,6 +531,10 @@ var SlicedCollection = IndexableCollection : [
     length = {
         tto - from
     }
+
+    slice = (from as NativeInteger, tto as NativeInteger) {
+        new SlicedCollection(coll, this.from + from, this.from + tto)
+    }
 ]
 
 /// Conversions for strings
