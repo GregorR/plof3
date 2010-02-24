@@ -36,7 +36,7 @@ args.each (ref x) (
 // read them
 var fcont = [[]]
 files.each (ref x) (
-    fcont ~= [[(new File(x, "r")).readFile().asByteArray()]]
+    fcont ~= [[((new File(x, "r")).readFile()).asByteArray()]]
 )
 
 fcont.each (ref x) (
