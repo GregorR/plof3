@@ -1,7 +1,7 @@
 /*
- * Support for PSL files
+ * Support for PSL bignums
  *
- * Copyright (C) 2009 Gregor Richards
+ * Copyright (C) 2010 Gregor Richards
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,33 +22,24 @@
  * THE SOFTWARE.
  */
 
-import(pslbignum)
+// convert a bignum to a reference in val, return the truncated buffer
+var bignumToInt = (buf, val as Reference) {
+    var tval = 0
+    var i = 0
 
-var PSLFileException = Exception : [
-    this () {
-        setMessage("Invalid PSL file")
-    }
-]
-
-var PSLFile = Object : [
-    sectionProgramData = 0
-    sectionComment = 1
-    sectionStrippedProgramData = 2
-    sectionRawDataTable = 3
-
-    this (dat) {
-        this.dat = dat
-    }
-
-    getPSL = () {
-        // first make sure it's a valid PSL file
-        if (dat.slice(0, 8) != [[158, 80, 83, 76, 23, 242, 88, 140]]) (
-            throw (new PSLFileException())
+    for (i = 0) (i < buf.length()) (i++) (
+        var cval = buf[i]
+        tval = tval * 128
+        if (cval < 128) (
+            tval = tval +cval
+            val.write(tval)
+            return (buf.sliceFrom(i))
+        ) else (
+            cval = cval - 128
+            tval = tval + cval
         )
+    )
 
-        var buf = dat.sliceFrom(8)
-        var x
-        buf = pslbignum.bignumToInt(buf, ref x)
-        Debug.print(x)
-    }
-]
+     val.write(tval)
+     return (buf.sliceFrom(i))
+}
