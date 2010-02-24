@@ -132,6 +132,16 @@ var Array = IndexableCollection : ConcatableCollection : [
         this.__pul_val = intarr
     }
 
+    ofSize = (sz as NativeInteger) {
+        new Array(psl {
+            null
+            {
+                plof{sz.__pul_val} pul_eval
+                array
+            } call
+        })
+    }
+
     opCastFrom = (x) {
         if (x is Collection) (
             var arr = new Array(psl { 0 array })
@@ -525,11 +535,11 @@ var SlicedCollection = IndexableCollection : [
 
 /// Conversions for strings
 String.asByteArray = {
-    var ret = [[]]
     var i
     var l = length()
+    var ret = Array.ofSize(l)
     for (i = 0) (i < l) (i = i + 1) (
-        ret ~= [[charCodeAt(i)]]
+        ret[i] = charCodeAt(i)
     )
     ret
 }
