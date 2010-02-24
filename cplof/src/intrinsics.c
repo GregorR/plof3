@@ -203,6 +203,10 @@ static struct PlofReturn opMember(struct PlofObject *ctx, struct PlofObject *arg
     ret = pul_eval(ctx, ad->data[0]);
     if (ret.isThrown) return ret;
     obj = ret.ret;
+    if (!ISOBJ(obj)) {
+        ret.ret = plofNull;
+        return ret;
+    }
 
     /* get out the name */
     ret = pul_eval(ctx, ad->data[1]);
