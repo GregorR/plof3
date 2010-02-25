@@ -133,13 +133,18 @@ var Array = IndexableCollection : ConcatableCollection : [
     }
 
     ofSize = (sz as NativeInteger) {
-        new Array(psl {
+        var ret = new Array(psl {
             null
             {
                 plof{sz.__pul_val} pul_eval
                 array
             } call
         })
+        var i
+        for (i = 0) (i < sz) (i++) (
+            ret[i] = Null
+        )
+        ret
     }
 
     opCastFrom = (x) {
