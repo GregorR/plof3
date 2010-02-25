@@ -33,7 +33,7 @@ var bignumToInt = (buf, val as Reference) {
         if (cval < 128) (
             tval = tval +cval
             val.write(tval)
-            return (buf.sliceFrom(i))
+            return (buf.sliceFrom(i+1))
         ) else (
             cval = cval - 128
             tval = tval + cval
@@ -41,5 +41,5 @@ var bignumToInt = (buf, val as Reference) {
     )
 
      val.write(tval)
-     return (buf.sliceFrom(i))
+     return (buf.sliceFrom(i+1))
 }

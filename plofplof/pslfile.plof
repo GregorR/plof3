@@ -24,9 +24,15 @@
 
 import(pslbignum)
 
-var PSLFileException = Exception : [
+var InvalidPSLFileException = Exception : [
     this () {
         setMessage("Invalid PSL file")
+    }
+]
+
+var NoPSLProgramDataException = Exception : [
+    this () {
+        setMessage("PSL file contains no program data (PlofPlof currently does not support stripped PSL)")
     }
 ]
 
@@ -43,12 +49,37 @@ var PSLFile = Object : [
     getPSL = () {
         // first make sure it's a valid PSL file
         if (dat.slice(0, 8) != [[158, 80, 83, 76, 23, 242, 88, 140]]) (
-            throw (new PSLFileException())
+            throw (new InvalidPSLFileException())
         )
 
+        // get the sections
         var buf = dat.sliceFrom(8)
-        var x
-        buf = pslbignum.bignumToInt(buf, ref x)
-        Debug.print(x)
+        var programData = Null
+        var strippedProgramData = Null
+        var rawDataTable = Null
+        while (buf.length() > 0) (
+            var secsize
+            var sectype
+            buf = pslbignum.bignumToInt(buf, ref secsize)
+            var secbuf = pslbignum.bignumToInt(buf, ref sectype)
+            secbuf = secbuf.slice(0, secsize - 1) // FIXME: secsize - 1 is arbitrary
+            buf = buf.sliceFrom(secsize)
+
+            // if we care about this section, keep it
+            if (sectype == sectionProgramData) (
+                programData = secbuf
+            ) else if (sectype == sectionStrippedProgramData) (
+                strippedProgramData = secbuf
+            ) else if (sectype == sectionRawDataTable) (
+                rawDataTable = secbuf
+            )
+        )
+
+        // make sure we have what we need
+        if (programData === Null) (
+            throw (new NoPSLProgramDataException())
+        )
+
+        return programData
     }
 ]
