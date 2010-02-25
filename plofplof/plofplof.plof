@@ -23,6 +23,9 @@
  * THE SOFTWARE.
  */
 
+import(psl)
+import(pslast)
+import(pslbignum)
 import(pslfile)
 
 var files = [[]]
@@ -41,9 +44,6 @@ files.each (ref x) (
 
 fcont.each (ref x) (
     var pf = new (pslfile.PSLFile)(x)
-    var psl = pf.getPSL()
-    var psli
-    psl.each (ref psli) (
-        Debug.print psli
-    )
+    var pslbuf = pf.getPSL()
+    pslast.pslToAst(pslbuf)
 )

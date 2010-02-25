@@ -22,8 +22,6 @@
  * THE SOFTWARE.
  */
 
-import(pslbignum)
-
 var InvalidPSLFileException = Exception : [
     this () {
         setMessage("Invalid PSL file")
