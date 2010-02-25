@@ -42,7 +42,7 @@ int isPSLFile(size_t sz, unsigned char *buf);
 struct Buffer_psl readPSLFile(size_t sz, unsigned char *buf);
 
 /* write out PSL to a file */
-void writePSLFile(FILE *to, size_t sz, unsigned char *buf);
+void writePSLFile(FILE *to, size_t sz, unsigned char *buf, unsigned char stripped);
 
 /* unstrip PSL */
 struct Buffer_psl unstripPSL(struct Buffer_psl psls, struct Buffer_psl strtab);

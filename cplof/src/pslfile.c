@@ -114,23 +114,32 @@ static void writePSLSection(FILE *to, int type, struct Buffer_psl sect)
 }
 
 /* write out PSL to a file */
-void writePSLFile(FILE *to, size_t sz, unsigned char *buf)
+void writePSLFile(FILE *to, size_t sz, unsigned char *buf, unsigned char stripped)
 {
     struct Buffer_psl psl, psls, strtab;
 
     /* strip it */
     psl.buf = buf;
     psl.bufused = psl.bufsz = sz;
-    stripPSL(psl, &psls, &strtab);
+    if (stripped) {
+        stripPSL(psl, &psls, &strtab);
+    }
 
     /* the header */
     fwrite(PSL_FILE_MAGIC, 1, sizeof(PSL_FILE_MAGIC)-1, to);
 
-    /* the program data */
-    writePSLSection(to, PSL_SECTION_STRIPPED_PROGRAM_DATA, psls);
+    if (stripped) {
+        /* the program data */
+        writePSLSection(to, PSL_SECTION_STRIPPED_PROGRAM_DATA, psls);
 
-    /* and the string table */
-    writePSLSection(to, PSL_SECTION_RAW_DATA_TABLE, strtab);
+        /* and the string table */
+        writePSLSection(to, PSL_SECTION_RAW_DATA_TABLE, strtab);
+
+    } else {
+        /* just program data */
+        writePSLSection(to, PSL_SECTION_PROGRAM_DATA, psl);
+
+    }
 }
 
 /* unstrip PSL */

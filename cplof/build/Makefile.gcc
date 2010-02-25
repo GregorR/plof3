@@ -22,9 +22,10 @@ LIBPLOF_A_OBJS=src/bignum.o src/intrinsics.o src/memory.o src/optimizations.o sr
 CPLOF_OBJS=src/main.o src/packrat.o src/prp.o src/whereami.o libplof.a
 PSLASM_OBJS=src/bignum.o src/lex.o src/parse.o src/pslasm.o src/pslfile.o
 PSLDASM_OBJS=src/bignum.o src/psldasm.o src/pslfile.o
+PSLSTRIP_OBJS=src/bignum.o src/pslstrip.o src/pslfile.o
 
 
-all: libplof.a cplof$(EXEEXT) pslasm$(EXEEXT) psldasm$(EXEEXT)
+all: libplof.a cplof$(EXEEXT) pslasm$(EXEEXT) psldasm$(EXEEXT) pslstrip$(EXEEXT)
 
 libplof.a: $(LIBPLOF_A_OBJS)
 	$(AR) $(ARFLAGS) libplof.a $(LIBPLOF_A_OBJS)
@@ -38,6 +39,9 @@ pslasm$(EXEEXT): $(PSLASM_OBJS)
 
 psldasm$(EXEEXT): $(PSLDASM_OBJS)
 	$(CC) $(CFLAGS) $(INCPATH) $(LDFLAGS) $(PSLDASM_OBJS) $(LIBS) -o psldasm$(EXEEXT)
+
+pslstrip$(EXEEXT): $(PSLSTRIP_OBJS)
+	$(CC) $(CFLAGS) $(INCPATH) $(LDFLAGS) $(PSLDASM_OBJS) $(LIBS) -o pslstrip$(EXEEXT)
 
 .SUFFIXES: c o
 

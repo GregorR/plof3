@@ -305,7 +305,7 @@ int main(int argc, char **argv)
             return 1;
         }
     
-        writePSLFile(pslf, compileBuf.bufused, compileBuf.buf);
+        writePSLFile(pslf, compileBuf.bufused, compileBuf.buf, 0);
     
         fclose(pslf);
     }
