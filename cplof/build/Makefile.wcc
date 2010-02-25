@@ -56,3 +56,4 @@ clean:
 	del psli.exe $(PSLI_OBJS)
 	del pslasm.exe $(PSLASM_OBJS)
 	del psldasm.exe $(PSLDASM_OBJS)
+	del pslstrip.exe $(PSLSTRIP_OBJS)

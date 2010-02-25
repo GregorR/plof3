@@ -53,6 +53,7 @@ clean:
 	rm -f cplof$(EXEEXT) $(CPLOF_OBJS)
 	rm -f pslasm$(EXEEXT) $(PSLASM_OBJS)
 	rm -f psldasm$(EXEEXT) $(PSLDASM_OBJS)
+	rm -f pslstrip$(EXEEXT) $(PSLSTRIP_OBJS)
 
 deps:
 	$(CC) $(CFLAGS) $(INCPATH) -MM src/*.c > deps
