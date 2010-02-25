@@ -1,0 +1,14 @@
+var A = Object : [
+    this (a, b) {
+        this.a = a
+        this.b = b
+    }
+]
+
+var x
+try (
+    var a = new A "Go" "od"
+    Debug.print (a.a ~ a.b)
+) catchall (ref x) (
+    Debug.print "Bad"
+)
