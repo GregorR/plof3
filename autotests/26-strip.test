@@ -1,0 +1,27 @@
+#!/bin/bash
+for i in autotests/strip/*
+do
+    bni=`basename $i`
+
+    pushd $i
+    
+    # Compile requisite .psl files
+    for j in *.apsl
+    do
+        pslasm $j ${j/.apsl}.psl
+    done
+
+    # Now run it
+    runtest compile_${bni}_run trybt cplof -N *.psl *.plof -o output
+    runtest compile_${bni}_strip trybt pslstrip output
+    runtest compile_${bni}_cmp diff output expected
+    rm -f output
+
+    # Get rid of compiled .psl files
+    for j in *.apsl
+    do
+        rm -f ${j/.apsl}.psl
+    done
+
+    popd
+done

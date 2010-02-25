@@ -1,0 +1,227 @@
+/*
+ * Basic members of Object and Function
+ *
+ *  Copyright (c) 2008, 2009  Gregor Richards
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to
+ *  deal in the Software without restriction, including without limitation the
+ *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *  sell copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *  IN THE SOFTWARE.
+ */
+
+// trivial plof function calls
+plofbnf {
+    plof_group = plof_group plof_group_next => plof {
+        psl { $1 1 array $0 pul_eval call }
+    }
+
+    plof_group = plof_group "\("w plof_args "\)" => plof {
+        psl { $2 pul_eval $0 pul_eval call }
+    }
+
+
+    plof_args = white => plof {
+        psl { 0 array }
+    }
+
+    plof_args = plof_args_prime => plof { $0 }
+
+    plof_args_prime = plof_args_prime ","w plof_args_prime_next => plof {
+        psl { $0 pul_eval $2 pul_eval aconcat }
+    }
+
+    plof_args_prime = plof_args_prime_next ","w plof_args_prime_next => plof {
+        psl { $0 pul_eval $2 pul_eval aconcat }
+    }
+
+    plof_args_prime => plof_arg
+
+    plof_arg = plof_semicolon => plof {
+        psl { $0 1 array }
+    }
+}
+
+// more advanced function syntax
+plofbnf {
+    plof_group = "\("w plof_params "\)" "\{"w plof_funcbody "\}" => {
+        // get the params for future reference
+        null push1 1 index call
+
+        // keep track of the length
+        push0 0 index
+
+        // make this a function context
+        {
+            this "__pul_fc" this memberset
+            this "__pul_proc" this "+procedure" member memberset
+            this "__pul_args" push2 memberset
+
+            // curry if necessary
+            push0 length }
+            
+            // make the length an int
+            push1 24 sr byte
+            push2 16 sr byte concat
+            push2 8 sr byte concat
+            push2 byte concat swrap concat
+            
+            { integer
+            {
+                // currying is necessary
+                {
+                    this "__pul_args" resolve member
+                    push1 aconcat
+                    this "__pul_proc" resolve member call
+                } 1 array this "opFunction" resolve member call
+            }
+        } concat
+
+        // everything from here on is in the not-currying case
+
+        // set up the args
+        {pul_fcontext 0}
+        push3 1 index concat
+        {
+            pop pop pop
+        } concat
+        
+        // then run the function itself
+        push4 4 index concat
+
+        // and make sure it's evaluated
+        {pul_eval} concat
+
+        // wrap it up for deep returns
+        cwrap
+        {
+            {
+                // is this our deep return?
+                push0 "__pul_ret_fc" member pul_fcontext
+                {
+                    // yes, return it
+                    "__pul_ret_val" member
+                }
+                {
+                    // no, throw it along
+                    throw
+                } cmp
+            } catch
+        } concat
+
+        // wrap it up in the lt case
+        cwrap concat { lt } concat
+
+        // wrap it up with opFunction
+        cwrap {1 array this "opFunction" resolve member call} concat
+
+        // then wrap the whole thing up
+        cwrap {pul_funcwrap} concat
+    }
+
+    
+    plof_params = white => {
+        {0 {} 2 array}
+    }
+
+
+    plof_params = plof_params ","w plof_params_next => {
+        null push1 0 index call
+            push0 0 index 1 add swrap
+            push1 1 index push3 2 index concat cwrap concat
+            {2 array} concat
+    }
+
+    plof_params = plof_params_next => {
+        {1}
+        push1 0 index cwrap concat
+        {2 array} concat
+    }
+
+    plof_params => plof_param
+
+
+    // type annotations to come later
+    plof_param = plof_identifier => {
+        // this.name ...
+        {push1}
+        push1 0 index concat
+
+        // inner stack: args fcontext index fcontext name
+
+        // = the val
+        {
+            push4 push3 index memberset
+        
+            // and increment
+            1 add
+        } concat
+    }
+
+
+    plof_funcbody = white => { {} }
+    plof_funcbody = plof_funcbody_next => plof { $0 }
+    plof_funcbody => plof_funcbody_prime
+
+    plof_funcbody_prime = plof_semicolon => plof { $0 }
+
+
+    // deep returns
+    plof_group = "return"w plof_group_next => plof {
+        psl {
+            new
+                push0 "__pul_ret_fc" pul_fcontext memberset
+                push0 "__pul_ret_val" $1 memberset
+            throw
+        }
+    }
+
+}
+
+plofbnf {
+    plof_group = "\{"w plof_funcbody "\}" => plof {
+        () { $1 }
+    }
+}
+
+/// Constructors are a somewhat special case of functions
+plofbnf {
+    plof_obj_def = "this"w plof_bind_next => {
+        {
+            push0 "init"
+            { this "super" }
+            plof{this.init} pul_eval cwrap concat
+            { memberset } concat
+        }
+        push1 1 index concat
+        {
+            pul_eval concat
+            {plof{this}} concat
+            1 array this "opFunction" resolve member call
+            push0 push3 parentset
+            memberset
+        } concat
+    }
+}
+
+/// References
+plofbnf {
+    plof_literal = "ref"w plof_var => plof {
+        new Reference (
+            { $1 },
+            (__pul_ref_x) { $1 = __pul_ref_x }
+        )
+    }
+}
