@@ -45,5 +45,5 @@ files.each (ref x) (
 fcont.each (ref x) (
     var pf = new (pslfile.PSLFile)(x)
     var pslbuf = pf.getPSL()
-    pslast.pslToAst(pslbuf)
+    Debug.print((pslast.pslToAst(pslbuf)).toString())
 )

@@ -1,7 +1,7 @@
 /*
  * A pseudo-AST for PSL
  *
- * Copyright (C) 2009 Gregor Richards
+ * Copyright (C) 2010 Gregor Richards
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -63,17 +63,18 @@ var i
 for (i = psl.ppop.val + 1) (i <= 255) (i++) (
     if (psl.pslInstructions[i] !== Null) (
         var inst = psl.pslInstructions[i]
+        var p = ASTNode
 
-        if (inst.pushes == 1) (
-            // simple case, default AST node
-            inst.ASTNode = (if          (inst.arity == 0) ASTNode
-                            else if     (inst.arity == 1) UnaryASTNode
-                            else if     (inst.arity == 2) BinaryASTNode
-                            else if     (inst.arity == 3) TrinaryASTNode
-                            else if     (inst.arity == 4) QuaternaryASTNode
-                            else if     (inst.arity == 5) QuinaryASTNode
-                            else                          ASTNode) : []
-        )
+        if          (inst.arity == 0) (p = ASTNode) \
+        else if     (inst.arity == 1) (p = UnaryASTNode) \
+        else if     (inst.arity == 2) (p = BinaryASTNode) \
+        else if     (inst.arity == 3) (p = TrinaryASTNode) \
+        else if     (inst.arity == 4) (p = QuaternaryASTNode) \
+        else if     (inst.arity == 5) (p = QuinaryASTNode)
+
+        inst.ASTNode = p : [
+            instruction = inst
+        ]
     )
 )
 
@@ -87,6 +88,8 @@ psl.presolve.ASTNode = BinaryASTNode : [
         this.t1 = t1
         this.t2 = t2
     }
+
+    instruction = psl.presolve
 ]
 
 // seq is just a sequence of instructions
@@ -94,6 +97,8 @@ var Seq = ASTNode : [
     this (children as Collection) {
         this.children = children
     }
+
+    instruction = Null
 ]
 
 // settemp and gettemp set and get temporary variables, respectively
@@ -102,16 +107,38 @@ var SetTemp = UnaryASTNode : [
         super(c1)
         this.temp = t1
     }
+
+    instruction = Null
 ]
 var GetTemp = ASTNode : [
     this (t1) {
         this.temp = t1
     }
+
+    instruction = Null
 ]
+
+import(pslastString)
 
 var pslToAst = (pslbuf) {
     var astout = [[ ]]
     var aststack = [[ ]]
+    var curtemp = 0
+
+    var saveStack = {
+        // for each element of the stack, save it as a temp
+        var i
+        for (i = 0) (i < aststack.length()) (i++) (
+            var elem = aststack[i]
+            if (!(elem is GetTemp)) (
+                // it's not a gettemp, so make it so
+                var st = new SetTemp(curtemp, elem)
+                aststack[i] = new GetTemp(curtemp)
+                astout ~= [[ st ]]
+                curtemp++
+            )
+        )
+    }
 
     while (pslbuf.length() > 0) (
         // get the current instruction
@@ -133,7 +160,88 @@ var pslToAst = (pslbuf) {
 
         // if we need to save our stack, do so
         if (cmd.val <= psl.ppush7.val || cmd.pushes != 1) (
-            //saveStack()
+            saveStack()
+        )
+
+        // now handle all the commands in their own unique way
+        if (cmd.val >= psl.ppush0.val && cmd.val <= psl.ppush7.val) (
+            // handle pushes by just copying the appropriate element
+            if (aststack.length() > cmd.val) (
+                aststack ~= [[ aststack[aststack.length() - 1 - cmd.val] ]]
+            ) else (
+                aststack ~= [[ new (psl.pnull.ASTNode)() ]]
+            )
+
+        ) else if (cmd === psl.ppop) (
+            // simple
+            aststack = aststack.slice(0, aststack.length() - 1) as Array
+
+        ) else if (cmd === psl.presolve) (
+            // the strangest case, write into two temps
+            var t1 = curtemp
+            var t2 = curtemp + 1
+            curtemp = curtemp + 2
+
+            // add the resolve instruction to the output
+            astout ~= [[
+                new (psl.presolve.ASTNode)(
+                    aststack[aststack.length()-2],
+                    aststack[aststack.length()-1]
+                ) \
+            ]]
+            aststack = aststack.slice(0, aststack.length() - 2) as Array
+
+            // add the gettemps to the stack
+            aststack ~= [[
+                new GetTemp(t1),
+                new GetTemp(t2) \
+            ]]
+
+        ) else if (cmd === psl.parray) (
+            // mixed arity, try to figure it out
+            var arity = 1
+            if (aststack.length() >= 1 && aststack[aststack.length() - 1] is psl.pinteger) (
+                // FIXME: actually do something here
+            )
+
+            var tp = new (psl.parray.ASTNode)(aststack.sliceFrom(aststack.length() - arity) as Array)
+            aststack = (aststack.slice(0, aststack.length() - arity) as Array) ~ [[ tp ]]
+
+        ) else (
+            // the rest is all simple
+
+            // make sure we have enough
+            while (aststack.length() < cmd.arity) (
+                // add a null to the beginning
+                aststack = [[ new (psl.pnull.ASTNode)() ]] ~ aststack
+            )
+
+            // now figure out what to push
+            var len = aststack.length()
+            var tp
+            if (cmd is QuinaryASTNode) (
+                tp = new (cmd.ASTNode)(aststack[len-5], aststack[len-4], aststack[len-3], aststack[len-2], aststack[len-1])
+            ) else if (cmd is QuaternaryASTNode) (
+                tp = new (cmd.ASTNode)(aststack[len-4], aststack[len-3], aststack[len-2], aststack[len-1])
+            ) else if (cmd is TrinaryASTNode) (
+                tp = new (cmd.ASTNode)(aststack[len-3], aststack[len-2], aststack[len-1])
+            ) else if (cmd is BinaryASTNode) ( 
+                tp = new (cmd.ASTNode)(aststack[len-2], aststack[len-1])
+            ) else if (cmd is UnaryASTNode) (
+                tp = new (cmd.ASTNode)(aststack[len-1])
+            ) else (
+                tp = new (cmd.ASTNode)()
+            )
+
+            // and push it
+            aststack = (aststack.slice(0, len - cmd.arity) as Array) ~ [[ tp ]]
+
         )
     )
+
+    // now move the stack onto the output
+    astout ~= aststack
+
+    // and output it as a seq
+    return (new Seq(astout))
 }
