@@ -1,0 +1,20 @@
+var A = Object : [
+    this (x) {
+        this.x = x
+    }
+]
+
+var B = Object : [
+    this (x, y) {
+        super(x)
+        this.y = y
+    }
+]
+
+var b = new B("Good", "Bad")
+var x
+try (
+    Debug.print(b.x)
+) catchall (ref x) (
+    Debug.print "Bad"
+)
