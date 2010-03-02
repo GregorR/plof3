@@ -25,7 +25,7 @@
 
 // Whitespace but no newlines, used to distinguish "complete" statements from incomplete ones
 __grammar_add(nnlwhite,
-              /(([ \t\r]*(\/\*([^\*]*\*[^\/])*[^\*]*\*\/)?)*)/,
+              /(([ \t\r]*(\/\*([^\*]*\*[^\/])*[^\*]*\*\/)?(\\\n)?)*)/,
               {});
 
 // End of statement can be either a semicolon or a newline (perhaps with line comments)
