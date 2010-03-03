@@ -1,0 +1,23 @@
+var foo = {
+    var str = ""
+    var e = [[ "a", "d" ]]
+
+    var c
+    e.each (ref c) (
+        str = str ~ c
+    )
+    // forgot to return str
+}
+
+var bar = {
+    "B" ~ (foo())
+}
+
+var x
+try (
+    Debug.print (bar())
+) catchall (ref x) (
+    psl {
+        plof{x} pul_eval "+exception" member print
+    }
+)
