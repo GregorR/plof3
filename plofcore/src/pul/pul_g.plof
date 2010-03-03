@@ -2,7 +2,7 @@
  * The Plof User Language basic definitions. This file gets you from the grammar defined in base.psl
  * to a functional PUL grammar.
  *
- *  Copyright (c) 2007, 2008, 2009, 2010  Gregor Richards
+ *  Copyright (c) 2007, 2008, 2009, 2010 Gregor Richards
  *  
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
