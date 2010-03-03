@@ -1,0 +1,10 @@
+var A = Object : [
+    x = Null
+]
+
+var x = new A()
+if (x.x === Null) (
+    Debug.print "Good"
+) else (
+    Debug.print "Bad"
+)
