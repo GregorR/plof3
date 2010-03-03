@@ -24,23 +24,23 @@
 
 // indexing and similar in the grammar
 grammar {
-    plof_member = plof_member "\["w plof_semicolon "\]" => plof {
+    plof_member = plof_member "\["n plof_semicolon "\]" => plof {
         $0.opIndex($2)
     }
 
     plof_as => plof_in
 
-    plof_in = plof_in_next "in"w plof_in_next => plof {
+    plof_in = plof_in_next "in"n plof_in_next => plof {
         $2.opContains($0)
     }
     plof_in = plof_in_next => plof { $0 }
 
     plof_mul => plof_range
 
-    plof_range = plof_range "to"w plof_range_next => plof {
+    plof_range = plof_range "to"n plof_range_next => plof {
         new Range($0, $2, 1)
     }
-    plof_range = plof_range "to"w plof_range_next "by"w plof_range_next => plof {
+    plof_range = plof_range "to"n plof_range_next "by"n plof_range_next => plof {
         new Range($0, $2, $4)
     }
     plof_range = plof_range_next => plof { $0 }
@@ -48,7 +48,7 @@ grammar {
 
 // the grammar for ListArrays
 grammar {
-    plof_literal = "\[\["w plof_arr_elems "\]\]" => plof {
+    plof_literal = "\[\["n plof_arr_elems "\]\]" => plof {
         new ListArray() ~= new Array($1)
     }
 
@@ -60,7 +60,7 @@ grammar {
     plof_arr_elems = plof_arr_elems_next => plof { $0 }
     plof_arr_elems => plof_arr_elems_prime
 
-    plof_arr_elems_prime = plof_arr_elems_prime ","w plof_arr_elems_prime_next => plof {
+    plof_arr_elems_prime = plof_arr_elems_prime ","n plof_arr_elems_prime_next => plof {
         psl {
             $0 pul_eval
             $2 1 array

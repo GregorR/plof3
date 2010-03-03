@@ -26,22 +26,22 @@
 grammar {
     plof_cmp => plof_add
 
-    plof_add = plof_add "\+"w plof_add_next => plof {
+    plof_add = plof_add "\+"n plof_add_next => plof {
         $0.opAdd($2)
     }
-    plof_add = plof_add "-"w plof_add_next => plof {
+    plof_add = plof_add "-"n plof_add_next => plof {
         $0.opSub($2)
     }
     plof_add = plof_add_next => plof { $0 }
     plof_add => plof_mul
 
-    plof_mul = plof_mul "\*"w plof_mul_next => plof {
+    plof_mul = plof_mul "\*"n plof_mul_next => plof {
         $0.opMul($2)
     }
     plof_mul = plof_mul /\// white plof_mul_next => plof {
         $0.opDiv($3)
     }
-    plof_mul = plof_mul "%"w plof_mul_next => plof {
+    plof_mul = plof_mul "%"n plof_mul_next => plof {
         $0.opMod($2)
     }
     plof_mul = plof_mul_next => plof { $0 }

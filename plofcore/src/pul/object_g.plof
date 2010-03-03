@@ -28,7 +28,7 @@ grammar {
         psl { $1 1 array $0 pul_eval call }
     }
 
-    plof_group = plof_group "\("w plof_args "\)" => plof {
+    plof_group = plof_group "\("n plof_args "\)" => plof {
         psl { $2 pul_eval $0 pul_eval call }
     }
 
@@ -39,11 +39,11 @@ grammar {
 
     plof_args = plof_args_prime => plof { $0 }
 
-    plof_args_prime = plof_args_prime ","w plof_args_prime_next => plof {
+    plof_args_prime = plof_args_prime ","n plof_args_prime_next => plof {
         psl { $0 pul_eval $2 pul_eval aconcat }
     }
 
-    plof_args_prime = plof_args_prime_next ","w plof_args_prime_next => plof {
+    plof_args_prime = plof_args_prime_next ","n plof_args_prime_next => plof {
         psl { $0 pul_eval $2 pul_eval aconcat }
     }
 
@@ -56,7 +56,7 @@ grammar {
 
 // more advanced function syntax
 grammar {
-    plof_group = "\("w plof_params "\)" "\{"w plof_funcbody "\}" => {
+    plof_group = "\("n plof_params "\)" "\{"n plof_funcbody "\}" => {
         // get the params for future reference
         null push1 1 index call
 
@@ -137,7 +137,7 @@ grammar {
     }
 
 
-    plof_params = plof_params ","w plof_params_next => {
+    plof_params = plof_params ","n plof_params_next => {
         null push1 0 index call
             push0 0 index 1 add byte swrap {integer} concat
             push1 1 index push3 2 index concat cwrap concat
@@ -179,7 +179,7 @@ grammar {
 
 
     // deep returns
-    plof_group = "return"w plof_group_next => plof {
+    plof_group = "return"n plof_group_next => plof {
         psl {
             new
                 push0 "__pul_ret_fc" pul_fcontext memberset
@@ -191,14 +191,14 @@ grammar {
 }
 
 grammar {
-    plof_group = "\{"w plof_funcbody "\}" => plof {
+    plof_group = "\{"n plof_funcbody "\}" => plof {
         () { $1 }
     }
 }
 
 /// Constructors are a somewhat special case of functions
 grammar {
-    plof_obj_def = "this"w plof_bind_next => {
+    plof_obj_def = "this"n plof_bind_next => {
         {
             push0 "init"
             { this "super" }
@@ -239,7 +239,7 @@ grammar {
 
 /// References
 grammar {
-    plof_literal = "ref"w plof_var => plof {
+    plof_literal = "ref"n plof_var => plof {
         new Reference (
             { $1 },
             (__pul_ref_x) { $1 = __pul_ref_x }

@@ -25,13 +25,13 @@
 grammar {
     plof_and => plof_equals
 
-    plof_equals = plof_equals "=="w plof_equals_next => plof {
+    plof_equals = plof_equals "=="n plof_equals_next => plof {
         $0.opEquals($2)
     }
-    plof_equals = plof_equals "!="w plof_equals_next => plof {
+    plof_equals = plof_equals "!="n plof_equals_next => plof {
         $0.opNEquals($2)
     }
-    plof_equals = plof_equals "==="w plof_equals_next => {
+    plof_equals = plof_equals "==="n plof_equals_next => {
         {
             null
         }
@@ -49,7 +49,7 @@ grammar {
         } concat
         pul_apply_funcwrap
     }
-    plof_equals = plof_equals "!=="w plof_equals_next => {
+    plof_equals = plof_equals "!=="n plof_equals_next => {
         {
             null
         }
@@ -70,16 +70,16 @@ grammar {
     plof_equals = plof_equals_next => plof { $0 }
     plof_equals => plof_cmp
 
-    plof_cmp = plof_cmp "<"w plof_cmp_next => plof {
+    plof_cmp = plof_cmp "<"n plof_cmp_next => plof {
         $0.opLess($2)
     }
-    plof_cmp = plof_cmp "<="w plof_cmp_next => plof {
+    plof_cmp = plof_cmp "<="n plof_cmp_next => plof {
         $0.opLessEqual($2)
     }
-    plof_cmp = plof_cmp ">"w plof_cmp_next => plof {
+    plof_cmp = plof_cmp ">"n plof_cmp_next => plof {
         $0.opGreater($2)
     }
-    plof_cmp = plof_cmp ">="w plof_cmp_next => plof {
+    plof_cmp = plof_cmp ">="n plof_cmp_next => plof {
         $0.opGreaterEqual($2)
     }
     plof_cmp = plof_cmp_next => plof { $0 }
