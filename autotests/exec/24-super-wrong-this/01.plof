@@ -4,7 +4,7 @@ var A = Object : [
     }
 ]
 
-var B = Object : [
+var B = A : [
     this (x, y) {
         super(x)
         this.y = y
