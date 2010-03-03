@@ -28,7 +28,7 @@ ASTNode := [
     }
 
     instructionToString = {
-        if (this.instruction !== Null) (
+        if (!(this.instruction is Null)) (
             return (this.instruction.name)
         )
         "?"
@@ -70,5 +70,25 @@ Seq := [
         children.each (ref c) (
             str = str ~ " " ~ c.toString()
         )
+
+        str
+    }
+]
+
+SetTemp := [
+    toString = {
+        "(settemp " ~ temp.toString() ~ childrenToString() ~ ")"
+    }
+]
+
+GetTemp := [
+    toString = {
+        "(gettemp " ~ temp.toString() ~ ")"
+    }
+]
+
+psl.praw.ASTNode := [
+    toString = {
+        "(raw " ~ raw.toString() ~ ")"
     }
 ]

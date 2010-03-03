@@ -219,28 +219,38 @@ var pslToAst = (pslbuf) {
             // now figure out what to push
             var len = aststack.length()
             var tp
-            if (cmd is QuinaryASTNode) (
+            if (cmd.ASTNode is QuinaryASTNode) (
                 tp = new (cmd.ASTNode)(aststack[len-5], aststack[len-4], aststack[len-3], aststack[len-2], aststack[len-1])
-            ) else if (cmd is QuaternaryASTNode) (
+            ) else if (cmd.ASTNode is QuaternaryASTNode) (
                 tp = new (cmd.ASTNode)(aststack[len-4], aststack[len-3], aststack[len-2], aststack[len-1])
-            ) else if (cmd is TrinaryASTNode) (
+            ) else if (cmd.ASTNode is TrinaryASTNode) (
                 tp = new (cmd.ASTNode)(aststack[len-3], aststack[len-2], aststack[len-1])
-            ) else if (cmd is BinaryASTNode) ( 
+            ) else if (cmd.ASTNode is BinaryASTNode) ( 
                 tp = new (cmd.ASTNode)(aststack[len-2], aststack[len-1])
-            ) else if (cmd is UnaryASTNode) (
+            ) else if (cmd.ASTNode is UnaryASTNode) (
                 tp = new (cmd.ASTNode)(aststack[len-1])
             ) else (
                 tp = new (cmd.ASTNode)()
             )
 
+            // maybe add the raw data
+            if (raw !== Null) (
+                tp.raw = raw
+            )
+
             // and push it
-            aststack = (aststack.slice(0, len - cmd.arity) as Array) ~ [[ tp ]]
+            aststack = aststack.slice(0, len - cmd.arity) as Array
+            if (cmd.pushes == 1) (
+                aststack = aststack ~ [[ tp ]]
+            ) else (
+                astout = astout ~ [[ tp ]]
+            )
 
         )
     )
 
     // now move the stack onto the output
-    astout ~= aststack
+    astout = (astout ~ aststack) as Array
 
     // and output it as a seq
     return (new Seq(astout))
