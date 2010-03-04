@@ -31,7 +31,8 @@
 
 #include "plof/packrat.h"
 
-#define BUFFER_DEFAULT_SIZE 8
+#define BUFFER_GC
+/*#define BUFFER_DEFAULT_SIZE 8*/
 #include "plof/buffer.h"
 BUFFER(ParseResult, struct ParseResult *);
 BUFFER(Production, struct Production *);
@@ -117,11 +118,12 @@ static struct ParseResult **packratParsePrime(struct ParseContext *ctx,
 
     /* make sure the cache is of the appropriate size */
     if (production->cachesz <= off) {
+        size_t newsz = (off * 2) + 1;
         production->cache = GC_REALLOC(production->cache,
-                                       (off + 1) * sizeof(struct ParseResult **));
+                                       newsz * sizeof(struct ParseResult **));
         memset(production->cache + production->cachesz, 0,
-               (off + 1 - production->cachesz) * sizeof(struct ParseResult **));
-        production->cachesz = off + 1;
+               (newsz - production->cachesz) * sizeof(struct ParseResult **));
+        production->cachesz = newsz;
     }
 
     /* then check if this is already cached */
@@ -177,10 +179,7 @@ struct ParseResult *packratParse(struct ParseContext *ctx,
     struct ParseResult **pr, *longest;
     int i;
 
-    /* first clear out all the caches */
-    clearCaches(productions);
-
-    /* then parse */
+    /* parse */
     pr = packratParsePrime(ctx, production, file, line, col, input, 0);
 
     /* choose the longest */
@@ -189,6 +188,10 @@ struct ParseResult *packratParse(struct ParseContext *ctx,
         if (pr[i]->consumedTo > longest->consumedTo)
             longest = pr[i];
     }
+
+    /* then clear out the caches */
+    clearCaches(productions);
+
     return longest;
 }
 

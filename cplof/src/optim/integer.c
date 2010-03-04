@@ -10,7 +10,7 @@ if (cpsli >= 2 && cpsl[cpsli-2] == addressof(interp_psl_raw)) {
     /* now replace the integer */
     cpsl[cpsli-2] = cpsl[cpsli];
     cpsli -= 2;
-    RDINT(parseRawInt((struct PlofRawData *) cpsl[cpsli+1]));
-    cpsl[cpsli+1] = rd;
+    RDINT(parseRawInt((struct PlofRawData *) cpslargs[(int) (size_t) cpsl[cpsli+1]]));
+    cpslargs[(int) (size_t) cpsl[cpsli+1]] = rd;
 }
 #endif

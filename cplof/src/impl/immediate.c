@@ -1,7 +1,7 @@
 label(interp_psl_immediate);
     DEBUG_CMD("immediate");
     if (immediate) {
-        rd = (struct PlofRawData *) pc[1];
+        rd = (struct PlofRawData *) cpslargs[(int) (size_t) pc[1]];
 #ifdef DEBUG
         fprintf(stderr, "DEBUG: ");
         {

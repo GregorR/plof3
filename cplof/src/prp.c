@@ -29,6 +29,7 @@
 #include <errno.h>
 #include <string.h>
 
+#define BUFFER_GC
 #include "plof/bignum.h"
 #include "plof/buffer.h"
 #include "plof/helpers.h"

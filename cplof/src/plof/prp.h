@@ -26,6 +26,7 @@
 #ifndef PLOF_PRP_H
 #define PLOF_PRP_H
 
+#define BUFFER_GC
 #include "plof/buffer.h"
 #include "plof/plof.h"
 

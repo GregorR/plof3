@@ -27,6 +27,7 @@
 
 #include <stdio.h>
 
+#define BUFFER_GC
 #include "plof/buffer.h"
 #include "plof/plof.h"
 

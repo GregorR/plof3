@@ -35,20 +35,28 @@
 
 int main(int argc, char **argv)
 {
+    char *ifile, *ofile;
     FILE *pslf;
     struct Buffer_psl pslin, psl;
 
     GC_INIT();
 
     if (argc < 2) {
-        fprintf(stderr, "Use: pslstrip <file>\n");
+        fprintf(stderr, "Use: pslstrip <file> [output file]\n");
         return 1;
     }
 
+    ifile = argv[1];
+    if (argc >= 3) {
+        ofile = argv[2];
+    } else {
+        ofile = argv[1];
+    }
+
     /* open the file */
-    pslf = fopen(argv[1], "rb");
+    pslf = fopen(ifile, "rb");
     if (pslf == NULL) {
-        perror(argv[1]);
+        perror(ifile);
         return 1;
     }
 
@@ -63,9 +71,9 @@ int main(int argc, char **argv)
     psl = readPSLFile(pslin.bufused, pslin.buf);
 
     /* then write it out */
-    pslf = fopen(argv[1], "wb");
+    pslf = fopen(ofile, "wb");
     if (pslf == NULL) {
-        perror(argv[1]);
+        perror(ofile);
         return 1;
     }
 

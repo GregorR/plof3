@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Gregor Richards
+ * Copyright (C) 2009, 2010 Gregor Richards
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,13 +23,25 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
-#include <gc/gc.h>
+#ifdef BUFFER_GC
+#ifndef BUFFER_DEFAULT_SIZE
+#define BUFFER_DEFAULT_SIZE 8
+#endif
+#define _BUFFER_MALLOC GC_malloc
+#define _BUFFER_REALLOC GC_realloc
+#define _BUFFER_FREE GC_free
 
-#include "plof/helpers.h"
-
+#else
 #ifndef BUFFER_DEFAULT_SIZE
 #define BUFFER_DEFAULT_SIZE 1024
 #endif
+#define _BUFFER_MALLOC malloc
+#define _BUFFER_REALLOC realloc
+#define _BUFFER_FREE free
+
+#endif
+
+#include "plof/helpers.h"
 
 /* auto-expanding buffer */
 #define BUFFER(name, type) \
@@ -46,7 +58,14 @@ BUFFER(int, int);
 { \
     (buffer).bufsz = BUFFER_DEFAULT_SIZE; \
     (buffer).bufused = 0; \
-    SF((buffer).buf, GC_malloc, NULL, (BUFFER_DEFAULT_SIZE * sizeof(*(buffer).buf))); \
+    SF((buffer).buf, _BUFFER_MALLOC, NULL, (BUFFER_DEFAULT_SIZE * sizeof(*(buffer).buf))); \
+}
+
+/* free a buffer */
+#define FREE_BUFFER(buffer) \
+{ \
+    if ((buffer).buf) _BUFFER_FREE((buffer).buf); \
+    (buffer).buf = NULL; \
 }
 
 /* the address of the free space in the buffer */
@@ -57,7 +76,7 @@ BUFFER(int, int);
 
 /* the amount of space left in the buffer */
 #define BUFFER_SPACE(buffer) ((buffer).bufsz - (buffer).bufused)
-
+ 
 /* get the top element of a buffer */
 #define BUFFER_TOP(buffer) ((buffer).buf[(buffer).bufused - 1])
 
@@ -68,7 +87,7 @@ BUFFER(int, int);
 #define EXPAND_BUFFER(buffer) \
 { \
     (buffer).bufsz *= 2; \
-    SF((buffer).buf, GC_realloc, NULL, ((buffer).buf, (buffer).bufsz * sizeof(*(buffer).buf))); \
+    SF((buffer).buf, _BUFFER_REALLOC, NULL, ((buffer).buf, (buffer).bufsz * sizeof(*(buffer).buf))); \
 }
 
 /* write a string to a buffer */

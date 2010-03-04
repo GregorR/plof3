@@ -7,13 +7,13 @@ label(interp_psl_integer);
         if (pc[1]) {
 #if defined(PLOF_BOX_NUMBERS)
             struct PlofObject *otmp;
-            rd = (struct PlofRawData *) pc[1];
+            rd = (struct PlofRawData *) cpslargs[(int) (size_t) pc[1]];
             otmp = newPlofObject();
             otmp->parent = context;
             otmp->data = (struct PlofData *) rd;
             STACK_PUSH(otmp);
 #elif defined(PLOF_FREE_INTS)
-            STACK_PUSH((struct PlofObject *) pc[1]);
+            STACK_PUSH((struct PlofObject *) cpslargs[(int) (size_t) pc[1]]);
 #endif
         } else {
             UNARY;

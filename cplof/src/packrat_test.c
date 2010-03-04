@@ -24,6 +24,7 @@
 
 #include <stdio.h>
 
+#define BUFFER_GC
 #include "buffer.h"
 #include "packrat.h"
 #include "prp.h"

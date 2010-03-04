@@ -139,6 +139,7 @@ struct PlofReturn interpretPSL(
     size_t psllen;
     unsigned char *psl = NULL;
     void **cpsl = NULL;
+    void **cpslargs = NULL;
     void **pc = NULL;
     /* Compiled PSL is an array of pointers. Every pointer which is 0 mod 2 is
      * the op to run, the next pointer is an argument as a PlofRawData (if
@@ -171,7 +172,7 @@ struct PlofReturn interpretPSL(
         rd = (struct PlofRawData *) pslraw->data;
         psllen = rd->length;
         psl = rd->data;
-        cpsl = rd->idata;
+        cpslargs = rd->idata;
     } else {
         rd = NULL;
         psllen = pslaltlen;
@@ -228,21 +229,27 @@ struct PlofReturn interpretPSL(
     }
 
     /* Make sure it's compiled */
-    if (!cpsl) {
-        int psli, cpsli;
+    if (cpslargs) {
+        cpsl = (void **) cpslargs[0];
+
+    } else {
+        int psli, cpsli, cpslai;
 
         /* our stack of leakies for determining what can be freed immediately */
         struct Leaky *lstack;
         int lstacklen, lstackcur;
 
         /* start with 8 slots */
-        int cpsllen = 8;
+        int cpsllen = 16;
+        int cpslalen = 8;
 
         /* allocate our stuff */
         lstacklen = 8;
         lstackcur = 0;
         lstack = GC_MALLOC_ATOMIC(lstacklen * sizeof(struct Leaky));
-        cpsl = GC_MALLOC(cpsllen * sizeof(void*));
+        cpsl = GC_MALLOC_ATOMIC(cpsllen * sizeof(void*));
+        cpslargs = GC_MALLOC(cpslalen * sizeof(void*));
+        cpslai = 1;
 
         /* now go through the PSL and translate it into compiled PSL */
         for (psli = 0, cpsli = 0;
@@ -285,9 +292,16 @@ struct PlofReturn interpretPSL(
                 memcpy(raw->data, psl + psli, len);
                 psli += len - 1;
 
-                cpsl[cpsli + 1] = raw;
+                if (cpslai >= cpslalen) {
+                    cpslalen *= 2;
+                    cpslargs = GC_REALLOC(cpslargs, cpslalen * sizeof(void*));
+                }
+                cpsl[cpsli+1] = (void *) (size_t) cpslai;
+                cpslargs[cpslai++] = raw;
+
             } else {
-                cpsl[cpsli + 1] = NULL;
+                cpsl[cpsli+1] = NULL;
+
             }
 
             /* either get only immediates, or everything else */
@@ -406,12 +420,18 @@ struct PlofReturn interpretPSL(
         /* now close off the end */
         cpsl[cpsli] = addressof(interp_psl_return);
         cpsl[cpsli+1] = NULL;
+        cpsli += 2;
 
         GC_FREE(lstack);
 
+        /* close them off */
+        cpsl = GC_REALLOC(cpsl, cpsli * sizeof(void*));
+        cpslargs = GC_REALLOC(cpslargs, cpslai * sizeof(void*));
+        cpslargs[0] = (void *) cpsl;
+
         /* and save it */
         if (pslraw && !immediate) {
-            ((struct PlofRawData *) pslraw->data)->idata = cpsl;
+            ((struct PlofRawData *) pslraw->data)->idata = cpslargs;
         }
     }
 
