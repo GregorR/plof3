@@ -57,7 +57,7 @@ int main(int argc, char **argv)
     }
 
     /* read in the buffer */
-    INIT_BUFFER(psl);
+    INIT_ATOMIC_BUFFER(psl);
     READ_FILE_BUFFER(psl, pslf);
     fclose(pslf);
 

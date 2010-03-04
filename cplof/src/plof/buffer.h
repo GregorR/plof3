@@ -28,6 +28,7 @@
 #define BUFFER_DEFAULT_SIZE 8
 #endif
 #define _BUFFER_MALLOC GC_malloc
+#define _BUFFER_MALLOC_ATOMIC GC_malloc_atomic
 #define _BUFFER_REALLOC GC_realloc
 #define _BUFFER_FREE GC_free
 
@@ -36,6 +37,7 @@
 #define BUFFER_DEFAULT_SIZE 1024
 #endif
 #define _BUFFER_MALLOC malloc
+#define _BUFFER_MALLOC_ATOMIC malloc
 #define _BUFFER_REALLOC realloc
 #define _BUFFER_FREE free
 
@@ -59,6 +61,14 @@ BUFFER(int, int);
     (buffer).bufsz = BUFFER_DEFAULT_SIZE; \
     (buffer).bufused = 0; \
     SF((buffer).buf, _BUFFER_MALLOC, NULL, (BUFFER_DEFAULT_SIZE * sizeof(*(buffer).buf))); \
+}
+
+/* initialize an atomic (pointer-free) buffer, only meaningful with BUFFER_GC */
+#define INIT_ATOMIC_BUFFER(buffer) \
+{ \
+    (buffer).bufsz = BUFFER_DEFAULT_SIZE; \
+    (buffer).bufused = 0; \
+    SF((buffer).buf, _BUFFER_MALLOC_ATOMIC, NULL, (BUFFER_DEFAULT_SIZE * sizeof(*(buffer).buf))); \
 }
 
 /* free a buffer */

@@ -689,7 +689,7 @@ struct PlofRawData *pslReplace(struct PlofRawData *in, struct PlofArrayData *wit
     int i;
 
     /* preallocate some space */
-    INIT_BUFFER(pslBuf);
+    INIT_ATOMIC_BUFFER(pslBuf);
 
     /* go through the commands in 'in' ... */
     for (i = 0; i < in->length; i++) {

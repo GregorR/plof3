@@ -61,7 +61,7 @@ int main(int argc, char **argv)
     }
 
     /* preallocate the buffer */
-    INIT_BUFFER(pslin);
+    INIT_ATOMIC_BUFFER(pslin);
 
     /* now read it */
     READ_FILE_BUFFER(pslin, pslf);

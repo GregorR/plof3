@@ -53,6 +53,9 @@ struct Buffer_psl readPSLFile(size_t sz, unsigned char *buf)
         /* section length */
         i += pslBignumToInt(buf + i, (size_t *) &slen);
 
+        /* if the section length is meaningless, need to bail out */
+        if (slen == 0) break;
+
         /* section type */
         stl = pslBignumToInt(buf + i, (size_t *) &stype);
 
@@ -148,7 +151,7 @@ struct Buffer_psl unstripPSL(struct Buffer_psl psls, struct Buffer_psl strtab)
     struct Buffer_psl psl;
     size_t psli;
 
-    INIT_BUFFER(psl);
+    INIT_ATOMIC_BUFFER(psl);
 
     /* go command-by-command, unstripping as necessary */
     for (psli = 0; psli < psls.bufused; psli++) {
@@ -210,8 +213,8 @@ void stripPSL(struct Buffer_psl psl, struct Buffer_psl *psls, struct Buffer_psl 
 {
     size_t psli;
 
-    INIT_BUFFER(*psls);
-    INIT_BUFFER(*strtab);
+    INIT_ATOMIC_BUFFER(*psls);
+    INIT_ATOMIC_BUFFER(*strtab);
 
     /* go command-by-command, stripping as necessary */
     for (psli = 0; psli < psl.bufused; psli++) {

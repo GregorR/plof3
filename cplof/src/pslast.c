@@ -67,6 +67,8 @@ int main(int argc, char **argv)
 
     /* read it */
     READ_FILE_BUFFER(file, fh);
+    WRITE_BUFFER(file, "\0", 1);
+    file.bufused--;
     fclose(fh);
 
     /* FIXME: bounds checking */

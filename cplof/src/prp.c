@@ -140,7 +140,7 @@ struct Buffer_psl parseAll(unsigned char *code, unsigned char *top, unsigned cha
     line = 0;
     column = 0;
 
-    INIT_BUFFER(res);
+    INIT_ATOMIC_BUFFER(res);
 
     while (*code) {
         struct PRPResult prpr = parseOne(code, top, file, line, column);
@@ -220,7 +220,7 @@ struct PlofObject *parseHelper(unsigned char *code, struct ParseResult *pr)
 
         /* just generate the code to return what was parsed */
         struct Buffer_psl psl;
-        INIT_BUFFER(psl);
+        INIT_ATOMIC_BUFFER(psl);
 
         /* operation is raw */
         psl.buf[psl.bufused++] = psl_raw;
@@ -257,7 +257,7 @@ struct PlofObject *parseHelper(unsigned char *code, struct ParseResult *pr)
             struct PlofObject *obj;
 
             /* now add the debug info */
-            INIT_BUFFER(psl);
+            INIT_ATOMIC_BUFFER(psl);
 
             /* first the filename */
             while (BUFFER_SPACE(psl) < 1) EXPAND_BUFFER(psl);

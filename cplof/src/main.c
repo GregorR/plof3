@@ -159,7 +159,7 @@ int main(int argc, char **argv)
         return 1;
     }
     /* FIXME: should be in if (compileOnly), but -Wall complains */
-    INIT_BUFFER(compileBuf);
+    INIT_ATOMIC_BUFFER(compileBuf);
     
     /* Initialize null and global */
     plofNull = newPlofObject();
@@ -185,7 +185,7 @@ int main(int argc, char **argv)
             fprintf(stderr, "Compiling %s\n", files[fn]);
         }
 
-        INIT_BUFFER(file);
+        INIT_ATOMIC_BUFFER(file);
         
         /* find the file */
         if (!strcmp(files[fn], "-")) {
@@ -208,9 +208,9 @@ int main(int argc, char **argv)
 
         /* read it */
         READ_FILE_BUFFER(file, fh);
+        WRITE_BUFFER(file, "\0", 1);
+        file.bufused--;
         fclose(fh);
-    
-        /* FIXME: bounds checking */
 
         /* check what type of file it is */
         if (isPSLFile(file.bufused, file.buf)) {
@@ -244,7 +244,7 @@ int main(int argc, char **argv)
         struct Buffer_char input;
         struct Buffer_psl psl;
 
-        INIT_BUFFER(input);
+        INIT_ATOMIC_BUFFER(input);
 
         /* read stuff */
         while (1) {
