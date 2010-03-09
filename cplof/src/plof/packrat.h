@@ -124,4 +124,7 @@ struct ParseResult **packratRegexTerminal(struct ParseContext *ctx,
 struct Production *newPackratNonterminal(unsigned char *name, unsigned char ***sub);
 struct Production *newPackratRegexTerminal(unsigned char *name, unsigned char *regex);
 
+/* warn when a nonterminal is ambiguous (should usually be off, since ambiguities are OK) */
+extern int packratWarnAmbiguous;
+
 #endif

@@ -27,6 +27,7 @@
 
 #include "plof/bignum.h"
 #include "plof/memory.h"
+#include "plof/packrat.h"
 #include "plof/plof.h"
 #include "plof/prp.h"
 #include "plof/psl.h"
@@ -91,6 +92,9 @@ int main(int argc, char **argv)
 
         } else ARG("no-intrinsics", "\xFF") {
             plofLoadIntrinsics = 0;
+
+        } else ARG("warn-ambiguous", "\xFF") {
+            packratWarnAmbiguous = 1;
 
         } else ARG("help", "h") {
             usage();
@@ -330,5 +334,8 @@ void usage()
             "  --interactive|-i:\n"
             "\tInteractive (read-execute-loop) mode.\n"
             "  --no-intrinsics:\n"
-            "\tDo not load intrinsics (much slower execution).\n");
+            "\tDo not load intrinsics (much slower execution).\n"
+            "  --warn-ambiguous:\n"
+            "\tWarn when a parse rule returns more than one result. Not recommended,\n"
+            "\tas ambiguity is often fine.\n");
 }

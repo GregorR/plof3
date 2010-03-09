@@ -40,6 +40,8 @@ BUFFER(Production_p, struct Production **);
 
 struct Production *productions = NULL;
 
+int packratWarnAmbiguous = 0;
+
 /* create a new, empty production with the given name */
 static struct Production *newProduction(const unsigned char *name)
 {
@@ -312,6 +314,12 @@ struct ParseResult **packratNonterminal(struct ParseContext *ctx,
 
     pr = NULL;
     WRITE_BUFFER(result, &pr, 1);
+
+    if (packratWarnAmbiguous && result.bufused > 2) {
+        fprintf(stderr, "Ambiguity: Production %s returned %d at %s:%d:%d\n",
+                (char *) production->name, result.bufused - 1,
+                (char *) file, (int) line + 1, (int) col + 1);
+    }
 
     return result.buf;
 }
