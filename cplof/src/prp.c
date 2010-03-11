@@ -103,7 +103,7 @@ struct PRPResult parseOne(unsigned char *code, unsigned char *top, unsigned char
     struct PRPResult ret;
     struct PlofObject *pobj;
     struct PlofRawData *rd;
-    struct ParseContext *ctx = GC_NEW_Z(struct ParseContext);
+    struct ParseContext *ctx = GC_NEW(struct ParseContext);
     struct Production *top_prod = getProduction(top);
     struct ParseResult *res = packratParse(ctx, top_prod, file, line,
                                            column, code);

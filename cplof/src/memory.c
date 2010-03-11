@@ -38,7 +38,7 @@ struct PlofObject *newPlofObject()
         plofObjectFreeList = plofObjectFreeList->parent;
         ret->parent = NULL;
     } else {
-        ret = GC_NEW_Z(struct PlofObject);
+        ret = GC_NEW(struct PlofObject);
     }
     return ret;
 }
@@ -113,7 +113,7 @@ void freePSLStack(struct PSLStack stack)
 struct PlofRawData *newPlofRawData(size_t length)
 {
     struct PlofRawData *rd;
-    rd = GC_NEW_Z(struct PlofRawData);
+    rd = GC_NEW(struct PlofRawData);
     rd->type = PLOF_DATA_RAW;
     rd->length = length;
     rd->data = GC_MALLOC_ATOMIC(length + 1);
@@ -125,7 +125,7 @@ struct PlofRawData *newPlofRawData(size_t length)
 struct PlofRawData *newPlofRawDataNonAtomic(size_t length)
 {
     struct PlofRawData *rd;
-    rd = GC_NEW_Z(struct PlofRawData);
+    rd = GC_NEW(struct PlofRawData);
     rd->type = PLOF_DATA_RAW;
     rd->length = length;
     rd->data = GC_MALLOC(length);

@@ -49,11 +49,6 @@ extern int plofLoadIntrinsics;
 #define PLOF_DATA_RAW 0
 #define PLOF_DATA_ARRAY 1
 
-/* GC_NEW with 0s */
-#ifndef GC_NEW_Z
-#define GC_NEW_Z(t) memset(GC_NEW(t), 0, sizeof(t))
-#endif
-
 /* Function for getting a value from the hash table in an object */
 struct PlofObject *plofRead(struct PlofObject *obj, unsigned char *name, size_t namehash);
 

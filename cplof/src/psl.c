@@ -804,7 +804,7 @@ void plofWrite(struct PlofObject *obj, unsigned char *name, size_t namehash, str
 
     ht = obj->hashTable;
     if (ht == NULL) {
-        obj->hashTable = ht = GC_NEW_Z(struct PlofOHashTables);
+        obj->hashTable = ht = GC_NEW(struct PlofOHashTables);
     }
     if (ht->elems[subhash].name == NULL) {
         plofHashtableNew(&ht->elems[subhash], name, namehash, value);
@@ -836,7 +836,7 @@ struct PlofOHashTable *plofHashtableNew(struct PlofOHashTable *into, unsigned ch
     if (into) {
         nht = into;
     } else {
-        nht = GC_NEW_Z(struct PlofOHashTable);
+        nht = GC_NEW(struct PlofOHashTable);
     }
     nht->hashedName = namehash;
 
