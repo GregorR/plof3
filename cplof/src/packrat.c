@@ -46,7 +46,6 @@ int packratWarnAmbiguous = 0;
 static struct Production *newProduction(const unsigned char *name)
 {
     struct Production *ret = GC_NEW(struct Production);
-    memset(ret, 0, sizeof(struct Production));
 
     ret->name = (unsigned char *) GC_STRDUP((char *) name);
 
@@ -123,8 +122,6 @@ static struct ParseResult **packratParsePrime(struct ParseContext *ctx,
         size_t newsz = (off * 2) + 1;
         production->cache = GC_REALLOC(production->cache,
                                        newsz * sizeof(struct ParseResult **));
-        memset(production->cache + production->cachesz, 0,
-               (newsz - production->cachesz) * sizeof(struct ParseResult **));
         production->cachesz = newsz;
     }
 
@@ -218,7 +215,6 @@ struct ParseResult **packratNonterminal(struct ParseContext *ctx,
     /* set up an empty result */
     INIT_BUFFER(lastResult)
     pr = GC_NEW(struct ParseResult);
-    memset(pr, 0, sizeof(struct ParseResult));
     pr->production = production;
     pr->file = file;
     pr->sline = pr->eline = line;
@@ -339,7 +335,6 @@ struct ParseResult **packratRegexTerminal(struct ParseContext *ctx,
     ret = GC_MALLOC(2 * sizeof(struct ParseResult *));
     ret[1] = NULL;
     ret[0] = GC_MALLOC(sizeof(struct ParseResult));
-    memset(ret[0], 0, sizeof(struct ParseResult));
     ret[0]->production = production;
     ret[0]->file = file;
     ret[0]->sline = line;

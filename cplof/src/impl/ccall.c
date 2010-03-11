@@ -38,7 +38,6 @@ label(interp_psl_ccall);
                     *((ptrdiff_t *) arg) = val;
 
                 } else if (sz > sizeof(ptrdiff_t)) {
-                    memset(arg, 0, sz);
 #ifdef WORDS_BIGENDIAN
                     memcpy((unsigned char *) arg + sz - sizeof(ptrdiff_t), &val, sizeof(ptrdiff_t));
 #else
@@ -61,7 +60,6 @@ label(interp_psl_ccall);
                     memcpy(arg, rd->data, sz);
 
                 } else if (sz > rd->length) {
-                    memset(arg, 0, sz);
 #ifdef WORDS_BIGENDIAN
                     memcpy((unsigned char *) arg + sz - rd->length, rd->data, rd->length);
 #else
@@ -78,7 +76,6 @@ label(interp_psl_ccall);
                 }
 
             } else {
-                memset(arg, 0, sz);
                 BADTYPE("ccall argument");
 
             }

@@ -69,7 +69,6 @@ struct PSLStack newPSLStack()
     } else {
         ret.length = 8;
         ret.data = GC_MALLOC(8 * sizeof(struct PlofObject *));
-        memset(ret.data, 0, 8 * sizeof(struct PlofObject *));
 
     }
 
@@ -117,7 +116,6 @@ struct PlofRawData *newPlofRawData(size_t length)
     rd->type = PLOF_DATA_RAW;
     rd->length = length;
     rd->data = GC_MALLOC_ATOMIC(length + 1);
-    memset(rd->data, 0, length + 1);
     return rd;
 }
 
@@ -129,7 +127,6 @@ struct PlofRawData *newPlofRawDataNonAtomic(size_t length)
     rd->type = PLOF_DATA_RAW;
     rd->length = length;
     rd->data = GC_MALLOC(length);
-    memset(rd->data, 0, length);
     return rd;
 }
 
@@ -139,7 +136,6 @@ struct PlofArrayData *newPlofArrayData(size_t length)
     struct PlofArrayData *ad;
     ad = (struct PlofArrayData *) GC_MALLOC(sizeof(struct PlofArrayData) +
                                             length * sizeof(struct PlofObject *));
-    memset(ad, 0, sizeof(struct PlofArrayData) + length * sizeof(struct PlofObject *));
     ad->type = PLOF_DATA_ARRAY;
     ad->length = length;
     ad->data = (struct PlofObject **) (ad + 1);
@@ -172,7 +168,6 @@ struct PlofObject *newPlofObjectWithArray(size_t length)
          sizeof(struct PlofArrayData) +
          length * sizeof(struct PlofObject *);
     obj = (struct PlofObject *) GC_MALLOC(sz);
-    memset(obj, 0, sz);
     ad = (struct PlofArrayData *) (obj + 1);
 
     /* set up the object */
