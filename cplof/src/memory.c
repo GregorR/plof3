@@ -69,6 +69,7 @@ struct PSLStack newPSLStack()
     } else {
         ret.length = 8;
         ret.data = GC_MALLOC(8 * sizeof(struct PlofObject *));
+        memset(ret.data, 0, 8 * sizeof(struct PlofObject *));
 
     }
 
@@ -116,6 +117,7 @@ struct PlofRawData *newPlofRawData(size_t length)
     rd->type = PLOF_DATA_RAW;
     rd->length = length;
     rd->data = GC_MALLOC_ATOMIC(length + 1);
+    memset(rd->data, 0, length + 1);
     return rd;
 }
 
