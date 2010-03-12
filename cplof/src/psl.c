@@ -215,7 +215,9 @@ struct PlofReturn interpretPSL(
     }
 
     /* perhaps set or generate the locals */
-    if (!ISLOCALS(context)) {
+    if (ISLOCALS(context)) {
+        locals = LOCALS(context)->data;
+    } else {
         if (ISLOCALS(context->parent)) {
             /* steal their locals */
             context->data = context->parent->data;
