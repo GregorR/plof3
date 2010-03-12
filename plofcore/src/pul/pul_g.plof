@@ -60,6 +60,16 @@ __grammar_add(grammar_production,
                   {gadd} concat
                   iwrap);
 __grammar_add(grammar_production,
+              /[A-Za-z_][A-Za-z0-9_]*/ white /=/ white pslbnf_targets
+                  /=>/ white /pre/ white /\{/ white pslOps /\}/ white
+                  /post/ white /\{/ white pslOps /\}/ white,,
+              push0 0 index
+                  push1 4 index concat
+                  push1 11 index cwrap concat
+                  push1 18 index cwrap concat
+                  {gadd} concat
+                  iwrap);
+__grammar_add(grammar_production,
               /[A-Za-z_][A-Za-z0-9_]*/ white /=>/ white /[A-Za-z_][A-Za-z0-9_]*/ eos,,
 
               // set that->next to this->next, then this->next to that
