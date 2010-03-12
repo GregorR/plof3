@@ -30,11 +30,18 @@ int main(int argc, char **argv)
 {
     if (argc != 2) {
         fprintf(stderr, "Use: gen <file to gen>\n"
-                        "Files supported: plof.vim psldasm-cmds.c psl-optim.c psl-impl.c psl.plof\n");
+                        "Files supported: base.apsl plof.vim psldasm-cmds.c psl-optim.c psl-impl.c psl.plof\n");
         return 1;
     }
 
-    if (!strcmp(argv[1], "plof.vim")) {
+    if (!strcmp(argv[1], "base.apsl")) {
+#define FOREACH(inst) \
+        printf("\"pslOp\" \"/%s/\" \"token\" \"white\" 3 array {} {{%s}} gadd\n", \
+               #inst , #inst );
+#include "psl_inst.h"
+#undef FOREACH
+
+    } else if (!strcmp(argv[1], "plof.vim")) {
         printf("syn keyword     pslKeyword      contained");
 #define FOREACH(inst) \
         printf(" %s", #inst );

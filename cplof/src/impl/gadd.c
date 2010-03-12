@@ -4,9 +4,9 @@ label(interp_psl_gadd); DEBUG_CMD("gadd"); STEP;
 
 label(interp_psl_gadd);
     DEBUG_CMD("gadd");
-    TRINARY;
+    QUATERNARY;
 
-    if (ISRAW(a) && ISARRAY(b) && ISRAW(c)) {
+    if (ISRAW(a) && ISARRAY(b) && ISRAW(c) && ISRAW(d)) {
         unsigned char *name, **target;
         int i;
 
@@ -31,7 +31,7 @@ label(interp_psl_gadd);
 
         /* now call gadd */
         rd = RAW(c);
-        gadd(name, target, rd->length, rd->data);
+        gadd(name, target, rd->length, rd->data, RAW(d)->length, RAW(d)->data);
 
     } else {
         BADTYPE("gadd");

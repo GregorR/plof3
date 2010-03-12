@@ -39,7 +39,9 @@ struct PRPResult {
 };
 
 /* These correspond directly to underlying PSL instructions */
-void gadd(unsigned char *name, unsigned char **target, size_t psllen, unsigned char *psl);
+void gadd(unsigned char *name, unsigned char **target,
+          size_t prepsllen, unsigned char *prepsl,
+          size_t postpsllen, unsigned char *postpsl);
 void grem(unsigned char *name);
 void gcommit(void);
 
