@@ -24,9 +24,13 @@ gadd
 gadd
 
 "gadd"
-"/__grammar_add/" "white" "token" "white" "/\(/" "white" "/[a-zA-Z0-9_]+/" "white" "/,/" "white" "grammarElems" "/,/" "white" "pslOps" "/\)/" "white"
-16 array
-{} {push0 6 index push1 10 index concat {{}} concat push1 13 index {{}} wrap concat {gadd} concat
+"/__grammar_add/" "white" "token" "white" "/\(/" "white" "/[a-zA-Z0-9_]+/" "white" "/,/" "white" "grammarElems" "/,/" "white"
+"pslOps" "/,/" "white"
+"pslOps" "/\)/" "white"
+19 array
+{} {push0 6 index push1 10 index concat
+    push1 13 index {{}} wrap concat
+    push1 16 index {{}} wrap concat {gadd} concat
  {[]} wrap}
 gadd
 
