@@ -46,8 +46,10 @@ extern unsigned char **plofIncludePaths;
 /* should we load intrinsics? */
 extern int plofLoadIntrinsics;
 
-#define PLOF_DATA_RAW 0
-#define PLOF_DATA_ARRAY 1
+/* data types */
+#define PLOF_DATA_RAW           1
+#define PLOF_DATA_ARRAY         2
+#define PLOF_DATA_LOCALS        3
 
 /* Function for getting a value from the hash table in an object */
 struct PlofObject *plofRead(struct PlofObject *obj, unsigned char *name, size_t namehash);

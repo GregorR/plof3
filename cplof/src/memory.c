@@ -144,6 +144,18 @@ struct PlofArrayData *newPlofArrayData(size_t length)
     return ad;
 }
 
+/* Allocate a PlofLocalsData */
+struct PlofArrayData *newPlofLocalsData(size_t length)
+{
+    size_t i;
+    struct PlofArrayData *ad = newPlofArrayData(length);
+    ad->type = PLOF_DATA_LOCALS;
+    for (i = 0; i < length; i++) {
+        ad->data[i] = plofNull;
+    }
+    return ad;
+}
+
 /* Allocate an objects with raw data inline */
 struct PlofObject *newPlofObjectWithRaw(size_t length)
 {

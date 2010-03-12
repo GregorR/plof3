@@ -135,6 +135,8 @@ struct PlofReturn interpretPSL(
     struct PlofRawData *rd;
     struct PlofArrayData *ad;
 
+    struct PlofObject **locals;
+
     /* The PSL in various forms */
     size_t psllen;
     unsigned char *psl = NULL;
@@ -210,6 +212,18 @@ struct PlofReturn interpretPSL(
         a = newPlofObject();
         a->parent = context;
         context = a;
+    }
+
+    /* perhaps set or generate the locals */
+    if (!ISLOCALS(context)) {
+        if (ISLOCALS(context->parent)) {
+            /* steal their locals */
+            context->data = context->parent->data;
+        } else {
+            /* make our own */
+            context->data = (struct PlofData *) newPlofLocalsData(0);
+        }
+        locals = LOCALS(context)->data;
     }
 
     /* add +procedure */

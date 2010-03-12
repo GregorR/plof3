@@ -90,8 +90,12 @@
 #define ISARRAY(obj) (ISOBJ(obj) && \
                   (obj)->data && \
                   (obj)->data->type == PLOF_DATA_ARRAY)
+#define ISLOCALS(obj) (ISOBJ(obj) && \
+                  (obj)->data && \
+                  (obj)->data->type == PLOF_DATA_LOCALS)
 #define RAW(obj) ((struct PlofRawData *) (obj)->data)
 #define ARRAY(obj) ((struct PlofArrayData *) (obj)->data)
+#define LOCALS(obj) ((struct PlofArrayData *) (obj)->data)
 #define RAWSTRDUP(type, into, _rd) \
 { \
     unsigned char *_into = (unsigned char *) GC_MALLOC_ATOMIC((_rd)->length + 1); \

@@ -107,6 +107,15 @@ break;
 case psl_members:
 fprintf(out, "members\n");
 break;
+case psl_locals:
+fprintf(out, "locals\n");
+break;
+case psl_local:
+fprintf(out, "local\n");
+break;
+case psl_localset:
+fprintf(out, "localset\n");
+break;
 case psl_rawlength:
 fprintf(out, "rawlength\n");
 break;

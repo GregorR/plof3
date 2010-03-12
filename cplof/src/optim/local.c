@@ -1,0 +1,3 @@
+ARITY(1)
+PUSHES(1)
+LEAKP
