@@ -400,15 +400,14 @@ grammar {
     plof_literal => plof_var
 
     plof_var = "var"n plof_identifier => {
-        /*
         // check how many locals we have
         this "__local_count" resolve
             // increment by one
             push1 push1
                 push1 push1 member 1 add
                 memberset
-            member print "locals" print
-        */
+            //member print "locals" print
+            pop pop
 
         {pul_fcontext}
         push1 1 index concat

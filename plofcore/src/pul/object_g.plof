@@ -175,7 +175,10 @@ grammar {
     plof_funcbody = plof_funcbody_next => pre {
         this "__local_count" 0 memberset
     } post {
-        push0 0 index
+        // set the number of locals, then run the code (FIXME: more than 255 locals)
+        this "__local_count" member byte swrap
+        {integer locals} concat
+        push1 0 index concat
     }
     plof_funcbody => plof_funcbody_prime
 
