@@ -303,7 +303,15 @@ grammar {
     top = white top_next => { push0 1 index }
     top => plof_statement
 
-    plof_statement = plof_statement_next eos => {
+    plof_statement = plof_statement_next eos => pre {
+        // make sure we have locals at this level
+        global "__local_count" member
+        null
+        {
+            // no local count, initialize it
+            global "__local_count" 0 memberset
+        } {} cmp
+    } post {
         push0 0 index pul_apply_eval {pop} concat
     }
     plof_statement => plof_assign
@@ -392,6 +400,16 @@ grammar {
     plof_literal => plof_var
 
     plof_var = "var"n plof_identifier => {
+        /*
+        // check how many locals we have
+        this "__local_count" resolve
+            // increment by one
+            push1 push1
+                push1 push1 member 1 add
+                memberset
+            member print "locals" print
+        */
+
         {pul_fcontext}
         push1 1 index concat
         {push1 push1 this "Null" resolve member memberset pul_varwrap} concat
