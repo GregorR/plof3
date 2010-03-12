@@ -177,32 +177,33 @@ var C = Object : [
         var x_c = C.prepcif returnType argTypes 0
         return (C.call x_c x_s)
     }
-
-    // types
-    void = opCPointer(psl { 0 ctype })
-    int = opCPointer(psl { 1 ctype })
-    float = opCPointer(psl { 2 ctype })
-    double = opCPointer(psl { 3 ctype })
-    longdouble = opCPointer(psl { 4 ctype })
-    uint8 = opCPointer(psl { 5 ctype })
-    int8 = opCPointer(psl { 6 ctype })
-    uint16 = opCPointer(psl { 7 ctype })
-    int16 = opCPointer(psl { 8 ctype })
-    uint32 = opCPointer(psl { 9 ctype })
-    int32 = opCPointer(psl { 10 ctype })
-    uint64 = opCPointer(psl { 11 ctype })
-    int64 = opCPointer(psl { 12 ctype })
-    pointer = opCPointer(psl { 14 ctype })
-    uchar = opCPointer(psl { 24 ctype })
-    schar = opCPointer(psl { 25 ctype })
-    ushort = opCPointer(psl { 26 ctype })
-    short = opCPointer(psl { 27 ctype })
-    uint = opCPointer(psl { 28 ctype })
-    ulong = opCPointer(psl { 30 ctype })
-    long = opCPointer(psl { 31 ctype })
-    ulonglong = opCPointer(psl { 32 ctype })
-    longlong = opCPointer(psl { 33 ctype })
 ]
+
+// MAJOR HUGE FIXME: I had to split this due to a bug in the parser that is causing it to chew up huge amounts of memory
+    // types
+C.void = opCPointer(psl { 0 ctype })
+C.int = opCPointer(psl { 1 ctype })
+C.float = opCPointer(psl { 2 ctype })
+C.double = opCPointer(psl { 3 ctype })
+C.longdouble = opCPointer(psl { 4 ctype })
+C.uint8 = opCPointer(psl { 5 ctype })
+C.int8 = opCPointer(psl { 6 ctype })
+C.uint16 = opCPointer(psl { 7 ctype })
+C.int16 = opCPointer(psl { 8 ctype })
+C.uint32 = opCPointer(psl { 9 ctype })
+C.int32 = opCPointer(psl { 10 ctype })
+C.uint64 = opCPointer(psl { 11 ctype })
+C.int64 = opCPointer(psl { 12 ctype })
+C.pointer = opCPointer(psl { 14 ctype })
+C.uchar = opCPointer(psl { 24 ctype })
+C.schar = opCPointer(psl { 25 ctype })
+C.ushort = opCPointer(psl { 26 ctype })
+C.short = opCPointer(psl { 27 ctype })
+C.uint = opCPointer(psl { 28 ctype })
+C.ulong = opCPointer(psl { 30 ctype })
+C.long = opCPointer(psl { 31 ctype })
+C.ulonglong = opCPointer(psl { 32 ctype })
+C.longlong = opCPointer(psl { 33 ctype })
 
 
 // a pseudotype containing raw data for C
@@ -272,7 +273,7 @@ if ("Darwin" in versions) (
     C.libc = C.wrapper (C.dlopen "libc.dylib")
 ) else (
     /* most platforms use NULL for "whatever I've already got" (libc, but
-     * technically also gc, pcre, ... */
+     * technically also gc, pcre, ...) */
     C.libc = C.wrapper Null
 )
 

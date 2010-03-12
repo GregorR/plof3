@@ -98,21 +98,9 @@ gadd
 gadd
 
 "pslOp"
-"/\{/" "white" "/\}/" "white"
-4 array
-{} {{{}}}
-gadd
-
-"pslOp"
 "/\[/" "white" "pslOps" "/\]/" "white"
 5 array
 {} {push0 2 index {[]} wrap}
-gadd
-
-"pslOp"
-"/\[/" "white" "/\]/" "white"
-4 array
-{} {{{}}}
 gadd
 
 "pslOp"

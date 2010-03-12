@@ -54,10 +54,11 @@ __grammar_add(grammar_production,
               /[A-Za-z_][A-Za-z0-9_]*/ white /=/ white pslbnf_targets
                   /=>/ white /\{/ white pslOps /\}/ white,
               push0 0 index
-                  push1 4 index
-                  push2 9 index cwrap
-                  {gadd}
-                  concat concat concat iwrap);
+                  push1 4 index concat
+                  {{}} concat
+                  push1 9 index cwrap concat
+                  {gadd} concat
+                  iwrap);
 __grammar_add(grammar_production,
               /[A-Za-z_][A-Za-z0-9_]*/ white /=>/ white /[A-Za-z_][A-Za-z0-9_]*/ eos,
 
@@ -73,7 +74,7 @@ __grammar_add(grammar_production,
               null push2 4 index call "_next" concat swrap concat
               {push0 grem} concat
               // inner stack: global.grammar_<this>_next "<that>_next"
-              {push1 1 array {push0 0 index} gadd pop} concat
+              {push1 1 array {} {push0 0 index} gadd pop} concat
               // inner stack:
 
               // now this->next = that
@@ -87,7 +88,7 @@ __grammar_add(grammar_production,
               null push2 0 index call "_next" concat swrap concat
               {push0 grem} concat
               // inner stack: "<that>" "<that>_next"
-              {push1 1 array {push0 0 index} gadd pop} concat
+              {push1 1 array {} {push0 0 index} gadd pop} concat
               // inner stack:
 
               // wrap it all up in an immediate
@@ -132,6 +133,7 @@ __grammar_add(pslbnf_target,
               // and gadd it
               {
                   "token" "nnlwhite" 3 array
+                  {}
                   {push0 0 index}
                   gadd
                   1 array
@@ -157,6 +159,7 @@ __grammar_add(pslbnf_target,
               // and gadd it
               {
                   "nnlwhite" 2 array
+                  {}
                   {push0 0 index}
                   gadd
                   1 array
@@ -183,6 +186,7 @@ __grammar_add(pslbnf_target,
               // and gadd it
               {
                   "token" "white" 3 array
+                  {}
                   {push0 0 index}
                   gadd
                   1 array
@@ -208,6 +212,7 @@ __grammar_add(pslbnf_target,
               // and gadd it
               {
                   "white" 2 array
+                  {}
                   {push0 0 index}
                   gadd
                   1 array
@@ -434,6 +439,7 @@ grammar {
         // push the name and targets
         push0 0 index
         push1 4 index concat
+        {{}} concat
 
         // add needless members since our replacement is useless
         { {} {} {} {} {} {} {} {} {} {} 10 array aconcat }
