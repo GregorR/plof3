@@ -34,7 +34,7 @@ grammar {
 
 
     plof_args = white => plof {
-        psl { 0 array }
+        psl { { plof{Null} } 1 array }
     }
 
     plof_args = plof_args_prime => plof { $0 }
