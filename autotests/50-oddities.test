@@ -1,6 +1,6 @@
 #!/bin/bash
-pushd autotests/oddities/01
-runtest oddities_01_run trybtout output cplof 01.plof
+pushd autotests/oddities/01-cat
+runtest oddities_01_run trybtout output cplof 01.tplof 01.tplof
 runtest oddities_01_cmp diff output expected
 rm -f output
 popd
