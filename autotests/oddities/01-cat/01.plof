@@ -12,7 +12,7 @@ args.each (ref x) (
         while (! f.eof()) (
             Stdout.write (f.read 1024)
         )
-	f.close()
+        f.close()
     )
 )
 
