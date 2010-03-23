@@ -51,7 +51,19 @@ var try = (x) {
             // if it was not a Plof object, ignore it (FIXME: should I really be eval'ing here?)
             push0 pul_eval "__pul_type" member
             null {
-                throw
+                // if it has a message (and so is a real exception), wrap it in an InternalException
+                push0 "+exception" member
+                null {
+                    // nope, rethrow
+                    throw
+                } {
+                    // OK, wrap it up
+                    1 array
+                    plof{opString} pul_eval
+                    call 1 array
+                    plof{new InternalException} pul_eval
+                    call
+                } cmp
             } {} cmp
 
             // otherwise, must catch
@@ -90,6 +102,13 @@ var Exception = Object : [
         opString(psl {
             plof{this} pul_eval "+exception" member
         })
+    }
+]
+
+// Internal exception
+var InternalException = Exception : [
+    this(str) {
+        setMessage(str)
     }
 ]
 
