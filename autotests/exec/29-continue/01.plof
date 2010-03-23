@@ -1,0 +1,10 @@
+var i
+for (i = 0) (i < 100) (i = i + 1) (
+    if (i <= 50) (continue())
+    break()
+)
+if (i == 51) (
+    Debug.print "Good"
+) else (
+    Debug.print "Bad"
+)
