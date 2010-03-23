@@ -56,9 +56,9 @@ Debug.print(foo.n)
 Debug.print("Try")
 var x = Object
 try (
-    throw (psl { 3 })
+    throw 3
 ) catchall (ref x) (
-    psl { plof{x} pul_eval print }
+    psl { plof{x.__pul_val} pul_eval print }
 )
 
 
