@@ -108,3 +108,16 @@ var OpAsException = Object : [
         this.tto = tto
     }
 ]
+
+// and, now we can catch specific types in exceptions
+var catch = (ex, type, r, f) {
+    if (ex is type) (
+        r.write ex
+        f
+        return selff
+    ) else (
+        return ((x) {
+            x ex
+        })
+    )
+}
