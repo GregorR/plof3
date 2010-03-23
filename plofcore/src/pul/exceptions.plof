@@ -48,7 +48,13 @@ var try = (x) {
             plof{selff}
         }
         {
-            // whoops, must catch
+            // if it was not a Plof object, ignore it (FIXME: should I really be eval'ing here?)
+            push0 pul_eval "__pul_type" member
+            null {
+                throw
+            } {} cmp
+
+            // otherwise, must catch
             plof{
                 (x) {
                     x exception
@@ -61,14 +67,16 @@ var try = (x) {
 var catchall = (ex, r, f) {
     r.write ex
     f
+    selff
 }
 
 
 // Technically anything can be thrown, but the user should only throw Exceptions
 var Exception = Object : [
+    str = Null // to be filled in
+
     this () {
-        // FIXME: strings
-//        setMessage("Exception")
+        setMessage(str)
     }
 
     setMessage = (s /* as String, but no dynamic types yet */) {
@@ -87,16 +95,18 @@ var Exception = Object : [
 
 // System exceptions
 var AbstractFunctionException = Exception : [
+    str = Null // to be filled in
+
     this() {
-        // FIXME: strings
-//        setMessage("Abstract function called")
+        setMessage(str)
     }
 ]
 
 var TypeMismatchException = Exception : [
+    str = Null // to be filled in
+
     init = (obj, type) {
-        // FIXME: strings
-//        setMessage("Type mismatch")
+        setMessage(str)
         this.obj = obj
         this.type = type
         return this

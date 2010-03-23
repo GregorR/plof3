@@ -22,25 +22,6 @@
  *  IN THE SOFTWARE.
  */
 
-Exception := [
-    init = {
-        setMessage("Exception")
-        this
-    }
-]
-
-AbstractFunctionException := [
-    init = {
-        setMessage("Abstract function called")
-        this
-    }
-]
-
-TypeMismatchException := [
-    init = (obj, type) {
-        setMessage("Type mismatch")
-        this.obj = obj
-        this.type = type
-        this
-    }
-]
+Exception.str = "Exception"
+AbstractFunctionException.str = "Abstract function called"
+TypeMismatchException.str = "Type mismatch"
