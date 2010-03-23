@@ -74,5 +74,5 @@ grammar {
     }
     plof_arr_elems_prime => plof_arr_elem
 
-    plof_arr_elem = plof_semicolon_next => plof { $0 }
+    plof_arr_elem = plof_semicolon_next white => plof { $0 }
 }

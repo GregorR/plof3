@@ -187,14 +187,14 @@ var pslToAst = (pslbuf) {
                 new (psl.presolve.ASTNode)(
                     aststack[aststack.length()-2],
                     aststack[aststack.length()-1]
-                ) \
+                )
             ]]
             aststack = aststack.slice(0, aststack.length() - 2) as Array
 
             // add the gettemps to the stack
             aststack ~= [[
                 new GetTemp(t1),
-                new GetTemp(t2) \
+                new GetTemp(t2)
             ]]
 
         ) else if (cmd === psl.parray) (
