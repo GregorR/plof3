@@ -477,10 +477,14 @@ opRet:
 /* Called when Plof throws up */
 void plofThrewUp(struct PlofObject *obj)
 {
-    struct PlofObject *exc = plofRead(obj, (unsigned char *) PSL_EXCEPTION_STACK, plofHash(sizeof(PSL_EXCEPTION_STACK)-1, (unsigned char *) PSL_EXCEPTION_STACK));
-    if (ISRAW(exc)) {
-        struct PlofRawData *rd = RAW(exc);
-        fprintf(stderr, "%.*s\n", (int) rd->length, rd->data);
+    if (ISOBJ(obj)) {
+        struct PlofObject *exc = plofRead(obj, (unsigned char *) PSL_EXCEPTION_STACK, plofHash(sizeof(PSL_EXCEPTION_STACK)-1, (unsigned char *) PSL_EXCEPTION_STACK));
+        if (ISRAW(exc)) {
+            struct PlofRawData *rd = RAW(exc);
+            fprintf(stderr, "%.*s\n", (int) rd->length, rd->data);
+        }
+    } else {
+        fprintf(stderr, "Plof threw up!\n");
     }
 }
 
