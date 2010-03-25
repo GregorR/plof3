@@ -1,0 +1,186 @@
+/*
+ * Some simple introspection
+ *
+ *  Copyright (c) 2010 Gregor Richards
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to
+ *  deal in the Software without restriction, including without limitation the
+ *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *  sell copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *  IN THE SOFTWARE.
+ */
+
+// get all the members of an object
+var members = (obj) {
+    var objmembers = psl {
+        plof{obj} pul_eval members
+        1 array
+        plof{new Array} pul_eval call
+    }
+    objmembers.apply((x) { opString(x) })
+    objmembers
+}
+
+// check if a member exists
+var objHasMember = (obj, member as String) {
+    psl {
+        plof{obj} pul_eval
+        plof{member.__pul_val} pul_eval
+        member
+        null {
+            // unset
+            plof{False}
+        } {
+            plof{True}
+        } cmp
+    }
+}
+
+// check if an object is a real Plof object (as opposed to an internal object)
+var isPlofObject = (obj) {
+    psl {
+        plof{obj} pul_eval "__pul_type" member
+        null {
+            // no type, not an object
+            plof{False}
+        } {
+            plof{True}
+        } cmp
+    }
+}
+
+// Internal (non-Plof) data, wrapped in a Plof object
+var InternalData = Object : [
+    this (val) {
+        this.__pul_val = val
+    }
+]
+
+// wrap some internal data in InternalData if necessary
+var asPlofObject = (obj) {
+    if (isPlofObject(obj)) (
+        return obj
+    ) else (
+        return (new InternalData(obj))
+    )
+}
+
+// Unevaluated data, wrapped in a Plof object
+var UnevaluatedData = Object : [
+    this (val) {
+        let this.value = val
+    }
+]
+
+// iterate over every member of an object, evaluating as necessary
+var forEachAndEveryMember = (obj, nameref, valref, f) {
+    var objmembers = members(obj)
+    var member
+    objmembers.each (ref member) (
+        var mval = asPlofObject(psl {
+            plof{obj} pul_eval
+            plof{member.__pul_val} pul_eval
+            member
+        })
+        nameref.write member
+        valref.write mval
+        forceEval(f)
+    )
+}
+
+// iterate over non-internal members
+var forEachMember = (obj, nameref, valref, f) {
+    var member
+    var mval
+    forEachAndEveryMember (obj) (ref member) (ref mval) (
+        if ((!(mval is InternalData) || mval === InternalData) && \
+            member.slice(0, 1) != "+" && member.slice(0, 6) != "__pul_") (
+            nameref.write member
+            valref.write mval
+            forceEval(f)
+        )
+    )
+}
+
+// iterate over every member of an object, not evaluating
+var forEachAndEveryMemberLazy = (obj, nameref, valref, f) {
+    var objmembers = members(obj)
+    var member
+    objmembers.each (ref member) (
+        var mval = asPlofObject(psl {
+            plof{obj} pul_eval
+            plof{member.__pul_val} pul_eval
+            member
+
+            // if it's an indirection object ...
+            push0 "__pul_e" member
+            null {
+                // nope, just an object
+            } {
+                // it's an indirection object, is it evaluated?
+                push0 "__pul_v" member
+                null {
+                    // no, wrap it up
+                    1 array
+                    plof{new UnevaluatedData} pul_eval
+                    call
+                } {
+                    // yes, get the value
+                    pul_eval
+                } cmp
+            } cmp
+        })
+        nameref.write member
+        valref.write mval
+        forceEval(f)
+    )
+}
+
+// iterate over non-internal members
+var forEachMemberLazy = (obj, nameref, valref, f) {
+    var member
+    var mval
+    forEachAndEveryMemberLazy (obj) (ref member) (ref mval) (
+        if ((!objIs(mval, InternalData) || mval === InternalData) && \
+            member.slice(0, 1) != "+" && member.slice(0, 6) != "__pul_") (
+            nameref.write member
+            valref.write mval
+            forceEval(f)
+        )
+    )
+}
+
+
+Object := [
+    hasMember = (member) {
+        objHasMember this member
+    }
+
+    eachAndEveryMember = (nameref) {
+        forEachAndEveryMember this nameref
+    }
+
+    eachMember = (nameref) {
+        forEachMember this nameref
+    }
+
+    eachAndEveryMemberLazy = (nameref) {
+        forEachAndEveryMemberLazy this nameref
+    }
+
+    eachMemberLazy = (nameref) {
+        forEachMemberLazy this nameref
+    }
+]
