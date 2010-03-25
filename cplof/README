@@ -1,0 +1,8 @@
+This is cplof, the C implementation of Plof. It requires the Boehm garbage
+collector and PCRE. libffi is highly-recommended as well. cplof is a fairly
+standard threaded bytecode interpreter, including a simple memoized recursive
+descent (packrat) parser and PSL interpreter. It does not have JIT, inline
+caching, or any other fancy features.
+
+The file DEBUG details some compiler flags for producing debugging versions of
+cplof. These flags should not be useful for most users.
