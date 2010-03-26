@@ -48,6 +48,20 @@ var objHasMember = (obj, member as String) {
     }
 }
 
+// check if a member exists, recursively through prototypes
+var objHasMemberRec = (obj, member as String) {
+    psl {
+        plof{obj} pul_eval
+        plof{member.__pul_val} pul_eval
+        null
+        3 array
+        {
+            plof{opMember} pul_eval call
+        } {} catch
+    }
+    objHasMember(obj, member)
+}
+
 // check if an object is a real Plof object (as opposed to an internal object)
 var isPlofObject = (obj) {
     psl {
@@ -168,6 +182,10 @@ Object := [
         objHasMember this member
     }
 
+    hasMemberRec = (member) {
+        objHasMemberRec this member
+    }
+
     eachAndEveryMember = (nameref) {
         forEachAndEveryMember this nameref
     }
@@ -182,5 +200,30 @@ Object := [
 
     eachMemberLazy = (nameref) {
         forEachMemberLazy this nameref
+    }
+
+    // get the type of this object as an array
+    getType = {
+        var primtype = (new Array(this.__pul_type)).sliceFrom(1)
+        if (primtype.length() == 0) (
+            // must be Object
+            return [[]]
+        )
+
+        var rettype = [[ primtype[0] ]]
+        var lasttype = primtype[0]
+        var t
+
+        // for each primitive type, add it to the returned type if applicable
+        primtype.each (ref t) (
+            if (lasttype is t) (
+                // not in this case, we're just still in subtypes
+            ) else (
+                lasttype = t
+                rettype ~= [[ lasttype ]]
+            )
+        )
+
+        rettype
     }
 ]
