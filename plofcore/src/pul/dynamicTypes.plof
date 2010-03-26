@@ -72,9 +72,9 @@ Object := [
 
     // perform a cast iff possible
     opCast = (type) {
-        if (!((var ret = this.opCastTo(type)) === Null)) (
+        if ((var ret = this.opCastTo(type)) !== Null) (
             return ret
-        ) else if (!((var ret = type.opCastFrom(this)) === Null)) (
+        ) else if ((var ret = type.opCastFrom(this)) !== Null) (
             return ret
         ) else (
             throw (new OpAsException(this, type))
@@ -105,13 +105,15 @@ psl {
 }
 
 // OpAsException is thrown when OpAs fails
-var OpAsException = Object : [
+var OpAsException = Exception : [
     from = Null
     tto = Null
+    str = Null // to be filled in
 
     this (from, tto) {
         this.from = from
         this.tto = tto
+        this.setMessage this.str
     }
 ]
 
