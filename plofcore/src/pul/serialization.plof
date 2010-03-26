@@ -100,13 +100,33 @@ Object := [
 // special serializations for special types
 String := [
     serialize = {
-        return ("(\"" ~ this ~ "\")")
+        "(\"" ~ this ~ "\")"
     }
 ]
 
 NativeInteger := [
     serialize = {
-        return ("(" ~ toString() ~ ")")
+        "(" ~ toString() ~ ")"
+    }
+]
+
+ListArray := [
+    serialize = {
+        var ret = "([[" ~ this[0].serialize()
+        var x
+
+        (this.sliceFrom(1)).each (ref x) (
+            ret = ret ~ "," ~ x.serialize()
+        )
+
+        ret = ret ~ "]])"
+        ret
+    }
+]
+
+Array := [
+    serialize = {
+        "(" ~ (this as ListArray).serialize() ~ " as Array)"
     }
 ]
 
