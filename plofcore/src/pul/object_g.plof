@@ -171,7 +171,7 @@ grammar {
     }
 
 
-    plof_funcbody = white => { {} }
+    plof_funcbody = white => { {plof{Null}} }
     plof_funcbody = plof_funcbody_next => plof { $0 }
     plof_funcbody => plof_funcbody_prime
 
