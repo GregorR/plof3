@@ -394,6 +394,18 @@ var ListArray = IndexableCollection : ConcatableCollection : AppendableCollectio
         )
     }
 
+    opCastFrom = (x) {
+        if (x is Collection) (
+            // cast via array
+            var midarr = x as Array
+            var ret = new ListArray()
+            ret.mlist.snoc(midarr)
+            return ret
+        ) else (
+            return Null
+        )
+    }
+
     opIndex = (x as Number) {
         var ret
         var retx
