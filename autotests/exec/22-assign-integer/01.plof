@@ -1,7 +1,7 @@
 var x
 try (
     0.__pul_val[0] = Object
-) catchall (ref x) (
+) catchAll (ref x) (
     Debug.print(
         opString(psl { plof{x} pul_eval "+exception" member })
     )

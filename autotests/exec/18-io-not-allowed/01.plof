@@ -12,7 +12,7 @@ try (
     Stdout.write s
     f.close()
 
-) catchall (ref x) (
+) catchAll (ref x) (
     Debug.print (x.getMessage())
 
 )

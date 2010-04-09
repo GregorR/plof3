@@ -63,7 +63,7 @@ Debug.print("Try")
 var x = Object
 try (
     throw (3)
-) catchall (ref x) (
+) catchAll (ref x) (
     psl { plof{x.__pul_val} pul_eval print }
 )
 
@@ -95,13 +95,13 @@ var foo = (x as Foo) {
 try (
     foo(Foo)
     Debug.print("GOOD")
-) catchall (ref x) (
+) catchAll (ref x) (
     Debug.print("BAD")
 )
 try (
     foo(Object)
     Debug.print("BAD")
-) catchall (ref x) (
+) catchAll (ref x) (
     Debug.print("GOOD")
 )
 
@@ -157,7 +157,6 @@ if (x == "world!") (
 // Ranges
 Debug.print("Ranges")
 Debug.print("This test should print all the numbers from 0 to 9 which are divisible by 2")
-psl { debug }
 (0 to 1000 by 2).each (ref x) (
     Debug.print(x)
 )
@@ -165,7 +164,6 @@ psl { debug }
 for (x = 0) (x < 1000) (x = x + 2) (
     Debug.print(x)
 )
-psl { debug }
 
 
 // Concatenation

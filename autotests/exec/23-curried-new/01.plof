@@ -9,6 +9,6 @@ var x
 try (
     var a = new A "Go" "od"
     Debug.print (a.a ~ a.b)
-) catchall (ref x) (
+) catchAll (ref x) (
     Debug.print "Bad"
 )

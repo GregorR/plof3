@@ -16,7 +16,7 @@ var bar = {
 var x
 try (
     Debug.print (bar())
-) catchall (ref x) (
+) catchAll (ref x) (
     psl {
         plof{x} pul_eval "+exception" member print
     }
