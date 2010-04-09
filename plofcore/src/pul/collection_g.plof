@@ -44,6 +44,10 @@ grammar {
         new Range($0, $2, $4)
     }
     plof_range = plof_range_next => plof { $0 }
+
+    plof_keyword = "in" => {}
+    plof_keyword = "to" => {}
+    plof_keyword = "by" => {}
 }
 
 // the grammar for ListArrays

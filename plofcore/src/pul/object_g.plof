@@ -188,6 +188,7 @@ grammar {
         }
     }
 
+    plof_keyword = "return" => {}
 }
 
 grammar {
@@ -245,4 +246,6 @@ grammar {
             (__pul_ref_x) { $1 = __pul_ref_x }
         )
     }
+
+    plof_keyword = "ref" => {}
 }

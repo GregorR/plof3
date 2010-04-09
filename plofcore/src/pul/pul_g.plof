@@ -408,17 +408,9 @@ grammar {
         push0 1 index
     }
 
-    plof_keyword = "as" => {}
-    plof_keyword = "by" => {}
     plof_keyword = "forceEval" => {}
-    plof_keyword = "is" => {}
-    plof_keyword = "import" => {}
-    plof_keyword = "in" => {}
-    plof_keyword = "include" => {}
+    plof_keyword = "let" => {}
     plof_keyword = "parent" => {}
-    plof_keyword = "return" => {}
-    plof_keyword = "rtInclude" => {}
-    plof_keyword = "to" => {}
     plof_keyword = "var" => {}
 }
 

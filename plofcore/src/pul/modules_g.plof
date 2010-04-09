@@ -104,4 +104,6 @@ grammar {
         pul_apply_funcwrap
         */
     }
+
+    plof_keyword = "import" => {}
 }
