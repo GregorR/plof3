@@ -115,13 +115,18 @@ struct ParseResult **packratNonterminal(struct ParseContext *ctx,
                                         struct Production *production,
                                         unsigned char *file, int line, int col,
                                         unsigned char *input, size_t off);
+struct ParseResult **packratNotNonterminal(struct ParseContext *ctx,
+                                           struct Production *production,
+                                           unsigned char *file, int line, int col,
+                                           unsigned char *input, size_t off);
 struct ParseResult **packratRegexTerminal(struct ParseContext *ctx,
                                           struct Production *production,
                                           unsigned char *file, int line, int col,
                                           unsigned char *input, size_t off);
 
-/* and generaters for them */
+/* and generators for them */
 struct Production *newPackratNonterminal(unsigned char *name, unsigned char ***sub);
+struct Production *newPackratNotNonterminal(unsigned char *name, unsigned char *sub);
 struct Production *newPackratRegexTerminal(unsigned char *name, unsigned char *regex);
 
 /* warn when a nonterminal is ambiguous (should usually be off, since ambiguities are OK) */

@@ -320,6 +320,39 @@ struct ParseResult **packratNonterminal(struct ParseContext *ctx,
     return result.buf;
 }
 
+/* negate a nonterminal */
+struct ParseResult **packratNotNonterminal(struct ParseContext *ctx,
+                                           struct Production *production,
+                                           unsigned char *file, int line, int col,
+                                           unsigned char *input, size_t off)
+{
+    struct ParseResult **ret, **subResult;
+
+    /* parse the child */
+    subResult = packratParsePrime(ctx, production->sub[0],
+                                  file, line, col,
+                                  input, off);
+
+    /* if it parsed successfully, then this failed */
+    if (subResult && subResult[0]) {
+        return NULL;
+    }
+
+    /* otherwise, success */
+    ret = GC_MALLOC(2 * sizeof(struct ParseResult *));
+    ret[1] = NULL;
+    ret[0] = GC_MALLOC(sizeof(struct ParseResult));
+    ret[0]->production = production;
+    ret[0]->file = file;
+    ret[0]->sline = ret[0]->eline = line;
+    ret[0]->scol = ret[0]->ecol = col;
+    ret[0]->choice = 0;
+    ret[0]->consumedFrom = ret[0]->consumedTo = off;
+
+    return ret;
+}
+
+
 /* parse a regex terminal */
 #define OVECTOR_LEN 30
 struct ParseResult **packratRegexTerminal(struct ParseContext *ctx,
@@ -405,6 +438,23 @@ struct Production *newPackratNonterminal(unsigned char *name, unsigned char ***s
     WRITE_BUFFER(pors, (struct Production ***) &pr, 1);
 
     ret->arg = pors.buf;
+
+    return ret;
+}
+
+/* create a negation nonterminal given only a name */
+struct Production *newPackratNotNonterminal(unsigned char *name, unsigned char *sub)
+{
+    struct Production *ret = getProduction(name);
+    struct Production **subp;
+
+    ret->parser = packratNotNonterminal;
+
+    /* now fill in the sub-production */
+    subp = GC_MALLOC(2 * sizeof(struct Production *));
+    subp[1] = NULL;
+    subp[0] = getProduction(sub);
+    ret->sub = subp;
 
     return ret;
 }

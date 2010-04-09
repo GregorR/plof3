@@ -361,7 +361,16 @@ static void gcommitRecurse(struct UProduction *curp)
                regex[regexlen] = '\0';
 
                newPackratRegexTerminal(name, regex)->userarg = NULL;
+
+            } else if (curp->target.buf[i][j][0] == '!') {
+                /* negation */
+                unsigned char *name = curp->target.buf[i][j];
+                unsigned char *sub = (unsigned char *) GC_MALLOC_ATOMIC(strlen((char *) name));
+                strcpy((char *) sub, (char *) name + 1);
+
+                newPackratNotNonterminal(name, sub)->userarg = NULL;
             }
+
         }
     }
 

@@ -102,7 +102,7 @@ __grammar_add(pslbnf_targets,
               pslbnf_target,
               push0 0 index);
 __grammar_add(pslbnf_target,
-              /[A-Za-z_][A-Za-z0-9_]*/ token white,
+              /\!?[A-Za-z_][A-Za-z0-9_]*/ token white,
               push0 0 index
                   {1 array}
                   concat);
@@ -404,24 +404,22 @@ grammar {
         cwrap { pul_funcwrap } concat
     }
 
-    plof_identifier = plof_notkeyword /[A-Za-z_][A-Za-z0-9_]*/ token nnlwhite => {
+    plof_identifier = !plof_keyword /[A-Za-z_][A-Za-z0-9_]*/ token nnlwhite => {
         push0 1 index
     }
 
-    plof_notkeyword =
-        /()(?!as[^A-Za-z0-9_])/
-        /()(?!by[^A-Za-z0-9_])/
-        /()(?!forceEval[^A-Za-z0-9_])/
-        /()(?!is[^A-Za-z0-9_])/
-        /()(?!import[^A-Za-z0-9_])/
-        /()(?!in[^A-Za-z0-9_])/
-        /()(?!include[^A-Za-z0-9_])/
-        /()(?!parent[^A-Za-z0-9_])/
-        /()(?!return[^A-Za-z0-9_])/
-        /()(?!rtInclude[^A-Za-z0-9_])/
-        /()(?!to[^A-Za-z0-9_])/
-        /()(?!var[^A-Za-z0-9_])/
-        => {{}}
+    plof_keyword = "as" => {}
+    plof_keyword = "by" => {}
+    plof_keyword = "forceEval" => {}
+    plof_keyword = "is" => {}
+    plof_keyword = "import" => {}
+    plof_keyword = "in" => {}
+    plof_keyword = "include" => {}
+    plof_keyword = "parent" => {}
+    plof_keyword = "return" => {}
+    plof_keyword = "rtInclude" => {}
+    plof_keyword = "to" => {}
+    plof_keyword = "var" => {}
 }
 
 // now plofbnf, trivial and removal
