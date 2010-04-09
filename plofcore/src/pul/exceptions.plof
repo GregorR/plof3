@@ -1,7 +1,7 @@
 /*
  * Basic support for exceptions.
  *
- *  Copyright (c) 2008 Gregor Richards
+ *  Copyright (c) 2008, 2010 Gregor Richards
  *  
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -48,7 +48,35 @@ var try = (x) {
             plof{selff}
         }
         {
-            // whoops, must catch
+            // if it was not a Plof object, ignore it (FIXME: should I really be eval'ing here?)
+            push0 pul_eval "__pul_type" member
+            null {
+                // ignore returns
+                push0 "__pul_ret_val" member
+                null {
+                    // rethrow anything that doesn't carry a string
+                    push0 "+exception" member
+                    null {
+                        throw
+                    } {
+                        // OK, wrap it up
+                        "+exception" member
+                        1 array
+                        plof{opString} pul_eval
+                        call 1 array
+                        plof{new InternalException} pul_eval
+                        call
+
+
+                        this "exception" resolve push2 memberset
+                    } cmp
+                } {
+                    // nope, rethrow
+                    throw
+                } cmp
+            } {} cmp
+
+            // otherwise, must catch
             plof{
                 (x) {
                     x exception
@@ -58,17 +86,19 @@ var try = (x) {
     }
 }
 
-var catchall = (ex, r, f) {
+var catchAll = (ex, r, f) {
     r.write ex
     f
+    selff
 }
 
 
 // Technically anything can be thrown, but the user should only throw Exceptions
 var Exception = Object : [
+    str = Null // to be filled in
+
     this () {
-        // FIXME: strings
-//        setMessage("Exception")
+        setMessage(str)
     }
 
     setMessage = (s /* as String, but no dynamic types yet */) {
@@ -85,18 +115,27 @@ var Exception = Object : [
     }
 ]
 
+// Internal exception
+var InternalException = Exception : [
+    this(str) {
+        setMessage(str)
+    }
+]
+
 // System exceptions
 var AbstractFunctionException = Exception : [
+    str = Null // to be filled in
+
     this() {
-        // FIXME: strings
-//        setMessage("Abstract function called")
+        setMessage(str)
     }
 ]
 
 var TypeMismatchException = Exception : [
+    str = Null // to be filled in
+
     init = (obj, type) {
-        // FIXME: strings
-//        setMessage("Type mismatch")
+        setMessage(str)
         this.obj = obj
         this.type = type
         return this

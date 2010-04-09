@@ -34,7 +34,7 @@ grammar {
 
 
     plof_args = white => plof {
-        psl { 0 array }
+        psl { { plof{Null} } 1 array }
     }
 
     plof_args = plof_args_prime => plof { $0 }
@@ -171,7 +171,7 @@ grammar {
     }
 
 
-    plof_funcbody = white => { {} }
+    plof_funcbody = white => { {plof{Null}} }
     plof_funcbody = plof_funcbody_next => pre {
         this "__local_count" 0 memberset
     } post {
@@ -195,6 +195,7 @@ grammar {
         }
     }
 
+    plof_keyword = "return" => {}
 }
 
 grammar {
@@ -252,4 +253,6 @@ grammar {
             (__pul_ref_x) { $1 = __pul_ref_x }
         )
     }
+
+    plof_keyword = "ref" => {}
 }

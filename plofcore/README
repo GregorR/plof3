@@ -1,0 +1,10 @@
+This is Plof Core, the standard library for Plof. It requires a compliant Plof
+compiler and interpreter, such as cplof. It expects that the compiler supports
+PSL and Plof files, and the following flags:
+
+-N: Do not automatically include any code before the specified sources
+-c: Compile only, do not interpret
+-o: Output filename for -c
+--debug: Include debug code
+
+It also expects a PSL assembler, such as pslasm, which is a part of cplof.

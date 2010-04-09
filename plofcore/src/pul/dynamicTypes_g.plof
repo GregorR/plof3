@@ -36,6 +36,9 @@ grammar {
         $0.opAs($2)
     }
     plof_as = plof_as_next => plof { $0 }
+
+    plof_keyword = "is" => {}
+    plof_keyword = "as" => {}
 }
 
 grammar {

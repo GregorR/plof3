@@ -1,0 +1,25 @@
+var inspectTreePrime = (inspected, depth, spaces, obj) {
+    var name
+    var val
+
+    // make sure we haven't handled it yet
+    if (objHasMember(obj, "__ins_inspected") && obj.__ins_inspected === inspected) (
+        return False
+    )
+    obj.__ins_inspected = inspected
+
+    forEachMemberLazy (obj) (ref name) (ref val) (
+        if (name != "__ins_inspected") (
+            Debug.print (spaces ~ name)
+            if (!objIs(val, UnevaluatedData)) (
+                inspectTreePrime(inspected, depth + 1, spaces ~ "  ", val)
+            )
+        )
+    )
+}
+
+var inspectTree = (obj) {
+    inspectTreePrime (new Object()) 0 "" obj
+}
+
+inspectTree this

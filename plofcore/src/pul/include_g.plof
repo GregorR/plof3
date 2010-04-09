@@ -70,4 +70,7 @@ grammar {
         { parse call } concat
         pul_apply_funcwrap
     }
+
+    plof_keyword = "include" => {}
+    plof_keyword = "rtInclude" => {}
 }

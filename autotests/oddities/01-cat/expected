@@ -1,0 +1,18 @@
+var x
+if (args == [[]]) (
+    args = [["-"]]
+)
+args.each (ref x) (
+    if (x == "-") (
+        while (! Stdin.eof()) (
+            Stdout.write (Stdin.read 1024)
+        )
+    ) else (
+        var f = new File(x, "r")
+        while (! f.eof()) (
+            Stdout.write (f.read 1024)
+        )
+	f.close()
+    )
+)
+

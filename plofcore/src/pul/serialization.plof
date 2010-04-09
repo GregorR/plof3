@@ -1,0 +1,138 @@
+/*
+ * Basics of serialization
+ *
+ *  Copyright (c) 2010 Gregor Richards
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to
+ *  deal in the Software without restriction, including without limitation the
+ *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *  sell copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *  IN THE SOFTWARE.
+ */
+
+// type for serialized data
+var Serialized = Object : [
+    this (of, str as String) {
+        this.of = of
+        this.str = str
+    }
+]
+
+Object.serialized = Null
+
+Object := [
+    // serialize this object
+    serialize = {
+        // if we've got a preserialized version, just accept it
+        if (this.serialized is Serialized && this.serialized.of === this) (
+            return this.serialized.str
+        )
+
+        // otherwise, generate one
+        var gen = "(({var r="
+
+        // first the type
+        var type = this.getType()
+        var tl = type.length()
+        if (tl == 1) (
+            // extend it
+            gen = gen ~ type[0].serialize() ~ ":[]"
+
+        ) else if (tl == 2) (
+            // just combine
+            gen = gen ~ type[0].serialize() ~ ":" ~ type[1].serialize()
+
+        ) else (
+            return "ERROR(More than 2 supertypes)"
+
+        )
+        gen = gen ~ ";"
+
+        // now, the content
+        var name
+        var val
+        var t
+        var ignore
+        this.eachMember (ref name) (ref val) (
+            // don't use any names defined by the type
+            ignore = False
+            type.each (ref t) (
+                if (t.hasMemberRec(name)) (
+                    // inherited, ignore it
+                    ignore = True
+                    break()
+                )
+            )
+
+            if (!ignore) (
+                gen = gen ~ "r." ~ name ~ "=" ~ val.serialize() ~ ";"
+            )
+        )
+
+        // close it up
+        gen = gen ~ "r})())"
+
+        gen
+    }
+]
+
+// give all the standard objects intrinsic serialization
+{
+    var name
+    var val
+    forEachMember (this) (ref name) (ref val) (
+        val.serialized = new Serialized(val, name)
+    )
+}()
+
+// special serializations for special types
+String := [
+    serialize = {
+        "(\"" ~ this ~ "\")"
+    }
+]
+
+NativeInteger := [
+    serialize = {
+        "(" ~ toString() ~ ")"
+    }
+]
+
+ListArray := [
+    serialize = {
+        var ret = "([[" ~ this[0].serialize()
+        var x
+
+        (this.sliceFrom(1)).each (ref x) (
+            ret = ret ~ "," ~ x.serialize()
+        )
+
+        ret = ret ~ "]])"
+        ret
+    }
+]
+
+Array := [
+    serialize = {
+        "(" ~ (this as ListArray).serialize() ~ " as Array)"
+    }
+]
+
+// functions can't be serialized
+Function := [
+    serialize = {
+        return "ERROR(Functions cannot be serialized (yet!))"
+    }
+]

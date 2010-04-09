@@ -32,28 +32,71 @@ var else = (then) {
     then
 }
 
-var while = (cond, act) {
-    psl {
-        null
-        { global } // while true
-        {
-            // check the condition
-            this "cc" plof{forceEval(cond)} pul_eval memberset
+// exception thrown when there's an (unlabeled) break
+var BreakException = Exception : [
+    str = Null // to be filled in
 
-            plof {
-                (cc&&True).ifFalse(return(True);)
-            } pul_eval
-
-            // perform the action
-            plof{forceEval(act)} pul_eval
-        } while
+    this () {
+        setMessage(str)
     }
+]
+
+// exception thrown when there's an (unabeled) continue
+var ContinueException = Exception : [
+    str = Null // to be filled in
+
+    this() {
+        setMessage(str)
+    }
+]
+
+var while = (cond, act) {
+    var ex
+    try (
+        psl {
+            null
+            { global } // while true
+            {
+                // check the condition
+                this "cc" plof{forceEval(cond)} pul_eval memberset
+
+                plof {
+                    (cc&&True).ifFalse(return(True);)
+                } pul_eval
+
+                // perform the action
+                plof{
+                    try (
+                        forceEval(act)
+                    ) catch ContinueException (ref ex) (
+                        // nothing to do except catch it
+                    ) throw
+                } pul_eval
+            } while
+        }
+
+    ) catch BreakException (ref ex) (
+        // nothing to do except catch it
+    ) throw
 }
 
 var for = (init, cond, step, act) {
+    var ex
     init
     while (forceEval(cond)) (
-        forceEval(act)
+        try (
+            forceEval(act)
+        ) catch ContinueException (ref ex) (
+            // catch continues early so that the step gets run
+        ) throw
         forceEval(step)
     )
+}
+
+var break = {
+    throw (new BreakException())
+}
+
+var continue = {
+    throw (new ContinueException())
 }

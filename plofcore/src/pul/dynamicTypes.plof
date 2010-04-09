@@ -22,53 +22,59 @@
  *  IN THE SOFTWARE.
  */
 
+// if it is necessary to type check an object without potentially evaluating anything
+var objIs = (obj, type) {
+    psl {
+        this "mytype"
+        plof{obj} pul_eval "__pul_type" member
+        memberset
+        this "index" 0 memberset
+
+        // go through each element
+        null
+        {
+            this "index" resolve member
+            this "mytype" resolve member length
+            { global } { null } lt
+        }
+        {
+            // check this one
+            this "mytype" resolve member
+                this "index" resolve member
+                    index
+                plof{type} pul_eval
+            {
+                // they're equal, this matches
+                plof{return True} pul_eval
+            }
+            {
+                // no match
+            } cmp
+
+            // increment the index
+            this "index" resolve
+                    this "index" resolve member
+                        1 add
+                        memberset
+        } while pop
+
+        // didn't find it
+        plof{return False} pul_eval
+    }
+}
+
+
 // typechecking in Object
 Object := [
     opIs = (type) {
-        psl {
-            this "mytype"
-            plof{this} pul_eval "__pul_type" member
-            memberset
-            this "index" 0 memberset
-
-            // go through each element
-            null
-            {
-                this "index" resolve member
-                this "mytype" resolve member length
-                { global } { null } lt
-            }
-            {
-                // check this one
-                this "mytype" resolve member
-                    this "index" resolve member
-                        index
-                    plof{type} pul_eval
-                {
-                    // they're equal, this matches
-                    plof{return True} pul_eval
-                }
-                {
-                    // no match
-                } cmp
-
-                // increment the index
-                this "index" resolve
-                        this "index" resolve member
-                            1 add
-                            memberset
-            } while pop
-
-            // didn't find it
-            plof{return False} pul_eval
-        }
+        objIs(this, type)
     }
 
     // perform a cast iff possible
     opCast = (type) {
-        if (!((var ret = this.opCastTo(type)) === Null)) (
+        if ((var ret = this.opCastTo(type)) !== Null) (
             return ret
-        ) else if (!((var ret = type.opCastFrom(this)) === Null)) (
+        ) else if ((var ret = type.opCastFrom(this)) !== Null) (
             return ret
         ) else (
             throw (new OpAsException(this, type))
@@ -99,12 +105,27 @@ psl {
 }
 
 // OpAsException is thrown when OpAs fails
-var OpAsException = Object : [
+var OpAsException = Exception : [
     from = Null
     tto = Null
+    str = Null // to be filled in
 
     this (from, tto) {
         this.from = from
         this.tto = tto
+        this.setMessage this.str
     }
 ]
+
+// and, now we can catch specific types in exceptions
+var catch = (ex, type, r, f) {
+    if (ex is type) (
+        r.write ex
+        f
+        return selff
+    ) else (
+        return ((x) {
+            x ex
+        })
+    )
+}

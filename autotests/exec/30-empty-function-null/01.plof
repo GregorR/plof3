@@ -1,0 +1,13 @@
+var x = {}()
+if (x === Null) (
+    Debug.print "Good"
+) else (
+    Debug.print "Bad"
+)
+
+var x = {0;}()
+if (x === 0) (
+    Debug.print "Good"
+) else (
+    Debug.print "Bad"
+)
