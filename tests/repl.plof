@@ -1,6 +1,6 @@
 var ex
 
-while (True) (
+while (!Stdin.eof()) (
     Stdout.write "> "
     Stdout.flush()
     var line = Stdin.readLine()
