@@ -1,0 +1,12 @@
+var ex
+
+while (True) (
+    Stdout.write "> "
+    Stdout.flush()
+    var line = Stdin.readLine()
+    try (
+        Stdout.write ((eval(line)).serialize() ~ "\n")
+    ) catchAll (ref ex) (
+        Stdout.write (ex.getMessage() ~ "\n")
+    )
+)
