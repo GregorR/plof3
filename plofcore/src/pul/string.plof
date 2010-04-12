@@ -74,19 +74,6 @@ var String = Object : [
             integer
         })
     }
-
-    eval = {
-        psl {
-            null
-            plof{this.__pul_val} pul_eval
-
-            // parse it
-            "plof_semicolon" "eval" parse
-
-            // and run it
-            call
-        }
-    }
 ]
 
 var opString = (x) {
@@ -127,7 +114,3 @@ NativeInteger := [
         str
     }
 ]
-
-var eval = (s as String) {
-    s.eval()
-}
