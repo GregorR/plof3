@@ -33,5 +33,9 @@ FOREACH(deletec)
 FOREACH(deleted)
 FOREACH(deletee)
 
+/* used for inlining, "push" or "pop" a 'this' */
+FOREACH(pushthis)
+FOREACH(popthis)
+
 FOREACH(jmp)
 FOREACH(jne)
