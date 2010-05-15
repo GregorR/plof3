@@ -86,15 +86,9 @@ int plofLoadIntrinsics = 1;
 
 /* We require an enum for compilation */
 enum compileLabel {
-    label_psl_nop,
 #define FOREACH(inst) label_psl_ ## inst,
-#include "psl_inst.h"
+#include "psl_internal_inst.h"
 #undef FOREACH
-    label_psl_deletea,
-    label_psl_deleteb,
-    label_psl_deletec,
-    label_psl_deleted,
-    label_psl_deletee,
 
     label_psl_last
 };
@@ -103,15 +97,11 @@ static void *compileLabels[label_psl_last];
 /* Some versions of 'jump' require an enum */
 #ifdef jumpenum
 enum jumplabel {
-    interp_psl_nop,
 #define FOREACH(inst) interp_psl_ ## inst,
 #include "psl_inst.h"
 #undef FOREACH
-    interp_psl_deletea,
-    interp_psl_deleteb,
-    interp_psl_deletec,
-    interp_psl_deleted,
-    interp_psl_deletee
+
+    interp_psl_last
 };
 #endif
 
@@ -403,15 +393,9 @@ struct PlofReturn interpretPSL(
         int i;
         for (i = 0; i < label_psl_last; i++) {
             switch (i) {
-                case label_psl_nop: compileLabels[i] = addressof(interp_psl_nop); break;
 #define FOREACH(inst) case label_psl_ ## inst: compileLabels[i] = addressof(interp_psl_ ## inst); break;
-#include "psl_inst.h"
+#include "psl_internal_inst.h"
 #undef FOREACH
-                case label_psl_deletea: compileLabels[i] = addressof(interp_psl_deletea); break;
-                case label_psl_deleteb: compileLabels[i] = addressof(interp_psl_deleteb); break;
-                case label_psl_deletec: compileLabels[i] = addressof(interp_psl_deletec); break;
-                case label_psl_deleted: compileLabels[i] = addressof(interp_psl_deleted); break;
-                case label_psl_deletee: compileLabels[i] = addressof(interp_psl_deletee); break;
                 default: compileLabels[i] = NULL; break;
             }
         }
@@ -519,9 +503,7 @@ struct PlofReturn interpretPSL(
     prejump(*pc);
 
     jumphead;
-#include "impl/nop.c"
 #include "psl-impl.c"
-#include "impl/delete.c"
     jumptail;
 
 performThrow:
