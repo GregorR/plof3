@@ -29,6 +29,7 @@ C.__fgets = C.libc("fgets", C.pointer, [[ C.pointer, C.int, C.pointer ]])
 C.__getline = C.libc("getline", C.pointer, [[ C.pointer, C.pointer, C.pointer ]])
 C.__fclose = C.libc("fclose", C.int, [[C.pointer]])
 C.__feof = C.libc("feof", C.int, [[C.pointer]])
+C.__fflush = C.libc("fflush", C.int, [[C.pointer]])
 C.__fdopen = C.libc("fdopen", C.pointer, [[ C.int, C.pointer ]])
 C.fdopen = (x as NativeInteger, y as String) {
     var c_y = C.calloc(y.length() + 1)
@@ -116,6 +117,10 @@ var File = Handle : [
             rd = C.__fread([[buf, 1, 1024, this.filepointer]]) as NativeInteger
         )
         return s
+    }
+
+    flush = () {
+        C.__fflush([[this.filepointer]]) as NativeInteger
     }
 
     eof = () {

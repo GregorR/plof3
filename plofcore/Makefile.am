@@ -17,6 +17,7 @@ STD_PSL_SOURCE=$(srcdir)/src/pul/object.plof \
                $(srcdir)/src/pul/exception_strings.plof \
                $(srcdir)/src/pul/modules_g.plof $(srcdir)/src/pul/modules.plof \
                $(srcdir)/src/pul/collection_g.plof $(srcdir)/src/pul/collection.plof \
+               $(srcdir)/src/pul/eval_g.plof \
                $(srcdir)/src/pul/introspection.plof \
                $(srcdir)/src/pul/serialization.plof \
                $(srcdir)/src/pul/io.plof \
