@@ -33,7 +33,7 @@ label(interp_psl_array);
                  stacki >= 0 &&
                  arri >= 0;
                  stacki--, arri--) {
-                ad->data[arri] = stack.data[stacki];
+                ad->data[arri] = stack[stacki];
             }
             stacktop = stacki + 1;
         }

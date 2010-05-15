@@ -35,18 +35,15 @@
 /* "Function" for pushing to the stack */
 #define STACK_PUSH(val) \
 { \
-    if (stacktop == stack.length) { \
-        stack = reallocPSLStack(stack); \
-    } \
-    stack.data[stacktop] = (val); \
-    stacktop++; \
+    stack[stacktop++] = (val); \
+    if (stacktop > stacksize) { printf("ACK! Blew the stack\n"); *((int *) 0) = 0; } \
 }
 #define STACK_POP(into) \
 { \
     if (stacktop == 0) { \
         into = plofNull; \
     } else { \
-        into = stack.data[--stacktop]; \
+        into = stack[--stacktop]; \
     } \
 }
 

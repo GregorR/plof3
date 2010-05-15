@@ -3,7 +3,6 @@ label(interp_psl_return);
     UNARY;
     ret.ret = a;
     ret.isThrown = 0;
-    freePSLStack(stack);
 
 #ifdef DEBUG_TIMING_PROCEDURE
     clock_gettime(CLOCK_MONOTONIC, &petspec);

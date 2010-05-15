@@ -51,64 +51,6 @@ void freePlofObject(struct PlofObject *tofree)
     plofObjectFreeList = tofree;
 }
 
-/* PSLStack freelist */
-static struct PSLStack *pslStackFreeList = NULL;
-static size_t pslStackFreeLen = 0;
-static size_t pslStackFreeCur = 0;
-
-/* Allocate a PSLStack */
-struct PSLStack newPSLStack()
-{
-    struct PSLStack ret;
-
-    /* do we have one free? */
-    if (pslStackFreeCur > 0 &&
-        pslStackFreeCur < pslStackFreeLen) {
-        ret = pslStackFreeList[--pslStackFreeCur];
-
-    } else {
-        ret.length = 8;
-        ret.data = GC_MALLOC(8 * sizeof(struct PlofObject *));
-        memset(ret.data, 0, 8 * sizeof(struct PlofObject *));
-
-    }
-
-    return ret;
-}
-
-/* Resize a PSLStack */
-struct PSLStack reallocPSLStack(struct PSLStack stack)
-{
-    /* just make a new one then free the old one */
-    struct PSLStack ret;
-
-    ret.length = stack.length * 2;
-    ret.data = GC_MALLOC(ret.length * sizeof(struct PlofObject *));
-    memcpy(ret.data, stack.data, stack.length * sizeof(struct PlofObject *));
-
-    freePSLStack(stack);
-    return ret;
-}
-
-/* Free a PSLStack */
-void freePSLStack(struct PSLStack stack)
-{
-    if (pslStackFreeCur >= pslStackFreeLen) {
-        /* our freelist needs more room */
-        if (pslStackFreeLen == 0)
-            pslStackFreeLen = 8;
-        else
-            pslStackFreeLen *= 2;
-        pslStackFreeList = GC_REALLOC(pslStackFreeList, pslStackFreeLen * sizeof(struct PSLStack));
-    }
-
-    /* clear out the stack's memory */
-    memset(stack.data, 0, stack.length * sizeof(struct PlofObject *));
-
-    /* then add it to the freelist */
-    pslStackFreeList[pslStackFreeCur++] = stack;
-}
-
 /* Allocate a PlofRawData */
 struct PlofRawData *newPlofRawData(size_t length)
 {

@@ -126,6 +126,7 @@ struct PlofReturn compilePSL(
     /* start with 8 slots */
     int cpsllen = 16;
     int cpslalen = 8;
+    ptrdiff_t stacksize = 1, maxstacksize = 1;
 
     /* general stuff */
     struct PlofRawData *rd;
@@ -138,7 +139,7 @@ struct PlofReturn compilePSL(
     lstack = GC_MALLOC_ATOMIC(lstacklen * sizeof(struct Leaky));
     cpsl = GC_MALLOC_ATOMIC(cpsllen * sizeof(void*));
     cpslargs = GC_MALLOC(cpslalen * sizeof(void*));
-    cpslai = 1;
+    cpslai = 2;
 
     /* now go through the PSL and translate it into compiled PSL */
     for (psli = 0, cpsli = 0;
@@ -247,6 +248,11 @@ struct PlofReturn compilePSL(
                     fprintf(stderr, "Invalid operation: 0x%x\n", cmd);
             }
 
+            if (arity > stacksize) stacksize = arity;
+            /*stacksize -= arity; FIXME: hugely broken */
+            stacksize += pushes;
+            if (stacksize > maxstacksize) maxstacksize = stacksize;
+
             /* pop the things it popped */
             if (arity) {
 #define MARKLEAK(depth) \
@@ -319,6 +325,7 @@ struct PlofReturn compilePSL(
     cpsl = GC_REALLOC(cpsl, cpsli * sizeof(void*));
     cpslargs = GC_REALLOC(cpslargs, cpslai * sizeof(void*));
     cpslargs[0] = (void *) cpsl;
+    cpslargs[1] = (void *) maxstacksize;
 
     *cpslargsp = cpslargs;
 
@@ -352,8 +359,8 @@ struct PlofReturn interpretPSL(
     static int setupCompileLabels = 0;
 
     /* The stack */
-    size_t stacktop;
-    struct PSLStack stack;
+    size_t stacktop, stacksize;
+    struct PlofObject **stack;
 
     /* Slots for n-ary ops */
     struct PlofObject *a, *b, *c, *d, *e;
@@ -475,27 +482,29 @@ struct PlofReturn interpretPSL(
         plofWrite(context, (unsigned char *) "+procedure", procedureHash, pslraw);
     }
 
-    /* Start the stack */
-    stack = newPSLStack();
-    stacktop = 0;
-    if (arg) {
-        stack.data[0] = arg;
-        stacktop = 1;
-    }
-
     /* Make sure it's compiled */
     if (cpslargs) {
         cpsl = (void **) cpslargs[0];
 
     } else {
         int cpsllen;
-        compilePSL(psllen, psl, immediate, &cpsllen, &cpslargs);
+        ret = compilePSL(psllen, psl, immediate, &cpsllen, &cpslargs);
+        if (ret.isThrown) goto performThrow;
         cpsl = (void **) cpslargs[0];
 
         /* and save it */
         if (pslraw && !immediate) {
             ((struct PlofRawData *) pslraw->data)->idata = cpslargs;
         }
+    }
+
+    /* Start the stack */
+    stacksize = (size_t) cpslargs[1];
+    stack = (struct PlofObject **) alloca(stacksize * sizeof(struct PlofObject *));
+    stacktop = 0;
+    if (arg) {
+        stack[0] = arg;
+        stacktop = 1;
     }
 
     /* ACTUAL INTERPRETER BEYOND HERE */
