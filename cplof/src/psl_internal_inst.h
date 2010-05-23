@@ -1,7 +1,8 @@
 /*
- * Memory abstraction
+ * A convenience header for repetetive code over every instruction, here with
+ * internal instructions (delete etc)
  *
- * Copyright (C) 2009, 2010 Gregor Richards
+ * Copyright (C) 2009 Gregor Richards
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,34 +23,19 @@
  * THE SOFTWARE.
  */
 
-#ifndef PLOF_MEMORY_H
-#define PLOF_MEMORY_H
+FOREACH(nop)
 
-#include "plof/plof.h"
+#include "psl_inst.h"
 
-/* Allocate a PlofObject */
-struct PlofObject *newPlofObject();
+FOREACH(deletea)
+FOREACH(deleteb)
+FOREACH(deletec)
+FOREACH(deleted)
+FOREACH(deletee)
 
-/* Free a PlofObject (optional) */
-void freePlofObject(struct PlofObject *tofree);
+/* used for inlining, "push" or "pop" a 'this' */
+FOREACH(pushthis)
+FOREACH(popthis)
 
-/* Allocate a PlofRawData */
-struct PlofRawData *newPlofRawData(size_t length);
-
-/* Allocate a PlofRawData with non-atomic data */
-struct PlofRawData *newPlofRawDataNonAtomic(size_t length);
-
-/* Allocate a PlofArrayData */
-struct PlofArrayData *newPlofArrayData(size_t length);
-
-/* Allocate a PlofLocalsData */
-struct PlofArrayData *newPlofLocalsData(size_t length);
-
-/* Allocate objects with data inline */
-struct PlofObject *newPlofObjectWithRaw(size_t length);
-struct PlofObject *newPlofObjectWithArray(size_t length);
-
-/* Free a PlofData (either kind) */
-void freePlofData(struct PlofData *obj);
-
-#endif
+FOREACH(jmp)
+FOREACH(jne)

@@ -2,263 +2,275 @@
 "top"
 "white" "base"
 2 array
-{push0 1 index}
+{} {push0 1 index}
 gadd
 
 "base"
 "gadd" "/;/" "white"
 3 array
-{push0 0 index}
+{} {push0 0 index}
 gadd
 
 "base"
 "grem" "/;/" "white"
 3 array
-{push0 0 index}
+{} {push0 0 index}
 gadd
 
 "base"
 "gcommit" "/;/" "white"
 3 array
-{push0 0 index}
+{} {push0 0 index}
 gadd
 
 "gadd"
-"/__grammar_add/" "white" "token" "white" "/\(/" "white" "/[a-zA-Z0-9_]+/" "white" "/,/" "white" "grammarElems" "/,/" "white" "pslOps" "/\)/" "white"
-16 array
-{push0 6 index push1 10 index concat push1 13 index {{}} wrap concat {gadd} concat
+"/__grammar_add/" "white" "token" "white" "/\(/" "white" "/[a-zA-Z0-9_]+/" "white" "/,/" "white" "grammarElems" "/,/" "white"
+"pslOps" "/,/" "white"
+"pslOps" "/\)/" "white"
+19 array
+{} {push0 6 index push1 10 index concat
+    push1 13 index {{}} wrap concat
+    push1 16 index {{}} wrap concat {gadd} concat
  {[]} wrap}
 gadd
 
 "grem"
 "/__grammar_rem/" "white" "token" "white" "/\(/" "white" "/[a-zA-Z0-9_]+/" "white" "/\)/" "white"
 10 array
-{push0 6 index {grem} concat
+{} {push0 6 index {grem} concat
  {[]} wrap}
 gadd
 
 "gcommit"
 "/__grammar_commit/" "token" "white" "/\(/" "white" "/\)/" "white"
 7 array
-{{[gcommit]}}
+{} {{[gcommit]}}
 gadd
 
 "grammarElems"
 "grammarElems" "grammarElem"
 2 array
-{push0 0 index push1 1 index {1 array aconcat} concat concat}
+{} {push0 0 index push1 1 index {1 array aconcat} concat concat}
 gadd
 
 "grammarElems"
 "grammarElem"
 1 array
-{push0 0 index {1 array} concat}
+{} {push0 0 index {1 array} concat}
 gadd
 
 "grammarElem"
 "/[a-zA-Z0-9_]+/" "white"
 2 array
-{push0 0 index}
+{} {push0 0 index}
 gadd
 
 "grammarElem"
 "/(\/([^\/\\]*\\.)*[^\/\\]*\/)/" "white"
 2 array
-{push0 0 index}
+{} {push0 0 index}
 gadd
 
 "pslOps"
 "pslOpsX"
 1 array
-{push0 0 index}
+{} {push0 0 index}
 gadd
 
 "pslOps"
 "white"
 1 array
-{{}}
+{} {{}}
 gadd
 
 "pslOpsX"
 "pslOpsX" "white" "pslOp" "white"
 4 array
-{push0 0 index push1 2 index concat}
+{} {push0 0 index push1 2 index concat}
 gadd
 
 "pslOpsX"
 "pslOp" "white"
 2 array
-{push0 0 index}
+{} {push0 0 index}
 gadd
 
 "pslOp"
 "/\{/" "white" "pslOps" "/\}/" "white"
 5 array
-{push0 2 index {{}} wrap}
-gadd
-
-"pslOp"
-"/\{/" "white" "/\}/" "white"
-4 array
-{{{}}}
+{} {push0 2 index {{}} wrap}
 gadd
 
 "pslOp"
 "/\[/" "white" "pslOps" "/\]/" "white"
 5 array
-{push0 2 index {[]} wrap}
-gadd
-
-"pslOp"
-"/\[/" "white" "/\]/" "white"
-4 array
-{{{}}}
+{} {push0 2 index {[]} wrap}
 gadd
 
 "pslOp"
 "/\x22/" "/[^\x22]*/" "/\x22/" "white"
 4 array
-{push0 1 index}
+{} {push0 1 index}
 gadd
 
 "pslOp"
 "number" "white"
 2 array
-{push0 0 index}
+{} {push0 0 index}
 gadd
 
 "pslOp"
 "marker" "white"
 2 array
-{push0 0 index}
+{} {push0 0 index}
 gadd
  
 
-"pslOp" "/aconcat/" "token" "white" 3 array {{aconcat}} gadd
-"pslOp" "/add/" "token" "white" 3 array {{add}} gadd
-"pslOp" "/and/" "token" "white" 3 array {{and}} gadd
-"pslOp" "/array/" "token" "white" 3 array {{array}} gadd
-"pslOp" "/byte/" "token" "white" 3 array {{byte}} gadd
-"pslOp" "/call/" "token" "white" 3 array {{call}} gadd
-"pslOp" "/calli/" "token" "white" 3 array {{calli}} gadd
-"pslOp" "/catch/" "token" "white" 3 array {{catch}} gadd
-"pslOp" "/cinteger/" "token" "white" 3 array {{cinteger}} gadd
-"pslOp" "/cmp/" "token" "white" 3 array {{cmp}} gadd
-"pslOp" "/combine/" "token" "white" 3 array {{combine}} gadd
-"pslOp" "/concat/" "token" "white" 3 array {{concat}} gadd
-"pslOp" "/debug/" "token" "white" 3 array {{debug}} gadd
-"pslOp" "/div/" "token" "white" 3 array {{div}} gadd
-"pslOp" "/dsrccol/" "token" "white" 3 array {{dsrccol}} gadd
-"pslOp" "/dsrcfile/" "token" "white" 3 array {{dsrcfile}} gadd
-"pslOp" "/dsrcline/" "token" "white" 3 array {{dsrcline}} gadd
-"pslOp" "/eq/" "token" "white" 3 array {{eq}} gadd
-"pslOp" "/extractraw/" "token" "white" 3 array {{extractraw}} gadd
-"pslOp" "/fadd/" "token" "white" 3 array {{fadd}} gadd
-"pslOp" "/fdiv/" "token" "white" 3 array {{fdiv}} gadd
-"pslOp" "/feq/" "token" "white" 3 array {{feq}} gadd
-"pslOp" "/fgt/" "token" "white" 3 array {{fgt}} gadd
-"pslOp" "/fgte/" "token" "white" 3 array {{fgte}} gadd
-"pslOp" "/fint/" "token" "white" 3 array {{fint}} gadd
-"pslOp" "/float/" "token" "white" 3 array {{float}} gadd
-"pslOp" "/flt/" "token" "white" 3 array {{flt}} gadd
-"pslOp" "/flte/" "token" "white" 3 array {{flte}} gadd
-"pslOp" "/fmod/" "token" "white" 3 array {{fmod}} gadd
-"pslOp" "/fmul/" "token" "white" 3 array {{fmul}} gadd
-"pslOp" "/fne/" "token" "white" 3 array {{fne}} gadd
-"pslOp" "/fsub/" "token" "white" 3 array {{fsub}} gadd
-"pslOp" "/gadd/" "token" "white" 3 array {{gadd}} gadd
-"pslOp" "/gcommit/" "token" "white" 3 array {{gcommit}} gadd
-"pslOp" "/global/" "token" "white" 3 array {{global}} gadd
-"pslOp" "/grem/" "token" "white" 3 array {{grem}} gadd
-"pslOp" "/gt/" "token" "white" 3 array {{gt}} gadd
-"pslOp" "/gte/" "token" "white" 3 array {{gte}} gadd
-"pslOp" "/include/" "token" "white" 3 array {{include}} gadd
-"pslOp" "/index/" "token" "white" 3 array {{index}} gadd
-"pslOp" "/indexset/" "token" "white" 3 array {{indexset}} gadd
-"pslOp" "/integer/" "token" "white" 3 array {{integer}} gadd
-"pslOp" "/intrinsic/" "token" "white" 3 array {{intrinsic}} gadd
-"pslOp" "/intwidth/" "token" "white" 3 array {{intwidth}} gadd
-"pslOp" "/length/" "token" "white" 3 array {{length}} gadd
-"pslOp" "/lengthset/" "token" "white" 3 array {{lengthset}} gadd
-"pslOp" "/lt/" "token" "white" 3 array {{lt}} gadd
-"pslOp" "/lte/" "token" "white" 3 array {{lte}} gadd
-"pslOp" "/member/" "token" "white" 3 array {{member}} gadd
-"pslOp" "/members/" "token" "white" 3 array {{members}} gadd
-"pslOp" "/memberset/" "token" "white" 3 array {{memberset}} gadd
-"pslOp" "/mod/" "token" "white" 3 array {{mod}} gadd
-"pslOp" "/mul/" "token" "white" 3 array {{mul}} gadd
-"pslOp" "/nand/" "token" "white" 3 array {{nand}} gadd
-"pslOp" "/ne/" "token" "white" 3 array {{ne}} gadd
-"pslOp" "/new/" "token" "white" 3 array {{new}} gadd
-"pslOp" "/nor/" "token" "white" 3 array {{nor}} gadd
-"pslOp" "/null/" "token" "white" 3 array {{null}} gadd
-"pslOp" "/nxor/" "token" "white" 3 array {{nxor}} gadd
-"pslOp" "/or/" "token" "white" 3 array {{or}} gadd
-"pslOp" "/parent/" "token" "white" 3 array {{parent}} gadd
-"pslOp" "/parentset/" "token" "white" 3 array {{parentset}} gadd
-"pslOp" "/parse/" "token" "white" 3 array {{parse}} gadd
-"pslOp" "/pop/" "token" "white" 3 array {{pop}} gadd
-"pslOp" "/print/" "token" "white" 3 array {{print}} gadd
-"pslOp" "/push0/" "token" "white" 3 array {{push0}} gadd
-"pslOp" "/push1/" "token" "white" 3 array {{push1}} gadd
-"pslOp" "/push2/" "token" "white" 3 array {{push2}} gadd
-"pslOp" "/push3/" "token" "white" 3 array {{push3}} gadd
-"pslOp" "/push4/" "token" "white" 3 array {{push4}} gadd
-"pslOp" "/push5/" "token" "white" 3 array {{push5}} gadd
-"pslOp" "/push6/" "token" "white" 3 array {{push6}} gadd
-"pslOp" "/push7/" "token" "white" 3 array {{push7}} gadd
-"pslOp" "/rawcmp/" "token" "white" 3 array {{rawcmp}} gadd
-"pslOp" "/rawlength/" "token" "white" 3 array {{rawlength}} gadd
-"pslOp" "/replace/" "token" "white" 3 array {{replace}} gadd
-"pslOp" "/resolve/" "token" "white" 3 array {{resolve}} gadd
-"pslOp" "/return/" "token" "white" 3 array {{return}} gadd
-"pslOp" "/sl/" "token" "white" 3 array {{sl}} gadd
-"pslOp" "/slice/" "token" "white" 3 array {{slice}} gadd
-"pslOp" "/sr/" "token" "white" 3 array {{sr}} gadd
-"pslOp" "/sub/" "token" "white" 3 array {{sub}} gadd
-"pslOp" "/this/" "token" "white" 3 array {{this}} gadd
-"pslOp" "/throw/" "token" "white" 3 array {{throw}} gadd
-"pslOp" "/trap/" "token" "white" 3 array {{trap}} gadd
-"pslOp" "/version/" "token" "white" 3 array {{version}} gadd
-"pslOp" "/while/" "token" "white" 3 array {{while}} gadd
-"pslOp" "/wrap/" "token" "white" 3 array {{wrap}} gadd
-"pslOp" "/xor/" "token" "white" 3 array {{xor}} gadd
+"pslOp" "/push0/" "token" "white" 3 array {} {{push0}} gadd
+"pslOp" "/push1/" "token" "white" 3 array {} {{push1}} gadd
+"pslOp" "/push2/" "token" "white" 3 array {} {{push2}} gadd
+"pslOp" "/push3/" "token" "white" 3 array {} {{push3}} gadd
+"pslOp" "/push4/" "token" "white" 3 array {} {{push4}} gadd
+"pslOp" "/push5/" "token" "white" 3 array {} {{push5}} gadd
+"pslOp" "/push6/" "token" "white" 3 array {} {{push6}} gadd
+"pslOp" "/push7/" "token" "white" 3 array {} {{push7}} gadd
+"pslOp" "/pop/" "token" "white" 3 array {} {{pop}} gadd
+"pslOp" "/this/" "token" "white" 3 array {} {{this}} gadd
+"pslOp" "/null/" "token" "white" 3 array {} {{null}} gadd
+"pslOp" "/global/" "token" "white" 3 array {} {{global}} gadd
+"pslOp" "/new/" "token" "white" 3 array {} {{new}} gadd
+"pslOp" "/combine/" "token" "white" 3 array {} {{combine}} gadd
+"pslOp" "/member/" "token" "white" 3 array {} {{member}} gadd
+"pslOp" "/memberset/" "token" "white" 3 array {} {{memberset}} gadd
+"pslOp" "/parent/" "token" "white" 3 array {} {{parent}} gadd
+"pslOp" "/parentset/" "token" "white" 3 array {} {{parentset}} gadd
+"pslOp" "/call/" "token" "white" 3 array {} {{call}} gadd
+"pslOp" "/return/" "token" "white" 3 array {} {{return}} gadd
+"pslOp" "/throw/" "token" "white" 3 array {} {{throw}} gadd
+"pslOp" "/catch/" "token" "white" 3 array {} {{catch}} gadd
+"pslOp" "/cmp/" "token" "white" 3 array {} {{cmp}} gadd
+"pslOp" "/concat/" "token" "white" 3 array {} {{concat}} gadd
+"pslOp" "/wrap/" "token" "white" 3 array {} {{wrap}} gadd
+"pslOp" "/resolve/" "token" "white" 3 array {} {{resolve}} gadd
+"pslOp" "/while/" "token" "white" 3 array {} {{while}} gadd
+"pslOp" "/calli/" "token" "white" 3 array {} {{calli}} gadd
+"pslOp" "/replace/" "token" "white" 3 array {} {{replace}} gadd
+"pslOp" "/array/" "token" "white" 3 array {} {{array}} gadd
+"pslOp" "/aconcat/" "token" "white" 3 array {} {{aconcat}} gadd
+"pslOp" "/length/" "token" "white" 3 array {} {{length}} gadd
+"pslOp" "/lengthset/" "token" "white" 3 array {} {{lengthset}} gadd
+"pslOp" "/index/" "token" "white" 3 array {} {{index}} gadd
+"pslOp" "/indexset/" "token" "white" 3 array {} {{indexset}} gadd
+"pslOp" "/members/" "token" "white" 3 array {} {{members}} gadd
+"pslOp" "/locals/" "token" "white" 3 array {} {{locals}} gadd
+"pslOp" "/local/" "token" "white" 3 array {} {{local}} gadd
+"pslOp" "/localset/" "token" "white" 3 array {} {{localset}} gadd
+"pslOp" "/rawlength/" "token" "white" 3 array {} {{rawlength}} gadd
+"pslOp" "/slice/" "token" "white" 3 array {} {{slice}} gadd
+"pslOp" "/rawcmp/" "token" "white" 3 array {} {{rawcmp}} gadd
+"pslOp" "/extractraw/" "token" "white" 3 array {} {{extractraw}} gadd
+"pslOp" "/integer/" "token" "white" 3 array {} {{integer}} gadd
+"pslOp" "/intwidth/" "token" "white" 3 array {} {{intwidth}} gadd
+"pslOp" "/mul/" "token" "white" 3 array {} {{mul}} gadd
+"pslOp" "/div/" "token" "white" 3 array {} {{div}} gadd
+"pslOp" "/mod/" "token" "white" 3 array {} {{mod}} gadd
+"pslOp" "/add/" "token" "white" 3 array {} {{add}} gadd
+"pslOp" "/sub/" "token" "white" 3 array {} {{sub}} gadd
+"pslOp" "/lt/" "token" "white" 3 array {} {{lt}} gadd
+"pslOp" "/lte/" "token" "white" 3 array {} {{lte}} gadd
+"pslOp" "/eq/" "token" "white" 3 array {} {{eq}} gadd
+"pslOp" "/ne/" "token" "white" 3 array {} {{ne}} gadd
+"pslOp" "/gt/" "token" "white" 3 array {} {{gt}} gadd
+"pslOp" "/gte/" "token" "white" 3 array {} {{gte}} gadd
+"pslOp" "/sl/" "token" "white" 3 array {} {{sl}} gadd
+"pslOp" "/sr/" "token" "white" 3 array {} {{sr}} gadd
+"pslOp" "/or/" "token" "white" 3 array {} {{or}} gadd
+"pslOp" "/nor/" "token" "white" 3 array {} {{nor}} gadd
+"pslOp" "/xor/" "token" "white" 3 array {} {{xor}} gadd
+"pslOp" "/nxor/" "token" "white" 3 array {} {{nxor}} gadd
+"pslOp" "/and/" "token" "white" 3 array {} {{and}} gadd
+"pslOp" "/nand/" "token" "white" 3 array {} {{nand}} gadd
+"pslOp" "/byte/" "token" "white" 3 array {} {{byte}} gadd
+"pslOp" "/float/" "token" "white" 3 array {} {{float}} gadd
+"pslOp" "/fint/" "token" "white" 3 array {} {{fint}} gadd
+"pslOp" "/fmul/" "token" "white" 3 array {} {{fmul}} gadd
+"pslOp" "/fdiv/" "token" "white" 3 array {} {{fdiv}} gadd
+"pslOp" "/fmod/" "token" "white" 3 array {} {{fmod}} gadd
+"pslOp" "/fadd/" "token" "white" 3 array {} {{fadd}} gadd
+"pslOp" "/fsub/" "token" "white" 3 array {} {{fsub}} gadd
+"pslOp" "/flt/" "token" "white" 3 array {} {{flt}} gadd
+"pslOp" "/flte/" "token" "white" 3 array {} {{flte}} gadd
+"pslOp" "/feq/" "token" "white" 3 array {} {{feq}} gadd
+"pslOp" "/fne/" "token" "white" 3 array {} {{fne}} gadd
+"pslOp" "/fgt/" "token" "white" 3 array {} {{fgt}} gadd
+"pslOp" "/fgte/" "token" "white" 3 array {} {{fgte}} gadd
+"pslOp" "/version/" "token" "white" 3 array {} {{version}} gadd
+"pslOp" "/dsrcfile/" "token" "white" 3 array {} {{dsrcfile}} gadd
+"pslOp" "/dsrcline/" "token" "white" 3 array {} {{dsrcline}} gadd
+"pslOp" "/dsrccol/" "token" "white" 3 array {} {{dsrccol}} gadd
+"pslOp" "/print/" "token" "white" 3 array {} {{print}} gadd
+"pslOp" "/debug/" "token" "white" 3 array {} {{debug}} gadd
+"pslOp" "/intrinsic/" "token" "white" 3 array {} {{intrinsic}} gadd
+"pslOp" "/trap/" "token" "white" 3 array {} {{trap}} gadd
+"pslOp" "/include/" "token" "white" 3 array {} {{include}} gadd
+"pslOp" "/parse/" "token" "white" 3 array {} {{parse}} gadd
+"pslOp" "/gadd/" "token" "white" 3 array {} {{gadd}} gadd
+"pslOp" "/grem/" "token" "white" 3 array {} {{grem}} gadd
+"pslOp" "/gcommit/" "token" "white" 3 array {} {{gcommit}} gadd
+"pslOp" "/marker/" "token" "white" 3 array {} {{marker}} gadd
+"pslOp" "/immediate/" "token" "white" 3 array {} {{immediate}} gadd
+"pslOp" "/code/" "token" "white" 3 array {} {{code}} gadd
+"pslOp" "/raw/" "token" "white" 3 array {} {{raw}} gadd
+"pslOp" "/dlopen/" "token" "white" 3 array {} {{dlopen}} gadd
+"pslOp" "/dlclose/" "token" "white" 3 array {} {{dlclose}} gadd
+"pslOp" "/dlsym/" "token" "white" 3 array {} {{dlsym}} gadd
+"pslOp" "/cget/" "token" "white" 3 array {} {{cget}} gadd
+"pslOp" "/cset/" "token" "white" 3 array {} {{cset}} gadd
+"pslOp" "/cinteger/" "token" "white" 3 array {} {{cinteger}} gadd
+"pslOp" "/ctype/" "token" "white" 3 array {} {{ctype}} gadd
+"pslOp" "/cstruct/" "token" "white" 3 array {} {{cstruct}} gadd
+"pslOp" "/csizeof/" "token" "white" 3 array {} {{csizeof}} gadd
+"pslOp" "/csget/" "token" "white" 3 array {} {{csget}} gadd
+"pslOp" "/csset/" "token" "white" 3 array {} {{csset}} gadd
+"pslOp" "/prepcif/" "token" "white" 3 array {} {{prepcif}} gadd
+"pslOp" "/ccall/" "token" "white" 3 array {} {{ccall}} gadd
 
 
 "pslOp"
 "/cwrap/" "token" "white"
 3 array
-{{ {{}} wrap }}
+{} {{ {{}} wrap }}
 gadd
 
 "pslOp"
 "/swrap/" "token" "white"
 3 array
-{{ {""} wrap }}
+{} {{ {""} wrap }}
 gadd
 
 "pslOp"
 "/iwrap/" "token" "white"
 3 array
-{{ {[]} wrap }}
+{} {{ {[]} wrap }}
 gadd
 
 
 "white"
 "/(([ \t\r\n]*(#[^\r\n]*[\r\n])?(\/\/[^\r\n]*[\r\n])?(\/\*([^\*]*\*[^\/])*[^\*]*\*\/)?)*)/"
 1 array
-{{}}
+{} {{}}
 gadd
 
 "token"
 "/()([^A-Za-z0-9_]|$)/"
 1 array
-{{}}
+{} {{}}
 gadd
 
 "number"
 "digits" "token"
 2 array
+{}
 {push0 0 index
  push0 24 sr byte
  push1 16 sr byte
@@ -271,33 +283,33 @@ gadd
 "marker"
 "/\$/" "number"
 2 array
-{null push1 1 index call
+{} {null push1 1 index call
  byte "ü" wrap}
 gadd
 
 "digits"
 "digits" "digit"
 2 array
-{push0 0 index 10 mul
+{} {push0 0 index 10 mul
  push1 1 index add}
 gadd
 
 "digits"
 "digit"
 1 array
-{push0 0 index}
+{} {push0 0 index}
 gadd
 
-"digit" "/0/" 1 array {0} gadd
-"digit" "/1/" 1 array {1} gadd
-"digit" "/2/" 1 array {2} gadd
-"digit" "/3/" 1 array {3} gadd
-"digit" "/4/" 1 array {4} gadd
-"digit" "/5/" 1 array {5} gadd
-"digit" "/6/" 1 array {6} gadd
-"digit" "/7/" 1 array {7} gadd
-"digit" "/8/" 1 array {8} gadd
-"digit" "/9/" 1 array {9} gadd
+"digit" "/0/" 1 array {} {0} gadd
+"digit" "/1/" 1 array {} {1} gadd
+"digit" "/2/" 1 array {} {2} gadd
+"digit" "/3/" 1 array {} {3} gadd
+"digit" "/4/" 1 array {} {4} gadd
+"digit" "/5/" 1 array {} {5} gadd
+"digit" "/6/" 1 array {} {6} gadd
+"digit" "/7/" 1 array {} {7} gadd
+"digit" "/8/" 1 array {} {8} gadd
+"digit" "/9/" 1 array {} {9} gadd
 
 gcommit
 ]

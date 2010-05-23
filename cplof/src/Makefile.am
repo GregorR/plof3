@@ -26,4 +26,4 @@ pslstrip_SOURCES=bignum.c pslstrip.c pslfile.c
 
 pslast_SOURCES=ast.c pslast.c
 pslast_CFLAGS=-DPLOF_NO_PARSER
-pslast_LDADD=libplof_noparser.a
+pslast_LDADD=libplof_noparser.a @CNFI_LIBS@

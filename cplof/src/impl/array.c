@@ -1,14 +1,24 @@
 label(interp_psl_array);
     DEBUG_CMD("array");
-    UNARY;
     {
         size_t length = 0;
         ptrdiff_t stacki, arri;
         struct PlofObject *otmp;
         length = stacki = arri = 0;
 
-        if (ISINT(a)) {
-            length = ASINT(a);
+        if (pc[1]) {
+            /* compiled in */
+#if defined(PLOF_BOX_NUMBERS)
+            rd = (struct PlofRawData *) cpslargs[(int) (size_t) pc[1]];
+            length = *((size_t *) rd->data);
+#else
+            length = ASINT(cpslargs[(int) (size_t) pc[1]]);
+#endif
+        } else {
+            UNARY;
+            if (ISINT(a)) {
+                length = ASINT(a);
+            }
         }
 
         /* now make an array of the appropriate size */
@@ -23,7 +33,7 @@ label(interp_psl_array);
                  stacki >= 0 &&
                  arri >= 0;
                  stacki--, arri--) {
-                ad->data[arri] = stack.data[stacki];
+                ad->data[arri] = stack[stacki];
             }
             stacktop = stacki + 1;
         }

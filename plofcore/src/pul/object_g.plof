@@ -1,7 +1,7 @@
 /*
  * Basic members of Object and Function
  *
- *  Copyright (c) 2008, 2009 Gregor Richards
+ *  Copyright (c) 2008, 2009, 2010 Gregor Richards
  *  
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -172,7 +172,14 @@ grammar {
 
 
     plof_funcbody = white => { {plof{Null}} }
-    plof_funcbody = plof_funcbody_next => plof { $0 }
+    plof_funcbody = plof_funcbody_next => /*pre {
+        this "__local_count" 0 memberset
+    } post*/ {
+        // set the number of locals, then run the code (FIXME: more than 255 locals)
+        /*this "__local_count" member byte swrap
+        {integer locals} concat*/
+        push0 0 index
+    }
     plof_funcbody => plof_funcbody_prime
 
     plof_funcbody_prime = plof_semicolon => plof { $0 }

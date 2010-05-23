@@ -35,18 +35,15 @@
 /* "Function" for pushing to the stack */
 #define STACK_PUSH(val) \
 { \
-    if (stacktop == stack.length) { \
-        stack = reallocPSLStack(stack); \
-    } \
-    stack.data[stacktop] = (val); \
-    stacktop++; \
+    stack[stacktop++] = (val); \
+    if (stacktop > stacksize) { printf("ACK! Blew the stack\n"); *((int *) 0) = 0; } \
 }
 #define STACK_POP(into) \
 { \
     if (stacktop == 0) { \
         into = plofNull; \
     } else { \
-        into = stack.data[--stacktop]; \
+        into = stack[--stacktop]; \
     } \
 }
 
@@ -90,8 +87,12 @@
 #define ISARRAY(obj) (ISOBJ(obj) && \
                   (obj)->data && \
                   (obj)->data->type == PLOF_DATA_ARRAY)
+#define ISLOCALS(obj) (ISOBJ(obj) && \
+                  (obj)->data && \
+                  (obj)->data->type == PLOF_DATA_LOCALS)
 #define RAW(obj) ((struct PlofRawData *) (obj)->data)
 #define ARRAY(obj) ((struct PlofArrayData *) (obj)->data)
+#define LOCALS(obj) ((struct PlofArrayData *) (obj)->data)
 #define RAWSTRDUP(type, into, _rd) \
 { \
     unsigned char *_into = (unsigned char *) GC_MALLOC_ATOMIC((_rd)->length + 1); \

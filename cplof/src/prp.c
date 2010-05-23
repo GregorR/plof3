@@ -50,7 +50,7 @@ struct UProduction {
     struct UProduction *right, *left;
 };
 
-struct PlofObject *parseHelper(unsigned char *code, struct ParseResult *pr);
+struct PlofObject *parseHelper(unsigned char *code, struct ParseResult *pr, struct PlofObject *pctx);
 
 static struct UProduction *getUProduction(unsigned char *name);
 
@@ -62,12 +62,18 @@ static struct UProduction *new_grammar = NULL;
 
 int prpDebug = 0;
 
-void gadd(unsigned char *name, unsigned char **target, size_t psllen, unsigned char *psl)
+void gadd(unsigned char *name, unsigned char **target,
+          size_t prepsllen, unsigned char *prepsl,
+          size_t postpsllen, unsigned char *postpsl)
 {
     struct UProduction *curp = getUProduction(name);
-    struct Buffer_psl pslbuf;
-    pslbuf.buf = psl;
-    pslbuf.bufsz = pslbuf.bufused = psllen;
+    struct Buffer_psl prepslbuf, postpslbuf;
+
+    prepslbuf.buf = prepsl;
+    prepslbuf.bufsz = prepslbuf.bufused = prepsllen;
+
+    postpslbuf.buf = postpsl;
+    postpslbuf.bufsz = postpslbuf.bufused = postpsllen;
 
 #ifdef DEBUG
     fprintf(stderr, "PRP: gadd %s\n", name);
@@ -77,10 +83,15 @@ void gadd(unsigned char *name, unsigned char **target, size_t psllen, unsigned c
         EXPAND_BUFFER(curp->target);
     STEP_BUFFER(curp->target, 1);
     BUFFER_TOP(curp->target) = target;
-    if(BUFFER_SPACE(curp->psl) < 1)
+
+    while(BUFFER_SPACE(curp->psl) < 2)
         EXPAND_BUFFER(curp->psl);
+
     STEP_BUFFER(curp->psl, 1);
-    BUFFER_TOP(curp->psl) = pslbuf;
+    BUFFER_TOP(curp->psl) = prepslbuf;
+
+    STEP_BUFFER(curp->psl, 1);
+    BUFFER_TOP(curp->psl) = postpslbuf;
 }
 
 void grem(unsigned char *name)
@@ -121,7 +132,7 @@ struct PRPResult parseOne(unsigned char *code, unsigned char *top, unsigned char
     ret.rcol = res->ecol;
 
     /* get the resultant object */
-    pobj = parseHelper(code, res);
+    pobj = parseHelper(code, res, plofGlobal);
 
     /* make sure it has raw data */
     if (pobj->data && pobj->data->type == PLOF_DATA_RAW) {
@@ -181,13 +192,31 @@ struct Buffer_psl parseAll(unsigned char *code, unsigned char *top, unsigned cha
     return res;
 }
 
-struct PlofObject *parseHelper(unsigned char *code, struct ParseResult *pr)
+struct PlofObject *parseHelper(unsigned char *code, struct ParseResult *pr, struct PlofObject *pctx)
 {
     int i;
     struct PlofRawData *rd;
     struct PlofArrayData *ad;
-    struct PlofObject *obj, *ret;
+    struct PlofObject *ctx, *obj, *ret;
     size_t len;
+
+    /* run the precode if applicable */
+    if (pr->production->userarg) {
+        /* the code is stored as an array, needs to know which was chosen */
+        struct Buffer_psl psl = ((struct Buffer_psl *) pr->production->userarg)[pr->choice*2];
+
+        /* make the context */
+        ctx = newPlofObject();
+        ctx->parent = pctx;
+        
+        /* run it */
+        interpretPSL(ctx, plofNull, NULL, psl.bufused, psl.buf, 0, 0);
+        /* FIXME: what if it throws? */
+
+    } else {
+        ctx = plofNull; /* for -Wall */
+
+    }
 
     /* produce an array from the sub-results */
     for (len = 0; pr->subResults && pr->subResults[len]; len++);
@@ -195,18 +224,18 @@ struct PlofObject *parseHelper(unsigned char *code, struct ParseResult *pr)
     obj->parent = plofNull;
     ad = (struct PlofArrayData *) obj->data;
     for (i = 0; i < ad->length; i++) {
-        ad->data[i] = parseHelper(code, pr->subResults[i]);
+        ad->data[i] = parseHelper(code, pr->subResults[i], ctx);
     }
 
-    /* run the code if applicable */
+    /* run the postcode if applicable */
     if (pr->production->userarg) {
         struct PlofReturn pret;
 
         /* the code is stored as an array, needs to know which was chosen */
-        struct Buffer_psl psl = ((struct Buffer_psl *) pr->production->userarg)[pr->choice];
+        struct Buffer_psl psl = ((struct Buffer_psl *) pr->production->userarg)[pr->choice*2+1];
         
         /* run it */
-        pret = interpretPSL(plofNull, obj, NULL, psl.bufused, psl.buf, 1, 0);
+        pret = interpretPSL(ctx, obj, NULL, psl.bufused, psl.buf, 0, 0);
         if (pret.isThrown) {
             /* uh oh ! */
             ret = plofNull;

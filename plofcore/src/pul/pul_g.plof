@@ -25,41 +25,52 @@
 
 // Whitespace but no newlines, used to distinguish "complete" statements from incomplete ones
 __grammar_add(nnlwhite,
-              /(([ \t\r]*(\/\*([^\*]*\*[^\/])*[^\*]*\*\/)?(\\\n)?)*)/,
+              /(([ \t\r]*(\/\*([^\*]*\*[^\/])*[^\*]*\*\/)?(\\\n)?)*)/,,
               {});
 
 // End of statement can be either a semicolon or a newline (perhaps with line comments)
-__grammar_add(eos, nnlwhite /;/ white, {});
-__grammar_add(eos, nnlwhite /((\/\/[^\r\n]*\r?)?\n)/ white, {});
+__grammar_add(eos, nnlwhite /;/ white,, {});
+__grammar_add(eos, nnlwhite /((\/\/[^\r\n]*\r?)?\n)/ white,, {});
 //__grammar_add(eos, nnlwhite /\n/ white, {});
 
 // Basic PSL: psl { psl code here };
-__grammar_add(top, psl, push0 0 index);
+__grammar_add(top, psl,, push0 0 index);
 __grammar_add(psl,
-              white /psl/ token white /\{/ white pslOps /\}/ eos,
+              white /psl/ token white /\{/ white pslOps /\}/ eos,,
               push0 6 index);
 
 // PSL BNF: grammar { production = target => { code } };
-__grammar_add(top, grammar, push0 0 index);
+__grammar_add(top, grammar,, push0 0 index);
 __grammar_add(grammar,
-              white /grammar/ token white /\{/ white grammar_productions /\}/ eos,
+              white /grammar/ token white /\{/ white grammar_productions /\}/ eos,,
               push0 6 index {[gcommit]} concat);
 __grammar_add(grammar_productions,
-              grammar_productions grammar_production,
+              grammar_productions grammar_production,,
               push0 0 index push1 1 index concat);
 __grammar_add(grammar_productions,
-              grammar_production,
+              grammar_production,,
               push0 0 index);
 __grammar_add(grammar_production,
               /[A-Za-z_][A-Za-z0-9_]*/ white /=/ white pslbnf_targets
-                  /=>/ white /\{/ white pslOps /\}/ white,
+                  /=>/ white /\{/ white pslOps /\}/ white,,
               push0 0 index
-                  push1 4 index
-                  push2 9 index cwrap
-                  {gadd}
-                  concat concat concat iwrap);
+                  push1 4 index concat
+                  {{}} concat
+                  push1 9 index cwrap concat
+                  {gadd} concat
+                  iwrap);
 __grammar_add(grammar_production,
-              /[A-Za-z_][A-Za-z0-9_]*/ white /=>/ white /[A-Za-z_][A-Za-z0-9_]*/ eos,
+              /[A-Za-z_][A-Za-z0-9_]*/ white /=/ white pslbnf_targets
+                  /=>/ white /pre/ white /\{/ white pslOps /\}/ white
+                  /post/ white /\{/ white pslOps /\}/ white,,
+              push0 0 index
+                  push1 4 index concat
+                  push1 11 index cwrap concat
+                  push1 18 index cwrap concat
+                  {gadd} concat
+                  iwrap);
+__grammar_add(grammar_production,
+              /[A-Za-z_][A-Za-z0-9_]*/ white /=>/ white /[A-Za-z_][A-Za-z0-9_]*/ eos,,
 
               // set that->next to this->next, then this->next to that
 
@@ -73,7 +84,7 @@ __grammar_add(grammar_production,
               null push2 4 index call "_next" concat swrap concat
               {push0 grem} concat
               // inner stack: global.grammar_<this>_next "<that>_next"
-              {push1 1 array {push0 0 index} gadd pop} concat
+              {push1 1 array {} {push0 0 index} gadd pop} concat
               // inner stack:
 
               // now this->next = that
@@ -87,33 +98,33 @@ __grammar_add(grammar_production,
               null push2 0 index call "_next" concat swrap concat
               {push0 grem} concat
               // inner stack: "<that>" "<that>_next"
-              {push1 1 array {push0 0 index} gadd pop} concat
+              {push1 1 array {} {push0 0 index} gadd pop} concat
               // inner stack:
 
               // wrap it all up in an immediate
               iwrap);
 __grammar_add(pslbnf_targets,
-              pslbnf_targets pslbnf_target,
+              pslbnf_targets pslbnf_target,,
               push0 0 index
                   push1 1 index
                   {aconcat}
                   concat concat);
 __grammar_add(pslbnf_targets,
-              pslbnf_target,
+              pslbnf_target,,
               push0 0 index);
 __grammar_add(pslbnf_target,
-              /\!?[A-Za-z_][A-Za-z0-9_]*/ token white,
+              /\!?[A-Za-z_][A-Za-z0-9_]*/ token white,,
               push0 0 index
                   {1 array}
                   concat);
 __grammar_add(pslbnf_target,
-              /(\/([^\\\/]*\\.)*[^\\\/]*\/)/ token white,
+              /(\/([^\\\/]*\\.)*[^\\\/]*\/)/ token white,,
               push0 0 index
                   {1 array}
                   concat);
 
 __grammar_add(pslbnf_target,
-              /"/ /[A-Za-z0-9_]+/ /"/ white,
+              /"/ /[A-Za-z0-9_]+/ /"/ white,,
               // force this to be its own token production in the grammar
               null push1 1 index call
 
@@ -132,13 +143,14 @@ __grammar_add(pslbnf_target,
               // and gadd it
               {
                   "token" "nnlwhite" 3 array
+                  {}
                   {push0 0 index}
                   gadd
                   1 array
               } concat);
 
 __grammar_add(pslbnf_target,
-              /"/ /([^A-Za-z0-9_]([^\\\/"]*\\.)*[^\\\/"]*)/ /"/ white,
+              /"/ /([^A-Za-z0-9_]([^\\\/"]*\\.)*[^\\\/"]*)/ /"/ white,,
               // force this to be its own token production in the grammar
               null push1 1 index call
 
@@ -157,6 +169,7 @@ __grammar_add(pslbnf_target,
               // and gadd it
               {
                   "nnlwhite" 2 array
+                  {}
                   {push0 0 index}
                   gadd
                   1 array
@@ -164,7 +177,7 @@ __grammar_add(pslbnf_target,
 
 
 __grammar_add(pslbnf_target,
-              /"/ /[A-Za-z0-9_]+/ /"n/ white,
+              /"/ /[A-Za-z0-9_]+/ /"n/ white,,
               // force this to be its own token production in the grammar
               null push1 1 index call
 
@@ -183,13 +196,14 @@ __grammar_add(pslbnf_target,
               // and gadd it
               {
                   "token" "white" 3 array
+                  {}
                   {push0 0 index}
                   gadd
                   1 array
               } concat);
 
 __grammar_add(pslbnf_target,
-              /"/ /([^A-Za-z0-9_]([^\\\/"]*\\.)*[^\\\/"]*)/ /"n/ white,
+              /"/ /([^A-Za-z0-9_]([^\\\/"]*\\.)*[^\\\/"]*)/ /"n/ white,,
               // force this to be its own token production in the grammar
               null push1 1 index call
 
@@ -208,6 +222,7 @@ __grammar_add(pslbnf_target,
               // and gadd it
               {
                   "white" 2 array
+                  {}
                   {push0 0 index}
                   gadd
                   1 array
@@ -288,7 +303,15 @@ grammar {
     top = white top_next => { push0 1 index }
     top => plof_statement
 
-    plof_statement = plof_statement_next eos => {
+    plof_statement = plof_statement_next eos => /*pre {
+        // make sure we have locals at this level
+        global "__local_count" member
+        null
+        {
+            // no local count, initialize it
+            global "__local_count" 0 memberset
+        } {} cmp
+    } post*/ {
         push0 0 index pul_apply_eval {pop} concat
     }
     plof_statement => plof_assign
@@ -377,6 +400,20 @@ grammar {
     plof_literal => plof_var
 
     plof_var = "var"n plof_identifier => {
+        /*// check how many locals we have
+        this "__local_count" resolve
+            // increment by one
+            push1 push1
+                push1 push1 member 1 add
+                memberset
+            //member print "locals" print
+            pop
+
+        // and save this local
+        "__local__" null push3 1 index call concat
+            push1 "__local_count" member
+            memberset*/
+
         {pul_fcontext}
         push1 1 index concat
         {push1 push1 this "Null" resolve member memberset pul_varwrap} concat
@@ -386,6 +423,11 @@ grammar {
     plof_var => plof_ident
 
     plof_ident = plof_identifier => {
+        // first check if we have a local
+        /*this "__local_count" resolve
+        // stack: either [null, null] or [ctx, "__local__name"]
+            push0 null {} {"Found a local" print} cmp pop pop*/
+
         // call the global opMember with the context and name, which will return a new context
         push0 0 index
         {
@@ -424,6 +466,7 @@ grammar {
         // push the name and targets
         push0 0 index
         push1 4 index concat
+        {{}} concat
 
         // add needless members since our replacement is useless
         { {} {} {} {} {} {} {} {} {} {} 10 array aconcat }

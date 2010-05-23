@@ -143,6 +143,18 @@ case psl_members:
     FOREACH(members);
 #include "optim/members.c"
     break;
+case psl_locals:
+    FOREACH(locals);
+#include "optim/locals.c"
+    break;
+case psl_local:
+    FOREACH(local);
+#include "optim/local.c"
+    break;
+case psl_localset:
+    FOREACH(localset);
+#include "optim/localset.c"
+    break;
 case psl_rawlength:
     FOREACH(rawlength);
 #include "optim/rawlength.c"
