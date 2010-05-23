@@ -172,13 +172,13 @@ grammar {
 
 
     plof_funcbody = white => { {plof{Null}} }
-    plof_funcbody = plof_funcbody_next => pre {
+    plof_funcbody = plof_funcbody_next => /*pre {
         this "__local_count" 0 memberset
-    } post {
+    } post*/ {
         // set the number of locals, then run the code (FIXME: more than 255 locals)
-        this "__local_count" member byte swrap
-        {integer locals} concat
-        push1 0 index concat
+        /*this "__local_count" member byte swrap
+        {integer locals} concat*/
+        push0 0 index
     }
     plof_funcbody => plof_funcbody_prime
 

@@ -303,7 +303,7 @@ grammar {
     top = white top_next => { push0 1 index }
     top => plof_statement
 
-    plof_statement = plof_statement_next eos => pre {
+    plof_statement = plof_statement_next eos => /*pre {
         // make sure we have locals at this level
         global "__local_count" member
         null
@@ -311,7 +311,7 @@ grammar {
             // no local count, initialize it
             global "__local_count" 0 memberset
         } {} cmp
-    } post {
+    } post*/ {
         push0 0 index pul_apply_eval {pop} concat
     }
     plof_statement => plof_assign
@@ -400,14 +400,19 @@ grammar {
     plof_literal => plof_var
 
     plof_var = "var"n plof_identifier => {
-        // check how many locals we have
+        /*// check how many locals we have
         this "__local_count" resolve
             // increment by one
             push1 push1
                 push1 push1 member 1 add
                 memberset
             //member print "locals" print
-            pop pop
+            pop
+
+        // and save this local
+        "__local__" null push3 1 index call concat
+            push1 "__local_count" member
+            memberset*/
 
         {pul_fcontext}
         push1 1 index concat
@@ -418,6 +423,11 @@ grammar {
     plof_var => plof_ident
 
     plof_ident = plof_identifier => {
+        // first check if we have a local
+        /*this "__local_count" resolve
+        // stack: either [null, null] or [ctx, "__local__name"]
+            push0 null {} {"Found a local" print} cmp pop pop*/
+
         // call the global opMember with the context and name, which will return a new context
         push0 0 index
         {
