@@ -2,8 +2,8 @@ label(interp_psl_debug);
     DEBUG_CMD("debug");
     {
         static unsigned int debugCount = 0;
-        /*fprintf(stderr, "%u\r", ++debugCount);*/
-        pid_t pid;
+        fprintf(stderr, "%u\r", ++debugCount);
+        /*pid_t pid;
         char *corefn, *pidstr;
 
         debugCount++;
@@ -17,7 +17,7 @@ label(interp_psl_debug);
             waitpid(pid, NULL, 0);
         } else {
             execlp("gcore", "gcore", "-o", corefn, pidstr, NULL);
-        }
+        }*/
     }
     STEP;
 

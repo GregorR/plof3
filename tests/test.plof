@@ -160,7 +160,6 @@ Debug.print("This test should print all the numbers from 0 to 9 which are divisi
 (0 to 1000 by 2).each (ref x) (
     Debug.print(x)
 )
-psl { debug }
 for (x = 0) (x < 1000) (x = x + 2) (
     Debug.print(x)
 )

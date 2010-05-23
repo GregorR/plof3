@@ -35,7 +35,8 @@
 /* "Function" for pushing to the stack */
 #define STACK_PUSH(val) \
 { \
-    stack[stacktop++] = (val); \
+    stack[stacktop] = (val); \
+    stacktop++; /* do NOT put this with previous line, as val could include stacktop */ \
     if (stacktop > stacksize) { printf("ACK! Blew the stack\n"); *((int *) 0) = 0; } \
 }
 #define STACK_POP(into) \

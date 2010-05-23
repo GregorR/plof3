@@ -98,7 +98,7 @@ static void *compileLabels[label_psl_last];
 #ifdef jumpenum
 enum jumplabel {
 #define FOREACH(inst) interp_psl_ ## inst,
-#include "psl_inst.h"
+#include "psl_internal_inst.h"
 #undef FOREACH
 
     interp_psl_last
@@ -513,6 +513,7 @@ struct PlofReturn interpretPSL(
 
     jumphead;
 #include "psl-impl.c"
+label(interp_psl_last);
     jumptail;
 
 performThrow:

@@ -1,7 +1,7 @@
 /*
  * Basic members of Object and Function
  *
- *  Copyright (c) 2008, 2009  Gregor Richards
+ *  Copyright (c) 2008, 2009, 2010 Gregor Richards
  *  
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,27 +23,27 @@
  */
 
 // trivial plof function calls
-plofbnf {
+grammar {
     plof_group = plof_group plof_group_next => plof {
         psl { $1 1 array $0 pul_eval call }
     }
 
-    plof_group = plof_group "\("w plof_args "\)" => plof {
+    plof_group = plof_group "\("n plof_args "\)" => plof {
         psl { $2 pul_eval $0 pul_eval call }
     }
 
 
     plof_args = white => plof {
-        psl { 0 array }
+        psl { { plof{Null} } 1 array }
     }
 
     plof_args = plof_args_prime => plof { $0 }
 
-    plof_args_prime = plof_args_prime ","w plof_args_prime_next => plof {
+    plof_args_prime = plof_args_prime ","n plof_args_prime_next => plof {
         psl { $0 pul_eval $2 pul_eval aconcat }
     }
 
-    plof_args_prime = plof_args_prime_next ","w plof_args_prime_next => plof {
+    plof_args_prime = plof_args_prime_next ","n plof_args_prime_next => plof {
         psl { $0 pul_eval $2 pul_eval aconcat }
     }
 
@@ -55,8 +55,8 @@ plofbnf {
 }
 
 // more advanced function syntax
-plofbnf {
-    plof_group = "\("w plof_params "\)" "\{"w plof_funcbody "\}" => {
+grammar {
+    plof_group = "\("n plof_params "\)" "\{"n plof_funcbody "\}" => {
         // get the params for future reference
         null push1 1 index call
 
@@ -137,9 +137,9 @@ plofbnf {
     }
 
 
-    plof_params = plof_params ","w plof_params_next => {
+    plof_params = plof_params ","n plof_params_next => {
         null push1 0 index call
-            push0 0 index 1 add swrap
+            push0 0 index 1 add byte swrap {integer} concat
             push1 1 index push3 2 index concat cwrap concat
             {2 array} concat
     }
@@ -171,15 +171,22 @@ plofbnf {
     }
 
 
-    plof_funcbody = white => { {} }
-    plof_funcbody = plof_funcbody_next => plof { $0 }
+    plof_funcbody = white => { {plof{Null}} }
+    plof_funcbody = plof_funcbody_next => /*pre {
+        this "__local_count" 0 memberset
+    } post*/ {
+        // set the number of locals, then run the code (FIXME: more than 255 locals)
+        /*this "__local_count" member byte swrap
+        {integer locals} concat*/
+        push0 0 index
+    }
     plof_funcbody => plof_funcbody_prime
 
     plof_funcbody_prime = plof_semicolon => plof { $0 }
 
 
     // deep returns
-    plof_group = "return"w plof_group_next => plof {
+    plof_group = "return"n plof_group_next => plof {
         psl {
             new
                 push0 "__pul_ret_fc" pul_fcontext memberset
@@ -188,17 +195,18 @@ plofbnf {
         }
     }
 
+    plof_keyword = "return" => {}
 }
 
-plofbnf {
-    plof_group = "\{"w plof_funcbody "\}" => plof {
+grammar {
+    plof_group = "\{"n plof_funcbody "\}" => plof {
         () { $1 }
     }
 }
 
 /// Constructors are a somewhat special case of functions
-plofbnf {
-    plof_obj_def = "this"w plof_bind_next => {
+grammar {
+    plof_obj_def = "this"n plof_bind_next => {
         {
             push0 "init"
             { this "super" }
@@ -216,12 +224,35 @@ plofbnf {
     }
 }
 
+/// Conversions from null to Null and Null to null
+grammar {
+    pslOp = "pul_nullNull" => {
+        {
+            push0 null
+            {
+                plof{Null} pul_eval
+            } {} cmp
+        }
+    }
+
+    pslOp = "pul_Nullnull" => {
+        {
+            push0 plof{Null} pul_eval
+            {
+                null
+            } {} cmp
+        }
+    }
+}
+
 /// References
-plofbnf {
-    plof_literal = "ref"w plof_var => plof {
+grammar {
+    plof_literal = "ref"n plof_var => plof {
         new Reference (
             { $1 },
             (__pul_ref_x) { $1 = __pul_ref_x }
         )
     }
+
+    plof_keyword = "ref" => {}
 }
