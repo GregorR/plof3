@@ -26,10 +26,10 @@ grammar {
     plof_and => plof_equals
 
     plof_equals = plof_equals "=="n plof_equals_next => plof {
-        $0.opEquals($2)
+        opEqualsOf($0, $2)
     }
     plof_equals = plof_equals "!="n plof_equals_next => plof {
-        $0.opNEquals($2)
+        opNEqualsOf($0, $2)
     }
     plof_equals = plof_equals "==="n plof_equals_next => {
         {

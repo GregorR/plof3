@@ -56,3 +56,6 @@ Object := [
         this.opCmp(x) >= 0
     }
 ]
+
+var opEqualsOf = (x, y) { x.opEquals y }
+var opNEqualsOf = (x, y) { x.opNEquals y }
