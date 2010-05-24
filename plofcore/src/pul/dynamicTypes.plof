@@ -104,6 +104,8 @@ psl {
     plof{Object.opAs} pul_eval 4 intrinsic
 }
 
+var opAsOf = (x, y) { x.opAs y }
+
 // OpAsException is thrown when OpAs fails
 var OpAsException = Exception : [
     from = Null

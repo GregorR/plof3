@@ -213,3 +213,12 @@ opInteger = (x) {
         lte
     }
 }
+
+// op*Ofs, done this way to allow unboxed integers
+var opAddOf = (x, y) { x.opAdd y }
+var opSubOf = (x, y) { x.opSub y }
+var opMulOf = (x, y) { x.opMul y }
+var opDivOf = (x, y) { x.opDiv y }
+var opModOf = (x, y) { x.opMod y }
+var opIncOf = (x) { x.opInc() }
+var opDecOf = (x) { x.opDec() }

@@ -33,7 +33,7 @@ grammar {
     plof_is => plof_as
 
     plof_as = plof_as "as"n plof_as_next => plof {
-        $0.opAs($2)
+        opAsOf($0, $2)
     }
     plof_as = plof_as_next => plof { $0 }
 
@@ -45,8 +45,14 @@ grammar {
     // specified argument types
     plof_param = plof_identifier "as"n plof_semicolon_next => {
         // still get the named param as usual
-        {push1}
+        { push1 }
         push1 0 index concat
+
+        {
+            // stack: args fcontext index fcontext ident
+            push4 push3 index
+            this "arg" push2 memberset
+        } concat
 
         // store the astype for later
         push1 2 index concat
@@ -56,16 +62,10 @@ grammar {
 
         {
             pul_eval
-            1 array
-
-            // stack: args fcontext index fcontext ident astype
-            push5 push4 index
-
-            // stack: args fcontext index fcontext ident astype arg
-            this "arg" push2 memberset
+            2 array
 
             // now run typechecking/coersion
-            pul_eval "opAs" pul_varwrap pul_eval call pul_eval
+            this "opAsOf" resolve member call pul_eval
 
             // stack: args fcontext index fcontex ident arg?
 

@@ -27,32 +27,32 @@ grammar {
     plof_cmp => plof_add
 
     plof_add = plof_add "\+"n plof_add_next => plof {
-        $0.opAdd($2)
+        opAddOf($0, $2)
     }
     plof_add = plof_add "-"n plof_add_next => plof {
-        $0.opSub($2)
+        opSubOf($0, $2)
     }
     plof_add = plof_add_next => plof { $0 }
     plof_add => plof_mul
 
     plof_mul = plof_mul "\*"n plof_mul_next => plof {
-        $0.opMul($2)
+        opMulOf($0, $2)
     }
     plof_mul = plof_mul /\// white plof_mul_next => plof {
-        $0.opDiv($3)
+        opDivOf($0, $3)
     }
     plof_mul = plof_mul "%"n plof_mul_next => plof {
-        $0.opMod($2)
+        opModOf($0, $2)
     }
     plof_mul = plof_mul_next => plof { $0 }
 
     plof_unop => plof_postfixopr
 
     plof_postfixopr = plof_postfixopr "\+\+" => plof {
-        $0 = $0.opInc()
+        $0 = opIncOf($0)
     }
     plof_postfixopr = plof_postfixopr "--" => plof {
-        $0 = $0.opDec()
+        $0 = opDecOf($0)
     }
     plof_postfixopr = plof_postfixopr_next => plof { $0 }
 }
