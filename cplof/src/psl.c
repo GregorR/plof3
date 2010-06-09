@@ -205,12 +205,15 @@ struct PlofReturn compilePSL(
         } else {
             int arity = 0;
             int pushes = 0;
+            int special = 0;
             int leaka, leakb, leakc, leakd, leake, leakp;
             int ari, pushi;
             leaka = leakb = leakc = leakd = leake = leakp = 0;
 
 #define LEAKY_PUSH(depth) \
             { \
+                pushes = 1; \
+                special = 1; \
                 while (lstackcur >= lstacklen) { \
                     lstacklen *= 2; \
                     lstack = GC_REALLOC(lstack, lstacklen * sizeof(struct Leaky)); \
@@ -250,12 +253,12 @@ struct PlofReturn compilePSL(
             }
 
             if (arity > stacksize) stacksize = arity;
-            /*stacksize -= arity; FIXME: hugely broken */
+            stacksize -= arity;
             stacksize += pushes;
             if (stacksize > maxstacksize) maxstacksize = stacksize;
 
             /* pop the things it popped */
-            if (arity) {
+            if (arity && !special) {
 #define MARKLEAK(depth) \
                 { \
                     int _depth = (depth); \
@@ -299,7 +302,7 @@ struct PlofReturn compilePSL(
             }
 
             /* now push whatever it pushes */
-            if (pushes) {
+            if (pushes && !special) {
                 while (lstackcur + pushes > lstacklen) {
                     lstacklen *= 2;
                     lstack = GC_REALLOC(lstack, lstacklen * sizeof(struct Leaky));
