@@ -1,15 +1,18 @@
 includeplofdir=$(includedir)/plof
 
 lib_LIBRARIES=libplof.a libplof_noparser.a
-includeplof_HEADERS=plof/bignum.h plof/buffer.h plof/helpers.h plof/memory.h plof/packrat.h plof/plof.h plof/prp.h plof/pslfile.h plof/psl.h
+includeplof_HEADERS=plof/bignum.h plof/buffer.h plof/helpers.h plof/memory.h \
+plof/packrat.h plof/plof.h plof/prp.h plof/pslfile.h plof/psl.h
 bin_PROGRAMS=cplof psli pslasm psldasm pslstrip
 noinst_PROGRAMS=pslast
 
 AM_CFLAGS=-DHAVE_CONFIG_H
 
-libplof_a_SOURCES=bignum.c intrinsics.c memory.c optimizations.c psl.c pslfile.c
+libplof_a_SOURCES=bignum.c inlining.c intrinsics.c memory.c optimizations.c \
+psl.c pslfile.c
 
-libplof_noparser_a_SOURCES=bignum.c intrinsics.c memory.c optimizations.c psl.c pslfile.c
+libplof_noparser_a_SOURCES=bignum.c inlining.c intrinsics.c memory.c \
+optimizations.c psl.c pslfile.c
 libplof_noparser_a_CFLAGS=-DPLOF_NO_PARSER
 
 cplof_SOURCES=ast.c main.c whereami.c packrat.c prp.c

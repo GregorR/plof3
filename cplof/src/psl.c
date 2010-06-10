@@ -107,12 +107,17 @@ struct PlofReturn compilePSL(
     size_t psllen,      /* the PSL itself */
     unsigned char *psl,
     int immediate,      /* compile only immediates */
+    size_t *cpslalenp,  /* if providing your own args array, current length and point */
+    size_t *cpslaip,
+    void **cpslargs,    /* and array */
     size_t *cpsllenp,   /* (out) where to stick the CPSL length and args */
     void ***cpslargsp)
 {
-    int psli, cpslai;
+    int psli;
     size_t cpsli;
-    void **cpsl, **cpslargs;
+    void **cpsl;
+    struct CPSLArgsHeader *cah;
+    size_t cpslalen, cpslai;
 
     /* our stack of leakies for determining what can be freed immediately */
     struct Leaky *lstack;
@@ -120,7 +125,6 @@ struct PlofReturn compilePSL(
 
     /* start with 8 slots */
     size_t cpsllen = 16;
-    int cpslalen = 8;
     ptrdiff_t stacksize = 1, maxstacksize = 1;
 
     /* general stuff */
@@ -133,8 +137,15 @@ struct PlofReturn compilePSL(
     lstackcur = 0;
     lstack = GC_MALLOC_ATOMIC(lstacklen * sizeof(struct Leaky));
     cpsl = GC_MALLOC_ATOMIC(cpsllen * sizeof(void*));
-    cpslargs = GC_MALLOC(cpslalen * sizeof(void*));
-    cpslai = 3;
+
+    if (!cpslargs) {
+        cpslalen = 8;
+        cpslargs = GC_MALLOC(cpslalen * sizeof(void*));
+        cpslai = CPSL_ARGS_HEADER_LENGTH;
+    } else {
+        cpslalen = *cpslalenp;
+        cpslai = *cpslaip;
+    }
 
     /* now go through the PSL and translate it into compiled PSL */
     for (psli = 0, cpsli = 0;
@@ -323,15 +334,21 @@ struct PlofReturn compilePSL(
     cpsl[cpsli+1] = NULL;
     cpsli += 2;
     *cpsllenp = cpsli;
+    if (cpslalenp) {
+        *cpslalenp = cpslalen;
+        *cpslaip = cpslai;
+    }
 
     GC_FREE(lstack);
 
     /* close them off */
     cpsl = GC_REALLOC(cpsl, cpsli * sizeof(void*));
     cpslargs = GC_REALLOC(cpslargs, cpslai * sizeof(void*));
-    cpslargs[0] = (void *) cpsl;
-    cpslargs[1] = (void *) cpsli;
-    cpslargs[2] = (void *) maxstacksize;
+    cah = (struct CPSLArgsHeader *) cpslargs;
+    cah->cpsl = cpsl;
+    cah->cpsllen = cpsli;
+    cah->maxstacksize = maxstacksize;
+    cah->endstacksize = stacksize;
 
     *cpslargsp = cpslargs;
 
@@ -493,7 +510,7 @@ struct PlofReturn interpretPSL(
 
     } else {
         size_t cpsllen;
-        ret = compilePSL(psllen, psl, immediate, &cpsllen, &cpslargs);
+        ret = compilePSL(psllen, psl, immediate, NULL, NULL, NULL, &cpsllen, &cpslargs);
         if (ret.isThrown) goto performThrow;
         cpsl = (void **) cpslargs[0];
 
@@ -504,7 +521,7 @@ struct PlofReturn interpretPSL(
     }
 
     /* Start the stack */
-    stack = (struct PlofObject **) alloca(((size_t) cpslargs[2]) * sizeof(struct PlofObject *));
+    stack = (struct PlofObject **) alloca(((struct CPSLArgsHeader *) cpslargs)->maxstacksize * sizeof(struct PlofObject *));
     stacktop = stack;
     if (arg) {
         *stacktop++ = arg;

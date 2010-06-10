@@ -113,6 +113,7 @@
 #include "impl/deleted.c"
 #include "impl/deletee.c"
 #include "impl/end.c"
+#include "impl/stackfrunge.c"
 #include "impl/pushthis.c"
 #include "impl/popthis.c"
 #include "impl/jmp.c"

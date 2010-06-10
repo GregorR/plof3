@@ -36,6 +36,9 @@ FOREACH(deletee)
 /* the last CPSL made, to clean up and return */
 FOREACH(end)
 
+/* used for inlining, frunge the stack to do something not-dissimilar to a return, minus the return */
+FOREACH(stackfrunge)
+
 /* used for inlining, "push" or "pop" a 'this' */
 FOREACH(pushthis)
 FOREACH(popthis)
