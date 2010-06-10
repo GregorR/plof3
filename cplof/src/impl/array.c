@@ -2,9 +2,9 @@ label(interp_psl_array);
     DEBUG_CMD("array");
     {
         size_t length = 0;
-        ptrdiff_t stacki, arri;
-        struct PlofObject *otmp;
-        length = stacki = arri = 0;
+        ptrdiff_t arri;
+        struct PlofObject **stacki, *otmp;
+        length = arri = 0;
 
         if (pc[1]) {
             /* compiled in */
@@ -33,7 +33,7 @@ label(interp_psl_array);
                  stacki >= 0 &&
                  arri >= 0;
                  stacki--, arri--) {
-                ad->data[arri] = stack[stacki];
+                ad->data[arri] = *stacki;
             }
             stacktop = stacki + 1;
         }

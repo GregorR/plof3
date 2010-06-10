@@ -220,6 +220,10 @@ struct PlofReturn compilePSL(
                     lstack[lstackcur].leaks = 1; \
                     lstackcur++; \
                 } \
+                if (depth >= stacksize) { \
+                    fprintf(stderr, "Non-compilable procedure blows the stack in push%d.\n", depth); \
+                    exit(1); \
+                } \
             }
 
             switch (cmd) {
@@ -361,8 +365,7 @@ struct PlofReturn interpretPSL(
     static int setupCompileLabels = 0;
 
     /* The stack */
-    size_t stacktop, stacksize;
-    struct PlofObject **stack;
+    struct PlofObject **stack, **stacktop;
 
     /* Slots for n-ary ops */
     struct PlofObject *a, *b, *c, *d, *e;
@@ -501,12 +504,12 @@ struct PlofReturn interpretPSL(
     }
 
     /* Start the stack */
-    stacksize = (size_t) cpslargs[2];
-    stack = (struct PlofObject **) alloca(stacksize * sizeof(struct PlofObject *));
-    stacktop = 0;
+    stack = (struct PlofObject **) alloca(((size_t) cpslargs[2]) * sizeof(struct PlofObject *));
+    stacktop = stack;
     if (arg) {
-        stack[0] = arg;
-        stacktop = 1;
+        *stacktop++ = arg;
+    } else {
+        *stacktop++ = plofNull;
     }
 
     /* ACTUAL INTERPRETER BEYOND HERE */

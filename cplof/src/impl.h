@@ -35,12 +35,12 @@
 /* "Function" for pushing to the stack */
 #define STACK_PUSH(val) \
 { \
-    stack[stacktop] = (val); \
+    *stacktop = (val); \
     stacktop++; /* do NOT put this with previous line, as val could include stacktop */ \
 }
 #define STACK_POP(into) \
 { \
-    into = stack[--stacktop]; \
+    into = *--stacktop; \
 }
 
 /* Standards for n-ary ops */

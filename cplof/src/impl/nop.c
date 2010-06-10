@@ -6,9 +6,5 @@ label(interp_psl_nop);
     /* General "function" for PSL push* commands */
 #define PSL_PUSH(n) \
     DEBUG_CMD("push"); \
-    if (stacktop <= n) { \
-        STACK_PUSH(plofNull); \
-    } else { \
-        STACK_PUSH(stack[stacktop - n - 1]); \
-    } \
+    STACK_PUSH(*(stacktop - n - 1)); \
     STEP
