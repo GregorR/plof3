@@ -75,10 +75,6 @@ case psl_call:
     FOREACH(call);
 #include "optim/call.c"
     break;
-case psl_return:
-    FOREACH(return);
-#include "optim/return.c"
-    break;
 case psl_throw:
     FOREACH(throw);
 #include "optim/throw.c"

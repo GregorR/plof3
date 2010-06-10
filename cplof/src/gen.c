@@ -29,8 +29,10 @@
 int main(int argc, char **argv)
 {
     if (argc != 2) {
+        char *supported = "base.apsl plof.vim psldasm-cmds.c psl-optim.c psl-impl.c psl.plof";
         fprintf(stderr, "Use: gen <file to gen>\n"
-                        "Files supported: base.apsl plof.vim psldasm-cmds.c psl-optim.c psl-impl.c psl.plof\n");
+                        "Files supported: %s\n"
+                        "for i in %s; do ./gen $i > $i; done\n", supported, supported);
         return 1;
     }
 

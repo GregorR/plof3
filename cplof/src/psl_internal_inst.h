@@ -33,6 +33,9 @@ FOREACH(deletec)
 FOREACH(deleted)
 FOREACH(deletee)
 
+/* the last CPSL made, to clean up and return */
+FOREACH(end)
+
 /* used for inlining, "push" or "pop" a 'this' */
 FOREACH(pushthis)
 FOREACH(popthis)

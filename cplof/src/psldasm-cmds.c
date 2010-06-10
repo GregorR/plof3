@@ -56,9 +56,6 @@ break;
 case psl_call:
 fprintf(out, "call\n");
 break;
-case psl_return:
-fprintf(out, "return\n");
-break;
 case psl_throw:
 fprintf(out, "throw\n");
 break;

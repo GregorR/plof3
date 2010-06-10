@@ -1,5 +1,5 @@
-label(interp_psl_return);
-    DEBUG_CMD("return");
+label(interp_psl_end);
+    DEBUG_CMD("end");
     UNARY;
     ret.ret = a;
     ret.isThrown = 0;
