@@ -3,7 +3,7 @@ PUSHES(1)
 
 #ifdef PSL_OPTIM
 /* if the value is already known, translate it in advance */
-if (cpsli >= 2 && cpsl[cpsli-2] == compileLabels[label_psl_raw]) {
+if (cpsli >= 2 && cpsl[cpsli-2] == pslCompileLabels[label_psl_raw]) {
     /* mark the input as leaked so it isn't improperly deleted */
     LEAKA
 

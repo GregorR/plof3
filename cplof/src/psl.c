@@ -190,10 +190,10 @@ struct PlofReturn compilePSL(
         }
 
         /* either get only immediates, or everything else */
-        cpsl[cpsli] = compileLabels[label_psl_nop];
+        cpsl[cpsli] = pslCompileLabels[label_psl_nop];
         if (immediate) {
             if (cmd == psl_immediate) {
-                cpsl[cpsli] = compileLabels[label_psl_immediate];
+                cpsl[cpsli] = pslCompileLabels[label_psl_immediate];
             }
 
         } else {
@@ -223,7 +223,7 @@ struct PlofReturn compilePSL(
             }
 
             switch (cmd) {
-#define FOREACH(cmd) cpsl[cpsli] = compileLabels[label_psl_ ## cmd];
+#define FOREACH(cmd) cpsl[cpsli] = pslCompileLabels[label_psl_ ## cmd];
 #define ARITY(x) arity = x;
 #define PUSHES(x) pushes = x;
 #define LEAKA leaka = 1;
@@ -280,11 +280,11 @@ struct PlofReturn compilePSL(
                     lcur = lstack + lsi;
                     if (!lcur->dup && !lcur->leaks) {
                         switch (ari) {
-                            case 0: cpsl[cpsli += 2] = compileLabels[label_psl_deletea]; break;
-                            case 1: cpsl[cpsli += 2] = compileLabels[label_psl_deleteb]; break;
-                            case 2: cpsl[cpsli += 2] = compileLabels[label_psl_deletec]; break;
-                            case 3: cpsl[cpsli += 2] = compileLabels[label_psl_deleted]; break;
-                            case 4: cpsl[cpsli += 2] = compileLabels[label_psl_deletee]; break;
+                            case 0: cpsl[cpsli += 2] = pslCompileLabels[label_psl_deletea]; break;
+                            case 1: cpsl[cpsli += 2] = pslCompileLabels[label_psl_deleteb]; break;
+                            case 2: cpsl[cpsli += 2] = pslCompileLabels[label_psl_deletec]; break;
+                            case 3: cpsl[cpsli += 2] = pslCompileLabels[label_psl_deleted]; break;
+                            case 4: cpsl[cpsli += 2] = pslCompileLabels[label_psl_deletee]; break;
                         }
                         cpsl[cpsli+1] = NULL;
                     }
@@ -312,7 +312,7 @@ struct PlofReturn compilePSL(
     }
 
     /* now close off the end */
-    cpsl[cpsli] = compileLabels[label_psl_return];
+    cpsl[cpsli] = pslCompileLabels[label_psl_end];
     cpsl[cpsli+1] = NULL;
     cpsli += 2;
     *cpsllenp = cpsli;
@@ -399,10 +399,10 @@ struct PlofReturn interpretPSL(
         int i;
         for (i = 0; i < label_psl_last; i++) {
             switch (i) {
-#define FOREACH(inst) case label_psl_ ## inst: compileLabels[i] = addressof(interp_psl_ ## inst); break;
+#define FOREACH(inst) case label_psl_ ## inst: pslCompileLabels[i] = addressof(interp_psl_ ## inst); break;
 #include "psl_internal_inst.h"
 #undef FOREACH
-                default: compileLabels[i] = NULL; break;
+                default: pslCompileLabels[i] = NULL; break;
             }
         }
         setupCompileLabels = 1;

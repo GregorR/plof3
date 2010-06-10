@@ -5,7 +5,7 @@ LEAKALL
 
 #ifdef PSL_OPTIM
 /* get the arity manually */
-if (cpsli >= 2 && cpsl[cpsli-2] == compileLabels[label_psl_integer] && cpsl[cpsli-1] != NULL) {
+if (cpsli >= 2 && cpsl[cpsli-2] == pslCompileLabels[label_psl_integer] && cpsl[cpsli-1] != NULL) {
     /* good, this is an integer literal, as it must be */
     cpsl[cpsli-2] = cpsl[cpsli];
     cpsli -= 2;
