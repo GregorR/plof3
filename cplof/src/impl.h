@@ -37,15 +37,10 @@
 { \
     stack[stacktop] = (val); \
     stacktop++; /* do NOT put this with previous line, as val could include stacktop */ \
-    if (stacktop > stacksize) { printf("ACK! Blew the stack\n"); *((int *) 0) = 0; } \
 }
 #define STACK_POP(into) \
 { \
-    if (stacktop == 0) { \
-        into = plofNull; \
-    } else { \
-        into = stack[--stacktop]; \
-    } \
+    into = stack[--stacktop]; \
 }
 
 /* Standards for n-ary ops */

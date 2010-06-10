@@ -246,7 +246,10 @@ struct PlofReturn compilePSL(
                     fprintf(stderr, "Invalid operation: 0x%x\n", cmd);
             }
 
-            if (arity > stacksize) stacksize = arity;
+            if (arity > stacksize) {
+                fprintf(stderr, "Non-compilable procedure blows the stack.\n");
+                exit(1);
+            }
             stacksize -= arity;
             stacksize += pushes;
             if (stacksize > maxstacksize) maxstacksize = stacksize;
