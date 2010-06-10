@@ -1,4 +1,4 @@
 label(interp_psl_popthis);
     DEBUG_CMD("popthis");
-    /* FIXME */
+    context = context->parent;
     STEP;

@@ -8,10 +8,10 @@ noinst_PROGRAMS=pslast
 
 AM_CFLAGS=-DHAVE_CONFIG_H
 
-libplof_a_SOURCES=bignum.c inlining.c intrinsics.c memory.c optimizations.c \
+libplof_a_SOURCES=bignum.c intrinsics.c memory.c optimizations.c \
 psl.c pslfile.c
 
-libplof_noparser_a_SOURCES=bignum.c inlining.c intrinsics.c memory.c \
+libplof_noparser_a_SOURCES=bignum.c intrinsics.c memory.c \
 optimizations.c psl.c pslfile.c
 libplof_noparser_a_CFLAGS=-DPLOF_NO_PARSER
 

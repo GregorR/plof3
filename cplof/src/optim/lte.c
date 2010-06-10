@@ -2,3 +2,7 @@ ARITY(5)
 PUSHES(1)
 LEAKA
 LEAKP
+
+#ifdef PSL_OPTIM
+INLINE_PSL(jgt);
+#endif
