@@ -306,6 +306,8 @@ if (cpsli >= 4 && cpsl[cpsli-4] == pslCompileLabels[label_psl_code] && cpsl[cpsl
     LEAKALL; \
 } \
 }
+#undef INLINE_PSL
+#define INLINE_PSL(op) {}
 
 
 #endif
