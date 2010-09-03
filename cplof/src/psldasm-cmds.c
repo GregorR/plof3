@@ -113,6 +113,9 @@ break;
 case psl_localset:
 fprintf(out, "localset\n");
 break;
+case psl_nullarray:
+fprintf(out, "nullarray\n");
+break;
 case psl_rawlength:
 fprintf(out, "rawlength\n");
 break;

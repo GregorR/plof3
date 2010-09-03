@@ -38,6 +38,7 @@
 #include "impl/locals.c"
 #include "impl/local.c"
 #include "impl/localset.c"
+#include "impl/nullarray.c"
 #include "impl/rawlength.c"
 #include "impl/slice.c"
 #include "impl/rawcmp.c"

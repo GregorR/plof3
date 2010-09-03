@@ -65,6 +65,7 @@
 #define psl_locals    0x27
 #define psl_local     0x28
 #define psl_localset  0x29
+#define psl_nullarray 0x2A
 #define psl_rawlength 0x60
 #define psl_slice     0x61
 #define psl_rawcmp    0x62

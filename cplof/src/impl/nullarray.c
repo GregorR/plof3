@@ -1,9 +1,9 @@
-label(interp_psl_array);
-    DEBUG_CMD("array");
+label(interp_psl_nullarray);
+    DEBUG_CMD("nullarray");
     {
-        size_t length = 0;
+        size_t length = 0, si;
         ptrdiff_t arri;
-        struct PlofObject **stacki, *otmp;
+        struct PlofObject *otmp;
         length = arri = 0;
 
         if (pc[1]) {
@@ -26,20 +26,9 @@ label(interp_psl_array);
         otmp->parent = context;
         ad = (struct PlofArrayData *) otmp->data;
 
-        /* copy in the stack */
-        if (length > 0) {
-            for (stacki = stacktop - 1,
-                 arri = length - 1;
-                 arri >= 0;
-                 stacki--, arri--) {
-                ad->data[arri] = *stacki;
-            }
-            stacktop = stacki + 1;
-        }
-
-        /* we may have exhausted the stack */
-        for (; arri >= 0; arri--) {
-            ad->data[arri] = plofNull;
+        /* set it to null */
+        for (si = 0; si < length; si++) {
+            ad->data[si] = plofNull;
         }
 
         /* then just put it in an object */

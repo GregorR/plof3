@@ -151,6 +151,10 @@ case psl_localset:
     FOREACH(localset);
 #include "optim/localset.c"
     break;
+case psl_nullarray:
+    FOREACH(nullarray);
+#include "optim/nullarray.c"
+    break;
 case psl_rawlength:
     FOREACH(rawlength);
 #include "optim/rawlength.c"

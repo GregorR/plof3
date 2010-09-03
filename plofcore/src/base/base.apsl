@@ -164,6 +164,7 @@ gadd
 "pslOp" "/locals/" "token" "white" 3 array {} {{locals}} gadd
 "pslOp" "/local/" "token" "white" 3 array {} {{local}} gadd
 "pslOp" "/localset/" "token" "white" 3 array {} {{localset}} gadd
+"pslOp" "/nullarray/" "token" "white" 3 array {} {{nullarray}} gadd
 "pslOp" "/rawlength/" "token" "white" 3 array {} {{rawlength}} gadd
 "pslOp" "/slice/" "token" "white" 3 array {} {{slice}} gadd
 "pslOp" "/rawcmp/" "token" "white" 3 array {} {{rawcmp}} gadd
