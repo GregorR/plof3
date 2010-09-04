@@ -202,8 +202,10 @@ QUINARY; \
 
 #define UNIMPL(cmd) fprintf(stderr, "UNIMPLEMENTED: " cmd "\n"); STEP
 
-#ifdef DEBUG_TIMING
+#if defined(DEBUG_TIMING)
 #define DEBUG_CMD(cmd) tiName = cmd; clock_gettime(CLOCK_THREAD_CPUTIME_ID, &stspec)
+#elif defined(DEBUG_INSTRUCTION_SEQUENCE)
+#define DEBUG_CMD(cmd) if (debug_instruction_sequence_fh) fprintf(debug_instruction_sequence_fh, cmd "\n")
 #else
 #ifdef DEBUG
 #define DEBUG_CMD(cmd) fprintf(stderr, "DEBUG: " cmd "\n")

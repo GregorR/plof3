@@ -82,6 +82,8 @@
 #include "impl/dsrcfile.c"
 #include "impl/dsrcline.c"
 #include "impl/dsrccol.c"
+#include "impl/dinstruction_sequence_start.c"
+#include "impl/dinstruction_sequence_end.c"
 #include "impl/print.c"
 #include "impl/debug.c"
 #include "impl/intrinsic.c"

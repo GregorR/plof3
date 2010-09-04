@@ -208,6 +208,8 @@ gadd
 "pslOp" "/dsrcfile/" "token" "white" 3 array {} {{dsrcfile}} gadd
 "pslOp" "/dsrcline/" "token" "white" 3 array {} {{dsrcline}} gadd
 "pslOp" "/dsrccol/" "token" "white" 3 array {} {{dsrccol}} gadd
+"pslOp" "/dinstruction_sequence_start/" "token" "white" 3 array {} {{dinstruction_sequence_start}} gadd
+"pslOp" "/dinstruction_sequence_end/" "token" "white" 3 array {} {{dinstruction_sequence_end}} gadd
 "pslOp" "/print/" "token" "white" 3 array {} {{print}} gadd
 "pslOp" "/debug/" "token" "white" 3 array {} {{debug}} gadd
 "pslOp" "/intrinsic/" "token" "white" 3 array {} {{intrinsic}} gadd

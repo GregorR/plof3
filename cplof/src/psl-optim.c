@@ -327,6 +327,14 @@ case psl_dsrccol:
     FOREACH(dsrccol);
 #include "optim/dsrccol.c"
     break;
+case psl_dinstruction_sequence_start:
+    FOREACH(dinstruction_sequence_start);
+#include "optim/dinstruction_sequence_start.c"
+    break;
+case psl_dinstruction_sequence_end:
+    FOREACH(dinstruction_sequence_end);
+#include "optim/dinstruction_sequence_end.c"
+    break;
 case psl_print:
     FOREACH(print);
 #include "optim/print.c"

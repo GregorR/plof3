@@ -1,11 +1,16 @@
 There are certain debug flags you can set while compiling:
 
 -DDEBUG_TIMING
-   Debugs timing of operations.
+    Debugs timing of operations.
 
 -DDEBUG_NAMES
-   Attempts to keep procedure/object names around for debugging using
-   e.g. DEBUG_TIMING_PROCEDURE
+    Attempts to keep procedure/object names around for debugging using
+    e.g. DEBUG_TIMING_PROCEDURE
 
 -DDEBUG_TIMING_PROCEDURE
-   Debugs timing of procedures.
+    Debugs timing of procedures.
+
+-DDEBUG_INSTRUCTION_SEQUENCE
+    Implements dinstruction_sequence_start and dinstruction_sequence_end
+    instructions, which cause the interpreter to dump out the instruction
+    sequence for a section.

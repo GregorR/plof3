@@ -109,6 +109,8 @@
 #define psl_dsrcfile  0xD0
 #define psl_dsrcline  0xD1
 #define psl_dsrccol   0xD2
+#define psl_dinstruction_sequence_start 0xD3
+#define psl_dinstruction_sequence_end   0xD4
 #define psl_print     0xE0
 #define psl_debug     0xE1
 #define psl_intrinsic 0xE2

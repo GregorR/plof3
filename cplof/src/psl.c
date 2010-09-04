@@ -87,6 +87,7 @@ int plofLoadIntrinsics = 1;
 
 
 void *pslCompileLabels[label_psl_last];
+static FILE *debug_instruction_sequence_fh = NULL;
 
 /* Some versions of 'jump' require an enum */
 #ifdef jumpenum

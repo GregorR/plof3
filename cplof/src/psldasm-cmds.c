@@ -245,6 +245,12 @@ break;
 case psl_dsrccol:
 fprintf(out, "dsrccol\n");
 break;
+case psl_dinstruction_sequence_start:
+fprintf(out, "dinstruction_sequence_start\n");
+break;
+case psl_dinstruction_sequence_end:
+fprintf(out, "dinstruction_sequence_end\n");
+break;
 case psl_print:
 fprintf(out, "print\n");
 break;
