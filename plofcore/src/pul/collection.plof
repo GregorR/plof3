@@ -74,12 +74,29 @@ var Collection = Object : [
         ret
     }
 
+    foldFirst = (f as Function) {
+        var ret = Null
+        var x
+        each (ref x) (
+            if (ret === Null) (
+                ret = x
+            ) else (
+                ret = f(ret, x)
+            )
+        )
+        ret
+    }
+
     sum = {
         fold(0, (x, y) { x + y })
     }
 
     product = {
         fold(1, (x, y) { x * y })
+    }
+
+    toString = {
+        "[[" ~ (map((x) { x.toString() })).foldFirst((x, y) { x ~ "," ~ y }) ~ "]]"
     }
 ]
 
@@ -134,11 +151,8 @@ var Array = IndexableCollection : ConcatableCollection : [
 
     ofSize = (sz as NativeInteger) {
         var ret = new Array(psl {
-            null
-            {
-                plof{sz.__pul_val} pul_eval
-                array
-            } call
+            plof{sz.__pul_val} pul_eval
+            nullarray
         })
         var i
         for (i = 0) (i < sz) (i++) (
