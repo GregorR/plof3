@@ -145,7 +145,6 @@ gadd
 "pslOp" "/parent/" "token" "white" 3 array {} {{parent}} gadd
 "pslOp" "/parentset/" "token" "white" 3 array {} {{parentset}} gadd
 "pslOp" "/call/" "token" "white" 3 array {} {{call}} gadd
-"pslOp" "/return/" "token" "white" 3 array {} {{return}} gadd
 "pslOp" "/throw/" "token" "white" 3 array {} {{throw}} gadd
 "pslOp" "/catch/" "token" "white" 3 array {} {{catch}} gadd
 "pslOp" "/cmp/" "token" "white" 3 array {} {{cmp}} gadd

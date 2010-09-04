@@ -25,9 +25,9 @@
 #include <stdio.h>
 
 #define BUFFER_GC
-#include "buffer.h"
-#include "packrat.h"
-#include "prp.h"
+#include "plof/buffer.h"
+#include "plof/packrat.h"
+#include "plof/prp.h"
 
 void printParseResult(struct ParseResult *pr, unsigned char *input, int spcs)
 {
