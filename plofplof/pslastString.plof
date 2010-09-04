@@ -92,3 +92,9 @@ psl.praw.ASTNode := [
         "(raw " ~ raw.toString() ~ ")"
     }
 ]
+
+psl.pcode.ASTNode := [
+    toString = {
+        "(code " ~ code.toString() ~ ")"
+    }
+]

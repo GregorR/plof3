@@ -89,6 +89,10 @@ psl.presolve.ASTNode = BinaryASTNode : [
         this.t2 = t2
     }
 
+    toString = {
+        "(resolve " ~ first.toString() ~ " " ~ second.toString() ~ " " ~ t1.toString() ~ " " ~ t2.toString() ~ ")"
+    }
+
     instruction = psl.presolve
 ]
 
@@ -174,7 +178,7 @@ var pslToAst = (pslbuf) {
 
         ) else if (cmd === psl.ppop) (
             // simple
-            aststack = aststack.slice(0, aststack.length() - 1) as Array
+            aststack = aststack.slice(0, aststack.length() - 1) as Array as ListArray
 
         ) else if (cmd === psl.presolve) (
             // the strangest case, write into two temps
@@ -186,10 +190,11 @@ var pslToAst = (pslbuf) {
             astout ~= [[
                 new (psl.presolve.ASTNode)(
                     aststack[aststack.length()-2],
-                    aststack[aststack.length()-1]
+                    aststack[aststack.length()-1],
+                    t1, t2
                 )
             ]]
-            aststack = aststack.slice(0, aststack.length() - 2) as Array
+            aststack = aststack.slice(0, aststack.length() - 2) as Array as ListArray
 
             // add the gettemps to the stack
             aststack ~= [[
@@ -206,6 +211,12 @@ var pslToAst = (pslbuf) {
 
             var tp = new (psl.parray.ASTNode)(aststack.sliceFrom(aststack.length() - arity) as Array)
             aststack = (aststack.slice(0, aststack.length() - arity) as Array) ~ [[ tp ]]
+
+        ) else if (cmd === psl.pcode) (
+            // parse it
+            var tp = new (psl.pcode.ASTNode)()
+            tp.code = pslToAst raw
+            aststack = aststack ~ [[ tp ]]
 
         ) else (
             // the rest is all simple
@@ -239,7 +250,7 @@ var pslToAst = (pslbuf) {
             )
 
             // and push it
-            aststack = aststack.slice(0, len - cmd.arity) as Array
+            aststack = aststack.slice(0, len - cmd.arity) as Array as ListArray
             if (cmd.pushes == 1) (
                 aststack = aststack ~ [[ tp ]]
             ) else (
@@ -250,7 +261,7 @@ var pslToAst = (pslbuf) {
     )
 
     // now move the stack onto the output
-    astout = (astout ~ aststack) as Array
+    astout = (astout ~ aststack) as Array as ListArray
 
     // and output it as a seq
     return (new Seq(astout))
