@@ -68,5 +68,6 @@ var Reference = Object : [
 var Debug = Object : [
     print = (val) {
         psl { plof{val.__pul_val} pul_eval print }
+        Null
     }
 ]
