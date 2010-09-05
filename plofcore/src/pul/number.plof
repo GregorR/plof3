@@ -190,28 +190,34 @@ psl {
                     memberset
     }
     while
+
+    /* intrinsics 6 and 7 remember __pul_icache and NativeInteger */
+    pul_fcontext "__pul_icache" member {} 6 intrinsic call pop
+    plof { NativeInteger } pul_eval {} 7 intrinsic call pop
 }
 
-// opInteger should return a native number
-opInteger = (x) {
-    psl {
-        plof{x} pul_eval push0 255
-        {
-            push0 0
+// opInteger should return a native number, intrinsic 8 on cplof
+opInteger = psl {
+    plof { (x) {
+        psl {
+            plof{x} pul_eval push0 255
             {
-                this "__pul_icache" resolve member
-                push1 index
+                push0 0
+                {
+                    this "__pul_icache" resolve member
+                        push1 index
+                }
+                {
+                    plof { new NativeInteger(x) }
+                }
+                gte
             }
             {
                 plof { new NativeInteger(x) }
             }
-            gte
+            lte
         }
-        {
-            plof { new NativeInteger(x) }
-        }
-        lte
-    }
+    } } pul_eval 8 intrinsic
 }
 
 // op*Ofs, done this way to allow unboxed integers

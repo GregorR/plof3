@@ -32,7 +32,10 @@ static struct PlofReturn opDuplicatePrime(struct PlofObject *ctx, struct PlofObj
 
 static size_t __pul_v_hash = 0, __pul_e_hash, __pul_s_hash, __pul_set_hash,
               __pul_type_hash, this_hash, True_hash, False_hash,
-              opCast_hash, __pul_fc_hash;
+              opCast_hash, __pul_fc_hash, __pul_val_hash;
+
+static struct PlofObject *__pul_icache = NULL;
+static struct PlofObject *NativeInteger = NULL;
 
 /* Get the necessary hashes */
 static void getHashes()
@@ -47,6 +50,7 @@ static void getHashes()
     False_hash = plofHash(5, (unsigned char *) "False");
     opCast_hash = plofHash(6, (unsigned char *) "opCast");
     __pul_fc_hash = plofHash(8, (unsigned char *) "__pul_fc");
+    __pul_val_hash = plofHash(9, (unsigned char *) "__pul_val");
 }
 #define GET_HASHES if (__pul_v_hash == 0) getHashes()
 
@@ -577,12 +581,106 @@ static struct PlofReturn opDuplicate(struct PlofObject *ctx, struct PlofObject *
 }
 
 
+/* cache the value of __pul_icache (the integer cache) */
+static struct PlofReturn set__pul_icache(struct PlofObject *ctx, struct PlofObject *arg)
+{
+    struct PlofReturn ret;
+    ret.isThrown = 0;
+    ret.ret = plofNull;
+
+    __pul_icache = arg;
+
+    return ret;
+}
+
+/* cache the value of NativeInteger (the number box) */
+static struct PlofReturn setNativeInteger(struct PlofObject *ctx, struct PlofObject *arg)
+{
+    struct PlofReturn ret;
+    ret.isThrown = 0;
+    ret.ret = plofNull;
+
+    NativeInteger = arg;
+
+    return ret;
+}
+
+/* opInteger. Create a NativeInteger object from a primitive integer, perhaps from the cache
+ * Plof code:
+ * (x) {
+ *     psl {
+ *         plof{x} pul_eval push0 255
+ *         {
+ *             push0 0
+ *             {
+ *                 this "__pul_icache" resolve member
+ *                 push1 index
+ *             }
+ *             {
+ *                 plof { new NativeInteger(x) }
+ *             }
+ *             gte
+ *         }
+ *         {
+ *             plof { new NativeInteger(x) }
+ *         }
+ *         lte
+ *     }
+ * }
+ */
+static struct PlofReturn opInteger(struct PlofObject *ctx, struct PlofObject *arg)
+{
+    struct PlofReturn ret;
+    struct PlofObject *rawInt;
+    ptrdiff_t intVal;
+    struct PlofArrayData *ad;
+    ret.isThrown = 0;
+    ret.ret = plofNull;
+
+    GET_HASHES;
+
+    /* make sure the arg is right */
+    if (!ISARRAY(arg)) return ret;
+    ad = ARRAY(arg);
+    if (ad->length < 1) return ret;
+    ret = pul_eval(ctx, ad->data[0]);
+    if (ret.isThrown) return ret;
+    rawInt = ret.ret;
+    ret.ret = plofNull;
+    if (!ISINT(rawInt)) return ret;
+    intVal = ASINT(rawInt);
+
+    /* check that we have everything we need */
+    if (!__pul_icache || !NativeInteger) return ret;
+
+    /* Check if it's in the icache range */
+    if (intVal >= 0 && intVal <= 255) {
+        /* get it out of the cache */
+        if (!ISARRAY(__pul_icache)) return ret;
+        ad = ARRAY(__pul_icache);
+        if (ad->length <= intVal) return ret;
+        ret.ret = ad->data[intVal];
+        return ret;
+    }
+
+    /* not in the range, create a NativeInteger */
+    ret = opDuplicatePrime(NativeInteger->parent, NativeInteger);
+    if (ret.isThrown) return ret;
+    plofWrite(ret.ret, (unsigned char *) "__pul_val", __pul_val_hash, rawInt);
+
+    return ret;
+}
+
+
 /* the intrinsics list */
 PlofFunction plofIntrinsics[] = {
-    pul_eval,
+    pul_eval,           /* 0 */
     opMember,
     pul_funcwrap,
     opIs,
     opAs,
-    opDuplicate
+    opDuplicate,        /* 5 */
+    set__pul_icache,
+    setNativeInteger,
+    opInteger
 };
