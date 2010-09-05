@@ -49,18 +49,28 @@ Debug.print(stretch_depth)
 Debug.print("\t check:")
 check_tree(make_tree(0, stretch_depth))
 
-/*
 long_lived_tree = make_tree(0, max_depth)
 
-iterations = 2**max_depth
-for depth in xrange(min_depth, stretch_depth, 2):
-
+// FIXME: really nasty here
+//iterations = 2**max_depth
+var iterations = 1
+for (var i = 0) (i < max_depth) (i++) (
+    iterations = iterations * 2
+)
+var depth
+var i
+(min_depth to stretch_depth by 2).each (ref depth) (
     check = 0
-    for i in xrange(1, iterations + 1):
-        check += check_tree(make_tree(i, depth)) + check_tree(make_tree(-i, depth))
+    (1 to (iterations + 1)).each (ref i) (
+        check = check + check_tree(make_tree(i, depth)) + check_tree(make_tree(-i, depth))
+    )
 
-    print "%d\t trees of depth %d\t check:" % (iterations * 2, depth), check
-    iterations /= 4
+    Debug.print(iterations * 2)
+    Debug.print("trees of depth")
+    Debug.print(depth)
+    Debug.print("check:")
+    Debug.print(check)
+    iterations = iterations / 4
+)
 
-print "long lived tree of depth %d\t check:" % max_depth, check_tree(long_lived_tree)
-*/
+//print "long lived tree of depth %d\t check:" % max_depth, check_tree(long_lived_tree)
