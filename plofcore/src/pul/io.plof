@@ -27,7 +27,11 @@ var Handle = Object : [
         Abstract()
     }
 
-    read = (x as String) {
+    writeln = (x as String) {
+        this.write (x ~ "\n")
+    }
+
+    read = (x as NativeInteger) {
         Abstract()
     }
 
