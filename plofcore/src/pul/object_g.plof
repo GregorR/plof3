@@ -66,7 +66,7 @@ grammar {
         // make this a function context
         {
             this "__pul_fc" this memberset
-            this "__pul_proc" this "+procedure" member memberset
+            this "+__pul_proc" this "+procedure" member memberset
             this "__pul_args" push2 memberset
 
             // curry if necessary
@@ -84,7 +84,7 @@ grammar {
                 {
                     this "__pul_args" resolve member
                     push1 aconcat
-                    this "__pul_proc" resolve member call
+                    this "+__pul_proc" resolve member call
                 } 1 array this "opFunction" resolve member call
             }
         } concat
