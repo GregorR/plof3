@@ -305,7 +305,6 @@ void dumpPSLAst(FILE *to, struct PSLAstNode *tree, int spaces)
 /* dump an AST tree in Dot */
 void dumpPSLAstDot(FILE *to, struct PSLAstNode *tree)
 {
-    int i;
     size_t si;
 
     fprintf(to, "Ox%p [label=\"", (void *) tree);
