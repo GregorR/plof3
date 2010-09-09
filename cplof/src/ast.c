@@ -308,7 +308,7 @@ void dumpPSLAstDot(FILE *to, struct PSLAstNode *tree)
     int i;
     size_t si;
 
-    fprintf(to, "Ox%p [label=\"", tree);
+    fprintf(to, "Ox%p [label=\"", (void *) tree);
 
     /* print the node name */
     switch (tree->cmd) {
@@ -359,7 +359,7 @@ void dumpPSLAstDot(FILE *to, struct PSLAstNode *tree)
 
     /* now print any children */
     for (si = 0; si < tree->childct; si++) {
-        fprintf(to, "Ox%p -> Ox%p;\n", tree, tree->children[si]);
+        fprintf(to, "Ox%p -> Ox%p;\n", (void *) tree, (void *) tree->children[si]);
         dumpPSLAstDot(to, tree->children[si]);
     }
 }
