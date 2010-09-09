@@ -96,7 +96,7 @@ int main(int argc, char **argv)
     if (!dot) {
         dumpPSLAst(stdout, ast, 0);
     } else {
-        printf("digraph {\n");
+        printf("digraph {\nnodesep=0;\nranksep=0;\n");
         dumpPSLAstDot(stdout, ast);
         printf("}\n");
     }
