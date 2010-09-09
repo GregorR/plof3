@@ -44,16 +44,32 @@ int main(int argc, char **argv)
 {
     FILE *fh;
     struct Buffer_psl file;
-    char *filenm;
+    char *filenm = NULL, *arg;
     struct Buffer_psl psl;
+    int i, dot;
+    struct PSLAstNode *ast;
 
     GC_INIT();
 
-    if (argc != 2) {
-        fprintf(stderr, "Use: pslast <psl file>\n");
+    dot = 0;
+    for (i = 1; i < argc; i++) {
+        arg = argv[i];
+        if (arg[0] == '-') {
+            if (!strcmp(arg, "-d")) {
+                dot = 1;
+            } else {
+                usage();
+                return 1;
+            }
+        } else {
+            filenm = arg;
+        }
+    }
+
+    if (filenm == NULL) {
+        usage();
         return 1;
     }
-    filenm = argv[1];
 
     /* load in the file */
     INIT_BUFFER(file);
@@ -76,6 +92,18 @@ int main(int argc, char **argv)
     /* check what type of file it is */
     psl = readPSLFile(file.bufused, file.buf);
 
-    dumpPSLAst(stdout, pslToAst(psl.buf, psl.bufused), 0);
+    ast = pslToAst(psl.buf, psl.bufused);
+    if (!dot) {
+        dumpPSLAst(stdout, ast, 0);
+    } else {
+        printf("digraph {\n");
+        dumpPSLAstDot(stdout, ast);
+        printf("}\n");
+    }
     return 0;
+}
+
+void usage()
+{
+    fprintf(stderr, "Use: pslast [-d] <psl file>\n");
 }

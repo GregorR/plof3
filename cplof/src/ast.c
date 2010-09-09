@@ -63,6 +63,10 @@ struct PSLAstNode *pslToAst(unsigned char *psl, size_t psllen)
     INIT_BUFFER(aststack);
     curtemp = 1;
 
+    /* make the arg */
+    cur = allocPSLAstNode(pslast_arg, NULL, 0, 0, NULL);
+    WRITE_BUFFER(aststack, &cur, 1);
+
     for (psli = 0; psli < psllen; psli++) {
         int arity = 0, pushes = 0;
         unsigned short cmd = psl[psli];
@@ -163,22 +167,6 @@ struct PSLAstNode *pslToAst(unsigned char *psl, size_t psllen)
                 aststack.bufused--;
 
         /* resolve is weird */
-        } else if (cmd == psl_resolve) {
-            cur = allocPSLAstNode(pslast_gettemp, NULL, 0, 0, NULL);
-            cur->temp0 = curtemp;
-            WRITE_BUFFER(aststack, &cur, 1);
-
-            cur = allocPSLAstNode(pslast_gettemp, NULL, 0, 0, NULL);
-            cur->temp0 = curtemp + 1;
-            WRITE_BUFFER(aststack, &cur, 1);
-
-            cur = allocPSLAstNode(psl_resolve, NULL, 0, 0, NULL);
-            cur->temp0 = curtemp;
-            cur->temp1 = curtemp + 1;
-            WRITE_BUFFER(astout, &cur, 1);
-
-            curtemp += 2;
-
         } else {
             /* figure out the mixed arity of an array */
             if (cmd == psl_array) {
@@ -215,6 +203,23 @@ struct PSLAstNode *pslToAst(unsigned char *psl, size_t psllen)
             cur = allocPSLAstNode(cmd, data, datasz, arity, BUFFER_END(aststack) - arity);
             aststack.bufused -= arity;
 
+            /* handle resolve's weird push */
+            if (cmd == psl_resolve) {
+                struct PSLAstNode *tmp;
+                tmp = allocPSLAstNode(pslast_gettemp, NULL, 0, 0, NULL);
+                tmp->temp0 = curtemp;
+                WRITE_BUFFER(aststack, &tmp, 1);
+
+                tmp = allocPSLAstNode(pslast_gettemp, NULL, 0, 0, NULL);
+                tmp->temp0 = curtemp + 1;
+                WRITE_BUFFER(aststack, &tmp, 1);
+
+                cur->temp0 = curtemp;
+                cur->temp1 = curtemp + 1;
+
+                curtemp += 2;
+            }
+
             /* put it either on the stack or in our instruction list */
             if (pushes == 1) {
                 WRITE_BUFFER(aststack, &cur, 1);
@@ -250,6 +255,10 @@ void dumpPSLAst(FILE *to, struct PSLAstNode *tree, int spaces)
 
         case pslast_seq:
             fprintf(to, "seq");
+            break;
+
+        case pslast_arg:
+            fprintf(to, "arg");
             break;
 
         case pslast_settemp:
@@ -291,4 +300,66 @@ void dumpPSLAst(FILE *to, struct PSLAstNode *tree, int spaces)
 
     for (i = 0; i < spaces; i++) fprintf(to, "  ");
     fprintf(to, ")\n");
+}
+
+/* dump an AST tree in Dot */
+void dumpPSLAstDot(FILE *to, struct PSLAstNode *tree)
+{
+    int i;
+    size_t si;
+
+    fprintf(to, "Ox%p [label=\"", tree);
+
+    /* print the node name */
+    switch (tree->cmd) {
+#define FOREACH(pslcmd) \
+        case psl_ ## pslcmd : \
+            fprintf(to, "%s", #pslcmd); \
+            break;
+#include "psl_inst.h"
+#undef FOREACH
+
+        case pslast_seq:
+            fprintf(to, "seq");
+            break;
+
+        case pslast_arg:
+            fprintf(to, "arg");
+            break;
+
+        case pslast_settemp:
+            fprintf(to, "settemp");
+            break;
+
+        case pslast_gettemp:
+            fprintf(to, "gettemp");
+            break;
+
+        default:
+            fprintf(to, "???");
+    }
+
+    /* if it has temps, output those */
+    if (tree->temp0) {
+        fprintf(to, "(%d", tree->temp0);
+        if (tree->temp1) fprintf(to, ",%d", tree->temp1);
+        fprintf(to, ")");
+    }
+
+    /* if it has data, output that */
+    if (tree->datasz) {
+        if (tree->datasz == (size_t) -1) {
+            fprintf(to, "  %d", (int) (size_t) tree->data);
+        } else {
+            fprintf(to, "  \\\"%.*s\\\"", (int) tree->datasz, (char *) tree->data);
+        }
+    }
+
+    fprintf(to, "\"];\n");
+
+    /* now print any children */
+    for (si = 0; si < tree->childct; si++) {
+        fprintf(to, "Ox%p -> Ox%p;\n", tree, tree->children[si]);
+        dumpPSLAstDot(to, tree->children[si]);
+    }
 }

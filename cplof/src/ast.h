@@ -45,8 +45,9 @@ BUFFER(PSLAstNode, struct PSLAstNode *);
 
 /* commands unique to PSL AST nodes */
 #define pslast_seq      0x100
-#define pslast_settemp  0x101
-#define pslast_gettemp  0x102
+#define pslast_arg      0x101
+#define pslast_settemp  0x102
+#define pslast_gettemp  0x103
 
 /* allocate a PSL AST node with these children */
 struct PSLAstNode *allocPSLAstNode(unsigned short cmd,
@@ -58,5 +59,8 @@ struct PSLAstNode *pslToAst(unsigned char *psl, size_t psllen);
 
 /* dump an AST tree in ASCII */
 void dumpPSLAst(FILE *to, struct PSLAstNode *tree, int spaces);
+
+/* dump an AST tree in DOT */
+void dumpPSLAstDot(FILE *to, struct PSLAstNode *tree);
 
 #endif
